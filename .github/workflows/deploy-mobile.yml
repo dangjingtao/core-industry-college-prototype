@@ -40,7 +40,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type-check and build mobile
+      - name: Type-check and build mobile preview
+        if: github.ref_name == 'dev'
+        run: npm run build:development --workspace @core/mobile
+
+      - name: Type-check and build mobile production
+        if: github.ref_name != 'dev'
         run: npm run build:mobile
 
       - name: Deploy mobile

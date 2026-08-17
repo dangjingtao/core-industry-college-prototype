@@ -86,4 +86,11 @@ Vite 构建时会将该文件复制到 `dist`，用于 Cloudflare Pages 的客�
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN`
 
+构建模式与前端环境文件对应：
+
+- `dev`：Vite `development` mode，读取两端各自的 `.env.development`。
+- `prod`：Vite `production` mode，读取两端各自的 `.env.production`。
+
+前端环境变量只能存放可公开信息。Cloudflare Token、后端密钥和其他敏感配置不得写入任何 `VITE_*` 变量或提交到仓库。
+
 尚未配置自定义域名。

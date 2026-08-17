@@ -81,6 +81,18 @@ npm run dev:pc
 npm run dev:mobile
 ```
 
+## 环境变量
+
+PC 与手机端分别使用各自目录下的 Vite 环境文件：
+
+| 环境 | PC | 手机端 |
+| --- | --- | --- |
+| 本地开发 / `dev` 预览 | `apps/pc/.env.development` | `apps/mobile/.env.development` |
+| `prod` 生产构建 | `apps/pc/.env.production` | `apps/mobile/.env.production` |
+| 配置模板 | `apps/pc/.env.example` | `apps/mobile/.env.example` |
+
+当前公开变量包括应用名称、端类型、环境、站点地址和预留的 API 地址。所有 `VITE_*` 变量都会进入浏览器构建产物，不能填写 Token、密码或私钥。本地私密覆盖使用 `.env.local` 或 `.env.*.local`，这类文件已被 Git 忽略；Cloudflare 凭据继续通过 GitHub Actions Secrets 管理。
+
 分别构建或一次构建全部工作区：
 
 ```bash
@@ -115,7 +127,7 @@ npm run verify:browser:pc
 - PC：<https://dev.core-industry-college-pc.pages.dev>
 - 手机：<https://dev.core-industry-college-mobile.pages.dev>
 
-两个项目均以 `prod` 为生产分支。当前采用 Wrangler 直接部署，尚未连接 GitHub 自动构建。
+两个项目均以 `prod` 为生产分支。当前采用 Wrangler Direct Upload，并由 GitHub Actions 自动构建和部署。
 
 详细配置见 [docs/cloudflare-deployment.md](./docs/cloudflare-deployment.md)。
 

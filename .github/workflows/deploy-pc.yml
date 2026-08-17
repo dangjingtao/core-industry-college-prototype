@@ -40,7 +40,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type-check and build PC
+      - name: Type-check and build PC preview
+        if: github.ref_name == 'dev'
+        run: npm run build:development --workspace @core/pc
+
+      - name: Type-check and build PC production
+        if: github.ref_name != 'dev'
         run: npm run build:pc
 
       - name: Deploy PC
