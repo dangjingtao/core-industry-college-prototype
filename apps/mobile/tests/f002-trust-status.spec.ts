@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("F002 gates trust actions until a credential is claimed", async ({ page }) => {
   await page.goto("/assets/verification");
-  await page.getByLabel("证书验真码").fill("COURSE-DA-26001");
+  await page.getByPlaceholder("输入证书验真码").fill("COURSE-DA-26001");
   await page.getByRole("button", { name: "验证", exact: true }).click();
   await expect(page.getByText("尚未签发", { exact: true })).toBeVisible();
   await expect(page.getByText("验证通过", { exact: true })).toHaveCount(0);
