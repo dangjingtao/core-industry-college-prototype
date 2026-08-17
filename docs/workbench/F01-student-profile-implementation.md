@@ -123,6 +123,7 @@ registration callback / workshop questionnaire
 - `apps/mobile/src/features/long-term-assets/studentProfile.ts`
 - `apps/mobile/src/features/long-term-assets/StudentProfilePages.tsx`
 - `docs/workbench/F01-student-profile-implementation.md`
+- `apps/mobile/tests/f001-phone-verification.spec.ts`
 
 修改：
 
@@ -135,32 +136,87 @@ registration callback / workshop questionnaire
 - `identities[]` / registration lifecycle；
 - F02 企业 / 验真；
 - F03 简历结构化字段；
-- F04 冻结业务。
+- F04 冻结业务；
+- `SupportPages.tsx` 中已不再被 App 使用的旧 onboarding 死代码（本轮不扩大范围清理）。
 
 ## 6. 施工提交与验证
 
-实现提交：
+初始实现提交：
 
 - `a7a57091037990161bc3a4d0879641a5995a9185` — StudentProfile 模型；
 - `8e230b6f53ff7bf6d0f1c0592337994721aa4a06` — 长期主档 provider；
 - `0994f12faf0f11eb7b00220b777b0efaa015b7fc` — onboarding / profile 页面；
 - `ac2465d27918666c9cc79f445daf01c173aa9524` — 路由切换并合并并发 F02 改动。
 
-CI：
+初始 CI：
 
 - GitHub Actions run `32013927360`
 - Workflow：`Deploy Mobile to Cloudflare Pages`
 - `dev` 阶段执行 `npm run build:development --workspace @core/mobile`，包含 TypeScript 检查与 Vite build；
 - 结果：`success`。
 
-## 7. 待独立评审
+## 7. 首轮独立评审与窄修复
 
-评审重点：
+正式评审：
 
-1. onboarding 与 `/me/profile` 修改后是否即时共享同一 profile；
-2. 修改手机号后未验证时是否禁止保存；
-3. 可选问卷跳过不会清空既有主档；
-4. 地区不会在问卷重复追问；
-5. `ResumePage` 继续读取同一 profile 的姓名 / 学校 / 专业 / 地区 / 邮箱；
-6. `mergeProfileFromSource` 不新建 questionnaire / registration profile；
-7. F00 未完成前不把“真实报名 callback 已接通”算作 F01 验收事实。
+- 评审文件：`docs/workbench/F01-review.md`；
+- 评审提交：`22577671923803ddcb84ad333df965b9e7c8524e`；
+- 结论：`CHANGES REQUIRED`；主体 StudentProfile / 问卷模型 / merge 接口通过，仅阻断手机号验证码的 UI / 父层状态不同步。
+
+修复原则：
+
+- 父层 `phoneVerified` 作为保存 gate 与 UI 的唯一验证状态；
+- 输入正确验证码本身不再直接推导“手机号已验证”；
+- 只有点击“验证”且验证码为 `123456` 时才调用 `onVerifiedChange(true)`；
+- 修改手机号会清除本次验证码发送 / 输入状态；
+- 改回原本已经 verified 的手机号时，同步恢复父层 `phoneVerified=true`，不再出现子组件与父层状态分裂。
+
+修复与测试提交：
+
+- `7da28be0b12e74db148b7149ae4f746dc523833a` — 修复 PhoneVerification 状态同步；
+- `87b5e6d84524fdb37d8e4bde4b86f43b3d48c8b4` — 新增 focused Playwright；
+- `8849cf7f896313d17506d99586a7def96bb57f1f` — Playwright 使用 exact 验证按钮 selector；
+- `bb9ec432f2eb37f09cd97a66cc4c09bfb55ad1ca` — 通过 SPA 返回 `/me/profile` 验证 provider 中已保存的新手机号和 verified 状态；
+- `b19a4cb4cf7bcd781b26158dd6889160220766bb` — browser PASS 后删除临时一次性 workflow，保留 focused test。
+
+Focused Playwright 覆盖：
+
+```text
+/me/profile
+→ 新手机号
+→ 保存禁用
+→ 错误验证码 654321
+→ 仍不可保存、不可显示已验证
+→ 正确验证码 123456
+→ 点击验证
+→ 保存开放
+→ 保存返回 /me
+→ SPA 再进入 /me/profile
+→ 新手机号仍在且 verified
+```
+
+Browser 证据：
+
+- GitHub Actions run `32019232067`；
+- `Build mobile preview`：success；
+- Chromium 安装：success；
+- `Run focused F001 browser test`：success；
+- run 总结论：`success`。
+
+说明：第二次试跑曾使用 `page.goto("/me/profile")` 强制刷新，导致纯内存 prototype provider 重建 seed；这不属于 F01 的“保存后同一 App 会话状态”契约，因此最终测试改为 SPA 返回页面，不额外引入跨刷新持久化模型。
+
+## 8. 待快速复审
+
+当前实现已针对首轮 `CHANGES REQUIRED` 的唯一阻断项完成窄修复并取得 focused browser PASS。
+
+复审重点：
+
+1. 新手机号输入正确验证码前，父层保存 gate 始终为 false；
+2. 输入 `123456` 不会自动显示 verified，点击“验证”后才同步为 true；
+3. 错码不会开放保存；
+4. 改回原本 verified 的手机号时父层同步恢复 verified；
+5. 保存后通过 SPA 返回 `/me/profile`，手机号与 verified 状态仍读取同一 StudentProfile；
+6. StudentProfile、问卷模型、`mergeProfileFromSource()` 未返工；
+7. `SupportPages.tsx` 旧 onboarding 死代码未在本轮顺手扩大处理。
+
+施工线程仍不自行标记 `PASS`，等待独立快速复审。
