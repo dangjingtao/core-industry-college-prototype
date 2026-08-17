@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AdminConsole } from "./admin/AdminConsole";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 
@@ -68,9 +69,10 @@ function RegistrationPortalRoute() {
 export function App() {
   return (
     <Routes>
+      <Route path="/admin/*" element={<AdminConsole />} />
       <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
-      <Route path="/" element={<Navigate to="/registration-portal/start" replace />} />
-      <Route path="*" element={<Navigate to="/registration-portal/start" replace />} />
+      <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   );
 }
