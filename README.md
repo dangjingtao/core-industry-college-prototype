@@ -7,9 +7,10 @@
 
 ## 当前状态
 
-- 手机端已从 `dangjingtao/com-design` 的 `core-industry-college-refactor` 分支迁入可交互原型；电脑端仍为基础脚手架。
+- 手机端已迁入可交互原型；电脑端已迁入独立的三创赛报名系统原型。
 - 电脑端已有原型可作为后续迁移与整合的参考：`/Users/tao/com-design/prototype/core-industry-college`。
 - 手机端迁移基线、范围与验证记录见 [`docs/migrations/mobile-from-com-design.md`](./docs/migrations/mobile-from-com-design.md)。
+- 电脑端报名系统迁移基线、范围与验证记录见 [`docs/migrations/pc-registration-portal-from-com-design.md`](./docs/migrations/pc-registration-portal-from-com-design.md)。
 
 ## 参考实现
 
@@ -55,6 +56,7 @@ npm run build:pc
 npm run build:mobile
 npm run build
 npm run verify:mobile
+npm run verify:pc
 ```
 
 ## Cloudflare 部署预留
@@ -82,7 +84,7 @@ npm run verify:mobile
 
 ## 后续工作
 
-- 电脑端业务页面仍需从参考实现迁移并独立验收。
+- 电脑端当前仅包含报名系统；其他电脑端业务页面仍需单独确认、迁移和验收。
 - 手机端后续变化需要明确来源分支和提交，持续维护迁移记录。
 - 两端仅在确认语义和交互一致时再把能力提取到 `packages/shared`。
 

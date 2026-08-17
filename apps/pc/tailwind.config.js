@@ -1,9 +1,43 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: "var(--color-primary)",
+        "primary-pressed": "var(--color-primary-hover)",
+        "on-primary": "var(--color-on-primary)",
+        "primary-container": "var(--color-primary-container)",
+        background: "var(--color-background)",
+        foreground: "var(--color-foreground)",
+        surface: "var(--color-surface)",
+        "surface-subtle": "var(--color-surface-subtle)",
+        border: "var(--color-border)",
+        "border-subtle": "var(--color-border-subtle)",
+        "text-primary": "var(--color-text-primary)",
+        "text-secondary": "var(--color-text-secondary)",
+        "text-tertiary": "var(--color-text-tertiary)",
+        "text-brand": "var(--color-text-brand)",
+        success: "var(--color-success)",
+        "success-bg": "var(--color-success-bg)",
+        "success-text": "var(--color-success-text)",
+        warning: "var(--color-warning)",
+        "warning-bg": "var(--color-warning-bg)",
+        "warning-text": "var(--color-warning-text)",
+        danger: "var(--color-danger)",
+        "danger-bg": "var(--color-danger-bg)",
+        "danger-text": "var(--color-danger-text)",
+        info: "var(--color-info)",
+        "info-bg": "var(--color-info-bg)",
+        "info-text": "var(--color-info-text)",
+      },
+      borderRadius: {
+        control: "var(--radius-control)",
+        container: "var(--radius-container)",
+      },
+      minHeight: { touch: "var(--size-touch-min)" },
+      boxShadow: { floating: "var(--shadow-1)" },
+    },
   },
   plugins: [],
 };
-
