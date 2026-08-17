@@ -1,225 +1,185 @@
 # F00｜手机端 ↔ 响应式报名门户｜独立评审
 
-**评审日期：2026-08-17**  
-**评审对象：`dev` 分支，F00 实现提交 `adbaedf8be2f4e60516ebccab21dee0e50b6a1fe`，并核对当前后续 HEAD 未改写 F00 核心文件。**  
-**结论：CHANGES REQUIRED（窄修后复审）**
+**初审日期：2026-08-17**  
+**复审日期：2026-08-17**  
+**初始实现：`adbaedf8be2f4e60516ebccab21dee0e50b6a1fe`**  
+**阻断修复：`38245d9d6c20f7395ae81927a93637baa9e8cd46`**  
+**施工证据文档：`27a4f2ac6f15a59b28d964d5e0e4ad87e413b4c6`**  
+**最终结论：PASS**
 
 ---
 
-## 1. 结论摘要
+## 1. 复审结论
 
-F00 的整体架构方向正确：
+首轮评审只阻断一个根问题：
 
-- 没有复制第二套 PC 报名 UI；
-- Mobile 使用环境变量进入现有 `/registration-portal/*`；
-- `@core/shared` 只定义 handoff / callback URL 协议，不持有业务状态；
-- PC 提供显式“返回 App / 赛事”；
-- callback 最终写入 Mobile 已有 Public Platform `identities[]`；
-- approved 同时推进对应赛事 runtime；
-- dev / prod Cloudflare 地址没有硬编码在业务组件；
-- PC / Mobile 的 type-check、build、deploy 均有成功 CI 证据。
+> 真实 `Mobile → PC → Mobile` 导航会卸载 Mobile React 应用，导致纯内存 `session / identities[] / identityMode` 返回时被默认 seed 重新初始化，从而破坏“同一个账号状态连续报名”的语义。
 
-但当前实现仍有一个阻断问题：
+修复提交 `38245d9d6c20f7395ae81927a93637baa9e8cd46` 已按要求做窄修，没有返工已经通过的 PC 报名页、shared URL 协议、Cloudflare 地址与 callback 映射。
 
-> **真实跨域导航会卸载 Mobile 应用，而 Mobile 的 `session / identities[] / identityMode` 仍是纯内存状态；返回 Mobile 时 Provider 会重新用 seed 初始化，因此回流并不是在“离开前同一个账号状态”上继续。**
-
-因此当前不能判 F00 PASS。
+该阻断项现已关闭，F00 转为 **PASS**。
 
 ---
 
-## 2. 已通过部分
+## 2. BLOCKER-01 修复确认
 
-### 2.1 Handoff 协议边界正确
+### 2.1 离开 Mobile 前保存一次性账号快照
 
-`packages/shared/src/registration-handoff.ts` 只负责：
+新增：
 
-- Mobile → PC URL；
-- PC → Mobile callback URL；
-- `competitionId`；
-- `returnTo`；
-- source marker；
-- `draft / pending / rejected / approved` 状态解析。
-
-没有把赛事身份或报名业务 Store 放入 shared package。
-
-### 2.2 Mobile 没有复制复杂报名
-
-Mobile `/competitions/:competitionId/registration` 已改为 `RegistrationHandoffPage`，复杂报名继续由 PC 响应式门户承接。
-
-### 2.3 PC 返回协议成立
-
-PC 从 Mobile 进入后保留短期 handoff context，并提供固定“返回 App / 赛事”按钮；返回时根据报名门户当前状态构造 callback。
-
-### 2.4 Mobile callback 写既有 `identities[]`
-
-- pending → pending；
-- rejected → rejected；
-- approved → active；
-- draft → 不创建赛事身份。
-
-没有新增第二份长期赛事身份 Store。
-
-### 2.5 环境配置符合任务卡
-
-Mobile：
-
-- dev → `https://dev.core-industry-college-pc.pages.dev`
-- prod → `https://core-industry-college-pc.pages.dev`
-- local example → `http://localhost:5174`
-
-业务组件本身不写死某次预览地址。
-
-### 2.6 Build / deploy 证据成立
-
-F00 提交对应：
-
-- Mobile run `32014377555`：install / type-check + dev build / Cloudflare deploy success；
-- PC run `32014377562`：install / type-check + dev build / Cloudflare deploy success。
-
----
-
-## 3. 阻断问题
-
-### BLOCKER-01｜真实跨端返回会丢失 Mobile 离开前的账号 / identity 状态
-
-当前 Mobile 打开 PC 使用：
-
-```ts
-window.location.assign(portalUrl)
+```text
+apps/mobile/src/features/public-platform/registrationHandoffSnapshot.ts
 ```
 
-这会离开 Mobile origin，并卸载 React 应用。
+快照只保存 F00 handoff 连续性需要的：
 
-而 `PublicPlatformProvider` 当前初始化仍是：
-
-```ts
-const [session, setSession] = useState(() => ...)
-const [identities, setIdentities] = useState(multiIdentitySeed)
-const [identityMode, setIdentityModeValue] = useState("multi")
+```text
+session
+identities[]
+identityMode
 ```
 
-没有 localStorage / sessionStorage hydration，也没有 F00 handoff snapshot restore。
+并满足：
 
-因此工作台账要求的真实动线：
+- 位于 Mobile 自身 origin 的 `sessionStorage`；
+- 仅在真实进入响应式报名门户前保存；
+- 带 `version` 与 2 小时 TTL；
+- 保存失败时阻止跨端跳转，不静默丢失账号状态；
+- 不是新的长期账号 / 赛事身份 Store。
+
+### 2.2 返回后恢复顺序正确
+
+Mobile 收到合法报名 callback 后：
+
+```text
+读取 handoff snapshot
+→ 恢复原 session / identityMode / identities[]
+→ 消费当前赛事 callback
+→ 写回既有 Public Platform identities[]
+→ 清理 snapshot
+→ 清理 callback query
+```
+
+这满足首轮要求的关键顺序：**先恢复离开前账号状态，再叠加本次报名结果。**
+
+对于无赛事身份账号，返回后不会重新引入默认 `multiIdentitySeed` 中其它赛事身份。
+
+### 2.3 callback 真相源边界没有退化
+
+F00 仍然保持：
+
+- `pending` → 当前赛事 `identityStatus=pending`；
+- `rejected` → 当前赛事 `identityStatus=rejected`；
+- `approved` → 当前赛事 `identityStatus=active`，并推进对应赛事 runtime；
+- `draft` → 不创建新赛事身份。
+
+最终赛事身份仍属于 Mobile 既有 Public Platform `identities[]`，没有迁入 PC Store，也没有建立第二份长期 identity 真相源。
+
+---
+
+## 3. 真实双服务 Browser PASS
+
+新增 focused E2E：
+
+```text
+apps/mobile/playwright.handoff.config.ts
+apps/mobile/tests/registration-handoff-cross-app.spec.ts
+```
+
+Playwright 同时启动：
+
+```text
+Mobile  http://127.0.0.1:5173
+PC      http://127.0.0.1:5174
+```
+
+实际测试路径不是人工注入 callback，而是浏览器真实执行：
+
+```text
+Mobile 默认多赛事 seed
+→ 切换为无赛事身份
+→ 进入 sanchuang-16 报名
+→ 真正导航到 PC 5174
+→ 队员注册
+→ 答题
+→ 点击“返回 App / 赛事”
+→ 真正返回 Mobile 5173
+→ sanchuang-16 = pending
+→ callback query 已清理
+→ handoff snapshot 已清理
+→ 进入“我的赛事”
+→ innovation-cup-2026 不存在
+→ sanchuang-15 不存在
+```
+
+该测试正面覆盖了首轮评审指出的 Provider 卸载 / 重建边界。
+
+---
+
+## 4. CI 证据
+
+GitHub Actions：
+
+```text
+Run: 32017114188
+Workflow: Deploy Mobile to Cloudflare Pages
+HEAD: 38245d9d6c20f7395ae81927a93637baa9e8cd46
+Conclusion: success
+```
+
+已核日志：
+
+- `npm ci`：success；
+- `Type-check and build mobile preview`：success；
+- `Install Playwright Chromium`：success；
+- `Run F00 cross-app browser regression`：success；
+- Playwright：`1 passed (6.1s)`；
+- Cloudflare Pages deploy：success。
+
+因此本次 PASS 不是“测试源码存在”的推断，而是有真实 CI browser execution 证据。
+
+---
+
+## 5. 首轮已经通过、复审未发现回归的部分
+
+以下继续判定通过：
+
+- 不复制第二套 PC 报名 UI；
+- Mobile 通过环境地址进入现有 `/registration-portal/*`；
+- `@core/shared` 仅维护 handoff / callback URL 协议；
+- PC 有明确“返回 App / 赛事”出口；
+- `competitionId / returnTo / source` 上下文保持；
+- dev / prod Cloudflare 地址环境化；
+- PC 短期 sessionStorage 不是长期赛事身份真相源；
+- 后续真实后台接入可替换 handoff / callback 层，而无需重画报名 UI。
+
+---
+
+## 6. 非阻断后续事项
+
+以下仍是生产化注意事项，不影响本轮中保真原型 PASS：
+
+1. 当前 callback query 是原型状态协议，真实生产赛事身份必须由服务端可信报名 / 审核结果授予；
+2. `returnTo` 生产化时应增加允许 origin 校验，避免开放跳转；
+3. 当前 handoff snapshot 只服务一次跨端浏览器会话，不应演变为长期账号持久化机制。
+
+---
+
+# 7. 最终判定
+
+**F00：PASS。**
+
+验收成立：
 
 ```text
 无赛事身份
-→ 手机赛事详情
-→ 报名
-→ PC 门户
-→ 提交
-→ 返回手机
-→ pending
-```
-
-实际会变成：
-
-```text
-Mobile：用户先切到“无赛事身份” → identities=[]
-→ 离开 Mobile
-→ PC
-→ 回到 Mobile
-→ PublicPlatformProvider 重新 mount
-→ identities 先恢复 multiIdentitySeed
-→ callback 再把当前赛事改成 pending
-```
-
-结果是：离开前不存在的其它赛事身份会重新出现，回流并不是在原账号状态上继续。
-
-这违反 F00 两个核心要求：
-
-1. “同一赛事不能在 PC 与 mobile 各自产生互不相认的报名事实”；
-2. “无赛事身份 → 报名 → pending”必须是同一个长账号上下文连续发生。
-
-### 修复要求
-
-只做窄修，不重构整个状态系统。可选实现方式：
-
-- 在离开 Mobile 前把 handoff 所需账号快照写入 Mobile origin 的 `sessionStorage`，至少覆盖 `session / identities[] / identityMode`；
-- 返回 Mobile 时先恢复该快照，再消费 callback；
-- callback 消费完成后清理一次性 handoff snapshot；
-- 或建立等价的、边界清晰的 Public Platform session hydration。
-
-不要：
-
-- 把长期赛事身份搬到 PC Store；
-- 把完整业务状态塞进 URL；
-- 新建第二份身份真相源。
-
----
-
-## 4. 当前测试为什么没有抓到 BLOCKER-01
-
-现有测试是两半：
-
-### Mobile test
-
-Mobile 测试验证 portal URL，然后直接在同一个 Mobile 页面里用 `history.pushState` 人工注入 callback。
-
-它**没有真的执行 `window.location.assign` 离开 Mobile**，因此 Provider 从未卸载，也就不会触发状态重置。
-
-### PC test
-
-PC 测试独立验证 handoff context，并把 callback 发往 `https://mobile.example.test/...`。
-
-它能证明 PC 构造 callback 正确，但没有回到真实 Mobile 应用验证原账号状态是否延续。
-
-两边各自正确，不等于真实跨端母动线已经被浏览器走通。
-
----
-
-## 5. 必须补的一条 focused browser regression
-
-修复后至少增加一条真实双服务 E2E：
-
-```text
-启动 Mobile 5173 + PC 5174
-→ Mobile 切到“无赛事身份”
-→ 进入 sanchuang-16 报名
-→ 点击真实 portal button，浏览器导航到 PC 5174
-→ 完成队员流程或提交审核
-→ 点击“返回 App / 赛事”
-→ 浏览器真实回到 Mobile 5173
-→ sanchuang-16 = pending
-→ 其它赛事身份没有凭 seed 无故重新出现
+→ Mobile 赛事详情
+→ 现有响应式报名门户
+→ PC 队员报名 / 答题
+→ 返回 Mobile
+→ 当前赛事 pending
+→ 默认其它赛事身份不复活
 → 我的赛事读取同一 identities[]
 ```
 
-这条测试的价值不是“多一条测试”，而是覆盖当前拆分测试无法发现的页面卸载 / 重建边界。
-
-当前 deploy workflow 不执行 Playwright，因此修复线程应提供实际本地/CI browser run 结果；不能只提交 test source 就声称通过。
-
----
-
-## 6. 非阻断说明
-
-### 6.1 callback 目前是原型协议，不是生产鉴权
-
-当前 marker / query 可以被手工构造，理论上不能作为真实生产赛事身份授予依据。但 F00 明确允许中保真模拟 approved / rejected，因此本次不把它作为阻断项。
-
-真实后台接入时，身份结果必须来自服务端可信报名/审核状态，而不是客户端 query 自证。
-
-### 6.2 `returnTo` 当前接受任意 http(s)
-
-为了本地、测试和 CF 原型切换，当前 shared parser 只检查 http(s)。生产化时建议按允许的 Mobile origin 做 allowlist，避免形成开放跳转边界。本次原型评审不阻断。
-
----
-
-## 7. 复审范围
-
-修复线程只需要处理：
-
-1. Mobile 跨页面 handoff 前后的账号 / `identities[]` 连续性；
-2. 一条真正跨 Mobile ↔ PC 的 focused browser regression；
-3. 给出真实 browser PASS 证据。
-
-以下已经通过，不要返工：
-
-- PC 报名 UI；
-- shared URL 协议基本结构；
-- dev / prod CF 环境配置；
-- Mobile callback 的 pending / rejected / approved 映射；
-- PC 固定返回入口；
-- 不建立第二份赛事身份 Store。
-
-**复审条件满足后，F00 可以快速转 PASS。**
+F00 可关闭，不需要继续返工报名 UI、shared 协议或 Cloudflare handoff。
