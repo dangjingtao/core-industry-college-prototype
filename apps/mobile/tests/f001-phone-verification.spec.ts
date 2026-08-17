@@ -32,7 +32,8 @@ test("F001 phone verification gates save and persists the verified number", asyn
   await save.click();
   await expect(page).toHaveURL(/\/me$/);
 
-  await page.goto("/me/profile");
+  await page.getByRole("button", { name: "编辑基础资料" }).click();
+  await expect(page).toHaveURL(/\/me\/profile$/);
   await expect(page.getByLabel("手机号")).toHaveValue(newPhone);
   await expect(page.getByText("手机号已验证", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "保存资料" })).toBeEnabled();
