@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { BriefcaseBusiness, ChevronLeft, Home, Trophy, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -34,20 +35,23 @@ export function StatusTag({ tone = "info", children }: { tone?: "info" | "succes
 export function PageHeader({ title, subtitle, backTo }: { title: string; subtitle?: string; backTo?: string }) {
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface">
-      <div className="mx-auto flex min-h-12 w-full max-w-md items-center gap-3 px-4">
-        {backTo && <button aria-label="返回" className="flex min-h-touch min-w-11 items-center justify-center rounded-control text-2xl leading-none text-text-primary active:bg-surface-pressed" onClick={() => navigate(backTo)}>‹</button>}
-        <div className="min-w-0 flex-1 py-2"><h1 className="truncate text-lg font-semibold text-text-primary">{title}</h1>{subtitle && <p className="truncate text-xs text-text-secondary">{subtitle}</p>}</div>
+    <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
+      <div className={`relative mx-auto flex w-full max-w-md items-center justify-center px-14 ${subtitle ? "min-h-14" : "min-h-11"}`}>
+        {backTo && <button type="button" aria-label="返回" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={() => navigate(backTo)}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>}
+        <div className="min-w-0 text-center">
+          <h1 className="truncate text-base font-semibold leading-5 text-text-primary">{title}</h1>
+          {subtitle && <p className="mt-0.5 truncate text-xs leading-4 text-text-secondary">{subtitle}</p>}
+        </div>
       </div>
     </header>
   );
 }
 
 const navItems = [
-  { label: "首页", to: "/home" },
-  { label: "赛事", to: "/competitions" },
-  { label: "机会", to: "/opportunities" },
-  { label: "我的", to: "/me" },
+  { label: "首页", to: "/home", icon: Home },
+  { label: "赛事", to: "/competitions", icon: Trophy },
+  { label: "机会", to: "/opportunities", icon: BriefcaseBusiness },
+  { label: "我的", to: "/me", icon: UserRound },
 ];
 
 export function PublicShell({ children, showNavigation = true }: { children: ReactNode; showNavigation?: boolean }) {
@@ -55,7 +59,10 @@ export function PublicShell({ children, showNavigation = true }: { children: Rea
     <div className="min-h-screen bg-background text-foreground">
       <main className={`mx-auto w-full max-w-md ${showNavigation ? "pb-24" : "pb-8"}`}>{children}</main>
       {showNavigation && <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex min-h-14 max-w-md border-t border-border-subtle bg-surface px-2 pb-[env(safe-area-inset-bottom)]">
-        {navItems.map(item => <NavLink key={item.to} to={item.to} className={({ isActive }) => `flex min-h-touch flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${isActive ? "text-text-brand" : "text-text-tertiary"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />{item.label}</NavLink>)}
+        {navItems.map(item => {
+          const Icon = item.icon;
+          return <NavLink key={item.to} to={item.to} className={({ isActive }) => `flex min-h-touch flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${isActive ? "text-text-brand" : "text-text-tertiary"}`}><Icon aria-hidden="true" size={22} strokeWidth={2} />{item.label}</NavLink>;
+        })}
       </nav>}
     </div>
   );
