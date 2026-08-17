@@ -1,10 +1,10 @@
 # F002｜企业可信信息 + 可信凭证完整能力｜施工记录
 
-**状态：待评审**  
+**状态：待复审**  
 **施工日期：2026-08-17**  
 **目标卡：`docs/workbench/00-work-ledger.md` → F002**
 
-> 按工作台账规则，施工线程不自行标记 `PASS`。本记录表示实现已完成并具备 build / deploy 证据，等待独立功能评审。
+> 按工作台账规则，施工线程不自行标记 `PASS`。本记录表示初版实现已完成，并已按独立评审的 `CHANGES REQUIRED` 完成窄修与 focused browser regression，等待独立复审。
 
 ## 1. 实际修改范围
 
@@ -81,7 +81,7 @@
 
 F002 已修正实际路由：验真页不再要求登录，符合公开验真的产品语义；证书详情和成绩详情仍属于长期账号资产，需要登录。
 
-## 2. 实现提交
+## 2. 初版实现提交
 
 F002 三个连续提交：
 
@@ -91,7 +91,7 @@ F002 三个连续提交：
 
 其后 F01 并行提交 `0994f12faf0f11eb7b00220b777b0efaa015b7fc` 以 F002 最后提交为 parent，未覆盖 F002 路由与实现。
 
-## 3. Build / CI 证据
+## 3. 初版 Build / CI 证据
 
 GitHub Actions：
 
@@ -106,63 +106,122 @@ GitHub Actions：
 - Type-check and build mobile preview：success
 - Deploy mobile：success
 
-由于该成功 run 的 head commit 直接以 F002 最后提交为祖先，因此构建包含本卡全部实现。
+由于该成功 run 的 head commit 直接以 F002 最后提交为祖先，因此构建包含本卡全部初版实现。
 
-## 4. 建议独立评审动线
+## 4. 初版独立评审
 
-### 企业可信信息
+正式评审：`docs/workbench/F002-review.md`  
+评审提交：`141f00965caa7d89ef6db88add64b58b0ef184b8`  
+评审结论：**CHANGES REQUIRED（小修后复审）**。
 
-```text
-/companies
-→ 任一企业
-→ 合作概览仍为默认页
-→ 工商信息
-→ 核对全部字段
-→ 直接访问 /companies/northstar-beauty?tab=business
-```
+评审接受企业工商信息部分，不允许返工；阻断点仅为可信凭证生命周期 gate：初版曾以 `status !== "revoked"` 判断验真有效，导致 `claimable / pending` 可能被提升为“验证通过”，同时非 `claimed` 证书与 `pending` 成绩开放了不应开放的可信动作。
 
-### 三种验真
+## 5. CHANGES REQUIRED 窄修
+
+修复提交：
+
+- `6e79997c359860bf2a545b198f62391fb9b0b09f` — `fix(F002): gate trusted credential actions by lifecycle`
+- `229a6048f99f4ffe3fac65882a7804e360a4432b` — `test(F002): regress credential trust status gates`
+- `42a5960c34e5dafad4c3498296b1c7af33c363e2` — `ci(F002): run focused trust status browser regression`
+- `1b0243500f576e28880f568d2435819216541d0f` — `test(F002): use stable verification selector`
+
+本轮只处理评审指定范围，企业 overview / business 与工商数据没有返工。
+
+### A. 证书可信状态 gate
+
+当前规则收敛为：
+
+- `claimed`：允许公开验真成功、保存、下载、进入统一验真和官方 handoff；
+- `claimable`：只允许领取；验真明确显示“尚未签发”，领取前不展示可信动作；
+- `pending`：显示“待发放 / 处理中”，不允许保存、下载或可信验真；
+- `revoked`：明确“已撤销 / 已失效”，可信动作关闭。
+
+因此 seed `cert-course-data-analytics` / `COURSE-DA-26001` 在 `claimable` 时不再能够验证通过；调用现有 `claimCertificate` 进入 `claimed` 后才开放可信动作。
+
+### B. 成绩报告 gate
+
+`pending` 赛事结果不再无条件下载正式成绩报告：
+
+- 页面显示 disabled `成绩报告处理中`；
+- 明确提示“不能下载为正式可信成绩报告”；
+- 阶段成果继续引导回赛事工坊查看。
+
+非 `pending` 既有结果下载行为保持不变，本轮不扩业务模型。
+
+## 6. 修复后验证证据
+
+### Mobile type-check / build / deploy
+
+- Workflow：`Deploy Mobile to Cloudflare Pages`
+- Run ID：`32016438710`
+- Head：`229a6048f99f4ffe3fac65882a7804e360a4432b`
+- `Type-check and build mobile preview`：success
+- `Deploy mobile`：success
+- Job conclusion：success
+
+该 head 已包含 `6e79997...` 的状态门控修复。
+
+### Focused browser regression
+
+新增：
+
+- `apps/mobile/tests/f002-trust-status.spec.ts`
+- `.github/workflows/f002-trust-regression.yml`
+
+只执行一条 F002 Playwright，用例覆盖：
 
 ```text
 /assets/verification
-→ 验真码
-→ 输入 SC15-TOMZ-24001
+→ COURSE-DA-26001
+→ claimable：显示“尚未签发”，不得“验证通过”，官方 handoff disabled
+
+/assets/certificates/cert-course-data-analytics
+→ claimable：仅领取，无保存 / 下载 / 验真 / 官方 handoff
+→ 领取
+→ claimed：可信动作开放
+→ 进入验真
 → 验证通过
 
-→ 扫码验真
-→ 启动扫码（Mock）
-→ 二维码有效
-
-→ 文件验真
-→ 选择 PDF / OFD
-→ 检查类型、大小、10MB 上限、状态
-→ 开始文件验真（Mock）
-→ 验证通过
-
-→ 官方验证出口
-→ 打开 handoff 原型页
+/assets/results/competition-result-sanchuang-16
+→ pending：正式成绩报告下载关闭
 ```
 
-### 证书 / 成绩下载
+最终成功证据：
+
+- Workflow：`F002 Trust Status Regression`
+- Run ID：`32016602993`
+- Head：`1b0243500f576e28880f568d2435819216541d0f`
+- Build mobile preview：success
+- Run focused F002 browser regression：success
+- Job conclusion：success
+
+首个 browser run `32016483021` 曾因测试使用 `getByLabel("证书验真码")` 而 timeout；现有 UI 的 `<label>` 未与 input 建立关联。这属于测试 selector 问题，不是可信状态门控失败。本轮不扩范围改造表单可访问性，仅把用例改为现有稳定 placeholder selector 后复跑通过。
+
+## 7. 复审动线
 
 ```text
-/assets/certificates/cert-sanchuang-15
-→ 保存证书
-→ 下载证书
-→ 三种方式验真
-→ 官方平台 handoff
+/assets/verification
+→ SC15-TOMZ-24001
+→ claimed：验证通过
 
-/assets/results/competition-result-sanchuang-15
-→ 下载成绩报告
-→ 查看关联证书
+/assets/verification
+→ COURSE-DA-26001
+→ claimable：显示“尚未签发”，不得验证通过
+
+/assets/certificates/cert-course-data-analytics
+→ claimable：只有领取
+→ 领取
+→ claimed：保存 / 下载 / 验真 / 官方 handoff 开放
+
+/assets/results/competition-result-sanchuang-16
+→ pending：不能下载正式可信成绩报告
+
+/companies/northstar-beauty?tab=business
+→ 企业工商部分保持原评审已接受实现
 ```
 
-## 5. 待独立评审关注点
+## 8. 当前结论
 
-- 企业页是否仍然明显以资源 / 品牌 / 合作关系为主，而非工商查询；
-- `?tab=business` 是否满足旧页面映射兼容；
-- `/assets/verification` 未登录访问是否符合预期；
-- PDF / OFD 的文件状态表达是否足够清楚；
-- Mock 与真实可信事实的边界是否清楚，没有把原型结果伪装为正式验真；
-- 证书 / 成绩下载动作是否满足中保真验收；
-- 后续真实后端只需替换可信数据源、文件解析、下载与 handoff 层，不需要重画页面。
+**F002 修复完成，状态：待复审。**
+
+施工线程不自行标记 `PASS`；请按 `docs/workbench/F002-review.md` 的 blocking finding 与本记录第 7 节动线进行独立复审。
