@@ -38,7 +38,7 @@
 | 卡片 | 主题 | 类型 | 状态 | 前置 |
 | --- | --- | --- | --- | --- |
 | F00 | 手机端接入现有响应式报名门户 | 施工 | 待执行 | 无 |
-| F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待执行 | F00 协议边界明确后可施工 |
+| F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待评审 | F00 协议边界明确后可施工 |
 | F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待评审 | 可与 F01 并行 |
 | F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待执行 | F01 部分数据模型 |
 | F04 | 学力值 / 第三方账号 / 任务 / 主体 / 创域等 | 产品决策 | 待决策 | 可并行讨论，不允许施工线程自行拍板 |
@@ -139,7 +139,7 @@ F00 → F01 → F02 → F03 → R-Final 功能级总回归
 # F01｜学生主档 + Onboarding / Profile / 问卷
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P0**
 
 ## 问题
@@ -198,6 +198,28 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
 - 不把完整旧问卷 1:1 生搬回来；
 - 不再新建一份独立 questionnaire profile 与长期 profile 脱节；
 - 不用“画像”名义虚构不可解释的用户评分。
+
+## 施工记录
+
+- 开始时 branch HEAD：`18528090ca70670563f7627982b79e267de3a88e`；
+- 实际修改范围：
+  - `apps/mobile/src/features/long-term-assets/studentProfile.ts`
+  - `apps/mobile/src/features/long-term-assets/StudentProfilePages.tsx`
+  - `apps/mobile/src/features/long-term-assets/store.tsx`
+  - `apps/mobile/src/app/App.tsx`
+  - `docs/workbench/F01-student-profile-implementation.md`
+- 实现提交：
+  - `a7a57091037990161bc3a4d0879641a5995a9185`
+  - `8e230b6f53ff7bf6d0f1c0592337994721aa4a06`
+  - `0994f12faf0f11eb7b00220b777b0efaa015b7fc`
+  - `ac2465d27918666c9cc79f445daf01c173aa9524`
+- Onboarding 与 `/me/profile` 已改读写同一长期 `StudentProfile`；手机号 / 验证码使用中保真 mock；旧问卷中的身份、参赛经历、产业方向、学历、从业年限、核心需求、关注服务均有明确去向；
+- `mergeProfileFromSource` 提供 registration / workshop → StudentProfile 的统一回流层，默认只补空白字段，避免施工线程自行决定报名覆盖长期资料；
+- F00 尚未完成真实跨端 callback，本卡不把“真实报名回流已接通”伪装成完成事实；
+- Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32013927360`，mobile dev type-check、Vite build 与 deploy 为 `success`；
+- 详细字段去向、入口职责与评审动线：`docs/workbench/F01-student-profile-implementation.md`；
+- 评审提交 SHA：待独立评审；
+- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
 
 ---
 
