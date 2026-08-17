@@ -59,5 +59,16 @@ Vite 构建时会将该文件复制到 `dist`，用于 Cloudflare Pages 的客�
 
 ## 当前完成边界
 
-本地双端构建、输出目录和 SPA 回退已经验证。尚未创建 Cloudflare Pages 项目、连接 GitHub、配置域名或完成线上访问验收。
+已完成：
 
+- 创建 `core-industry-college-pc` 与 `core-industry-college-mobile` 两个 Pages 项目。
+- 两个项目均将 `prod` 设为生产分支。
+- 从提交 `ca092ae` 完成首次生产部署。
+- 验证稳定域名首页和深层路由均返回 HTTP 200。
+
+线上地址：
+
+- PC：<https://core-industry-college-pc.pages.dev>
+- 手机：<https://core-industry-college-mobile.pages.dev>
+
+当前采用 Wrangler Direct Upload，Git Provider 显示为 `No`。尚未配置 GitHub 自动构建或自定义域名；后续可以继续使用 Wrangler 手动部署，或另行配置 GitHub Actions。

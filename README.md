@@ -7,9 +7,9 @@
 
 ## 当前状态
 
-- 双端基础脚手架已经建立，具体业务页面与原型资产尚待迁入和整理。
+- 手机端已从 `dangjingtao/com-design` 的 `core-industry-college-refactor` 分支迁入可交互原型；电脑端仍为基础脚手架。
 - 电脑端已有原型可作为后续迁移与整合的参考：`/Users/tao/com-design/prototype/core-industry-college`。
-- 手机端计划迁移到本仓库，但目前仍在旧 GitHub 项目中开发；在迁移完成并验证前，旧项目仍是手机端在建版本的事实来源。
+- 手机端迁移基线、范围与验证记录见 [`docs/migrations/mobile-from-com-design.md`](./docs/migrations/mobile-from-com-design.md)。
 
 ## 参考实现
 
@@ -54,6 +54,7 @@ npm run dev:mobile
 npm run build:pc
 npm run build:mobile
 npm run build
+npm run verify:mobile
 ```
 
 ## Cloudflare 部署预留
@@ -65,15 +66,20 @@ npm run build
 | 电脑端 | `npm run build:pc` | `apps/pc/dist` |
 | 手机端 | `npm run build:mobile` | `apps/mobile/dist` |
 
-正式接入 Cloudflare 时，建议分别创建 PC、手机两个 Pages 项目，独立设置域名、预览环境和发布节奏。当前仅完成部署兼容准备，尚未创建或发布任何 Cloudflare 项目。
+已分别创建 PC、手机两个 Cloudflare Pages 项目，当前稳定地址为：
+
+- PC：<https://core-industry-college-pc.pages.dev>
+- 手机：<https://core-industry-college-mobile.pages.dev>
+
+两个项目均以 `prod` 为生产分支。当前采用 Wrangler 直接部署，尚未连接 GitHub 自动构建。
 
 详细配置与首次上线确认项见 [docs/cloudflare-deployment.md](./docs/cloudflare-deployment.md)。
 
-## 后续迁移前需确认
+## 后续工作
 
-- 手机端与电脑端是否独立构建、独立部署
-- 两端可复用的设计令牌、组件、模拟数据和业务模型
-- 旧项目迁移范围、迁移顺序及验收标准
+- 电脑端业务页面仍需从参考实现迁移并独立验收。
+- 手机端后续变化需要明确来源分支和提交，持续维护迁移记录。
+- 两端仅在确认语义和交互一致时再把能力提取到 `packages/shared`。
 
 ## 协作说明
 
