@@ -37,7 +37,7 @@
 
 | 卡片 | 主题 | 类型 | 状态 | 前置 |
 | --- | --- | --- | --- | --- |
-| F00 | 手机端接入现有响应式报名门户 | 施工 | 待执行 | 无 |
+| F00 | 手机端接入现有响应式报名门户 | 施工 | 待评审 | 无 |
 | F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待评审 | F00 协议边界明确后可施工 |
 | F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待评审 | 可与 F01 并行 |
 | F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待执行 | F01 部分数据模型 |
@@ -56,7 +56,7 @@ F00 → F01 → F02 → F03 → R-Final 功能级总回归
 # F00｜手机端接入现有三创赛响应式报名门户
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P0**
 
 ## 背景
@@ -133,6 +133,33 @@ F00 → F01 → F02 → F03 → R-Final 功能级总回归
 → 模拟 approved / rejected
 → 我的赛事 / workspace 读取同一 identities[]
 ```
+
+## 施工记录
+
+- 开始时 branch HEAD：`19ad03d08eb38166fe6a95e0c1a137e2281c6321`；提交前发现 F01 / F02 并行推进，实际安全 rebase 到 `d5d2e211e771d242034beb1e3698c55f34189fea` 后再提交，没有覆盖并行改动；
+- 实际修改范围：
+  - `packages/shared/src/registration-handoff.ts`
+  - `packages/shared/src/index.ts`
+  - `apps/mobile/src/features/competition-workspace/RegistrationHandoffPage.tsx`
+  - `apps/mobile/src/app/App.tsx`
+  - `apps/mobile/.env.development`
+  - `apps/mobile/.env.production`
+  - `apps/mobile/.env.example`
+  - `apps/mobile/src/vite-env.d.ts`
+  - `apps/mobile/tests/mother-flows.spec.ts`
+  - `apps/pc/src/App.tsx`
+  - `apps/pc/src/registration-portal/model.tsx`
+  - `apps/pc/tests/registration-portal.spec.ts`
+  - `docs/workbench/F00-registration-handoff.md`
+- 实现提交：`adbaedf8be2f4e60516ebccab21dee0e50b6a1fe`；
+- Mobile 已不再走“进入响应式报名（模拟）”路由实现，而是按环境变量生成真实 PC portal handoff URL；协议传递 `competitionId`、绝对 `returnTo`、`source=mobile-app` 与原型账号来源上下文；
+- PC portal 从 Mobile 进入时保留短期 handoff 上下文并提供显式“返回 App / 赛事”按钮；`pending / rejected / approved / draft` 通过 callback URL 返回；队员完成注册等待队长绑定按 `pending` 回流；
+- Mobile callback 只写已有 Public Platform `identities[]`：`pending → pending`、`rejected → rejected`、`approved → active`；处理后清理 callback query，没有新增第二份长期赛事身份 Store；
+- dev / prod 对应 PC Cloudflare 地址由 `VITE_REGISTRATION_PORTAL_URL` 管理，本地模板使用 `5173 → 5174`；业务组件不写死某次预览 URL；
+- Build / CI：GitHub Actions `Deploy PC to Cloudflare Pages` run `32014377562` 与 `Deploy Mobile to Cloudflare Pages` run `32014377555` 均完成 dev type-check、Vite build 与 Cloudflare deploy，结论 `success`；
+- Mobile mother flow B 与 PC portal Playwright 已补跨端协议 / callback 回归用例；当前部署 workflows 不执行 Playwright，因此浏览器用例属于已提交的评审证据，仍需独立评审实际执行，不把“测试已写”冒充 browser PASS；
+- 协议与真相源边界详见 `docs/workbench/F00-registration-handoff.md`；
+- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
 
 ---
 
