@@ -89,6 +89,22 @@ PC 管理端数据控制面骨架。
 
 文档内包含当前对象关系图、数据流图、写入责任矩阵、权限角色和首期 CRUD 范围。
 
+### [`product/04-leadership-signoff-gate.md`](./product/04-leadership-signoff-gate.md)
+
+正式原型版本的外部领导审批 Gate 设计。
+
+当前方案明确：
+
+- 领导不要求拥有 GitHub 账号；
+- 审批通过第三方邮箱触达，正式决策发生在独立 Signoff Gateway；
+- Signoff 精确绑定 Release PR 当前 commit SHA；
+- 代码变化后旧批准不能继承；
+- MVP 只卡 `dev → prod` 的正式 Release PR，不干扰日常功能 PR；
+- R-Final 是工程验收，Leadership Signoff 是交付/业务验收，两者都通过才能进入 `prod`；
+- Signoff 不侵入 `apps/mobile`、`apps/pc` 或产业学院业务后台。
+
+文档内包含审批流程、状态机、邮箱 OTP、数据模型、API 边界、GitHub gate、异常处理、审计要求和 SG01–SG04 实施拆分。
+
 ### [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)
 
 原始 Mockplus 功能审计。
