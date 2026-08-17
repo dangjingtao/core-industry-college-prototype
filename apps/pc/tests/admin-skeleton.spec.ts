@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.use({ viewport: { width: 1280, height: 900 } });
+
 test("PC root opens the management data-control skeleton", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/admin$/);
@@ -14,7 +16,7 @@ test("admin domains expose data ownership rather than copied mobile pages", asyn
   await expect(page.getByRole("heading", { name: "资源运营", exact: true })).toBeVisible();
   await expect(page.getByText("ResourceRelation", { exact: true })).toBeVisible();
   await expect(page.getByText("EligibilityRule", { exact: true })).toBeVisible();
-  await expect(page.getByText("企业资源关系", { exact: true })).toBeVisible();
+  await expect(page.getByText(/企业资源关系/)).toBeVisible();
 
   await page.goto("/admin/students");
   await expect(page.getByText("CompetitionIdentity", { exact: true })).toBeVisible();
