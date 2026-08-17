@@ -1,7 +1,7 @@
 # F00｜手机端 ↔ 响应式报名门户 Handoff 协议
 
 > 对应工作台账：`docs/workbench/00-work-ledger.md` F00  
-> 状态：已施工；首轮 `CHANGES REQUIRED` 的窄修已完成，待独立复审
+> 状态：**PASS**；首轮 `CHANGES REQUIRED` 的跨端状态连续性问题已修复并通过真实双服务浏览器回归
 
 ## 1. 边界
 
@@ -173,4 +173,4 @@ npm run verify:browser:pc
 npm run verify:browser:handoff --workspace @core/mobile
 ```
 
-本线程不自行把 F00 标记为 `PASS`；首轮评审结论仍由 `docs/workbench/F00-review.md` 保留，等待独立复审确认。
+最终独立评审：`docs/workbench/F00-review.md`。F00 已转为 **PASS**。
