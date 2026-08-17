@@ -1,0 +1,53 @@
+name: R-Final Full Regression
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/r-final-check.yml"
+      - "apps/mobile/**"
+      - "apps/pc/**"
+      - "packages/shared/**"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  r-final:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify mobile routes, types and build
+        run: npm run verify --workspace @core/mobile
+
+      - name: Run mobile mother flows and feature regressions
+        run: >-
+          npm run e2e --workspace @core/mobile --
+          tests/mother-flows.spec.ts
+          tests/f001-phone-verification.spec.ts
+          tests/f002-trust-status.spec.ts
+          tests/f003.spec.ts
+          tests/r-final.spec.ts
+
+      - name: Run real Mobile-PC-Mobile handoff
+        run: npm run verify:browser:handoff --workspace @core/mobile
+
+      - name: Verify PC types and build
+        run: npm run verify --workspace @core/pc
+
+      - name: Run PC browser regressions
+        run: npm run e2e --workspace @core/pc
