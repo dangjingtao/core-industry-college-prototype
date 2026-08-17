@@ -119,9 +119,23 @@ export function CompetitionWorkspacePage() {
 
 export function CompetitionTeamPage() {
   const { competitionId } = useParams();
+  const { getRuntime } = useWorkshopRuntime();
+  const [requestType, setRequestType] = useState<"reduction" | "change">("reduction");
+  const [memberName, setMemberName] = useState("");
+  const [reason, setReason] = useState("");
+  const [materialName, setMaterialName] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   if (!competitionId) return null;
   const data = workspaceData[competitionId];
-  return <PublicShell showNavigation={false}><PageHeader title="我的团队" subtitle="当前赛事团队" backTo={`/competitions/${competitionId}/workspace`} /><RequireCompetitionAccess allowNotStarted><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} />{data ? <><Card><h1 className="text-lg font-semibold text-text-primary">{data.team.name}</h1><p className="mt-2 text-sm text-text-secondary">团队 ID {data.team.id} · 我的角色 {data.team.role}</p></Card><Section title="成员"><div className="space-y-2">{data.team.members.map(member => <Card key={member.name}><div className="flex items-start justify-between gap-3"><div><p className="font-medium text-text-primary">{member.name}</p><p className="mt-1 text-sm text-text-secondary">{member.school}</p></div><StatusTag tone="neutral">{member.role}</StatusTag></div></Card>)}</div></Section></> : <Card><p className="text-text-secondary">暂无团队数据。</p></Card>}</div></RequireCompetitionAccess></PublicShell>;
+  const lifecycle = getRuntime(competitionId).lifecycle;
+  const canRequestChange = lifecycle === "inProgress";
+  const submitChange = () => {
+    if (!memberName || !reason.trim() || !materialName) return;
+    setSubmitted(true);
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="我的团队" subtitle="当前赛事团队" backTo={`/competitions/${competitionId}/workspace`} /><RequireCompetitionAccess allowNotStarted><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} />{data ? <><Card><h1 className="text-lg font-semibold text-text-primary">{data.team.name}</h1><p className="mt-2 text-sm text-text-secondary">团队 ID {data.team.id} · 我的角色 {data.team.role}</p></Card><Section title="成员"><div className="space-y-2">{data.team.members.map(member => <Card key={member.name}><div className="flex items-start justify-between gap-3"><div><p className="font-medium text-text-primary">{member.name}</p><p className="mt-1 text-sm text-text-secondary">{member.school}</p></div><StatusTag tone="neutral">{member.role}</StatusTag></div></Card>)}</div></Section>
+      <Section title="赛事期团队维护">{!canRequestChange ? <Card className="border border-border-subtle"><StatusTag tone="neutral">当前不可提交</StatusTag><p className="mt-3 text-sm leading-6 text-text-secondary">团队变更属于赛事进行期维护动作；报名期成员录入仍由响应式报名系统承接。赛事开始后，如规则允许，可在这里提交变更申请。</p></Card> : submitted ? <Card className="border border-warning bg-warning-bg"><StatusTag tone="warning">待老师 / 运营审核</StatusTag><h2 className="mt-3 font-semibold text-warning-text">团队变更申请已提交</h2><p className="mt-2 text-sm leading-6 text-warning-text">申请类型：{requestType === "reduction" ? "减员申请" : "成员变更"} · 涉及成员：{memberName}</p><p className="mt-1 text-sm text-warning-text">材料：{materialName}</p><p className="mt-3 text-xs leading-5 text-warning-text">当前成员列表仍是系统事实；审核通过前不会直接改动团队成员。</p><SecondaryButton className="mt-4 w-full" onClick={() => { setSubmitted(false); setReason(""); setMaterialName(""); }}>继续提交其它申请</SecondaryButton></Card> : <Card className="space-y-4"><div><p className="text-sm font-medium text-text-primary">申请类型</p><div className="mt-2 grid grid-cols-2 gap-2"><button onClick={() => setRequestType("reduction")} className={`min-h-touch rounded-control border px-3 text-sm font-medium ${requestType === "reduction" ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-secondary"}`}>减员申请</button><button onClick={() => setRequestType("change")} className={`min-h-touch rounded-control border px-3 text-sm font-medium ${requestType === "change" ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-secondary"}`}>成员变更</button></div></div><label className="block"><span className="text-sm font-medium text-text-primary">涉及成员</span><select value={memberName} onChange={event => setMemberName(event.target.value)} className="mt-2 min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm outline-none focus:border-primary"><option value="">请选择成员</option>{data.team.members.map(member => <option key={member.name} value={member.name}>{member.name} · {member.role}</option>)}</select></label><label className="block"><span className="text-sm font-medium text-text-primary">申请原因</span><textarea rows={4} value={reason} onChange={event => setReason(event.target.value)} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" placeholder="说明赛事期成员变更原因" /></label><label className="block"><span className="text-sm font-medium text-text-primary">上传申请 / 证明材料</span><input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={event => setMaterialName(event.target.files?.[0]?.name ?? "")} className="mt-2 block w-full text-sm text-text-secondary" /><span className="mt-1 block text-xs text-text-tertiary">中保真原型只记录文件名；正式流程由赛事规则决定材料格式与审批人。</span></label><Button className="w-full" disabled={!memberName || !reason.trim() || !materialName} onClick={submitChange}>提交团队变更申请</Button></Card>}</Section>
+    </> : <Card><p className="text-text-secondary">暂无团队数据。</p></Card>}</div></RequireCompetitionAccess></PublicShell>;
 }
 
 export function CompetitionResourcesPage() {
@@ -135,7 +149,38 @@ export function CompetitionResourcesPage() {
 export function CompetitionResourceDetailPage() {
   const { competitionId, resourceId } = useParams();
   const [saved, setSaved] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   if (!competitionId) return null;
   const resource = resourceById(competitionId, resourceId);
-  return <PublicShell showNavigation={false}><PageHeader title="资料详情" backTo={`/competitions/${competitionId}/workspace/resources`} /><RequireCompetitionAccess allowNotStarted><div className="space-y-5 px-4 py-5"><CompetitionContextLine competitionId={competitionId} />{resource ? <><Card><StatusTag tone="neutral">{resource.category}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{resource.title}</h1><p className="mt-3 text-sm leading-6 text-text-secondary">{resource.description}</p><p className="mt-4 text-xs text-text-tertiary">更新于 {resource.updatedAt}</p><Button className="mt-5 w-full" disabled={saved} onClick={() => setSaved(true)}>{saved ? "已保存" : "保存资料"}</Button></Card>{saved && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">资料已保存</p><p className="mt-1 text-sm text-success-text">本次原型会话已记录保存反馈。</p></Card>}</> : <Card className="border border-danger bg-danger-bg"><p className="font-medium text-danger-text">资料不存在或已失效。</p></Card>}</div></RequireCompetitionAccess></PublicShell>;
+  const saveLocal = () => {
+    if (!resource) return;
+    const blob = new Blob([`${resource.title}\n\n${resource.description}\n\n更新于 ${resource.updatedAt}\n`], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${resource.title}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setSaved(true);
+  };
+  const shareResource = async () => {
+    if (!resource) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: resource.title, text: resource.description, url: window.location.href });
+        setShareStatus("已调起系统分享，可选择微信或其它应用。");
+        return;
+      }
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareStatus("资料链接已复制，可发送到微信。");
+        return;
+      }
+      setShareStatus("当前浏览器不支持系统分享，请复制地址栏链接发送到微信。");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      setShareStatus("分享未完成，可复制当前页面链接发送到微信。");
+    }
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="资料详情" backTo={`/competitions/${competitionId}/workspace/resources`} /><RequireCompetitionAccess allowNotStarted><div className="space-y-5 px-4 py-5"><CompetitionContextLine competitionId={competitionId} />{resource ? <><Card><StatusTag tone="neutral">{resource.category}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{resource.title}</h1><p className="mt-3 text-sm leading-6 text-text-secondary">{resource.description}</p><p className="mt-4 text-xs text-text-tertiary">更新于 {resource.updatedAt}</p><div className="mt-5 grid grid-cols-2 gap-3"><Button disabled={saved} onClick={saveLocal}>{saved ? "已保存到本地" : "保存到本地"}</Button><SecondaryButton onClick={shareResource}>分享 / 发送微信</SecondaryButton></div></Card>{saved && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">本地文件已生成</p><p className="mt-1 text-sm text-success-text">浏览器已下载该资料的原型文本文件，不只记录会话状态。</p></Card>}{shareStatus && <Card className="border border-info bg-info-bg"><p className="text-sm text-info-text">{shareStatus}</p></Card>}</> : <Card className="border border-danger bg-danger-bg"><p className="font-medium text-danger-text">资料不存在或已失效。</p></Card>}</div></RequireCompetitionAccess></PublicShell>;
 }
