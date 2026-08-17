@@ -74,7 +74,7 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "legal.user", path: "/legal/user-agreement", context: "public", purpose: "用户协议", states: ["ready"] },
   { id: "legal.privacy", path: "/legal/privacy", context: "public", purpose: "隐私政策", states: ["ready"] },
   { id: "about", path: "/about", context: "public", purpose: "关于", states: ["ready"] },
-  { id: "tasks.reserved", path: "/tasks", context: "blocked", purpose: "任务专区保留位", states: ["blockedByDecision"] },
+  { id: "tasks.center", path: "/tasks", context: "public", purpose: "已有业务下一步聚合", states: ["guest", "activeCompetition", "noIdentity", "filtered", "empty"] },
 ];
 
 export const candidatePrimaryNavigation = [

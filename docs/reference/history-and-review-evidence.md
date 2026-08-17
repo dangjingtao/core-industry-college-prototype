@@ -381,3 +381,99 @@ R02/R03/R04 的问题都不是视觉问题，而是共享状态和业务真相�
 本次 Google Drive 复核新增教训：
 
 > Route coverage 是必要条件，不是 legacy feature coverage 的充分条件。
+
+---
+
+## 10. 2026-08-17｜首页任务专区局部聚合
+
+> 历史阶段记录：本节关于 `/tasks` 继续 blocked 的结论，已被同日后续“任务中心已有业务聚合”产品确认覆盖；见第 11 节。
+
+### 施工边界
+
+- 在手机端首页加入“任务专区”模块；
+- 只聚合已有赛事工作区、赛事内创赛工坊、课程、投递与机会出口；
+- 不创建统一 task 对象，不恢复旧日常/核心/企业任务和学力值奖励；
+- `/tasks` 继续保持 D03 decision-blocked。
+
+### 本地验证
+
+基线分支 / HEAD：
+
+```text
+dev / b74bcf7
+```
+
+Route audit：
+
+```text
+Registry routes: 66
+App route declarations: 69
+Missing registry routes: 0
+RouteProbe in App: no
+Explicit 404 route: yes
+Route audit PASS
+```
+
+TypeScript / Vite：
+
+```text
+tsc -b PASS
+vite build PASS
+```
+
+Chromium，390×844 viewport，单 worker：
+
+```text
+Running 8 tests
+8 passed
+```
+
+新增回归验证：首页任务专区的创赛工坊入口保留 `competitionId`，直接进入 `/competitions/sanchuang-16/workspace/workshop`，不经过全局 `/tasks`。
+
+---
+
+## 11. 2026-08-17｜任务中心已有业务聚合
+
+### 后续产品确认
+
+- 首页“任务专区”保留，并通过“查看全部”进入 `/tasks`；
+- `/tasks` 只汇总已有赛事、创赛工坊、课程、权益和机会的下一步；
+- 每一项继续使用原业务域的状态和真实详情页，不创建第二份任务状态；
+- 旧日常任务、核心任务、企业任务，以及任务与学力值奖励的关系仍未恢复或自行定义。
+
+### 实现与验证
+
+施工基线分支 / HEAD：
+
+```text
+dev / 141f009
+```
+
+Route audit：
+
+```text
+Registry routes: 66
+App route declarations: 69
+Missing registry routes: 0
+RouteProbe in App: no
+Explicit 404 route: yes
+Route audit PASS
+```
+
+TypeScript / Vite：
+
+```text
+tsc -b PASS
+vite build PASS
+```
+
+Chromium，单 worker：
+
+```text
+Running 14 tests
+14 passed
+```
+
+新增任务中心回归覆盖：首页入口、赛事上下文、工坊下一任务、课程进度、权益资格、分类筛选，以及从任务卡片返回原业务详情页。
+
+视觉检查覆盖 `375x812` 与 `390x844`：页面无横向溢出，筛选栏、任务卡片和右侧操作均保持可读与可点击。

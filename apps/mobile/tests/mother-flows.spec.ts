@@ -12,6 +12,29 @@ test("A guest can browse public competition and login back into registration", a
   await expect(page.getByRole("heading", { name: "赛事报名", exact: true })).toBeVisible();
 });
 
+test("home task zone keeps the featured workshop action in its competition context", async ({ page }) => {
+  await page.goto("/home");
+  await expect(page.getByRole("heading", { name: "任务专区", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /赛事：赛事进度/ })).toBeVisible();
+  await page.getByRole("button", { name: /创赛工坊：继续赛事内任务/ }).click();
+  await expect(page.getByRole("heading", { name: "创赛工坊", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/competitions\/sanchuang-16\/workspace\/workshop$/);
+});
+
+test("task center derives status from existing competition, learning and benefit stores", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByLabel("任务专区").getByRole("link", { name: "查看全部" }).click();
+  await expect(page.getByRole("heading", { name: "任务中心", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /创赛工坊：完成市场可行性诊断/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /课程学习：品牌电商实战课，38%/ })).toBeVisible();
+  await page.getByRole("button", { name: "权益", exact: true }).click();
+  await expect(page.getByRole("button", { name: /权益：校园视频会员月卡，可领取/ })).toBeVisible();
+  await page.getByRole("button", { name: "赛事", exact: true }).click();
+  await page.getByRole("button", { name: /创赛工坊：完成市场可行性诊断/ }).click();
+  await expect(page.getByRole("heading", { name: "任务答题", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/competitions\/sanchuang-16\/workspace\/workshop\/tasks\/s2-market-feasibility\/answer$/);
+});
+
 test("B registration handoff carries context and callbacks share one competition identity", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: /原型账号：多赛事身份/ }).click();

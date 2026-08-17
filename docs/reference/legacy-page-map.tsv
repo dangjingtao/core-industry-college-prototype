@@ -1,7 +1,7 @@
 #	oldPageId	oldPage	disposition	newTarget	note
 1	FBcre9R5VO8	登录	保留	/auth/login	
 2	rO3Pd6xb0A	首页	保留	/home	
-3	vW8yJHwBF	任务专区	归档	/tasks (reserved)	旧页为空且业务定义未确认；仅保留路由保留位，不实现产品 UI。
+3	vW8yJHwBF	任务专区	重构	/tasks	旧页为空；2026-08-17 后续决定改为读取现有赛事、工坊、学习、权益与机会状态的派生聚合页。
 4	4Og6sVUqf3	赛事	保留	/competitions	
 5	G-Mpir1yrM	学院	合并	/courses	
 6	5Tgm571aEm	社区	拆分	/opportunities + /companies + /news	“社区”实际混合公告、企业、实训机会；按业务对象拆分，最终一级命名待定。
@@ -138,4 +138,4 @@
 137	v9hhV81q9G5	首页 / 赛友风采 / 更多列表页	合并	/stories	
 138	dHEfsTFRun2	首页 / 赛友风采 / 投稿页	保留	/stories/submit	
 139	eHx-DBqwJ56	首页 / 智能客服 / 人工客服	合并	/support/chat	
-140	bFdMU5BhfR3	首页 / 智能客服 / 请求人工客服	合并	/support/chat	
+140	bFdMU5BhfR3	首页 / 智能客服 / 请求人工客服	合并	/support/chat

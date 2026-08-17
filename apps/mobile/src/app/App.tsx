@@ -46,6 +46,7 @@ import {
 } from "../features/long-term-assets/AssetsPages";
 import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
+import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import {
   CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
@@ -69,7 +70,6 @@ import {
   SupportChatPage,
   SupportHomePage,
   SupportProvider,
-  TasksDecisionPage,
 } from "../features/platform-support/SupportPages";
 
 const account = (page: ReactNode) => <AccountRequired>{page}</AccountRequired>;
@@ -148,7 +148,7 @@ export function App() {
               <Route path="/legal/user-agreement" element={<LegalPage kind="user" />} />
               <Route path="/legal/privacy" element={<LegalPage kind="privacy" />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/tasks" element={<TasksDecisionPage />} />
+              <Route path="/tasks" element={<TaskCenterPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </SupportProvider>

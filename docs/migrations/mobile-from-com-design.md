@@ -241,7 +241,7 @@ Route audit PASS
 
 特别注意：
 
-- `/tasks` 继续 decision-blocked；
+- `/tasks` 在迁移时继续 decision-blocked（已被 2026-08-17 后续产品决策覆盖：允许派生聚合页）；
 - `/me/subjects` 继续 decision-blocked；
 - wildcard 必须显式 404，不静默吞回首页；
 - 深层赛事路由必须保留 competitionId。

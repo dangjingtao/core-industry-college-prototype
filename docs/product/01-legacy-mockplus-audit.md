@@ -543,7 +543,9 @@ Google Drive 文件：
 
 之间的对象关系。
 
-所以 `/tasks` 保持 Decision Blocked 是合理的。
+所以在审计当时，`/tasks` 保持 Decision Blocked 是合理的。
+
+> 2026-08-17 后续决策覆盖：`/tasks` 已允许作为读取现有 domain store 的派生聚合页；旧日常/核心/企业任务及学力值奖励仍未恢复。
 
 ---
 

@@ -175,10 +175,6 @@ export function AboutPage() {
   return <PublicShell showNavigation={false}><PageHeader title="关于" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card><h1 className="text-lg font-semibold text-text-primary">核心产业学院</h1><p className="mt-3 text-sm leading-6 text-text-secondary">围绕参赛、企业实践与就业/实习建立长期学生账号；课程、权益与可信成果作为支撑能力长期沉淀。</p></Card><Card><p className="text-xs text-text-secondary">Prototype · Com Design consumer</p></Card></div></PublicShell>;
 }
 
-export function TasksDecisionPage() {
-  return <DecisionBlockedPage title="任务专区" decision="D03" body="平台任务、赛事任务、企业任务与权益任务之间的对象关系仍未确认。这里不把创赛工坊 Task Runtime 误当成全局任务中心。" backTo="/home" />;
-}
-
 function DecisionBlockedPage({ title, decision, body, backTo }: { title: string; decision: string; body: string; backTo: string }) {
   const navigate = useNavigate();
   return <PublicShell showNavigation={false}><PageHeader title={title} backTo={backTo} /><div className="space-y-5 px-4 py-6"><Card className="border border-warning bg-warning-bg"><StatusTag tone="warning">待产品决策 · {decision}</StatusTag><h1 className="mt-3 text-lg font-semibold text-warning-text">暂不实现产品交互</h1><p className="mt-2 text-sm leading-6 text-warning-text">{body}</p></Card><SecondaryButton className="w-full" onClick={() => navigate(backTo)}>返回上一层</SecondaryButton></div></PublicShell>;

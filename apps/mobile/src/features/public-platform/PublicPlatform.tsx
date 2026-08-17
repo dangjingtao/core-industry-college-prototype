@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, Gift, Trophy } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { scenarios } from "../../mock/scenarios";
@@ -169,13 +169,93 @@ function AccountScenarioSwitch() {
   return <button className="min-h-touch rounded-control bg-surface-subtle px-3 text-xs font-medium text-text-secondary" onClick={() => setIdentityMode(identityMode === "none" ? "multi" : "none")}>原型账号：{label}</button>;
 }
 
+type HomeTaskEntry = {
+  id: string;
+  source: string;
+  title: string;
+  detail: string;
+  status: string;
+  tone: "info" | "success" | "warning" | "danger" | "neutral";
+  to: string;
+  icon: ReactNode;
+  iconClass: string;
+};
+
+function HomeTaskZone({ entries }: { entries: HomeTaskEntry[] }) {
+  const navigate = useNavigate();
+  const [featured, ...shortcuts] = entries;
+  if (!featured) return null;
+  return <section aria-labelledby="home-task-zone-title" className="space-y-3">
+    <div className="flex min-h-6 items-center justify-between gap-3"><h2 id="home-task-zone-title" className="text-base font-semibold text-text-primary">任务专区</h2><Link to="/tasks" className="text-sm font-medium text-text-brand">查看全部</Link></div>
+    <div className="overflow-hidden rounded-container border border-border-subtle bg-surface">
+      <button type="button" aria-label={`${featured.source}：${featured.title}，${featured.status}`} className="block min-h-[136px] w-full bg-[linear-gradient(135deg,#f3f5ff_0%,#ffffff_72%)] p-4 text-left transition active:bg-surface-pressed" onClick={() => navigate(featured.to)}>
+        <span className="flex items-start justify-between gap-3"><span className="flex items-center gap-3"><span className={`flex size-10 shrink-0 items-center justify-center rounded-control ${featured.iconClass}`}>{featured.icon}</span><span><span className="flex items-center gap-2"><span className="text-xs font-medium text-text-secondary">当前优先 · {featured.source}</span><StatusTag tone={featured.tone}>{featured.status}</StatusTag></span><strong className="mt-2 block text-base font-semibold text-text-primary">{featured.title}</strong></span></span><ClipboardList className="shrink-0 text-text-tertiary" size={20} aria-hidden="true" /></span>
+        <span className="mt-2 block truncate text-xs text-text-tertiary">{featured.detail}</span>
+        <span className="mt-3 flex items-center justify-between border-t border-border-subtle pt-3 text-sm font-medium text-text-brand"><span>继续处理</span><ChevronRight size={18} aria-hidden="true" /></span>
+      </button>
+      <div className="grid grid-cols-3 divide-x divide-border-subtle border-t border-border-subtle">{shortcuts.map(entry => <button key={entry.id} type="button" aria-label={`${entry.source}：${entry.title}，${entry.status}`} className="flex min-h-[92px] min-w-0 flex-col items-center justify-center px-2 py-2 text-center transition active:bg-surface-pressed" onClick={() => navigate(entry.to)}>
+        <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${entry.iconClass}`}>{entry.icon}</span>
+        <strong className="mt-1 block w-full truncate text-sm font-semibold text-text-primary">{entry.title}</strong>
+        <span className="mt-1 text-xs text-text-tertiary">{entry.status}</span>
+      </button>)}</div>
+    </div>
+  </section>;
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const guest = useGuest();
   const view = usePrototypeView();
-  const { identities } = usePublicPlatform();
+  const { identities, applications } = usePublicPlatform();
   const activeIdentity = identities.find(identity => identity.identityStatus === "active");
   const activeCompetition = guest ? undefined : competitionById(activeIdentity?.competitionId);
+  const openOpportunityCount = opportunities.filter(item => item.status === "open").length;
+  const taskEntries: HomeTaskEntry[] = [
+    ...(activeCompetition ? [{
+      id: "workshop",
+      source: "创赛工坊",
+      title: "继续赛事内任务",
+      detail: `${activeCompetition.name} · 创赛工坊`,
+      status: "赛事内",
+      tone: "neutral" as const,
+      to: `/competitions/${activeCompetition.id}/workspace/workshop`,
+      icon: <Sparkles size={19} aria-hidden="true" />,
+      iconClass: "bg-[#e9f6f1] text-[#247456]",
+    }] : []),
+    {
+      id: "competition",
+      source: "赛事",
+      title: activeCompetition ? "赛事进度" : guest ? "发现正在报名的赛事" : "选择赛事并完成报名",
+      detail: activeCompetition?.name ?? "从公开赛事开始",
+      status: activeCompetition ? "进行中" : "可开始",
+      tone: activeCompetition ? "info" : "neutral",
+      to: activeCompetition ? `/competitions/${activeCompetition.id}/workspace` : "/competitions",
+      icon: <Trophy size={19} aria-hidden="true" />,
+      iconClass: "bg-[#fff2e8] text-[#c45b1b]",
+    },
+    {
+      id: "course",
+      source: "课程",
+      title: "课程学习",
+      detail: "课程、考试与学习成果",
+      status: "待安排",
+      tone: "neutral",
+      to: "/courses",
+      icon: <BookOpen size={19} aria-hidden="true" />,
+      iconClass: "bg-[#eaf5ff] text-[#2879d0]",
+    },
+    {
+      id: "opportunity",
+      source: "机会",
+      title: applications.length ? "投递进展" : "实习与项目",
+      detail: applications.length ? `${applications.length} 条投递记录` : `${openOpportunityCount} 个开放机会`,
+      status: applications.length ? "进行中" : "可开始",
+      tone: applications.length ? "info" : "success",
+      to: applications.length ? "/applications" : "/opportunities",
+      icon: <BriefcaseBusiness size={19} aria-hidden="true" />,
+      iconClass: "bg-[#f3efff] text-[#6f4bc2]",
+    },
+  ];
   const growthResources = [
     { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
     { label: "权益", description: "查看可领取的支持", to: "/benefits", icon: Gift },
@@ -187,6 +267,8 @@ export function HomePage() {
       <section className="overflow-hidden rounded-[20px] bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary shadow-floating"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium opacity-80">{activeCompetition ? "我的赛事" : "正在报名"}</p><h2 className="mt-2 text-xl font-semibold leading-7">{activeCompetition?.name ?? competitions[0].name}</h2><p className="mt-2 text-sm opacity-85">{activeCompetition ? "赛事身份有效，继续推进你的参赛项目" : "发现适合你的赛事，开启一段新经历"}</p></div><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><Trophy size={22} aria-hidden="true" /></span></div><div className="mt-5 flex gap-2">{activeCompetition ? <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate(`/competitions/${activeCompetition.id}/workspace`)}>进入当前赛事</button> : <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate("/competitions")}>发现比赛</button>}<button className="flex min-h-touch items-center justify-center rounded-control bg-white/15 px-4 text-sm font-medium" onClick={() => navigate("/competitions")}>全部赛事<ChevronRight size={16} aria-hidden="true" /></button></div></section>
 
       <section><div className="grid grid-cols-4 gap-2">{growthResources.map(({ label, to, icon: Icon }) => <button key={to} onClick={() => navigate(to)} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-container bg-surface text-center active:bg-surface-pressed"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">{label}</span></button>)}</div></section>
+
+      <HomeTaskZone entries={taskEntries} />
 
       <Section title="为你推荐"><div className="grid grid-cols-2 gap-3"><button className="rounded-container bg-[#fff2e8] p-4 text-left" onClick={() => navigate("/competitions")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#e66d20]"><Trophy size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">赛事推荐</strong><span className="mt-1 block text-xs text-text-secondary">正在报名的赛事</span></button><button className="rounded-container bg-[#eaf5ff] p-4 text-left" onClick={() => navigate("/opportunities")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#2879d0]"><BriefcaseBusiness size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">实习与项目</strong><span className="mt-1 block text-xs text-text-secondary">找到真实实践机会</span></button></div></Section>
 
