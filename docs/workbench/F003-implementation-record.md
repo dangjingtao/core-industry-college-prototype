@@ -1,6 +1,6 @@
 # F003｜账号 / 简历 / 团队 / 外部 handoff｜施工记录
 
-> 状态：施工完成，待 CI 与独立评审  
+> 状态：施工完成，CI 通过，待独立评审  
 > 施工分支：`workbench/f003`  
 > 任务真相源：`docs/workbench/00-work-ledger.md` 的 F03
 
@@ -119,11 +119,13 @@ F003 没有处理以下 F04 决策项：
 
 ## 5. 验证状态
 
-- 当前 GitHub workflow 只在 `dev` / `prod` push 时运行，F003 施工分支本身不会自动获得 build 证据。
-- 当前执行环境没有可联网的仓库 checkout，因此不能在本地伪造 `npm ci` / TypeScript / Chromium 结果。
-- 合入 `dev` 后应以 `Deploy Mobile to Cloudflare Pages` 中的 `Type-check and build mobile preview` 为构建证据；如失败，必须按日志修复后再进入评审。
-- 浏览器 F003 专项用例已写入仓库，但在获得真实 Playwright 执行证据前不标记 PASS。
+- F003 PR：`#1`，已合入 `dev`。
+- 合并提交：`677878362658359cbf740c9a1021fcfcf1cbe591`。
+- GitHub Actions：`Deploy Mobile to Cloudflare Pages` run `32014523170`，最终结论 `success`。
+- 该 run 的 `Type-check and build mobile preview` 为 `success`，`Deploy mobile` 也为 `success`。
+- 当前执行环境没有可联网的仓库 checkout，因此没有伪造本地 `npm ci` / Chromium 结果。
+- 浏览器 F003 专项用例已写入仓库，但现有 deploy workflow 不执行 Playwright；在获得真实浏览器执行证据前，施工线程不标记 `PASS`。
 
 ## 6. 施工结论
 
-F003 任务范围已按工作台账完成实现；施工线程只把卡片推进到“待评审”，不自行标记 `PASS`。
+F003 任务范围已按工作台账完成实现并通过 `dev` TypeScript / Vite 构建与部署；施工线程只把卡片推进到“待评审”，不自行标记 `PASS`。
