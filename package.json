@@ -13,6 +13,10 @@
     "build": "npm run build --workspaces --if-present",
     "build:pc": "npm run build --workspace @core/pc",
     "build:mobile": "npm run build --workspace @core/mobile",
+    "verify:mobile": "npm run verify --workspace @core/mobile",
+    "verify:browser:mobile": "npm run verify:browser --workspace @core/mobile",
+    "verify:pc": "npm run verify --workspace @core/pc",
+    "verify:browser:pc": "npm run verify:browser --workspace @core/pc",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
@@ -26,4 +30,3 @@
     "vite": "^5.4.11"
   }
 }
-

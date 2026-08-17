@@ -1,12 +1,19 @@
+@import "./design-tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
-  color-scheme: dark;
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--color-foreground);
+  background: var(--color-background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+html {
+  background: var(--color-background);
 }
 
 body {
@@ -15,3 +22,12 @@ body {
   min-height: 100vh;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+/* Keep the prototype scenario controls clear of bottom-page actions. */
+details.fixed.bottom-3.right-3.z-50 {
+  top: 96px;
+  bottom: auto;
+}
