@@ -5,7 +5,7 @@ import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 
 type Notice = { id: string; title: string; body: string; read: boolean; time: string };
-type Story = { id: string; title: string; summary: string; author: string; external?: boolean };
+type Story = { id: string; title: string; summary: string; author: string; external?: boolean; externalUrl?: string };
 type SupportState = {
   notifications: Notice[];
   bindings: string[];
@@ -31,7 +31,7 @@ const news = [
 const storySeed: Story[] = [
   { id: "team-retail", title: "从校赛复盘到零售数据实习", summary: "一个学生团队如何把比赛里的数据复盘经验整理成长期履历。", author: "赛友投稿" },
   { id: "brand-project", title: "第一次和企业真实做项目", summary: "从需求澄清、协作到阶段汇报，一次并不完美但真实的项目实践。", author: "赛友投稿" },
-  { id: "wechat-story", title: "公众号精选：三创赛后的下一站", summary: "外部内容镜像入口，保留来源说明。", author: "官方公众号", external: true },
+  { id: "wechat-story", title: "公众号精选：三创赛后的下一站", summary: "外部内容镜像入口，保留来源说明。", author: "官方公众号", external: true, externalUrl: "https://mp.weixin.qq.com/" },
 ];
 
 const SupportContext = createContext<SupportState | null>(null);
@@ -100,7 +100,7 @@ export function GrowthScorePage() {
   const completed = learning.filter(item => item.status === "completed").length;
   const rows: [string, number][] = [["基础账号", 60], ["已完成学习", completed * 20], ["真实投递", applications.length * 10]];
   const score = rows.reduce((sum, [, value]) => sum + value, 0);
-  return <PublicShell showNavigation={false}><PageHeader title="学力值" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">当前学力值</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="成长概览" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">成长记录汇总</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
 }
 
 export function StoriesPage() {
@@ -114,7 +114,7 @@ export function StoryDetailPage() {
   const { submittedStories } = useSupport();
   const item = [...submittedStories, ...storySeed].find(value => value.id === useParams().storyId);
   if (!item) return <Missing title="故事不存在" backTo="/stories" />;
-  return <PublicShell showNavigation={false}><PageHeader title="赛友故事" backTo="/stories" /><div className="space-y-5 px-4 py-6"><div><StatusTag tone={item.external ? "info" : "neutral"}>{item.external ? "公众号来源" : "站内投稿"}</StatusTag><h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1><p className="mt-2 text-sm text-text-secondary">{item.author}</p></div><Card><p className="text-base leading-7 text-text-primary">{item.summary}</p><p className="mt-4 text-sm leading-6 text-text-secondary">正式内容由运营审核后发布；原型只验证来源和阅读动线。</p></Card></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="赛友故事" backTo="/stories" /><div className="space-y-5 px-4 py-6"><div><StatusTag tone={item.external ? "info" : "neutral"}>{item.external ? "公众号来源" : "站内投稿"}</StatusTag><h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1><p className="mt-2 text-sm text-text-secondary">{item.author}</p></div><Card><p className="text-base leading-7 text-text-primary">{item.summary}</p><p className="mt-4 text-sm leading-6 text-text-secondary">正式内容由运营审核后发布；原型只验证来源和阅读动线。</p>{item.external && item.externalUrl && <><a href={item.externalUrl} target="_blank" rel="noreferrer" className="mt-5 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">打开公众号入口</a><p className="mt-2 text-xs leading-5 text-text-tertiary">当前只配置公众号入口；具体文章原文链接待运营内容配置，不伪造不存在的文章 URL。</p></>}</Card></div></PublicShell>;
 }
 
 export function StorySubmitPage() {
@@ -129,7 +129,7 @@ export function StorySubmitPage() {
 
 export function SupportHomePage() {
   const questions = ["报名后为什么还不能进入赛事工作区？", "比赛结束后证书和成绩在哪里？", "投递使用的是哪一份简历？"];
-  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界，不伪造已经接通人工。</p><Link to="/support/chat" className="mt-4 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link></Card></div></PublicShell>;
+  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><Link to="/support/chat" className="mt-4 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link></Card></div></PublicShell>;
 }
 
 export function SupportChatPage() {
@@ -137,13 +137,13 @@ export function SupportChatPage() {
   const [messages, setMessages] = useState(["你好，我可以先帮你定位报名、赛事、课程、权益和投递相关问题。"]);
   const [humanRequested, setHumanRequested] = useState(false);
   const send = () => { if (!draft.trim()) return; setMessages(current => [...current, draft.trim(), "原型客服：已记录你的问题。需要人工处理时可以发起人工请求。"]); setDraft(""); };
-  return <PublicShell showNavigation={false}><PageHeader title="客服会话" backTo="/support" /><div className="space-y-5 px-4 py-5"><div className="space-y-2">{messages.map((item,index) => <Card key={`${index}-${item}`}><p className="text-sm leading-6 text-text-primary">{item}</p></Card>)}</div>{humanRequested && <Card className="border border-info bg-info-bg"><StatusTag tone="info">已请求人工</StatusTag><p className="mt-2 text-sm text-info-text">当前原型不伪造企业微信已接通，只保留请求状态。</p></Card>}<textarea rows={4} value={draft} onChange={event => setDraft(event.target.value)} className="w-full rounded-control border border-border bg-surface p-3 text-sm outline-none focus:border-primary" placeholder="描述你的问题" /><div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => setHumanRequested(true)} disabled={humanRequested}>{humanRequested ? "已请求人工" : "请求人工客服"}</SecondaryButton><Button disabled={!draft.trim()} onClick={send}>发送</Button></div></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="客服会话" backTo="/support" /><div className="space-y-5 px-4 py-5"><div className="space-y-2">{messages.map((item,index) => <Card key={`${index}-${item}`}><p className="text-sm leading-6 text-text-primary">{item}</p></Card>)}</div>{humanRequested && <Card className="border border-info bg-info-bg"><StatusTag tone="info">人工渠道：企业微信福利官</StatusTag><h2 className="mt-3 font-semibold text-info-text">请通过企业微信进入人工服务</h2><p className="mt-2 text-sm leading-6 text-info-text">正式联系人 / 二维码由运营配置。当前原型只明确最终接入渠道，不伪造已经加好友或已经接通人工。</p><a href="https://work.weixin.qq.com/" target="_blank" rel="noreferrer" className="mt-4 block min-h-touch rounded-control bg-surface px-4 py-3 text-center text-sm font-medium text-text-brand">打开企业微信入口</a></Card>}<textarea rows={4} value={draft} onChange={event => setDraft(event.target.value)} className="w-full rounded-control border border-border bg-surface p-3 text-sm outline-none focus:border-primary" placeholder="描述你的问题" /><div className="grid grid-cols-2 gap-3"><SecondaryButton onClick={() => setHumanRequested(true)} disabled={humanRequested}>{humanRequested ? "查看人工渠道" : "请求人工客服"}</SecondaryButton><Button disabled={!draft.trim()} onClick={send}>发送</Button></div></div></PublicShell>;
 }
 
 export function AccountsPage() {
   const { bindings, toggleBinding } = useSupport();
   const accounts = [["email","邮箱"],["wecom","企业微信"],["wechat","微信"]] as const;
-  return <PublicShell showNavigation={false}><PageHeader title="第三方账号" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
 }
 
 export function SubjectDecisionPage() {
@@ -173,10 +173,6 @@ export function LegalPage({ kind }: { kind: "user" | "privacy" }) {
 
 export function AboutPage() {
   return <PublicShell showNavigation={false}><PageHeader title="关于" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card><h1 className="text-lg font-semibold text-text-primary">核心产业学院</h1><p className="mt-3 text-sm leading-6 text-text-secondary">围绕参赛、企业实践与就业/实习建立长期学生账号；课程、权益与可信成果作为支撑能力长期沉淀。</p></Card><Card><p className="text-xs text-text-secondary">Prototype · Com Design consumer</p></Card></div></PublicShell>;
-}
-
-export function TasksDecisionPage() {
-  return <DecisionBlockedPage title="任务专区" decision="D03" body="平台任务、赛事任务、企业任务与权益任务之间的对象关系仍未确认。这里不把创赛工坊 Task Runtime 误当成全局任务中心。" backTo="/home" />;
 }
 
 function DecisionBlockedPage({ title, decision, body, backTo }: { title: string; decision: string; body: string; backTo: string }) {

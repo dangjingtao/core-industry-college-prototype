@@ -83,5 +83,5 @@ export function PrototypeStateTools() {
     const query = next.toString();
     navigate(`${location.pathname}${query ? `?${query}` : ""}`);
   };
-  return <details className="fixed bottom-20 right-3 z-40 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating"><summary className="cursor-pointer font-medium text-text-secondary">原型状态</summary><div className="mt-2 grid grid-cols-2 gap-1">{[undefined,"loading","empty","error"].map(v => <button key={v ?? "ready"} className="min-h-8 rounded-control px-2 text-text-brand active:bg-surface-pressed" onClick={() => set(v)}>{v ?? "ready"}</button>)}</div></details>;
+  return <details className="mx-3 ml-auto mt-4 w-fit rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating"><summary className="cursor-pointer font-medium text-text-secondary">原型状态</summary><div className="mt-2 grid grid-cols-2 gap-1">{[undefined,"loading","empty","error"].map(v => <button key={v ?? "ready"} className="min-h-8 rounded-control px-2 text-text-brand active:bg-surface-pressed" onClick={() => set(v)}>{v ?? "ready"}</button>)}</div></details>;
 }

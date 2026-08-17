@@ -9,9 +9,10 @@
 
 - 本仓库已建立双端 npm workspaces、Cloudflare Pages 预览与根级 lockfile。
 - 手机端可交互原型已迁入 `apps/mobile`，并在本仓库重新通过路由审计、生产构建和 Chromium 7/7 回归。
-- 电脑端已迁入独立的三创赛报名系统，并通过桌面队长流程与窄屏队员流程 2/2 回归；其他 PC 业务尚未迁移。
+- 电脑端保留独立三创赛响应式报名门户 `/registration-portal/*`，并新增 `/admin/*` 管理数据骨架；当前管理端先定义赛事、主体、资源、学生身份、资产、内容活动、创赛工坊等数据责任边界，不把骨架冒充完整后台。
 - 手机端迁移记录见 [`docs/migrations/mobile-from-com-design.md`](./docs/migrations/mobile-from-com-design.md)。
 - PC 报名系统迁移记录见 [`docs/migrations/pc-registration-portal-from-com-design.md`](./docs/migrations/pc-registration-portal-from-com-design.md)。
+- PC 管理数据骨架见 [`docs/product/03-pc-admin-data-skeleton.md`](./docs/product/03-pc-admin-data-skeleton.md)。
 
 ## 先读项目文档
 
@@ -22,7 +23,8 @@
 1. [`docs/product/00-product-master-context.md`](./docs/product/00-product-master-context.md) — 产品定位、业务角色、五条母动线、账号/赛事/长期资产边界。
 2. [`docs/product/01-legacy-mockplus-audit.md`](./docs/product/01-legacy-mockplus-audit.md) — 直接检查 Google Drive 原始 Mockplus 后确认的功能缺口。
 3. [`docs/product/02-open-decisions-and-backlog.md`](./docs/product/02-open-decisions-and-backlog.md) — 可直接补回、需产品确认、明确冻结的事项。
-4. [`docs/reference/legacy-page-map.tsv`](./docs/reference/legacy-page-map.tsv) — 旧 140 页逐页去向表。
+4. [`docs/product/03-pc-admin-data-skeleton.md`](./docs/product/03-pc-admin-data-skeleton.md) — PC 管理端的数据域、写入责任、关系与手机消费边界。
+5. [`docs/reference/legacy-page-map.tsv`](./docs/reference/legacy-page-map.tsv) — 旧 140 页逐页去向表。
 
 特别注意：
 
@@ -80,6 +82,11 @@ npm ci
 npm run dev:pc
 npm run dev:mobile
 ```
+
+PC 本地入口：
+
+- 管理数据骨架：`/admin`
+- 三创赛报名门户：`/registration-portal/start`
 
 ## 环境变量
 

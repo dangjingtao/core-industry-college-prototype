@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord } from "./data";
+import {
+  initialProfileSources,
+  seedStudentProfile,
+  type ProfileSource,
+  type StudentProfile,
+  type StudentProfileSources,
+} from "./studentProfile";
 
 export type LearningStatus = "notStarted" | "inProgress" | "completed";
 export type LearningRecord = {
@@ -10,20 +17,24 @@ export type LearningRecord = {
   assessment: "idle" | "passed" | "failed";
 };
 
+export type ResumeEducationDetails = {
+  graduationTime: string;
+  startDate: string;
+  endDate: string;
+  majorCourses: string;
+  campusExperience: string;
+};
+
 export type ResumePresentation = {
   selectedFactKeys: string[];
   strengths: string;
   education: string;
+  educationDetails: ResumeEducationDetails;
   updatedAt: string;
 };
 
-export type ProfileState = {
-  name: string;
-  school: string;
-  major: string;
-  city: string;
-  email: string;
-};
+/** @deprecated Use StudentProfile. Kept as a compatibility alias for existing prototype code. */
+export type ProfileState = StudentProfile;
 
 type LongTermAssetsContextValue = {
   learning: LearningRecord[];
@@ -32,7 +43,8 @@ type LongTermAssetsContextValue = {
   certificates: CertificateRecord[];
   competitionResults: CompetitionResultRecord[];
   resume: ResumePresentation;
-  profile: ProfileState;
+  profile: StudentProfile;
+  profileSources: StudentProfileSources;
   learningFor: (courseId: string) => LearningRecord;
   startCourse: (courseId: string) => void;
   advanceCourse: (courseId: string) => void;
@@ -44,7 +56,9 @@ type LongTermAssetsContextValue = {
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
-  updateProfile: (patch: Partial<ProfileState>) => void;
+  updateEducationDetails: (patch: Partial<ResumeEducationDetails>) => void;
+  updateProfile: (patch: Partial<StudentProfile>, source?: ProfileSource) => void;
+  mergeProfileFromSource: (patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode?: "fill-empty" | "replace") => void;
 };
 
 const seedLearning: LearningRecord[] = [
@@ -57,15 +71,14 @@ const seedResume: ResumePresentation = {
   selectedFactKeys: ["experience:sanchuang-15", "certificate:cert-sanchuang-15", "learning:data-analytics"],
   strengths: "有真实赛事项目协作、内容运营和数据复盘经历，习惯把结论落到可验证的行动。",
   education: "华南商贸学院 · 电子商务 · 本科",
+  educationDetails: {
+    graduationTime: "2026-06",
+    startDate: "2022-09",
+    endDate: "2026-06",
+    majorCourses: "消费者行为学、电子商务运营、数据分析、供应链管理",
+    campusExperience: "参与校级创新创业项目与赛事团队，负责内容运营、用户调研和阶段复盘。",
+  },
   updatedAt: "2026-08-17",
-};
-
-const seedProfile: ProfileState = {
-  name: "林晓",
-  school: "华南商贸学院",
-  major: "电子商务",
-  city: "广州",
-  email: "linxiao@example.edu.cn",
 };
 
 const LongTermAssetsContext = createContext<LongTermAssetsContextValue | null>(null);
@@ -77,6 +90,12 @@ function updateLearning(records: LearningRecord[], courseId: string, updater: (r
     : [...records, updater(existing)];
 }
 
+function sourcePatch(patch: Partial<StudentProfile>, source: ProfileSource): StudentProfileSources {
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined).map(([key]) => [key, source]),
+  ) as StudentProfileSources;
+}
+
 export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const { session, identities } = usePublicPlatform();
   const [learning, setLearning] = useState<LearningRecord[]>(seedLearning);
@@ -84,7 +103,8 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [certificates, setCertificates] = useState<CertificateRecord[]>(initialCertificates);
   const [competitionResults] = useState<CompetitionResultRecord[]>(initialCompetitionResults);
   const [resume, setResume] = useState<ResumePresentation>(seedResume);
-  const [profile, setProfile] = useState<ProfileState>(seedProfile);
+  const [profile, setProfile] = useState<StudentProfile>(seedStudentProfile);
+  const [profileSources, setProfileSources] = useState<StudentProfileSources>(() => initialProfileSources(seedStudentProfile));
 
   const benefitStatusFor = useCallback((benefitId: string): BenefitStatus => {
     const benefit = benefitById(benefitId);
@@ -96,6 +116,24 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     return eligibleFromSharedIdentity ? stored : "ineligible";
   }, [benefitStatuses, identities, session.loggedIn]);
 
+  const updateProfile = useCallback((patch: Partial<StudentProfile>, source: ProfileSource = "profile") => {
+    if (!session.loggedIn) return;
+    setProfile(current => ({ ...current, ...patch }));
+    setProfileSources(current => ({ ...current, ...sourcePatch(patch, source) }));
+  }, [session.loggedIn]);
+
+  const mergeProfileFromSource = useCallback((patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode: "fill-empty" | "replace" = "fill-empty") => {
+    if (!session.loggedIn) return;
+    setProfile(current => {
+      const applied = Object.fromEntries(
+        Object.entries(patch).filter(([key, value]) => value !== undefined && (mode === "replace" || !current[key as keyof StudentProfile])),
+      ) as Partial<StudentProfile>;
+      if (!Object.keys(applied).length) return current;
+      setProfileSources(sources => ({ ...sources, ...sourcePatch(applied, source) }));
+      return { ...current, ...applied };
+    });
+  }, [session.loggedIn]);
+
   const value = useMemo<LongTermAssetsContextValue>(() => ({
     learning,
     benefitStatuses,
@@ -104,6 +142,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     competitionResults,
     resume,
     profile,
+    profileSources,
     learningFor: courseId => learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted", progress: 0, assessment: "idle" },
     startCourse: courseId => {
       if (!session.loggedIn) return;
@@ -169,11 +208,13 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       if (!session.loggedIn) return;
       setResume(current => ({ ...current, education, updatedAt: "2026-08-17" }));
     },
-    updateProfile: patch => {
+    updateEducationDetails: patch => {
       if (!session.loggedIn) return;
-      setProfile(current => ({ ...current, ...patch }));
+      setResume(current => ({ ...current, educationDetails: { ...current.educationDetails, ...patch }, updatedAt: "2026-08-17" }));
     },
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, resume, profile, session.loggedIn]);
+    updateProfile,
+    mergeProfileFromSource,
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }
