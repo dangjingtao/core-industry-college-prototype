@@ -21,11 +21,28 @@ export type Opportunity = {
   status: "open" | "closed";
 };
 
+export type CompanyBusinessInfo = {
+  legalRepresentative: string;
+  registeredCapital: string;
+  operatingStatus: "存续" | "在业" | "存续（在营、开业、在册）";
+  establishedDate: string;
+  companyType: string;
+  industry: string;
+  region: string;
+  unifiedSocialCreditCode: string;
+  registrationNumber: string;
+  approvalDate: string;
+  registrationAuthority: string;
+  registeredAddress: string;
+  businessScope: string;
+};
+
 export type Company = {
   id: string;
   name: string;
   industry: string;
   summary: string;
+  businessInfo: CompanyBusinessInfo;
   resourceRelations: { type: "赛事" | "权益" | "课程" | "活动" | "岗位"; title: string; to?: string }[];
 };
 
@@ -79,6 +96,21 @@ export const companies: Company[] = [
     name: "北辰美妆",
     industry: "美妆 / 新零售",
     summary: "参与赛事命题、课程共建、学生权益与实习机会合作的品牌方。",
+    businessInfo: {
+      legalRepresentative: "林岚",
+      registeredCapital: "5,000 万元人民币",
+      operatingStatus: "存续",
+      establishedDate: "2018-04-18",
+      companyType: "有限责任公司（自然人投资或控股）",
+      industry: "零售业 / 电子商务",
+      region: "广东省广州市",
+      unifiedSocialCreditCode: "91440101MA5XMOCK01",
+      registrationNumber: "4401MOCK018042",
+      approvalDate: "2026-03-12",
+      registrationAuthority: "广州市市场监督管理局（原型）",
+      registeredAddress: "广东省广州市海珠区创新大道 88 号（原型）",
+      businessScope: "化妆品及日用消费品销售、品牌策划、电子商务服务、市场营销与相关咨询服务等（原型信息）。",
+    },
     resourceRelations: [
       { type: "赛事", title: "三创赛 · 美妆电商赛道", to: "/competitions/sanchuang-16" },
       { type: "权益", title: "校园体验权益" },
@@ -92,6 +124,21 @@ export const companies: Company[] = [
     name: "云栖零售实验室",
     industry: "数字零售 / 数据服务",
     summary: "提供零售数据实践、企业课题和学生项目实践机会。",
+    businessInfo: {
+      legalRepresentative: "周予安",
+      registeredCapital: "2,000 万元人民币",
+      operatingStatus: "在业",
+      establishedDate: "2020-09-07",
+      companyType: "其他有限责任公司",
+      industry: "软件和信息技术服务业",
+      region: "广东省深圳市",
+      unifiedSocialCreditCode: "91440300MA5XMOCK02",
+      registrationNumber: "4403MOCK020907",
+      approvalDate: "2026-01-20",
+      registrationAuthority: "深圳市市场监督管理局（原型）",
+      registeredAddress: "广东省深圳市南山区科创路 66 号（原型）",
+      businessScope: "零售数据分析、软件技术服务、企业数字化咨询、产学研项目协作与技术培训等（原型信息）。",
+    },
     resourceRelations: [
       { type: "活动", title: "零售数据工作坊" },
       { type: "课程", title: "商业数据分析基础", to: "/courses/data-analytics" },
@@ -103,6 +150,21 @@ export const companies: Company[] = [
     name: "青禾供应链",
     industry: "供应链 / 可持续商业",
     summary: "围绕绿色供应链提供赛事合作、企业实践和岗位机会。",
+    businessInfo: {
+      legalRepresentative: "陈青禾",
+      registeredCapital: "3,000 万元人民币",
+      operatingStatus: "存续（在营、开业、在册）",
+      establishedDate: "2017-11-23",
+      companyType: "有限责任公司",
+      industry: "商务服务业 / 供应链管理",
+      region: "广东省佛山市",
+      unifiedSocialCreditCode: "91440600MA5XMOCK03",
+      registrationNumber: "4406MOCK017112",
+      approvalDate: "2025-12-08",
+      registrationAuthority: "佛山市市场监督管理局（原型）",
+      registeredAddress: "广东省佛山市顺德区绿色产业园 18 号（原型）",
+      businessScope: "供应链管理、仓储与物流方案咨询、绿色商业项目服务、企业实践项目合作等（原型信息）。",
+    },
     resourceRelations: [
       { type: "赛事", title: "绿色商业实践赛", to: "/competitions/green-business-2026" },
       { type: "岗位", title: "供应链项目助理", to: "/opportunities/intern-3" },
