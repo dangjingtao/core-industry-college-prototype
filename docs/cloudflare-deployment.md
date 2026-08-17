@@ -71,4 +71,9 @@ Vite 构建时会将该文件复制到 `dist`，用于 Cloudflare Pages 的客�
 - PC：<https://core-industry-college-pc.pages.dev>
 - 手机：<https://core-industry-college-mobile.pages.dev>
 
+`dev` 预览地址：
+
+- PC：<https://dev.core-industry-college-pc.pages.dev>
+- 手机：<https://dev.core-industry-college-mobile.pages.dev>
+
 当前采用 Wrangler Direct Upload，Git Provider 显示为 `No`。尚未配置 GitHub 自动构建或自定义域名；后续可以继续使用 Wrangler 手动部署，或另行配置 GitHub Actions。

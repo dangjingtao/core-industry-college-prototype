@@ -71,6 +71,11 @@ npm run verify:mobile
 - PC：<https://core-industry-college-pc.pages.dev>
 - 手机：<https://core-industry-college-mobile.pages.dev>
 
+`dev` 预览地址：
+
+- PC：<https://dev.core-industry-college-pc.pages.dev>
+- 手机：<https://dev.core-industry-college-mobile.pages.dev>
+
 两个项目均以 `prod` 为生产分支。当前采用 Wrangler 直接部署，尚未连接 GitHub 自动构建。
 
 详细配置与首次上线确认项见 [docs/cloudflare-deployment.md](./docs/cloudflare-deployment.md)。
