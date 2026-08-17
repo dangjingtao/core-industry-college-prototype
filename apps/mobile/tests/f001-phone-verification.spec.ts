@@ -20,12 +20,12 @@ test("F001 phone verification gates save and persists the verified number", asyn
 
   const code = page.getByPlaceholder("输入 6 位验证码");
   await code.fill("654321");
-  await page.getByRole("button", { name: "验证" }).click();
+  await page.getByRole("button", { name: "验证", exact: true }).click();
   await expect(save).toBeDisabled();
   await expect(page.getByText("手机号已验证", { exact: true })).toHaveCount(0);
 
   await code.fill("123456");
-  await page.getByRole("button", { name: "验证" }).click();
+  await page.getByRole("button", { name: "验证", exact: true }).click();
   await expect(page.getByText("手机号已验证", { exact: true })).toBeVisible();
   await expect(save).toBeEnabled();
 
