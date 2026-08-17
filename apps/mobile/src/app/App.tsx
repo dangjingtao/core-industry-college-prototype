@@ -4,7 +4,6 @@ import { RouteLab } from "../dev/RouteLab";
 import {
   ApplicationsPage,
   CompaniesPage,
-  CompanyDetailPage,
   CompetitionsPage,
   HomePage,
   LoginBoundaryPage,
@@ -38,17 +37,20 @@ import { CourseAchievementPage, CourseAssessmentPage, CourseDetailPage, CourseLe
 import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage } from "../features/long-term-assets/BenefitsPages";
 import {
   AssetsHomePage,
-  CertificateDetailPage,
   CertificatesPage,
   ExperienceDetailPage,
   ExperiencesPage,
   LearningAssetsPage,
   MyPage,
-  ResultDetailPage,
   ResultsPage,
-  VerificationPage,
 } from "../features/long-term-assets/AssetsPages";
 import { ProfilePage, ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
+import {
+  CertificateDetailTrustedPage,
+  CompanyDetailTrustedPage,
+  ResultDetailTrustedPage,
+  VerificationTrustedPage,
+} from "../features/trust/TrustPages";
 import {
   AboutPage,
   AccountsPage,
@@ -110,7 +112,7 @@ export function App() {
               <Route path="/opportunities/:opportunityId" element={<OpportunityDetailPage />} />
               <Route path="/applications" element={<ApplicationsPage />} />
               <Route path="/companies" element={<CompaniesPage />} />
-              <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+              <Route path="/companies/:companyId" element={<CompanyDetailTrustedPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:contentId" element={<NewsDetailPage />} />
               <Route path="/courses" element={<CoursesPage />} />
@@ -127,10 +129,10 @@ export function App() {
               <Route path="/assets/experiences/:experienceId" element={account(<ExperienceDetailPage />)} />
               <Route path="/assets/learning" element={account(<LearningAssetsPage />)} />
               <Route path="/assets/results" element={account(<ResultsPage />)} />
-              <Route path="/assets/results/:resultId" element={account(<ResultDetailPage />)} />
+              <Route path="/assets/results/:resultId" element={account(<ResultDetailTrustedPage />)} />
               <Route path="/assets/certificates" element={account(<CertificatesPage />)} />
-              <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailPage />)} />
-              <Route path="/assets/verification" element={account(<VerificationPage />)} />
+              <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailTrustedPage />)} />
+              <Route path="/assets/verification" element={<VerificationTrustedPage />} />
               <Route path="/stories" element={<StoriesPage />} />
               <Route path="/stories/:storyId" element={<StoryDetailPage />} />
               <Route path="/stories/submit" element={account(<StorySubmitPage />)} />
