@@ -39,7 +39,7 @@
 | --- | --- | --- | --- | --- |
 | F00 | 手机端接入现有响应式报名门户 | 施工 | 待执行 | 无 |
 | F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待执行 | F00 协议边界明确后可施工 |
-| F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待执行 | 可与 F01 并行 |
+| F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待评审 | 可与 F01 并行 |
 | F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待执行 | F01 部分数据模型 |
 | F04 | 学力值 / 第三方账号 / 任务 / 主体 / 创域等 | 产品决策 | 待决策 | 可并行讨论，不允许施工线程自行拍板 |
 
@@ -204,7 +204,7 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
 # F02｜企业可信信息 + 可信凭证完整能力
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P0**
 
 ## A. 企业工商 / 可信基础信息
@@ -253,6 +253,23 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
 - 证书 / 成绩能表达保存和下载；
 - 外部官方验证出口明确；
 - 系统可信事实仍不可被简历编辑器修改。
+
+## 施工记录
+
+- 开始时 branch HEAD：`18528090ca70670563f7627982b79e267de3a88e`；
+- 实际修改范围：
+  - `apps/mobile/src/features/public-platform/data.ts`
+  - `apps/mobile/src/features/trust/TrustPages.tsx`
+  - `apps/mobile/src/app/App.tsx`
+  - `docs/workbench/F002-implementation-record.md`
+- 实现提交：
+  - `89620ff637033c02269b1a7ee8a7c2e543af1bd6`
+  - `081577f2437d4f40086222e06401db384e4fb115`
+  - `2ff2631c8d6979c83041f9ac7bcdd72c03f82f46`
+- Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32013871701`，`Type-check and build mobile preview` 与 `Deploy mobile` 均为 `success`；该 run head `0994f12faf0f11eb7b00220b777b0efaa015b7fc` 直接包含 F002 全部实现；
+- 详细施工与评审动线：`docs/workbench/F002-implementation-record.md`；
+- 评审提交 SHA：待独立评审；
+- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
 
 ---
 
