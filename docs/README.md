@@ -8,19 +8,23 @@
 
 ## 1. 开工先读
 
-任何涉及手机端、PC 报名门户、功能补齐、产品结构或状态模型的线程，建议按这个顺序阅读：
+任何涉及手机端、PC 管理端、PC 报名门户、功能补齐、产品结构或状态模型的线程，建议按这个顺序阅读：
 
 1. [`workbench/00-work-ledger.md`](./workbench/00-work-ledger.md)  
    当前工作台账、F00–F04 任务卡、依赖关系和最终总回归要求。
 2. [`product/00-product-master-context.md`](./product/00-product-master-context.md)  
    产品定位、业务访谈、账号 / 赛事 / 长期资产等不可破坏原则。
-3. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
+3. [`product/03-pc-admin-data-skeleton.md`](./product/03-pc-admin-data-skeleton.md)  
+   PC 管理端作为数据控制面的骨架：主数据、关系、状态、长期资产、权限角色、写入责任和首期 CRUD 范围。
+4. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
    直接检查 Google Drive 原始 Mockplus 后得到的功能级缺口；解决“路由有了但功能缩水”的问题。
-4. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
+5. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
    明确该补、待决策、继续冻结的 backlog。
-5. 与当前任务直接相关的 migration / reference 文档。
+6. 与当前任务直接相关的 migration / reference 文档。
 
 不要只看当前页面代码就自行推导产品模型，也不要只因为旧页面已经映射到新路由就认为旧功能完整覆盖。
+
+如果任务涉及 PC 管理系统，新页面施工前还必须回答：**它管理什么业务对象、谁能写、手机哪里消费、与哪些对象关联、结束后哪些事实必须保留。**
 
 ---
 
@@ -41,6 +45,14 @@
 
 施工与评审状态以后以工作台账为准；施工线程不能自行把任务标记为 PASS。
 
+### PC 管理端骨架
+
+[`product/03-pc-admin-data-skeleton.md`](./product/03-pc-admin-data-skeleton.md)
+
+当前已形成 `/admin/*` 数据责任骨架，用于承接手机端快速演进后逐步暴露的数据来源问题。
+
+它不是一张“后台 UI 设计稿”，而是后续 PC 管理端施工的约束文档。
+
 ---
 
 ## 3. Product｜产品真相源
@@ -59,6 +71,23 @@
 - 企业是资源 / 品牌 / 合作方，不只是职位发布者；
 - 学校老师属于 Web / 运营后台用户；
 - 不构造不透明的 AI 人才评分。
+
+### [`product/03-pc-admin-data-skeleton.md`](./product/03-pc-admin-data-skeleton.md)
+
+PC 管理端数据控制面骨架。
+
+当前明确：
+
+- `/admin/*` 是数据运营 / 管理控制面；
+- `/registration-portal/*` 是学生响应式报名业务入口；
+- PC 管“人、主体、资源、规则、关系、可信状态”，不复制手机端交互；
+- 赛事、企业、课程、权益、机会、活动、学生赛事身份、成绩证书、工坊配置等都要有明确数据责任；
+- Organization 是后台资源 / 权限 / 可信主体主数据，不等价于 D08 手机“主体管理”；
+- `/tasks` 仍是聚合视图，不建立万能任务后台；
+- 学力值模型未决前不得在后台先造余额 / 流水 / 奖励体系；
+- 默认优先 archive / close / expire / revoke，而不是删除被长期事实引用的业务对象。
+
+文档内包含当前对象关系图、数据流图、写入责任矩阵、权限角色和首期 CRUD 范围。
 
 ### [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)
 
@@ -103,6 +132,12 @@
 
 **旧来源仓库的 R05 PASS 只属于迁移来源证据，新仓库必须以自己的代码、build 和 browser evidence 为准。**
 
+### [`migrations/pc-registration-portal-from-com-design.md`](./migrations/pc-registration-portal-from-com-design.md)
+
+记录现有三创赛响应式报名门户的迁移来源、流程与验收证据。
+
+注意：报名门户只是 PC 侧的一个业务入口，不代表 PC 管理端已经完成。
+
 ---
 
 ## 5. Reference｜追溯与评审证据
@@ -146,9 +181,50 @@ Com Design Core 的组件、token、视觉规则、触摸目标和已知 reduced
 
 剩余功能完整性问题以 `workbench/00-work-ledger.md` 和 legacy audit 为准。
 
+手机端当前仍存在部分静态 / mock 数据。后续不应继续把这些数据理解成“手机页面自己的数据”，而应逐步映射到 PC 管理端的数据域。
+
+### PC Admin
+
+当前已经有管理端骨架：
+
+```text
+/admin
+/admin/competitions
+/admin/organizations
+/admin/resources
+/admin/students
+/admin/assets
+/admin/content
+/admin/workshop
+```
+
+当前骨架用于表达：
+
+- 数据域；
+- 对象关系；
+- 写入责任；
+- 手机消费位置；
+- 首版最低管理动作。
+
+**这只是可施工骨架，不等于真实 CRUD / 后端 / 权限体系已经完成。**
+
+后续施工优先按照：
+
+```text
+赛事中心
+→ Organization / 企业 / 学校
+→ 资源运营
+→ 学生 / 赛事身份
+→ 长期资产
+→ 内容活动
+→ 工坊配置
+```
+
+小卡推进。
+
 ### PC / Responsive Registration Portal
 
-PC 端当前已有三创赛响应式报名门户：
+PC 端另有三创赛响应式报名门户：
 
 ```text
 /registration-portal/*
@@ -165,7 +241,7 @@ PC 端当前已有三创赛响应式报名门户：
 - 报名完成；
 - 报告 / 证书等后续入口。
 
-当前最高优先事项不是重画 PC 报名，而是按 F00 把 mobile ↔ responsive portal 真正接通。
+报名门户与 PC Admin 后续应共享赛事 ID、账号上下文和状态语义，但不为了“后台统一”强行合并页面。
 
 ---
 
@@ -174,11 +250,13 @@ PC 端当前已有三创赛响应式报名门户：
 在明确产品决策前，不允许普通施工线程自行恢复：
 
 - D03 全局任务体系；
-- D08 主体管理；
+- D08 手机主体管理；
 - 学力值积分经济 vs 成长分；
 - 第三方业务平台账号语义；
-- 创域 / 本地运营 / 扫码体系；
+- 创域 / 本地运营 / 扫码体系的完整权限模型；
 - AI 人才评分 / 能力雷达等不可解释能力。
+
+PC 管理端同样受这些冻结约束，不能借“后台需要配置”提前替业务拍板。
 
 详见工作台账 F04 与 product backlog。
 
@@ -196,6 +274,7 @@ PC 端当前已有三创赛响应式报名门户：
 6. Google Drive 140 页原型高风险页面 feature-level spot check；
 7. P0 / P1 缺口逐项有明确状态；
 8. 未决业务有决策或保持冻结；
-9. 无 duplicate session / identities / lifecycle / applications 真相源。
+9. 无 duplicate session / identities / lifecycle / applications 真相源；
+10. PC 新增管理能力能够说明数据对象、写入责任、手机消费和长期保留边界。
 
 **“66/66 routes”只能说明门都存在；最终还要检查屋里的东西有没有丢。**
