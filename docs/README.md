@@ -1,73 +1,201 @@
-# 项目文档索引
+# 核心产业学院原型｜文档入口
 
-> 更新时间：2026-08-17 12:24（UTC+8）  
-> 目标分支：`dev`  
-> 作用：让后续产品、设计、研发与 AI 施工线程只依赖本仓库，也能理解原型为什么这样设计、旧原型有哪些功能、哪些能力仍缺失、哪些问题仍待决策。
+本目录是 `core-industry-college-prototype` 的产品、迁移、历史真相源和施工台账入口。
 
-## 先读什么
+> 当前原则：**新仓库是后续唯一施工入口；旧仓库和 Google Drive 原型用于追溯产品与功能真相。**
 
-任何涉及产品结构、手机端迁移或补功能的线程，建议按以下顺序阅读：
+---
 
-1. [`product/00-product-master-context.md`](./product/00-product-master-context.md)  
-   产品定位、业务角色、账号/赛事模型、五条母动线、长期资产、企业商业逻辑和不可破坏原则。
-2. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
-   直接核对 Google Drive 原始 Mockplus 包后的功能审计。这里特别说明“140/140 页面有去向”与“功能完全不缩水”不是一回事。
-3. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
-   当前需要补回、需要产品确认、明确冻结的事项，以及建议施工顺序。
-4. [`migrations/mobile-from-com-design.md`](./migrations/mobile-from-com-design.md)  
-   手机端从旧 `com-design` 原型迁入本仓库的来源、边界、目录与验收要求。
-5. [`reference/history-and-review-evidence.md`](./reference/history-and-review-evidence.md)  
-   T01–T05 / R01–R05 的关键修复、最终 CI 和浏览器证据，以及这些评审真正解决过什么问题。
-6. [`reference/source-index.md`](./reference/source-index.md)  
-   Google Drive 原包、旧 GitHub 仓库、业务访谈、评审稿、旧代码提交、CI Run、Com Design 真相源的索引。
-7. [`reference/com-design-baseline.md`](./reference/com-design-baseline.md)  
-   手机端视觉/组件基线和已知 Core 缺陷。
-8. [`reference/legacy-page-map.tsv`](./reference/legacy-page-map.tsv)  
-   旧 Mockplus 140 页逐页去向表，用于追溯页面来源；不能单独作为功能完整性证明。
+## 1. 开工先读
 
-## 当前迁移状态
+任何涉及手机端、PC 报名门户、功能补齐、产品结构或状态模型的线程，建议按这个顺序阅读：
 
-文档落库时，本仓库 `dev` 已具备双端 monorepo 脚手架、根级 `package-lock.json` 与 Cloudflare Pages 预览配置，但 `apps/mobile/src/App.tsx` 仍是“旧项目内容将在确认后逐步迁移”的占位实现。
+1. [`workbench/00-work-ledger.md`](./workbench/00-work-ledger.md)  
+   当前工作台账、F00–F04 任务卡、依赖关系和最终总回归要求。
+2. [`product/00-product-master-context.md`](./product/00-product-master-context.md)  
+   产品定位、业务访谈、账号 / 赛事 / 长期资产等不可破坏原则。
+3. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
+   直接检查 Google Drive 原始 Mockplus 后得到的功能级缺口；解决“路由有了但功能缩水”的问题。
+4. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
+   明确该补、待决策、继续冻结的 backlog。
+5. 与当前任务直接相关的 migration / reference 文档。
 
-因此当前状态应理解为：
+不要只看当前页面代码就自行推导产品模型，也不要只因为旧页面已经映射到新路由就认为旧功能完整覆盖。
 
-- **新仓库是后续唯一目标仓库；**
-- **旧 `com-design/core-industry-college-refactor` 是手机端迁移来源与历史验收基线；**
-- **Google Drive Mockplus ZIP 是旧功能/页面/字段的原始真相源；**
-- 迁移是否完成，只能以本仓库重新执行 route audit、build、浏览器母动线和功能缺口复核为准；
-- 不得因为旧仓库曾经 R05 PASS，就声称新仓库当前代码已经 R05 PASS。
+---
 
-## 真相源优先级
+## 2. 当前工作入口
 
-发生冲突时按以下顺序判断：
+### 工作台账
 
-1. **本仓库中用户后续明确确认的新产品决策**；
-2. **Google Drive 原始 Mockplus 包**：判断旧功能、字段、按钮和页面是否真实存在；
-3. **业务访谈与正式产品评审**：判断功能应该放在哪里、为什么存在、哪些业务边界不能破坏；
-4. **旧可交互重构代码与 R01–R05 记录**：判断已经验证过的路由、状态模型、交互动线和工程实现；
-5. **Com Design Core**：判断视觉、组件、token、触控与交互基线；
-6. `legacy-page-map.tsv`：作为页面追溯索引，不作为“功能一件没少”的充分证据。
+[`workbench/00-work-ledger.md`](./workbench/00-work-ledger.md)
 
-## 一个必须记住的审计结论
+当前已登记：
 
-旧重构曾做到：
+- **F00** 手机端接入现有三创赛响应式报名门户；
+- **F01** 学生主档 + Onboarding / Profile / 问卷；
+- **F02** 企业可信信息 + 可信凭证完整能力；
+- **F03** 账号 / 简历 / 团队 / 外部 handoff 补齐；
+- **F04** 学力值 / 第三方账号 / D03 / D08 / 创域 / AI 能力等产品决策；
+- **R-Final** 基于 Google Drive 140 页原型的功能级总回归。
 
-- 140 个 Mockplus 页面全部建立旧→新去向；
-- 66/66 semantic routes 明确承接；
-- RouteProbe = 0；
-- 真实 TypeScript/Vite build PASS；
-- Chromium 7/7 回归 PASS，其中包含五条母动线。
+施工与评审状态以后以工作台账为准；施工线程不能自行把任务标记为 PASS。
 
-但 2026-08-17 重新直接检查 Google Drive 原始 Mockplus 包后确认：
+---
 
-> **路由覆盖证明“门都在”，不能证明“屋里的功能一件没少”。**
+## 3. Product｜产品真相源
 
-目前已发现若干二级操作、字段和历史业务语义在页面合并时缩水或被替换。具体见 `product/01-legacy-mockplus-audit.md`。
+### [`product/00-product-master-context.md`](./product/00-product-master-context.md)
 
-## 文档维护规则
+当前产品总纲。核心结论包括：
 
-- 新确认的产品决定优先更新 `product/`，不要只写在聊天里。
-- 新发现的旧功能漏项更新 `01-legacy-mockplus-audit.md` 和 `02-open-decisions-and-backlog.md`。
-- 迁移状态、来源 SHA、验证结果更新 `migrations/mobile-from-com-design.md`。
-- 新的真实 build / E2E / CI 证据更新 `reference/history-and-review-evidence.md`。
-- 不删除历史来源记录；结论变化时标记“已被后续决策覆盖”，而不是改写历史。
+- 产品不是单一“三创赛 App”；
+- 学生侧主轴是“参赛 + 就业 / 实习”；
+- App Account 长期存在，赛事身份是按赛事生命周期存在；
+- 一个账号可以拥有多个赛事身份；
+- 无赛事身份仍能使用公共平台；
+- 创赛工坊属于具体赛事上下文；
+- 赛事结束后经历 / 结果 / 证书 / 课程成果继续长期存在；
+- 企业是资源 / 品牌 / 合作方，不只是职位发布者；
+- 学校老师属于 Web / 运营后台用户；
+- 不构造不透明的 AI 人才评分。
+
+### [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)
+
+原始 Mockplus 功能审计。
+
+历史真相源：Google Drive `核心产业学院-mockplus-offline.zip`：
+
+- 58,024,433 bytes；
+- SHA-256 `28ac5a710283ec402a8d24822a1bea84ae6aaeee11fefdcd0a220db1557bf03b`；
+- 470 files；
+- 140 个 `data/pages/*.js` 页面。
+
+这份文档重点记录旧页面内部真实存在但在重构中可能缩水的字段、按钮、外部 handoff 和业务语义。
+
+### [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)
+
+按以下类型整理：
+
+- 明确应补；
+- 需要先统一数据模型；
+- 必须产品确认；
+- 已冻结；
+- 后续探索。
+
+工作台账是当前执行排序，Backlog 是问题库；两者不要互相替代。
+
+---
+
+## 4. Migrations｜迁移与当前实现基线
+
+### [`migrations/mobile-from-com-design.md`](./migrations/mobile-from-com-design.md)
+
+手机端从 `dangjingtao/com-design/core-industry-college-refactor` 迁入本仓库的记录，包括：
+
+- 来源提交；
+- 66 semantic routes；
+- 公共平台 / workspace / workshop / assets / support；
+- shared state 边界；
+- route audit；
+- build / Chromium 回归；
+- 新仓库重新验收要求。
+
+**旧来源仓库的 R05 PASS 只属于迁移来源证据，新仓库必须以自己的代码、build 和 browser evidence 为准。**
+
+---
+
+## 5. Reference｜追溯与评审证据
+
+### [`reference/legacy-page-map.tsv`](./reference/legacy-page-map.tsv)
+
+完整 140 页旧 Mockplus → 新结构映射。
+
+用途：定位旧页去向。
+
+注意：它只能证明页面有去向，不能证明页面内部所有功能均被保留。
+
+### [`reference/history-and-review-evidence.md`](./reference/history-and-review-evidence.md)
+
+记录旧重构 T01–T05 / R01–R05 的关键结论、修复原因、构建和浏览器证据。
+
+### [`reference/source-index.md`](./reference/source-index.md)
+
+Google Drive、旧 GitHub、产品访谈、正式评审、实现 HEAD、CI 等来源索引。
+
+### [`reference/com-design-baseline.md`](./reference/com-design-baseline.md)
+
+Com Design Core 的组件、token、视觉规则、触摸目标和已知 reduced-motion CSS 问题。
+
+---
+
+## 6. 当前两端事实边界
+
+### Mobile
+
+手机端当前已经迁入主要业务原型，包括：
+
+- 公共平台；
+- 赛事生命周期；
+- 创赛工坊；
+- 长期资产；
+- 课程 / 权益；
+- 机会 / 企业 / 投递；
+- 支撑页面；
+- explicit 404。
+
+剩余功能完整性问题以 `workbench/00-work-ledger.md` 和 legacy audit 为准。
+
+### PC / Responsive Registration Portal
+
+PC 端当前已有三创赛响应式报名门户：
+
+```text
+/registration-portal/*
+```
+
+它已经承担复杂报名流程，不应在手机端再造一套：
+
+- 队长 / 队员；
+- 账号注册；
+- 答题；
+- 团队与成员；
+- 审核；
+- 承诺书；
+- 报名完成；
+- 报告 / 证书等后续入口。
+
+当前最高优先事项不是重画 PC 报名，而是按 F00 把 mobile ↔ responsive portal 真正接通。
+
+---
+
+## 7. 决策冻结
+
+在明确产品决策前，不允许普通施工线程自行恢复：
+
+- D03 全局任务体系；
+- D08 主体管理；
+- 学力值积分经济 vs 成长分；
+- 第三方业务平台账号语义；
+- 创域 / 本地运营 / 扫码体系；
+- AI 人才评分 / 能力雷达等不可解释能力。
+
+详见工作台账 F04 与 product backlog。
+
+---
+
+## 8. 最终验收不能只数路由
+
+后续总验收至少同时包括：
+
+1. route audit；
+2. TypeScript + Vite build；
+3. 五条母动线真实浏览器回归；
+4. mobile → 响应式报名 → mobile 状态回流；
+5. pending / rejected / ended / revoked / permissionDenied；
+6. Google Drive 140 页原型高风险页面 feature-level spot check；
+7. P0 / P1 缺口逐项有明确状态；
+8. 未决业务有决策或保持冻结；
+9. 无 duplicate session / identities / lifecycle / applications 真相源。
+
+**“66/66 routes”只能说明门都存在；最终还要检查屋里的东西有没有丢。**
