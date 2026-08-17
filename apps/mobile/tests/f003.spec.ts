@@ -23,7 +23,7 @@ test("F003 resume keeps structured education and opportunity returnTo", async ({
   await expect(page.getByRole("button", { name: "返回机会继续投递" })).toBeVisible();
 });
 
-test("F003 competition-period team change submits for review without mutating members", async ({ page }) => {
+test("F003 competition-period team change persists pending without mutating members", async ({ page }) => {
   await page.goto("/competitions/sanchuang-16/workspace/team");
   await page.getByLabel("涉及成员").selectOption({ label: "陈语 · 内容运营" });
   await page.getByLabel("申请原因").fill("成员实习时间冲突，申请按赛事规则办理减员。");
@@ -35,6 +35,14 @@ test("F003 competition-period team change submits for review without mutating me
   await page.getByRole("button", { name: "提交团队变更申请" }).click();
   await expect(page.getByText("待老师 / 运营审核", { exact: true })).toBeVisible();
   await expect(page.getByText(/审核通过前不会直接改动团队成员/)).toBeVisible();
+  await expect(page.getByText("陈语", { exact: true }).first()).toBeVisible();
+
+  await page.getByRole("button", { name: "返回" }).click();
+  await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /山城新零售队/ }).click();
+  await expect(page.getByRole("heading", { name: "我的团队", exact: true })).toBeVisible();
+  await expect(page.getByText("待老师 / 运营审核", { exact: true })).toBeVisible();
+  await expect(page.getByText(/涉及成员：陈语/)).toBeVisible();
   await expect(page.getByText("陈语", { exact: true }).first()).toBeVisible();
 });
 
@@ -49,8 +57,9 @@ test("F003 resource local save creates a browser download", async ({ page }) => 
 
 test("F003 external content support and course sharing expose real handoffs", async ({ page }) => {
   await page.goto("/stories/wechat-story");
-  const readMore = page.getByRole("link", { name: "阅读全文（公众号原文）" });
-  await expect(readMore).toHaveAttribute("href", "https://mp.weixin.qq.com/");
+  const publicAccountEntry = page.getByRole("link", { name: "打开公众号入口" });
+  await expect(publicAccountEntry).toHaveAttribute("href", "https://mp.weixin.qq.com/");
+  await expect(page.getByText(/具体文章原文链接待运营内容配置/)).toBeVisible();
 
   await page.goto("/support/chat");
   await page.getByRole("button", { name: "请求人工客服" }).click();

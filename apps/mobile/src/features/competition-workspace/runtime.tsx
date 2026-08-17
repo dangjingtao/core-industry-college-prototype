@@ -12,12 +12,25 @@ export type CompetitionWorkshopRuntime = {
   acceptedResultIds: string[];
 };
 
+export type TeamChangeRequest = {
+  competitionId: string;
+  type: "reduction" | "change";
+  memberName: string;
+  reason: string;
+  materialName: string;
+  status: "pending";
+  submittedAt: string;
+};
+
 type RuntimeStore = Record<string, CompetitionWorkshopRuntime>;
+type TeamChangeRequestStore = Record<string, TeamChangeRequest>;
 
 type WorkshopRuntimeContextValue = {
   identityFor: (competitionId: string) => CompetitionIdentityState | undefined;
   setIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
   getRuntime: (competitionId: string) => CompetitionWorkshopRuntime;
+  teamChangeRequestFor: (competitionId: string) => TeamChangeRequest | undefined;
+  submitTeamChangeRequest: (request: Omit<TeamChangeRequest, "status" | "submittedAt">) => void;
   setLifecycle: (competitionId: string, lifecycle: WorkshopLifecycle) => void;
   setPermissionDenied: (competitionId: string, denied: boolean) => void;
   setMaterial: (competitionId: string, material: MaterialKey, available: boolean) => void;
@@ -93,11 +106,21 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
     "sanchuang-16": makeActiveRuntime(),
     "sanchuang-15": makeEndedRuntime(),
   }));
+  const [teamChangeRequests, setTeamChangeRequests] = useState<TeamChangeRequestStore>({});
 
   const value = useMemo<WorkshopRuntimeContextValue>(() => ({
     identityFor: competitionId => session.loggedIn ? identities.find(identity => identity.competitionId === competitionId) : undefined,
     setIdentityScenario: (competitionId, scenario) => setCompetitionIdentityScenario(competitionId, scenario),
     getRuntime: competitionId => store[competitionId] ?? initialRuntime(competitionId),
+    teamChangeRequestFor: competitionId => teamChangeRequests[competitionId],
+    submitTeamChangeRequest: request => setTeamChangeRequests(current => ({
+      ...current,
+      [request.competitionId]: {
+        ...request,
+        status: "pending",
+        submittedAt: new Date().toISOString(),
+      },
+    })),
     setLifecycle: (competitionId, lifecycle) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, lifecycle }))),
     setPermissionDenied: (competitionId, permissionDenied) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, permissionDenied }))),
     setMaterial: (competitionId, material, available) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, materials: { ...runtime.materials, [material]: available } }))),
@@ -133,8 +156,16 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
       ...runtime,
       acceptedResultIds: runtime.acceptedResultIds.includes(resultId) ? runtime.acceptedResultIds : [...runtime.acceptedResultIds, resultId],
     }))),
-    resetCompetition: competitionId => setStore(current => ({ ...current, [competitionId]: initialRuntime(competitionId) })),
-  }), [session.loggedIn, identities, setCompetitionIdentityScenario, store]);
+    resetCompetition: competitionId => {
+      setStore(current => ({ ...current, [competitionId]: initialRuntime(competitionId) }));
+      setTeamChangeRequests(current => {
+        if (!current[competitionId]) return current;
+        const next = { ...current };
+        delete next[competitionId];
+        return next;
+      });
+    },
+  }), [session.loggedIn, identities, setCompetitionIdentityScenario, store, teamChangeRequests]);
 
   return <WorkshopRuntimeContext.Provider value={value}>{children}</WorkshopRuntimeContext.Provider>;
 }
