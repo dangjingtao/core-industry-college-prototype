@@ -30,6 +30,7 @@ export function CourseDetailPage() {
   const { courseId } = useParams();
   const course = courseById(courseId);
   const { learningFor, startCourse, benefitStatusFor } = useLongTermAssets();
+  const [shareStatus, setShareStatus] = useState("");
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
   const record = learningFor(course.id);
   const unlocked = course.entitlement === "free" || !course.unlockBenefitId || (loggedIn && ["claimed","used"].includes(benefitStatusFor(course.unlockBenefitId)));
@@ -43,7 +44,25 @@ export function CourseDetailPage() {
       navigate(`/courses/${course.id}/learn`);
     });
   };
-  return <PublicShell showNavigation={false}><PageHeader title="课程详情" backTo="/courses" /><div className="space-y-6 px-4 py-5"><SourceLine source={course.source} /><div><h1 className="text-2xl font-semibold leading-8 text-text-primary">{course.title}</h1><p className="mt-3 text-sm leading-6 text-text-secondary">{course.summary}</p></div>{loggedIn ? <Card><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">当前学习状态</span><StatusTag tone={record.status === "completed" ? "success" : record.status === "inProgress" ? "info" : "neutral"}>{statusLabel(record.status)}</StatusTag></div><div className="mt-3"><ProgressBar value={record.progress} /></div><p className="mt-2 text-xs text-text-secondary">进度 {record.progress}% · {course.duration}</p></Card> : <Card><p className="text-sm text-text-secondary">课程目录可公开浏览；登录后读取学习进度、考试和证书状态。</p></Card>}
+  const shareCourse = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: course.title, text: course.summary, url: window.location.href });
+        setShareStatus("已调起系统分享，可选择微信或其它应用。");
+        return;
+      }
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareStatus("课程链接已复制，可直接发送给同学。");
+        return;
+      }
+      setShareStatus("当前浏览器不支持系统分享，请复制地址栏链接。");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      setShareStatus("分享未完成，可复制当前页面链接继续分享。");
+    }
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="课程详情" backTo="/courses" /><div className="space-y-6 px-4 py-5"><SourceLine source={course.source} /><div><div className="flex items-start justify-between gap-3"><h1 className="text-2xl font-semibold leading-8 text-text-primary">{course.title}</h1><GhostButton onClick={shareCourse}>分享</GhostButton></div><p className="mt-3 text-sm leading-6 text-text-secondary">{course.summary}</p></div>{shareStatus && <Card className="border border-info bg-info-bg"><p className="text-sm text-info-text">{shareStatus}</p></Card>}{loggedIn ? <Card><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">当前学习状态</span><StatusTag tone={record.status === "completed" ? "success" : record.status === "inProgress" ? "info" : "neutral"}>{statusLabel(record.status)}</StatusTag></div><div className="mt-3"><ProgressBar value={record.progress} /></div><p className="mt-2 text-xs text-text-secondary">进度 {record.progress}% · {course.duration}</p></Card> : <Card><p className="text-sm text-text-secondary">课程目录可公开浏览；登录后读取学习进度、考试和证书状态。</p></Card>}
     <Section title="课程目录"><Card>{course.lessons.map((lesson, index) => <div key={lesson} className="flex min-h-touch items-center gap-3 border-b border-border-subtle last:border-0"><span className="text-xs text-text-tertiary">{String(index + 1).padStart(2,"0")}</span><span className="text-sm text-text-primary">{lesson}</span></div>)}</Card></Section>
     {!unlocked ? <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">需要账号权益解锁</p><p className="mt-2 text-sm leading-5 text-warning-text">旧原型“需兑换课程”在详情页内完成资格说明，不另造商城。</p>{loggedIn ? <SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/benefits/${course.unlockBenefitId}`)}>查看对应权益</SecondaryButton> : <Button className="mt-4 w-full" onClick={() => accountAction(() => undefined)}>登录后查看资格</Button>}</Card> : <Button className="w-full" onClick={begin}>{!loggedIn ? "登录后开始学习" : record.status === "notStarted" ? "开始学习" : record.status === "completed" ? "查看学习成果" : "继续学习"}</Button>}
   </div></PublicShell>;

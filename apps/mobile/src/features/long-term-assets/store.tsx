@@ -17,10 +17,19 @@ export type LearningRecord = {
   assessment: "idle" | "passed" | "failed";
 };
 
+export type ResumeEducationDetails = {
+  graduationTime: string;
+  startDate: string;
+  endDate: string;
+  majorCourses: string;
+  campusExperience: string;
+};
+
 export type ResumePresentation = {
   selectedFactKeys: string[];
   strengths: string;
   education: string;
+  educationDetails: ResumeEducationDetails;
   updatedAt: string;
 };
 
@@ -47,6 +56,7 @@ type LongTermAssetsContextValue = {
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
+  updateEducationDetails: (patch: Partial<ResumeEducationDetails>) => void;
   updateProfile: (patch: Partial<StudentProfile>, source?: ProfileSource) => void;
   mergeProfileFromSource: (patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode?: "fill-empty" | "replace") => void;
 };
@@ -61,6 +71,13 @@ const seedResume: ResumePresentation = {
   selectedFactKeys: ["experience:sanchuang-15", "certificate:cert-sanchuang-15", "learning:data-analytics"],
   strengths: "有真实赛事项目协作、内容运营和数据复盘经历，习惯把结论落到可验证的行动。",
   education: "华南商贸学院 · 电子商务 · 本科",
+  educationDetails: {
+    graduationTime: "2026-06",
+    startDate: "2022-09",
+    endDate: "2026-06",
+    majorCourses: "消费者行为学、电子商务运营、数据分析、供应链管理",
+    campusExperience: "参与校级创新创业项目与赛事团队，负责内容运营、用户调研和阶段复盘。",
+  },
   updatedAt: "2026-08-17",
 };
 
@@ -190,6 +207,10 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     updateEducation: education => {
       if (!session.loggedIn) return;
       setResume(current => ({ ...current, education, updatedAt: "2026-08-17" }));
+    },
+    updateEducationDetails: patch => {
+      if (!session.loggedIn) return;
+      setResume(current => ({ ...current, educationDetails: { ...current.educationDetails, ...patch }, updatedAt: "2026-08-17" }));
     },
     updateProfile,
     mergeProfileFromSource,
