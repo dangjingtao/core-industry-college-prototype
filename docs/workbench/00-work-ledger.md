@@ -40,7 +40,7 @@
 | F00 | 手机端接入现有响应式报名门户 | 施工 | 待评审 | 无 |
 | F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待评审 | F00 协议边界明确后可施工 |
 | F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待评审 | 可与 F01 并行 |
-| F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待执行 | F01 部分数据模型 |
+| F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待评审 | F01 部分数据模型 |
 | F04 | 学力值 / 第三方账号 / 任务 / 主体 / 创域等 | 产品决策 | 待决策 | 可并行讨论，不允许施工线程自行拍板 |
 
 推荐主顺序：
@@ -325,7 +325,7 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
 # F03｜账号 / 简历 / 团队 / 外部 handoff 补齐
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P1 / P2**
 
 这张卡只补业务已经清楚的小功能，不在此卡解决 F04 未决模型。
@@ -386,6 +386,30 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 - 人工客服：明确最终渠道（如企微二维码 / 联系人，按当前业务为准）；
 - 课程详情：分享入口；
 - 证书 / 成绩的保存、下载若已在 F02 完成则不重复实现。
+
+## 施工记录
+
+- 正式施工基线：F01 合入后的 `0994f12faf0f11eb7b00220b777b0efaa015b7fc`；施工分支：`workbench/f003`；并行期间 F00 / F02 继续推进，合并前确认 F003 实现文件没有被并行线程覆盖；
+- 实际修改范围：
+  - `apps/mobile/src/features/long-term-assets/store.tsx`
+  - `apps/mobile/src/features/long-term-assets/ResumePages.tsx`
+  - `apps/mobile/src/features/long-term-assets/AssetsPages.tsx`
+  - `apps/mobile/src/features/competition-workspace/WorkspacePages.tsx`
+  - `apps/mobile/src/features/platform-support/SupportPages.tsx`
+  - `apps/mobile/src/features/long-term-assets/CoursesPages.tsx`
+  - `apps/mobile/tests/f003.spec.ts`
+  - `docs/workbench/F003-implementation-record.md`
+- 退出登录：`/me` 增加二次确认，只调用既有 `continueAsGuest()` 清 session 并返回公共首页，不清长期资产；
+- 长期简历：手机号 / 学校 / 专业 / 学历直接复用 F01 `StudentProfile`，只在 resume presentation 新增毕业时间、时间段、主修课程、在校经历；可信事实继续只读，`returnTo` 保持回原机会；
+- 团队维护：赛事 `inProgress` 时可提交减员 / 成员变更、原因与材料，提交后进入待老师 / 运营审核；审核前不直接修改团队成员事实；报名期复杂成员表单仍留在响应式报名门户；
+- 外部 handoff：赛事资料支持真实浏览器下载、系统分享 / 复制链接降级；公众号来源内容增加“阅读全文”外跳；人工客服明确企业微信福利官为最终渠道但不伪造联系人 / 二维码；课程详情增加系统分享 / 复制链接降级；证书 / 成绩下载沿用 F02，不重复施工；
+- 未处理 F04 的学力值、第三方业务账号、D03 任务、D08 主体、创域 / 扫码、AI 简历与人才评分决策；
+- PR：`#1`；合并提交：`677878362658359cbf740c9a1021fcfcf1cbe591`；
+- Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32014523170`，`Type-check and build mobile preview` 与 `Deploy mobile` 均为 `success`；
+- 浏览器专项回归已新增 `apps/mobile/tests/f003.spec.ts`，覆盖退出、结构化教育经历 + `returnTo`、赛事期团队变更申请、资料下载、公众号 / 企微 / 课程分享 handoff；当前部署 workflow 不执行 Playwright，因此“测试已写”不作为 browser PASS；
+- 详细施工与验收边界：`docs/workbench/F003-implementation-record.md`；
+- 评审提交 SHA：待独立评审；
+- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
 
 ---
 
