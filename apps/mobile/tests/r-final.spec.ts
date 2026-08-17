@@ -4,7 +4,7 @@ test("R-Final revoked competition keeps long-term asset handoff", async ({ page 
   await page.goto("/competitions/sanchuang-16");
   await page.getByText("T03 生命周期状态", { exact: true }).click();
   await page.getByRole("button", { name: "revoked", exact: true }).click();
-  await page.goto("/competitions/sanchuang-16/workspace");
+  await page.getByRole("button", { name: "查看赛后出口" }).click();
   await expect(page.getByText("赛事期权限已回收", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "查看参赛经历" })).toBeVisible();
   await expect(page.getByRole("button", { name: "查看成绩与证书" })).toBeVisible();
