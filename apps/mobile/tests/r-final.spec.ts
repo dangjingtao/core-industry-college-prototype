@@ -46,3 +46,18 @@ test("R-Final D08 remains explicitly blocked instead of inventing subject manage
   await expect(page.getByText("待产品决策 · D08", { exact: true })).toBeVisible();
   await expect(page.getByText("暂不实现产品交互", { exact: true })).toBeVisible();
 });
+
+test("R-Final GrowthScore no longer reuses learning-point semantics", async ({ page }) => {
+  await page.goto("/growth/score");
+  await expect(page.getByRole("heading", { name: "成长概览", exact: true })).toBeVisible();
+  await expect(page.getByText("学力值")).toHaveCount(0);
+});
+
+test("R-Final account bindings no longer masquerade as third-party business accounts", async ({ page }) => {
+  await page.goto("/me/accounts");
+  await expect(page.getByRole("heading", { name: "账号绑定", exact: true })).toBeVisible();
+  await expect(page.getByText("第三方账号")).toHaveCount(0);
+  for (const label of ["邮箱", "企业微信", "微信"]) {
+    await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
+  }
+});
