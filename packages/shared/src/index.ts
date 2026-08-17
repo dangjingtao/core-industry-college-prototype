@@ -7,3 +7,4 @@ export const clientLabels: Record<ClientKind, string> = {
   mobile: "手机端",
 };
 
+export * from "./registration-handoff";

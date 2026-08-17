@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_PLATFORM: "mobile";
   readonly VITE_APP_ENV: "development" | "production";
   readonly VITE_PUBLIC_SITE_URL: string;
+  readonly VITE_REGISTRATION_PORTAL_URL: string;
   readonly VITE_API_BASE_URL: string;
 }
 

@@ -12,17 +12,47 @@ test("A guest can browse public competition and login back into registration", a
   await expect(page.getByRole("heading", { name: "赛事报名", exact: true })).toBeVisible();
 });
 
-test("B registration returns pending, approval, workspace and competition-scoped benefits", async ({ page }) => {
+test("B registration handoff carries context and callbacks share one competition identity", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: /原型账号：多赛事身份/ }).click();
   await expect(page.getByRole("button", { name: /原型账号：无赛事身份/ })).toBeVisible();
   await page.getByRole("button", { name: "发现比赛" }).click();
   await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
   await page.getByRole("button", { name: "进入报名" }).click();
-  await page.getByRole("button", { name: "进入响应式报名（模拟）" }).click();
-  await page.getByRole("button", { name: "模拟提交并回流 App" }).click();
+
+  const portalButton = page.getByRole("button", { name: "打开响应式报名门户" });
+  await expect(portalButton).toBeVisible();
+  const portalUrlValue = await portalButton.getAttribute("data-portal-url");
+  expect(portalUrlValue).toBeTruthy();
+  const portalUrl = new URL(portalUrlValue!);
+  expect(portalUrl.pathname).toBe("/registration-portal/start");
+  expect(portalUrl.searchParams.get("competitionId")).toBe("sanchuang-16");
+  expect(portalUrl.searchParams.get("source")).toBe("mobile-app");
+  expect(portalUrl.searchParams.get("accountContext")).toBe("current-student-prototype-session");
+  const returnTo = new URL(portalUrl.searchParams.get("returnTo")!);
+  expect(returnTo.pathname).toBe("/competitions/sanchuang-16/registration");
+
+  const callback = async (status: "pending" | "rejected" | "approved") => {
+    await page.evaluate(({ status }) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("handoff", "registration-portal");
+      url.searchParams.set("registrationCompetitionId", "sanchuang-16");
+      url.searchParams.set("registrationStatus", status);
+      url.searchParams.set("registrationSource", "pc-registration-portal");
+      window.history.pushState({}, "", `${url.pathname}${url.search}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }, { status });
+  };
+
+  await callback("pending");
   await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "模拟审核通过" }).click();
+  await callback("rejected");
+  await expect(page.getByText("报名审核未通过", { exact: true })).toBeVisible();
+  await callback("pending");
+  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await callback("approved");
+  await expect(page.getByText("审核通过，已获得赛事身份", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入赛事工作区" }).click();
   await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
   await expect(page.getByText("身份：active · 团队：山城新零售队", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /赛事权益/ }).click();

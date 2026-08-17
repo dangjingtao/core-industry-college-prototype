@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { RegistrationCallbackStatus } from "@core/shared";
 
 export type RegistrationRole = "leader" | "member";
 export type ReviewStatus = "draft" | "pending" | "rejected" | "approved" | "completed" | "closed";
@@ -77,6 +78,8 @@ type RegistrationPortalContextValue = RegistrationPortalState & {
   loadScenario: (scenario: "leaderDraft" | "memberWaiting" | "pending" | "rejected" | "approved" | "completed" | "closed") => void;
 };
 
+const callbackStatusStorageKey = "core.registration-portal.callback-status";
+
 const seedAccount: AccountDraft = {
   school: "广东技术师范大学",
   track: "美妆新零售实战赛",
@@ -132,10 +135,37 @@ function initialState(): RegistrationPortalState {
   };
 }
 
+function callbackStatusFromState(state: RegistrationPortalState): RegistrationCallbackStatus {
+  if (state.reviewStatus === "pending") return "pending";
+  if (state.reviewStatus === "rejected") return "rejected";
+  if (state.reviewStatus === "approved" || state.reviewStatus === "completed") return "approved";
+  if (state.role === "member" && state.quizPassed) return "pending";
+  return "draft";
+}
+
+export function readRegistrationPortalCallbackStatus(): RegistrationCallbackStatus {
+  if (typeof window === "undefined") return "draft";
+  try {
+    const value = window.sessionStorage.getItem(callbackStatusStorageKey);
+    if (value === "draft" || value === "pending" || value === "rejected" || value === "approved") return value;
+  } catch {
+    // Session storage is an optional prototype bridge only.
+  }
+  return "draft";
+}
+
 const RegistrationPortalContext = createContext<RegistrationPortalContextValue | null>(null);
 
 export function RegistrationPortalProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RegistrationPortalState>(() => initialState());
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(callbackStatusStorageKey, callbackStatusFromState(state));
+    } catch {
+      // Keep the standalone portal usable even when storage is unavailable.
+    }
+  }, [state]);
 
   const value = useMemo<RegistrationPortalContextValue>(() => ({
     ...state,

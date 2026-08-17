@@ -18,8 +18,8 @@ import {
   CompetitionTeamPage,
   CompetitionWorkspacePage,
   MyCompetitionsLifecyclePage,
-  RegistrationLifecyclePage,
 } from "../features/competition-workspace/WorkspacePages";
+import { RegistrationHandoffPage } from "../features/competition-workspace/RegistrationHandoffPage";
 import {
   WorkshopComputePage,
   WorkshopHomePage,
@@ -91,7 +91,7 @@ export function App() {
               <Route path="/competitions" element={<CompetitionsPage />} />
               <Route path="/competitions/mine" element={<MyCompetitionsLifecyclePage />} />
               <Route path="/competitions/:competitionId" element={<CompetitionLifecycleDetailPage />} />
-              <Route path="/competitions/:competitionId/registration" element={<RegistrationLifecyclePage />} />
+              <Route path="/competitions/:competitionId/registration" element={<RegistrationHandoffPage />} />
               <Route path="/competitions/:competitionId/workspace" element={<CompetitionWorkspacePage />} />
               <Route path="/competitions/:competitionId/workspace/team" element={<CompetitionTeamPage />} />
               <Route path="/competitions/:competitionId/workspace/resources" element={<CompetitionResourcesPage />} />

@@ -54,3 +54,31 @@ test("standalone registration portal keeps member branch usable on mobile", asyn
   await expect(page.getByText("注册成功，请等待队长绑定团队信息", { exact: true })).toBeVisible();
   await expect(page.getByText(/队长可通过你注册使用的邮箱/)).toBeVisible();
 });
+
+test("mobile handoff keeps competition context and returns portal status", async ({ page }) => {
+  const returnTo = "https://mobile.example.test/competitions/sanchuang-16/registration";
+  const query = new URLSearchParams({
+    competitionId: "sanchuang-16",
+    returnTo,
+    source: "mobile-app",
+    accountContext: "current-student-prototype-session",
+  });
+  await page.goto(`/registration-portal/start?${query.toString()}`);
+  await expect(page.getByRole("button", { name: "返回 App / 赛事" })).toBeVisible();
+
+  await page.getByRole("button", { name: /我是队员/ }).click();
+  await page.getByRole("button", { name: "注册并进入答题" }).click();
+  await page.getByRole("button", { name: /B\. 等待审核结果/ }).click();
+  await page.getByRole("button", { name: "提交答题" }).click();
+  await expect(page.getByText("注册成功，请等待队长绑定团队信息", { exact: true })).toBeVisible();
+
+  await page.route("https://mobile.example.test/**", route => route.abort());
+  const callbackRequest = page.waitForRequest(request => request.url().startsWith(returnTo));
+  await page.getByRole("button", { name: "返回 App / 赛事" }).click();
+  const request = await callbackRequest;
+  const callbackUrl = new URL(request.url());
+  expect(callbackUrl.searchParams.get("handoff")).toBe("registration-portal");
+  expect(callbackUrl.searchParams.get("registrationCompetitionId")).toBe("sanchuang-16");
+  expect(callbackUrl.searchParams.get("registrationStatus")).toBe("pending");
+  expect(callbackUrl.searchParams.get("registrationSource")).toBe("pc-registration-portal");
+});
