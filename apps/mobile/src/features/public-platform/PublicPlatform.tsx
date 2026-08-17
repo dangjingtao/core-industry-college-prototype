@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Carousel } from "../../components/Carousel";
+import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { scenarios } from "../../mock/scenarios";
 import type { CompetitionIdentityState } from "../../state/model";
@@ -101,7 +103,7 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
   const setApplicationStatus = useCallback((opportunityId: string, status: ApplicationRecord["status"]) => setApplications(records => records.map(record => record.opportunityId === opportunityId ? { ...record, status } : record)), []);
   const toggleFollow = useCallback((companyId: string) => setFollowedCompanies(ids => ids.includes(companyId) ? ids.filter(id => id !== companyId) : [...ids, companyId]), []);
   const updateListView = useCallback((patch: Partial<ListViewState>) => setListView(current => ({ ...current, ...patch })), []);
-  const setListScroll = useCallback((key: ListKey, value: number) => setListScrollState(current => ({ ...current, [key]: value })), []);
+  const setListScroll = useCallback((key: ListKey, value: number) => setListScrollState(current => current[key] === value ? current : { ...current, [key]: value }), []);
 
   const guardedSubmitApplication = useCallback((opportunityId: string) => { if (session.loggedIn) submitApplication(opportunityId); }, [session.loggedIn, submitApplication]);
   const guardedToggleFollow = useCallback((companyId: string) => { if (session.loggedIn) toggleFollow(companyId); }, [session.loggedIn, toggleFollow]);
@@ -135,10 +137,11 @@ function usePrototypeView() {
 
 function useListScroll(key: ListKey) {
   const { listScroll, setListScroll } = usePublicPlatform();
+  const savedScroll = listScroll[key];
   useEffect(() => {
-    const frame = requestAnimationFrame(() => window.scrollTo({ top: listScroll[key], behavior: "auto" }));
+    const frame = requestAnimationFrame(() => window.scrollTo({ top: savedScroll, behavior: "auto" }));
     return () => { cancelAnimationFrame(frame); setListScroll(key, window.scrollY); };
-  }, [key, listScroll, setListScroll]);
+  }, [key, savedScroll, setListScroll]);
 }
 
 function useGuest() {
@@ -155,6 +158,42 @@ function CompetitionCard({ item }: { item: Competition }) {
 function OpportunityCard({ item }: { item: Opportunity }) {
   const company = companyById(item.companyId);
   return <Link to={`/opportunities/${item.id}`} className="block"><Card interactive className="space-y-3"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-semibold text-text-primary">{item.title}</h3><p className="mt-1 text-sm text-text-secondary">{company?.name} · {item.city}</p></div><StatusTag tone={item.status === "open" ? "success" : "neutral"}>{item.status === "open" ? item.mode : "已结束"}</StatusTag></div><p className="line-clamp-2 text-sm leading-5 text-text-secondary">{item.summary}</p><div className="flex flex-wrap gap-2">{item.skills.map(skill => <StatusTag key={skill} tone="neutral">{skill}</StatusTag>)}</div></Card></Link>;
+}
+
+const competitionBannerStyles = [
+  "from-[#5B5EF7] to-[#7B7EF8]",
+  "from-[#147A4C] to-[#21B66F]",
+  "from-[#9A6110] to-[#F3A21B]",
+];
+
+function CompetitionCarousel() {
+  const featured = competitions.filter(item => item.status !== "ended").slice(0, 3);
+  return <Carousel size="sm" ariaLabel="精选赛事" autoPlay interval={5000} items={featured.map((item, index) => {
+    const [statusLabel] = competitionStatus(item);
+    return {
+      id: item.id,
+      ariaLabel: `${item.name}，${statusLabel}`,
+      content: <Link to={`/competitions/${item.id}`} aria-label={`查看第 ${index + 1} 个精选赛事`} className={`flex h-full flex-col justify-between bg-gradient-to-br p-4 pr-12 text-on-primary ${competitionBannerStyles[index % competitionBannerStyles.length]}`}><span className="text-xs font-medium opacity-85">精选赛事 · {statusLabel}</span><span><strong className="line-clamp-2 block text-base font-semibold leading-6">{item.name}</strong><span className="mt-1 block truncate text-xs opacity-80">{item.organizer}</span></span></Link>,
+    };
+  })} />;
+}
+
+const opportunityBannerStyles = [
+  "from-[#2879D0] to-[#5AA6E8]",
+  "from-[#6F4BC2] to-[#9A7DDB]",
+  "from-[#147A4C] to-[#36A573]",
+];
+
+function OpportunityCarousel() {
+  const featured = opportunities.filter(item => item.status === "open").slice(0, 3);
+  return <Carousel size="sm" ariaLabel="精选机会" autoPlay interval={5000} items={featured.map((item, index) => {
+    const company = companyById(item.companyId);
+    return {
+      id: item.id,
+      ariaLabel: `${item.title}，${company?.name ?? "合作企业"}`,
+      content: <Link to={`/opportunities/${item.id}`} aria-label={`查看第 ${index + 1} 个精选机会`} className={`flex h-full flex-col justify-between bg-gradient-to-br p-4 pr-12 text-on-primary ${opportunityBannerStyles[index % opportunityBannerStyles.length]}`}><span className="text-xs font-medium opacity-85">{item.mode} · {item.city}</span><span><strong className="line-clamp-2 block text-base font-semibold leading-6">{item.title}</strong><span className="mt-1 block truncate text-xs opacity-80">{company?.name}</span></span></Link>,
+    };
+  })} />;
 }
 
 function ViewGate({ children }: { children: ReactNode }) {
@@ -287,7 +326,7 @@ export function CompetitionsPage() {
   const { listView, updateListView } = usePublicPlatform();
   const view = usePrototypeView();
   const filtered = useMemo(() => competitions.filter(item => (listView.competitionStatus === "all" || item.status === listView.competitionStatus) && `${item.name}${item.organizer}${item.tags.join("")}`.toLowerCase().includes(listView.competitionKeyword.toLowerCase())), [listView.competitionKeyword, listView.competitionStatus]);
-  return <PublicShell><PageHeader title="赛事" subtitle="公开赛事发现，不要求先拥有赛事身份" /><div className="space-y-6 px-4 py-5"><div className="space-y-3"><input value={listView.competitionKeyword} onChange={event => updateListView({ competitionKeyword: event.target.value })} placeholder="搜索赛事名称、主办方或关键词" className="min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-primary" /><div className="flex gap-2 overflow-x-auto">{[["all","全部"],["registrationOpen","报名中"],["inProgress","进行中"],["upcoming","即将开放"],["ended","已结束"]].map(([value,label]) => <button key={value} onClick={() => updateListView({ competitionStatus: value })} className={`min-h-touch shrink-0 rounded-control px-3 text-sm font-medium ${listView.competitionStatus === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{label}</button>)}</div></div>{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <CompetitionCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
+  return <PublicShell><PageHeader title="赛事" subtitle="公开赛事发现，不要求先拥有赛事身份" /><div className="space-y-6 px-4 py-5"><CompetitionCarousel /><MobileFilter query={listView.competitionKeyword} onQueryChange={competitionKeyword => updateListView({ competitionKeyword })} searchPlaceholder="搜索赛事名称、主办方或关键词" options={[{ value: "all", label: "全部" }, { value: "registrationOpen", label: "报名中" }, { value: "inProgress", label: "进行中" }, { value: "upcoming", label: "即将开放" }, { value: "ended", label: "已结束" }]} value={listView.competitionStatus} onValueChange={competitionStatus => updateListView({ competitionStatus })} defaultValue="all" filterAriaLabel="赛事筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="场赛事" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <CompetitionCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
 }
 
 export function OpportunitiesPage() {
@@ -295,7 +334,7 @@ export function OpportunitiesPage() {
   const { listView, updateListView } = usePublicPlatform();
   const view = usePrototypeView();
   const filtered = useMemo(() => opportunities.filter(item => (listView.opportunityMode === "all" || item.mode === listView.opportunityMode) && `${item.title}${companyById(item.companyId)?.name}${item.city}`.toLowerCase().includes(listView.opportunityKeyword.toLowerCase())), [listView.opportunityKeyword, listView.opportunityMode]);
-  return <PublicShell><PageHeader title="机会" subtitle="实习、校招与企业项目实践" /><div className="space-y-5 px-4 py-5"><input value={listView.opportunityKeyword} onChange={event => updateListView({ opportunityKeyword: event.target.value })} placeholder="搜索岗位、企业或城市" className="min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm outline-none focus:border-primary" /><div className="flex gap-2 overflow-x-auto">{["all","实习","校招","项目实践"].map(value => <button key={value} onClick={() => updateListView({ opportunityMode: value })} className={`min-h-touch shrink-0 rounded-control px-3 text-sm font-medium ${listView.opportunityMode === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{value === "all" ? "全部" : value}</button>)}</div>{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <OpportunityCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}<Link to="/companies" className="block min-h-touch rounded-control bg-surface px-4 py-3 text-center text-sm font-medium text-text-brand">浏览合作企业</Link></div><PrototypeStateTools /></PublicShell>;
+  return <PublicShell><PageHeader title="机会" subtitle="实习、校招与企业项目实践" /><div className="space-y-5 px-4 py-5"><OpportunityCarousel /><MobileFilter query={listView.opportunityKeyword} onQueryChange={opportunityKeyword => updateListView({ opportunityKeyword })} searchPlaceholder="搜索岗位、企业或城市" options={[{ value: "all", label: "全部" }, { value: "实习", label: "实习" }, { value: "校招", label: "校招" }, { value: "项目实践", label: "项目实践" }]} value={listView.opportunityMode} onValueChange={opportunityMode => updateListView({ opportunityMode })} defaultValue="all" filterAriaLabel="机会筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="个机会" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <OpportunityCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}<Link to="/companies" className="block min-h-touch rounded-control bg-surface px-4 py-3 text-center text-sm font-medium text-text-brand">浏览合作企业</Link></div><PrototypeStateTools /></PublicShell>;
 }
 
 export function OpportunityDetailPage() {
