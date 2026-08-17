@@ -1,7 +1,7 @@
 # RF01｜R-Final 两处语义收口
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P0 / R-Final blocker**  
 **施工基线：`e9cb7643f730db2ece0ac225f5a3544af72bc1a4`**
 
@@ -122,3 +122,59 @@ npm run e2e --workspace @core/mobile -- tests/r-final.spec.ts
 
 状态只改到：**待评审**。  
 不要自行进入 RF02，不要自行宣布 R-Final PASS。
+
+---
+
+## 施工记录｜2026-08-17
+
+### 实际修改
+
+- `apps/mobile/src/features/platform-support/SupportPages.tsx`
+  - `/growth/score`：页面标题改为“成长概览”，汇总提示改为“成长记录汇总”；原 GrowthScore 计算逻辑保持不变。
+  - `/me/accounts`：页面标题改为“账号绑定”；Email / 企业微信 / 微信的绑定 / 解绑行为保持不变。
+- `apps/mobile/src/routes/registry.ts`
+  - `growth.score` purpose 改为“成长概览”；路由保持 `/growth/score`。
+  - `me.accounts` purpose 改为“账号绑定”；路由保持 `/me/accounts`。
+- `apps/mobile/tests/r-final.spec.ts`
+  - 新增 GrowthScore 页面不得出现“学力值”的 focused assertion。
+  - 新增账号绑定页面不得出现“第三方账号”，且邮箱 / 企业微信 / 微信仍可见的 focused assertion。
+
+### 验证证据
+
+实现提交 HEAD：`352a6ab90a3fb4687d7e8a6b893ea13336af9bc8`。
+
+GitHub Actions `R-Final Full Regression`：
+
+- run：`32024088172`
+- job：`95369672518`
+- conclusion：`success`
+
+关键结果：
+
+```text
+Mobile route audit: PASS
+Registry routes: 66
+App route declarations: 69
+Missing registry routes: 0
+RouteProbe in App: no
+Explicit 404 route: yes
+
+Mobile typecheck + production build: PASS
+Mobile browser regressions: 22 passed (9.6s)
+  - RF01 GrowthScore semantic assertion: PASS
+  - RF01 account binding semantic assertion: PASS
+
+Real Mobile -> PC -> Mobile handoff: 1 passed
+PC typecheck + production build: PASS
+PC browser regressions: 6 passed
+```
+
+### 边界声明
+
+- **未恢复积分经济**：未新增余额 / 流水、`LearningPointAccount`、旧兑换中心或课程积分兑换逻辑。
+- **未恢复旧业务渠道账号**：未新增抖音达人 / 快团团 / 三创好物或 `BusinessChannelAccount`。
+- 未修改 `/growth/score`、`/me/accounts` 路由。
+- 未扩张或删除现有 GrowthScore 计算逻辑。
+- 未进入 RF02，未宣布 R-Final PASS。
+
+**当前状态：待评审。**
