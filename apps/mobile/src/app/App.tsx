@@ -44,7 +44,8 @@ import {
   MyPage,
   ResultsPage,
 } from "../features/long-term-assets/AssetsPages";
-import { ProfilePage, ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
+import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
+import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import {
   CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
@@ -61,9 +62,6 @@ import {
   NotificationDetailPage,
   NotificationsPage,
   NotFoundPage,
-  OnboardingProfilePage,
-  OnboardingReadyPage,
-  OnboardingSurveyPage,
   StoriesPage,
   StoryDetailPage,
   StorySubmitPage,
