@@ -76,4 +76,14 @@ Vite 构建时会将该文件复制到 `dist`，用于 Cloudflare Pages 的客�
 - PC：<https://dev.core-industry-college-pc.pages.dev>
 - 手机：<https://dev.core-industry-college-mobile.pages.dev>
 
-当前采用 Wrangler Direct Upload，Git Provider 显示为 `No`。尚未配置 GitHub 自动构建或自定义域名；后续可以继续使用 Wrangler 手动部署，或另行配置 GitHub Actions。
+当前采用 Wrangler Direct Upload，Git Provider 显示为 `No`。持续部署由两个 GitHub Actions 工作流负责：
+
+- `.github/workflows/deploy-pc.yml`
+- `.github/workflows/deploy-mobile.yml`
+
+两个工作流监听 `dev` 与 `prod`：`prod` 部署生产环境，`dev` 部署预览环境。仓库 Actions Secrets 必须包含：
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+尚未配置自定义域名。
