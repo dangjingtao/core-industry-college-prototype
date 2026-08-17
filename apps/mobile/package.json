@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "verify": "npm run audit:routes && npm run typecheck && npm run build",
-    "verify:browser": "npm run verify && playwright test"
+    "verify:browser": "npm run verify && playwright test",
+    "verify:browser:handoff": "playwright test tests/registration-handoff-cross-app.spec.ts --config=playwright.handoff.config.ts"
   },
   "dependencies": {
     "@core/shared": "*",
