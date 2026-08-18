@@ -106,7 +106,7 @@ export function AdminControlPlaneShell({ children }: { children: ReactNode }) {
   const viewClass = adminViewClass(location.pathname);
   return <div className="min-h-screen bg-background text-text-primary">
     <style>{`
-      .pc05-tech-hidden .font-mono,.pc05-tech-hidden code{display:none!important}
+      .pc05-tech-hidden .font-mono,.pc05-tech-hidden code,.pc05-tech-hidden [data-pc05-technical]{display:none!important}
       .pc05-tech-hidden [aria-label="PC02 三层事实边界"]{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>div:first-child>p{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>span{display:none!important}
