@@ -15,14 +15,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: dev
 
-      - name: Patch ledger and stale PC01 copy
+      - name: Patch review findings
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+
+          basic = Path('apps/pc/src/admin/BasicDataConsole.tsx')
+          text = basic.read_text()
+          old = '''function SourceTag({ source }: { source: DataSource }) {
+            return <StatusTag tone={sourceMeta[source].tone}>{source}</StatusTag>;
+          }'''
+          new = '''function sourceBusinessLabel(source: DataSource) {
+            if (source === "Runtime") return "系统记录";
+            if (source === "API 同步") return "接口同步";
+            return source;
+          }
+
+          function SourceTag({ source }: { source: DataSource }) {
+            return <><span className="text-xs font-medium text-text-secondary">{sourceBusinessLabel(source)}</span><span data-pc05-technical className="ml-1"><StatusTag tone={sourceMeta[source].tone}>{source}</StatusTag></span></>;
+          }'''
+          if old not in text:
+              raise SystemExit('BasicData SourceTag anchor not found')
+          basic.write_text(text.replace(old, new, 1))
 
           pc01 = Path('apps/pc/src/admin/PC01OperationsConsole.tsx')
           text = pc01.read_text()
@@ -113,6 +129,7 @@ jobs:
           rm .github/workflows/pc-bd01-review-closure.yml
           git config user.name 'Mira PC-BD01'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add apps/pc/src/admin/PC01OperationsConsole.tsx docs/workbench/00-work-ledger.md docs/workbench/PC-BD01-review-closure-test.log .github/workflows/pc-bd01-review-closure.yml
+          git add apps/pc/src/admin/BasicDataConsole.tsx apps/pc/src/admin/PC01OperationsConsole.tsx docs/workbench/00-work-ledger.md docs/workbench/PC-BD01-review-closure-test.log .github/workflows/pc-bd01-review-closure.yml
           git commit -m 'fix(pc): close PC-BD01 independent review findings'
+          git pull --rebase origin dev
           git push origin HEAD:dev
