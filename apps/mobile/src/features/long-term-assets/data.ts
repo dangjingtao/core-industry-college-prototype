@@ -56,6 +56,20 @@ export type CompetitionResultRecord = {
   certificateId?: string;
 };
 
+export type EducationIdentityStatus = "notBound" | "claimable" | "claimed" | "revoked";
+
+export type EducationIdentityRecord = {
+  id: string;
+  name: string;
+  school: string;
+  major: string;
+  studentId: string;
+  verifiedBy: string;
+  verificationCode: string;
+  status: EducationIdentityStatus;
+  issuedAt?: string;
+};
+
 export const courses: Course[] = [
   {
     id: "data-analytics",
@@ -189,6 +203,17 @@ export const initialCompetitionResults: CompetitionResultRecord[] = [
     status: "pending",
   },
 ];
+
+export const initialEducationIdentity: EducationIdentityRecord = {
+  id: "edu-identity-001",
+  name: "陈同学",
+  school: "华南商贸学院",
+  major: "电子商务",
+  studentId: "2022010847",
+  verifiedBy: "学信网",
+  verificationCode: "CHSI-2022010847-26001",
+  status: "claimable",
+};
 
 export const courseById = (id?: string) => courses.find(item => item.id === id);
 export const benefitById = (id?: string) => benefits.find(item => item.id === id);

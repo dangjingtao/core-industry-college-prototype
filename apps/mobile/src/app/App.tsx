@@ -38,6 +38,7 @@ import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage } from "../features
 import {
   AssetsHomePage,
   CertificatesPage,
+  EducationIdentityPage,
   ExperienceDetailPage,
   ExperiencesPage,
   LearningAssetsPage,
@@ -131,6 +132,7 @@ export function App() {
               <Route path="/assets/results/:resultId" element={account(<ResultDetailTrustedPage />)} />
               <Route path="/assets/certificates" element={account(<CertificatesPage />)} />
               <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailTrustedPage />)} />
+              <Route path="/assets/education-identity" element={account(<EducationIdentityPage />)} />
               <Route path="/assets/verification" element={<VerificationTrustedPage />} />
               <Route path="/stories" element={<StoriesPage />} />
               <Route path="/stories/alumni" element={<AlumniListPage />} />

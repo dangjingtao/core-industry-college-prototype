@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Award, Bell, ChevronRight, FileText, Headphones, Info, Link2, ShieldCheck } from "lucide-react";
+import { Award, Bell, ChevronRight, Download, FileText, GraduationCap, Headphones, HelpCircle, Info, Link2, Save, ShieldCheck } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { workspaceData, resultById } from "../competition-workspace/data";
@@ -69,7 +69,8 @@ export function AssetsHomePage() {
       const sourceTitle = item.sourceType === "competition" ? competitionById(item.competitionId)?.name : courses.find(course => course.id === item.courseId)?.title;
       return <Link key={item.id} to={`/assets/certificates/${item.id}`} className="block"><Card interactive className="flex items-start gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-[#fff2e8] text-[#c45b1b]"><Award size={20} aria-hidden="true" /></span><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-text-primary">{item.title}</h3><StatusTag tone="info">可领取</StatusTag></div><p className="mt-1 text-xs text-text-secondary">{item.issuer}{sourceTitle ? ` · ${sourceTitle}` : ""}</p></div><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Card></Link>;
     })}</div></Section>}
-    <Section title="资产概览"><div className="grid grid-cols-2 gap-3"><Link to="/assets/experiences"><Card interactive><strong className="text-2xl text-text-primary">{experiences.length}</strong><p className="mt-1 text-sm text-text-secondary">赛事 / 项目经历</p></Card></Link><Link to="/assets/results"><Card interactive><strong className="text-2xl text-text-primary">{competitionResults.length}</strong><p className="mt-1 text-sm text-text-secondary">成绩 / 可信成果</p></Card></Link><Link to="/assets/learning"><Card interactive><strong className="text-2xl text-text-primary">{learning.filter(item => item.status !== "notStarted").length}</strong><p className="mt-1 text-sm text-text-secondary">学习成果</p></Card></Link><Link to="/assets/certificates"><Card interactive><strong className="text-2xl text-text-primary">{certificates.length}</strong><p className="mt-1 text-sm text-text-secondary">证书记录</p></Card></Link></div></Section><Section title="下一步"><Card><h2 className="font-semibold text-text-primary">把可信事实整理成自己的履历表达</h2><p className="mt-2 text-sm leading-5 text-text-secondary">系统事实保持只读；你可以选择哪些经历进入长期简历，并编辑面向岗位的表达。</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate("/me/resume")}>整理长期简历</SecondaryButton></Card></Section></div></PublicShell>;
+    <Section title="资产概览"><div className="grid grid-cols-2 gap-3"><Link to="/assets/experiences"><Card interactive><strong className="text-2xl text-text-primary">{experiences.length}</strong><p className="mt-1 text-sm text-text-secondary">赛事 / 项目经历</p></Card></Link><Link to="/assets/results"><Card interactive><strong className="text-2xl text-text-primary">{competitionResults.length}</strong><p className="mt-1 text-sm text-text-secondary">成绩 / 可信成果</p></Card></Link><Link to="/assets/learning"><Card interactive><strong className="text-2xl text-text-primary">{learning.filter(item => item.status !== "notStarted").length}</strong><p className="mt-1 text-sm text-text-secondary">学习成果</p></Card></Link><Link to="/assets/certificates"><Card interactive><strong className="text-2xl text-text-primary">{certificates.length}</strong><p className="mt-1 text-sm text-text-secondary">证书记录</p></Card></Link></div></Section><Section title="可信空间服务"><div className="grid grid-cols-3 gap-3"><Link to="/assets/education-identity" className="block"><Card interactive className="flex min-h-[92px] flex-col items-center justify-center gap-2 text-center"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><GraduationCap size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">教育身份</span></Card></Link><Link to="/assets/verification" className="block"><Card interactive className="flex min-h-[92px] flex-col items-center justify-center gap-2 text-center"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShieldCheck size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">快速验真</span></Card></Link><Link to="/support" className="block"><Card interactive className="flex min-h-[92px] flex-col items-center justify-center gap-2 text-center"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><HelpCircle size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">帮助中心</span></Card></Link></div></Section>
+    <Section title="下一步"><Card><h2 className="font-semibold text-text-primary">把可信事实整理成自己的履历表达</h2><p className="mt-2 text-sm leading-5 text-text-secondary">系统事实保持只读；你可以选择哪些经历进入长期简历，并编辑面向岗位的表达。</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate("/me/resume")}>整理长期简历</SecondaryButton></Card></Section></div></PublicShell>;
 }
 
 export function ExperiencesPage() {
@@ -139,4 +140,48 @@ export function VerificationPage() {
 export function ApplicationsAssetSummary() {
   const { applications } = usePublicPlatform();
   return <div className="space-y-3">{applications.map(record => <Card key={record.opportunityId}><p className="font-medium text-text-primary">{opportunityById(record.opportunityId)?.title ?? record.opportunityId}</p><p className="mt-1 text-xs text-text-secondary">共享状态：{record.status}</p></Card>)}</div>;
+}
+
+function downloadPrototypeArtifact(filename: string, lines: string[]) {
+  const body = [
+    "核心产业学院｜中保真原型下载占位",
+    "",
+    ...lines,
+    "",
+    "说明：真实环境应由可信凭证服务返回正式文件；本原型仅验证下载交互与信息边界。",
+  ].join("\n");
+  const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function EducationIdentityPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { educationIdentity, claimEducationIdentity } = useLongTermAssets();
+  const [saved, setSaved] = useState(false);
+  const justClaimed = new URLSearchParams(location.search).get("claimed") === "1";
+  if (!educationIdentity) return <PublicShell showNavigation={false}><PageHeader title="可信数字教育身份" backTo="/assets" /><div className="space-y-5 px-4 py-5"><Card><p className="text-sm text-text-secondary">当前账号暂无教育身份数据。</p></Card></div></PublicShell>;
+  const statusLabel = educationIdentity.status === "claimed" ? "已领取" : educationIdentity.status === "claimable" ? "待领取" : educationIdentity.status === "revoked" ? "已撤销" : "未绑定";
+  const isClaimed = educationIdentity.status === "claimed";
+  const claim = () => {
+    claimEducationIdentity();
+    navigate(`${location.pathname}?claimed=1`, { replace: true });
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="可信数字教育身份" backTo="/assets" /><div className="space-y-5 px-4 py-5">
+    {justClaimed && isClaimed && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">领取成功</p><p className="mt-2 text-sm leading-5 text-success-text">可信数字教育身份已领取，可作为学历背景的可信凭证使用。</p></Card>}
+    <Card className="space-y-4"><div className="flex items-start gap-3"><span className="flex size-12 shrink-0 items-center justify-center rounded-[16px] bg-primary-container text-text-brand"><GraduationCap size={26} aria-hidden="true" /></span><div><p className="text-xs text-text-secondary">{educationIdentity.verifiedBy} 认证</p><h1 className="mt-1 text-xl font-semibold leading-7 text-text-primary">可信数字教育身份</h1></div></div><div className="grid grid-cols-2 gap-3 text-sm"><div><p className="text-text-tertiary">姓名</p><p className="mt-1 text-text-primary">{educationIdentity.name}</p></div><div><p className="text-text-tertiary">状态</p><p className="mt-1 text-text-primary">{statusLabel}</p></div><div><p className="text-text-tertiary">学校</p><p className="mt-1 text-text-primary">{educationIdentity.school}</p></div><div><p className="text-text-tertiary">专业</p><p className="mt-1 text-text-primary">{educationIdentity.major}</p></div><div className="col-span-2"><p className="text-text-tertiary">学籍号</p><p className="mt-1 text-text-primary">{educationIdentity.studentId}</p></div></div><div className="border-t border-border-subtle pt-3"><p className="text-xs text-text-tertiary">{isClaimed ? "身份核验码" : "凭证编号（尚未生效）"}</p><p className="mt-1 font-mono text-sm text-text-primary">{educationIdentity.verificationCode}</p></div></Card>
+    {educationIdentity.status === "claimable" && <><Button className="w-full" onClick={claim}>领取教育身份</Button><Card className="border border-info bg-info-bg"><p className="font-semibold text-info-text">领取后成为可信教育身份凭证</p><p className="mt-2 text-sm leading-5 text-info-text">当前仅表示教育信息已核验；领取后可用于简历、报名等场景的可信背书。</p></Card></>}
+    {isClaimed && <>
+      <div className="grid grid-cols-2 gap-3"><SecondaryButton className="w-full" onClick={() => setSaved(true)}><Save size={16} aria-hidden="true" />{saved ? "已保存" : "保存凭证"}</SecondaryButton><SecondaryButton className="w-full" onClick={() => downloadPrototypeArtifact(`${educationIdentity.id}-education-identity.txt`, [`可信数字教育身份`, `姓名：${educationIdentity.name}`, `学校：${educationIdentity.school}`, `专业：${educationIdentity.major}`, `学籍号：${educationIdentity.studentId}`, `认证方：${educationIdentity.verifiedBy}`, `核验码：${educationIdentity.verificationCode}`])}><Download size={16} aria-hidden="true" />下载凭证</SecondaryButton></div>
+      {saved && <Card className="border border-success bg-success-bg"><p className="text-sm font-medium text-success-text">凭证已保存到本地资产动作（Mock）</p><p className="mt-1 text-xs text-success-text">真实客户端应保存正式图片 / PDF，并处理系统相册或文件权限。</p></Card>}
+    </>}
+    <TrustNote />
+  </div></PublicShell>;
 }

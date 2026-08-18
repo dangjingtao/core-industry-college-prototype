@@ -56,6 +56,7 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "assets.result", path: "/assets/results/:resultId", context: "account", purpose: "结果详情", states: ["ready", "pending", "invalid"] },
   { id: "assets.certificates", path: "/assets/certificates", context: "account", purpose: "证书列表", states: ["empty", "claimable", "claimed"] },
   { id: "assets.certificate", path: "/assets/certificates/:certificateId", context: "account", purpose: "证书详情", states: ["ready", "invalid", "revoked"] },
+  { id: "assets.educationIdentity", path: "/assets/education-identity", context: "account", purpose: "可信数字教育身份", states: ["notBound", "claimable", "claimed", "revoked"] },
   { id: "assets.verification", path: "/assets/verification", context: "public", purpose: "可信成果验真", states: ["idle", "checking", "valid", "invalid", "error"] },
   { id: "stories.list", path: "/stories", context: "public", purpose: "赛友内容", states: ["default", "filters", "empty"] },
   { id: "stories.detail", path: "/stories/:storyId", context: "public", purpose: "赛友/公众号内容详情", states: ["internal", "external"] },

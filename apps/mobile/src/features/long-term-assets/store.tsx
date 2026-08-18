@@ -1,7 +1,7 @@
 import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord } from "./data";
+import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
   initialProfileSources,
   seedStudentProfile,
@@ -43,6 +43,7 @@ type LongTermAssetsContextValue = {
   benefitStatusFor: (benefitId: string) => BenefitStatus;
   certificates: CertificateRecord[];
   competitionResults: CompetitionResultRecord[];
+  educationIdentity: EducationIdentityRecord | null;
   resume: ResumePresentation;
   profile: StudentProfile;
   profileSources: StudentProfileSources;
@@ -55,6 +56,7 @@ type LongTermAssetsContextValue = {
   claimBenefit: (benefitId: string) => void;
   useBenefit: (benefitId: string) => void;
   claimCertificate: (certificateId: string) => void;
+  claimEducationIdentity: () => void;
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
@@ -113,6 +115,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [benefitStatuses, setBenefitStatuses] = useState<Record<string, BenefitStatus>>(() => Object.fromEntries(benefits.map(item => [item.id, item.initialStatus])));
   const [certificates, setCertificates] = useState<CertificateRecord[]>(initialCertificates);
   const [competitionResults] = useState<CompetitionResultRecord[]>(initialCompetitionResults);
+  const [educationIdentity, setEducationIdentity] = useState<EducationIdentityRecord | null>(initialEducationIdentity);
   const [resume, setResume] = useState<ResumePresentation>(seedResume);
   const [profile, setProfile] = useState<StudentProfile>(seedStudentProfile);
   const [profileSources, setProfileSources] = useState<StudentProfileSources>(() => initialProfileSources(seedStudentProfile));
@@ -151,6 +154,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     benefitStatusFor,
     certificates,
     competitionResults,
+    educationIdentity,
     resume,
     profile,
     profileSources,
@@ -210,6 +214,10 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       if (!session.loggedIn) return;
       setCertificates(current => current.map(item => item.id === certificateId && item.status === "claimable" ? { ...item, status: "claimed", issuedAt: "2026-08-17" } : item));
     },
+    claimEducationIdentity: () => {
+      if (!session.loggedIn) return;
+      setEducationIdentity(current => current && current.status === "claimable" ? { ...current, status: "claimed", issuedAt: "2026-08-17" } : current);
+    },
     toggleResumeFact: factKey => {
       if (!session.loggedIn) return;
       setResume(current => ({
@@ -232,7 +240,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     },
     updateProfile,
     mergeProfileFromSource,
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }
