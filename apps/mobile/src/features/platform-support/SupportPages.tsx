@@ -483,7 +483,9 @@ export function StoriesPage() {
 
         {activeTab === "projects" && (
           <div className="space-y-4">
-            <Link to="/stories/submit" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去发布 ›</Link>
+            <Card className="border border-info bg-info-bg">
+              <p className="text-sm leading-5 text-info-text">优秀案例与项目需求由运营后台统一上传，学生端暂不支持自行发布。</p>
+            </Card>
             <div className="space-y-3">
               {projectPostsSeed.map(post => (
                 <ProjectPostCard key={post.id} post={post} />
@@ -647,47 +649,18 @@ export function StoryDetailPage() {
 
 export function StorySubmitPage() {
   const navigate = useNavigate();
-  const [type, setType] = useState<ProjectPostType>("找合作");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [tag, setTag] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const valid = title.trim() && description.trim();
-  const postTypes: ProjectPostType[] = ["找合作", "招聘", "资源置换", "经验分享"];
-
-  const submit = () => {
-    setSubmitted(true);
-  };
-
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="发布项目需求" backTo="/stories" />
-      <div className="space-y-5 px-4 py-5">
-        {submitted ? (
-          <Card className="border border-success bg-success-bg py-6 text-center">
-            <h1 className="text-lg font-semibold text-success-text">发布已提交</h1>
-            <p className="mt-2 text-sm text-success-text">内容进入运营审核；审核通过后将在「创·项目」中展示。</p>
-            <Button className="mt-4 w-full" onClick={() => navigate("/stories")}>返回三创同学会</Button>
-          </Card>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-text-primary">发布类型</span>
-              <div className="flex flex-wrap gap-2">
-                {postTypes.map(t => (
-                  <button key={t} onClick={() => setType(t)} className={`min-h-touch rounded-control px-3 text-xs font-medium ${type === t ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{t}</button>
-                ))}
-              </div>
-            </div>
-            <Field label="标题" value={title} onChange={setTitle} />
-            <label className="block">
-              <span className="text-sm font-medium text-text-primary">需求描述</span>
-              <textarea rows={6} value={description} onChange={event => setDescription(event.target.value)} placeholder="描述你的需求或经验…" className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" />
-            </label>
-            <Field label="标签（如：求助、招募、置换、干货）" value={tag} onChange={setTag} />
-            <Button className="w-full" disabled={!valid} onClick={submit}>提交审核</Button>
-          </>
-        )}
+      <PageHeader title="内容上传" backTo="/stories" />
+      <div className="px-4 py-5">
+        <Card className="border border-info bg-info-bg py-6 text-center">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-info text-on-primary">
+            <PenLine size={26} aria-hidden="true" />
+          </span>
+          <h1 className="mt-4 text-lg font-semibold text-info-text">内容由运营后台上传</h1>
+          <p className="mt-2 text-sm leading-5 text-info-text">优秀案例、赛友风采与项目需求均由运营后台统一上传，学生端暂不支持自行发布。</p>
+          <Button className="mt-4 w-full" onClick={() => navigate("/stories")}>返回三创同学会</Button>
+        </Card>
       </div>
     </PublicShell>
   );
