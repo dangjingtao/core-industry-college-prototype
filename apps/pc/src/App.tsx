@@ -3,6 +3,7 @@ import { buildRegistrationReturnUrl, parseRegistrationHandoff, type Registration
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
+import { PC03AdminFrame } from "./admin/PC03AdminFrame";
 import { PC03Console } from "./admin/PC03Console";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { PC04Console } from "./admin/PC04Console";
@@ -70,14 +71,18 @@ function RegistrationPortalRoute() {
   </>;
 }
 
+function Pc03Route({ children }: { children: React.ReactNode }) {
+  return <PC03AdminFrame>{children}</PC03AdminFrame>;
+}
+
 export function App() {
   return (
     <Routes>
       <Route path="/admin/competitions/objects/:competitionId" element={<CompetitionConsole />} />
-      <Route path="/admin/organizations" element={<PC03Console />} />
-      <Route path="/admin/organizations/:organizationId" element={<PC03Console />} />
-      <Route path="/admin/opportunities/*" element={<PC03OpportunityRoute />} />
-      <Route path="/admin/content" element={<PC03Console />} />
+      <Route path="/admin/organizations" element={<Pc03Route><PC03Console /></Pc03Route>} />
+      <Route path="/admin/organizations/:organizationId" element={<Pc03Route><PC03Console /></Pc03Route>} />
+      <Route path="/admin/opportunities/*" element={<Pc03Route><PC03OpportunityRoute /></Pc03Route>} />
+      <Route path="/admin/content/*" element={<Pc03Route><PC03Console /></Pc03Route>} />
       <Route path="/admin/pc04/*" element={<PC04Console />} />
       <Route path="/admin/resources/objects/course-brand-ecommerce" element={<Navigate to="/admin/pc04/courses/brand-ecommerce" replace />} />
       <Route path="/admin/resources/objects/course-brand-ecommerce/edit" element={<Navigate to="/admin/pc04/courses/brand-ecommerce/edit" replace />} />
