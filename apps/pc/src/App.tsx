@@ -2,11 +2,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
+import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
-import { PC03AdminFrame } from "./admin/PC03AdminFrame";
 import { PC03Console } from "./admin/PC03Console";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
+import { PC03StateProvider } from "./admin/PC03State";
 import { PC04Console } from "./admin/PC04Console";
+import { PC04StateProvider } from "./admin/PC04State";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 
@@ -71,29 +73,33 @@ function RegistrationPortalRoute() {
   </>;
 }
 
-function Pc03Route({ children }: { children: ReactNode }) {
-  return <PC03AdminFrame>{children}</PC03AdminFrame>;
+function AdminRoute({ children }: { children: ReactNode }) {
+  return <AdminControlPlaneShell>{children}</AdminControlPlaneShell>;
 }
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/admin/competitions/objects/:competitionId" element={<CompetitionConsole />} />
-      <Route path="/admin/organizations" element={<Pc03Route><PC03Console /></Pc03Route>} />
-      <Route path="/admin/organizations/:organizationId" element={<Pc03Route><PC03Console /></Pc03Route>} />
-      <Route path="/admin/opportunities/*" element={<Pc03Route><PC03OpportunityRoute /></Pc03Route>} />
-      <Route path="/admin/content/*" element={<Pc03Route><PC03Console /></Pc03Route>} />
-      <Route path="/admin/pc04/*" element={<PC04Console />} />
-      <Route path="/admin/resources/objects/course-brand-ecommerce" element={<Navigate to="/admin/pc04/courses/brand-ecommerce" replace />} />
-      <Route path="/admin/resources/objects/course-brand-ecommerce/edit" element={<Navigate to="/admin/pc04/courses/brand-ecommerce/edit" replace />} />
-      <Route path="/admin/resources/objects/benefit-beauty-sample" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample" replace />} />
-      <Route path="/admin/resources/objects/benefit-beauty-sample/edit" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample/edit" replace />} />
-      <Route path="/admin/assets/objects/certificate-sanchuang-15" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
-      <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
-      <Route path="/admin/*" element={<AdminConsole />} />
-      <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
-      <Route path="/" element={<Navigate to="/admin" replace />} />
-      <Route path="*" element={<Navigate to="/admin" replace />} />
-    </Routes>
+    <PC03StateProvider>
+      <PC04StateProvider>
+        <Routes>
+          <Route path="/admin/competitions/objects/:competitionId" element={<CompetitionConsole />} />
+          <Route path="/admin/organizations" element={<AdminRoute><PC03Console /></AdminRoute>} />
+          <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03Console /></AdminRoute>} />
+          <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
+          <Route path="/admin/content/*" element={<AdminRoute><PC03Console /></AdminRoute>} />
+          <Route path="/admin/pc04/*" element={<AdminRoute><PC04Console /></AdminRoute>} />
+          <Route path="/admin/resources/objects/course-brand-ecommerce" element={<Navigate to="/admin/pc04/courses/brand-ecommerce" replace />} />
+          <Route path="/admin/resources/objects/course-brand-ecommerce/edit" element={<Navigate to="/admin/pc04/courses/brand-ecommerce/edit" replace />} />
+          <Route path="/admin/resources/objects/benefit-beauty-sample" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample" replace />} />
+          <Route path="/admin/resources/objects/benefit-beauty-sample/edit" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample/edit" replace />} />
+          <Route path="/admin/assets/objects/certificate-sanchuang-15" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
+          <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
+          <Route path="/admin/*" element={<AdminConsole />} />
+          <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </PC04StateProvider>
+    </PC03StateProvider>
   );
 }
