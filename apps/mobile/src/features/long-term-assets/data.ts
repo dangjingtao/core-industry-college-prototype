@@ -239,21 +239,26 @@ export const initialEducationIdentity: EducationIdentityRecord = {
   status: "claimable",
 };
 
+export type ExchangeCategory = "all" | "course" | "ticket" | "virtual";
+
 export type ExchangeItem = {
   id: string;
   title: string;
   summary: string;
+  category: Exclude<ExchangeCategory, "all">;
   cost: number;
   claimedCount: number;
   status: "available" | "outOfStock" | "exchanged";
 };
 
 export const exchangeItems: ExchangeItem[] = [
-  { id: "exchange-course-data", title: "商业数据分析基础课", summary: "平台公共课程兑换资格", cost: 200, claimedCount: 342, status: "available" },
-  { id: "exchange-course-brand", title: "品牌电商实战课", summary: "三创赛美妆电商赛道课程", cost: 300, claimedCount: 189, status: "available" },
-  { id: "exchange-lab-cloud", title: "云栖零售项目课", summary: "企业共建项目课学习资格", cost: 400, claimedCount: 76, status: "available" },
-  { id: "exchange-ride", title: "青年创新日出行券", summary: "线下活动现场出行权益", cost: 50, claimedCount: 512, status: "outOfStock" },
-  { id: "exchange-video", title: "校园视频会员月卡", summary: "平台合作视频会员权益", cost: 150, claimedCount: 1205, status: "available" },
+  { id: "exchange-course-data", title: "商业数据分析基础课", summary: "平台公共课程兑换资格", category: "course", cost: 200, claimedCount: 342, status: "available" },
+  { id: "exchange-course-brand", title: "品牌电商实战课", summary: "三创赛美妆电商赛道课程", category: "course", cost: 300, claimedCount: 189, status: "available" },
+  { id: "exchange-lab-cloud", title: "云栖零售项目课", summary: "企业共建项目课学习资格", category: "course", cost: 400, claimedCount: 76, status: "available" },
+  { id: "exchange-ride", title: "青年创新日出行券", summary: "线下活动现场出行权益", category: "ticket", cost: 50, claimedCount: 512, status: "outOfStock" },
+  { id: "exchange-video", title: "校园视频会员月卡", summary: "平台合作视频会员权益", category: "virtual", cost: 150, claimedCount: 1205, status: "available" },
+  { id: "exchange-cloud-storage", title: "云笔记年度会员", summary: "在线云笔记与文档协作权益", category: "virtual", cost: 120, claimedCount: 890, status: "available" },
+  { id: "exchange-mock-exam", title: "商业分析模拟考", summary: "在线模拟考试与能力测评", category: "ticket", cost: 80, claimedCount: 230, status: "available" },
 ];
 
 export type LearningCreditRecord = {

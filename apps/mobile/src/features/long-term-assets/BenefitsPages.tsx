@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Coins, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
+import { ChevronRight, Coins, Search, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { benefitById, benefits, exchangeItemById, exchangeItems, learningCreditRecords, type BenefitStatus } from "./data";
 import { SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
@@ -77,23 +77,51 @@ export function FreeBenefitsPage() {
   return <PublicShell><PageHeader title="全部免费福利" subtitle="平台、赛事、企业与活动来源的权益" backTo="/benefits" /><div className="space-y-5 px-4 py-5">{loggedIn && <div className="flex gap-2">{(["all","available","history"] as const).map(value => <button key={value} onClick={() => setFilter(value)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${filter === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{value === "all" ? "全部" : value === "available" ? "可领取 / 待使用" : "历史"}</button>)}</div>}<div className="space-y-3">{visible.length ? visible.map(item => <BenefitListItem key={item.id} item={item} status={loggedIn ? benefitStatusFor(item.id) : undefined} />) : <Card><p className="text-sm text-text-secondary">当前条件下没有可展示的免费福利。</p></Card>}</div></div></PublicShell>;
 }
 
-const sortOptions = [
-  { value: "default", label: "默认" },
-  { value: "costAsc", label: "学力值从低到高" },
-  { value: "costDesc", label: "学力值从高到低" },
-  { value: "claimed", label: "兑换人数" },
+const categoryTabs = [
+  { value: "all" as const, label: "全部" },
+  { value: "course" as const, label: "课程" },
+  { value: "ticket" as const, label: "入场券" },
+  { value: "virtual" as const, label: "虚拟权益" },
+];
+
+const filterTabs = [
+  { value: "default" as const, label: "默认" },
+  { value: "claimed" as const, label: "销量" },
+  { value: "costAsc" as const, label: "学力值" },
 ] as const;
 
 export function ExchangeCenterPage() {
-  const [sort, setSort] = useState<typeof sortOptions[number]["value"]>("default");
-  const sorted = useMemo(() => {
-    const list = [...exchangeItems];
-    if (sort === "costAsc") list.sort((a, b) => a.cost - b.cost);
-    if (sort === "costDesc") list.sort((a, b) => b.cost - a.cost);
-    if (sort === "claimed") list.sort((a, b) => b.claimedCount - a.claimedCount);
+  const [category, setCategory] = useState<typeof categoryTabs[number]["value"]>("all");
+  const [filter, setFilter] = useState<typeof filterTabs[number]["value"]>("default");
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    let list = exchangeItems.filter(item => category === "all" || item.category === category);
+    if (query.trim()) list = list.filter(item => item.title.includes(query.trim()) || item.summary.includes(query.trim()));
+    if (filter === "costAsc") list.sort((a, b) => a.cost - b.cost);
+    if (filter === "claimed") list.sort((a, b) => b.claimedCount - a.claimedCount);
     return list;
-  }, [sort]);
-  return <PublicShell><PageHeader title="兑换中心" subtitle="使用学力值兑换课程与权益" backTo="/benefits" /><div className="space-y-5 px-4 py-5"><Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">当前展示为原型兑换内容，正式商品、库存与学力值消耗规则由运营配置并接入 F04 决策后的经济模型。</p></Card><div className="flex gap-2 overflow-x-auto pb-1">{sortOptions.map(option => <button key={option.value} onClick={() => setSort(option.value)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${sort === option.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{option.label}</button>)}</div><div className="grid grid-cols-2 gap-3">{sorted.map(item => <Link key={item.id} to={`/benefits/exchange/${item.id}`} className="block"><Card interactive className="flex h-full flex-col"><div className="flex items-start justify-between"><span className="flex size-9 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShoppingBag size={18} aria-hidden="true" /></span>{item.status === "outOfStock" && <StatusTag tone="neutral">已兑完</StatusTag>}</div><h3 className="mt-3 line-clamp-2 text-sm font-semibold text-text-primary">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs text-text-secondary">{item.summary}</p><div className="mt-auto flex items-center justify-between pt-3"><span className="flex items-center gap-1 text-sm font-semibold text-text-brand"><Coins size={14} aria-hidden="true" />{item.cost}</span><span className="text-xs text-text-tertiary">{item.claimedCount} 人已兑</span></div></Card></Link>)}</div></div></PublicShell>;
+  }, [category, filter, query]);
+  return <PublicShell><PageHeader title="兑换中心" subtitle="搜索并使用学力值兑换" backTo="/benefits" />
+    <div className="flex h-[calc(100dvh-104px)] flex-col">
+      <div className="shrink-0 border-b border-border-subtle bg-surface px-4 py-3">
+        <div className="flex items-center gap-2 rounded-control bg-surface px-3 py-2">
+          <Search size={18} className="text-text-tertiary" aria-hidden="true" />
+          <input value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索可兑换项目" className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary" />
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1">
+        <nav className="w-20 shrink-0 overflow-y-auto border-r border-border-subtle bg-surface py-2">
+          {categoryTabs.map(tab => <button key={tab.value} onClick={() => setCategory(tab.value)} className={`block w-full px-2 py-3 text-center text-xs font-medium transition ${category === tab.value ? "bg-primary-container text-text-brand" : "text-text-secondary"}`}>{tab.label}</button>)}
+        </nav>
+        <div className="min-w-0 flex-1 overflow-y-auto bg-background p-3">
+          <div className="flex gap-2 overflow-x-auto pb-2">{filterTabs.map(tab => <button key={tab.value} onClick={() => setFilter(tab.value)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${filter === tab.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{tab.label}</button>)}</div>
+          <div className="grid grid-cols-2 gap-3 pt-1">{filtered.map(item => <Link key={item.id} to={`/benefits/exchange/${item.id}`} className="block"><Card interactive className="flex h-full flex-col"><div className="flex items-start justify-between"><span className="flex size-9 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShoppingBag size={18} aria-hidden="true" /></span>{item.status === "outOfStock" && <StatusTag tone="neutral">已兑完</StatusTag>}</div><h3 className="mt-3 line-clamp-2 text-sm font-semibold text-text-primary">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs text-text-secondary">{item.summary}</p><div className="mt-auto flex items-center justify-between pt-3"><span className="flex items-center gap-1 text-sm font-semibold text-text-brand"><Coins size={14} aria-hidden="true" />{item.cost}</span><span className="text-xs text-text-tertiary">{item.claimedCount} 人已兑</span></div></Card></Link>)}</div>
+          {filtered.length === 0 && <Card><p className="py-4 text-center text-sm text-text-secondary">当前分类下没有可兑换项目</p></Card>}
+          <p className="mt-4 text-center text-xs text-text-tertiary">兑换内容与学力值消耗为原型占位，正式规则待 F04 决策。</p>
+        </div>
+      </div>
+    </div>
+  </PublicShell>;
 }
 
 export function ExchangeDetailPage() {
