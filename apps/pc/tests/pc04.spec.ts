@@ -1,13 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-test("PC04 stays inside the canonical PC01 shell and derives Course Completed from progress plus passed assessment", async ({ page }) => {
+async function showTechnical(page: Page) {
+  const button = page.getByTestId("technical-mode-toggle");
+  if (await button.getByText("显示技术信息", { exact: true }).count()) await button.click();
+}
+
+test("PC04 stays inside the shared admin shell and derives Course Completed from progress plus passed assessment", async ({ page }) => {
   await page.goto("/admin/pc04/courses/brand-ecommerce");
   await expect(page.getByRole("navigation", { name: "管理端主导航" })).toBeVisible();
-  await expect(page.getByLabel("当前管理角色与数据范围")).toContainText("平台运营");
-  await expect(page.getByLabel("当前管理角色与数据范围")).toContainText("PC01 全域查看 · 编辑按域授权");
-  await expect(page.getByLabel("当前管理角色与数据范围")).toContainText("全平台（dev 原型）");
+  const permission = page.getByLabel("当前管理角色与数据范围");
+  await expect(permission).toBeVisible();
+  await expect(permission).not.toHaveAttribute("open", "");
+  await permission.locator("summary").click();
+  await expect(permission).toContainText("平台运营");
+  await expect(permission).toContainText("PC01 全域查看 · 编辑按域授权");
+  await expect(permission).toContainText("全平台（dev 原型）");
   await expect(page.getByRole("link", { name: "资源运营", exact: true })).toHaveClass(/text-text-brand/);
   await expect(page.getByTestId("course-completed-derived")).toContainText("false");
 
@@ -53,8 +62,10 @@ test("PC04 benefit fulfillment save persists and rewrites the matching fulfillme
   await expect(page.getByTestId("benefit-fulfillment-detail")).not.toContainText("线下工作人员核销");
 });
 
-test("PC04 covers all current App benefits and separates certificate issuance from claim state", async ({ page }) => {
+test("PC04 covers all current App benefits while stable ids stay secondary by default", async ({ page }) => {
   await page.goto("/admin/pc04/benefits");
+  await expect(page.getByText("benefit-campus-video", { exact: true })).not.toBeVisible();
+  await showTechnical(page);
   for (const id of [
     "benefit-campus-video",
     "benefit-beauty-sample",
@@ -69,6 +80,8 @@ test("PC04 covers all current App benefits and separates certificate issuance fr
   await page.goto("/admin/pc04/certificates/cert-course-data-analytics");
   await expect(page.getByTestId("issuance-status")).toContainText("issued");
   await expect(page.getByTestId("claim-status")).toContainText("claimable");
+  await expect(page.getByText(/COURSE-DA-26001/)).not.toBeVisible();
+  await showTechnical(page);
   await expect(page.getByText(/COURSE-DA-26001/)).toBeVisible();
   await expect(page.getByText("未签发", { exact: true })).toHaveCount(0);
 
