@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
+import { CompetitionConsole } from "./admin/CompetitionConsole";
 import { PC03Console } from "./admin/PC03Console";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
@@ -71,6 +72,7 @@ function RegistrationPortalRoute() {
 export function App() {
   return (
     <Routes>
+      <Route path="/admin/competitions/objects/:competitionId" element={<CompetitionConsole />} />
       <Route path="/admin/organizations" element={<PC03Console />} />
       <Route path="/admin/organizations/:organizationId" element={<PC03Console />} />
       <Route path="/admin/opportunities/*" element={<PC03OpportunityRoute />} />
