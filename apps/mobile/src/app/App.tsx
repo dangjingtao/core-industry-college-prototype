@@ -24,11 +24,11 @@ import {
   WorkshopComputePage,
   WorkshopHomePage,
   WorkshopProjectPage,
-  WorkshopResultDetailPage,
   WorkshopResultsPage,
   WorkshopSkillPage,
   WorkshopSkillsPage,
 } from "../features/competition-workspace/WorkshopPages";
+import { T013AResultDetailPage } from "../features/competition-workspace/T013AResultDetailPage";
 import { TaskAnswerPage, TaskProgressPage, TaskReviewPage } from "../features/competition-workspace/TaskRuntimePages";
 import { WorkshopRuntimeProvider } from "../features/competition-workspace/runtime";
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
@@ -118,7 +118,7 @@ export function App() {
               <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/review" element={<TaskReviewPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/progress" element={<TaskProgressPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/results" element={<WorkshopResultsPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<WorkshopResultDetailPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<T013AResultDetailPage />} />
               <Route path="/opportunities" element={<OpportunitiesPage />} />
               <Route path="/opportunities/:opportunityId" element={<OpportunityDetailPage />} />
               <Route path="/applications" element={<ApplicationsPage />} />
