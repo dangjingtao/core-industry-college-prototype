@@ -5,7 +5,7 @@ import { AdminConsole } from "./admin/AdminConsole";
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
 import { PC01OperationsConsole } from "./admin/PC01OperationsConsole";
-import { PC03Console } from "./admin/PC03Console";
+import { PC03HumanContentConsole } from "./admin/PC03HumanContentConsole";
 import { PC03HumanOrganizationConsole } from "./admin/PC03HumanOrganizationConsole";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { PC03StateProvider } from "./admin/PC03State";
@@ -102,7 +102,7 @@ export function App() {
             <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03HumanOrganizationConsole /></AdminRoute>} />
             <Route path="/admin/organizations/objects/:organizationId" element={<LegacyOrganizationRedirect />} />
             <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
-            <Route path="/admin/content/*" element={<AdminRoute><PC03Console /></AdminRoute>} />
+            <Route path="/admin/content/*" element={<AdminRoute><PC03HumanContentConsole /></AdminRoute>} />
             <Route path="/admin/pc04/*" element={<AdminRoute><PC04Console /></AdminRoute>} />
             <Route path="/admin/resources/objects/course-brand-ecommerce" element={<Navigate to="/admin/pc04/courses/brand-ecommerce" replace />} />
             <Route path="/admin/resources/objects/course-brand-ecommerce/edit" element={<Navigate to="/admin/pc04/courses/brand-ecommerce/edit" replace />} />
