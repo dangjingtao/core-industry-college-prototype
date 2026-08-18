@@ -16,11 +16,20 @@ test("PC03 unifies Organization while preserving Mobile company stable values", 
   await expect(page.getByText("品牌电商实战课", { exact: true })).toBeVisible();
 });
 
-test("PC03 opportunity flow supports create, lifecycle, explainable targeting and Application truth", async ({ page }) => {
+test("PC03 opportunity flow supports create, edit, lifecycle, explainable targeting and Application truth", async ({ page }) => {
   await page.goto("/admin/opportunities/intern-1");
   await expect(page.getByRole("heading", { name: "机会管理 + App 内投递" })).toBeVisible();
   await expect(page.getByText("opportunityId · intern-1", { exact: true })).toBeVisible();
   await expect(page.getByText(/不建立 CandidateRecord/).first()).toBeVisible();
+
+  await page.getByRole("link", { name: "编辑机会" }).click();
+  await expect(page).toHaveURL(/\/admin\/opportunities\/intern-1\/edit$/);
+  await expect(page.getByRole("heading", { name: "编辑机会" })).toBeVisible();
+  await page.getByLabel("标题").fill("品牌增长实习生（校园）");
+  await page.getByLabel("地区").fill("广州 / 深圳");
+  await page.getByRole("button", { name: "保存编辑" }).click();
+  await expect(page.getByTestId("opportunity-edit-saved")).toContainText("品牌增长实习生（校园） · 广州 / 深圳");
+  await page.getByRole("link", { name: "返回机会详情" }).click();
 
   await page.getByTestId("opportunity-toggle").click();
   await expect(page.getByTestId("opportunity-toggle")).toContainText("重新上架");
