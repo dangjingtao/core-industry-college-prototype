@@ -56,6 +56,7 @@ import {
 import {
   AboutPage,
   AccountsPage,
+  AlumniListPage,
   GrowthScorePage,
   LegalPage,
   NewsDetailPage,
@@ -132,6 +133,7 @@ export function App() {
               <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailTrustedPage />)} />
               <Route path="/assets/verification" element={<VerificationTrustedPage />} />
               <Route path="/stories" element={<StoriesPage />} />
+              <Route path="/stories/alumni" element={<AlumniListPage />} />
               <Route path="/stories/:storyId" element={<StoryDetailPage />} />
               <Route path="/stories/submit" element={account(<StorySubmitPage />)} />
               <Route path="/support" element={<SupportHomePage />} />

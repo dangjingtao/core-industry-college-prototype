@@ -1,36 +1,79 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { BookOpen, BriefcaseBusiness, Calendar, ChevronRight, Heart, ImagePlus, MessageCircle, PenLine, Share2, Users } from "lucide-react";
+import { Award, Bookmark, BriefcaseBusiness, ChevronRight, Heart, ImagePlus, MessageCircle, PenLine, Plus, Share2, Trophy, Users, Zap } from "lucide-react";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 
 type Notice = { id: string; title: string; body: string; read: boolean; time: string };
-type StoryType = "story" | "wechat";
-type Story = {
+type AwardLevel = "金奖" | "银奖" | "铜奖" | "专项奖";
+
+type ShowcaseProject = {
   id: string;
-  type: StoryType;
   title: string;
-  summary: string;
-  body: string;
-  author: string;
-  authorInitial: string;
+  awardLevel: AwardLevel;
+  edition: string;
+  description: string;
   tags: string[];
-  publishTime: string;
-  external?: boolean;
-  externalUrl?: string;
-  likes: number;
+  school: string;
+  teamSize: number;
 };
 
+type AlumniPost = {
+  id: string;
+  title: string;
+  date: string;
+  tag: string;
+  excerpt: string;
+  likes: number;
+  comments: number;
+  bookmarks: number;
+};
+
+type Alumni = {
+  id: string;
+  name: string;
+  verified: boolean;
+  school: string;
+  edition: string;
+  role: string;
+  awardLevel: AwardLevel;
+  tags: string[];
+  likes: number;
+  postCount: number;
+  initial: string;
+  projects: ShowcaseProject[];
+  posts: AlumniPost[];
+};
+
+type ProjectPostType = "找合作" | "招聘" | "资源置换" | "经验分享";
+
+type ProjectPost = {
+  id: string;
+  type: ProjectPostType;
+  tag: string;
+  title: string;
+  description: string;
+  author: string;
+  authorSchool: string;
+  authorInitial: string;
+  likes: number;
+  comments: number;
+};
+
+type BoostTask = { id: string; title: string; points: number; tag: string };
+type BoostRecord = { title: string; points: number };
 
 type SupportState = {
   notifications: Notice[];
   bindings: string[];
-  submittedStories: Story[];
+  followedAlumni: string[];
+  likedPosts: string[];
   markRead: (id: string) => void;
   markAllRead: () => void;
   toggleBinding: (id: string) => void;
-  submitStory: (story: Story) => void;
+  toggleFollowAlumni: (id: string) => void;
+  toggleLikePost: (id: string) => void;
 };
 
 const noticeSeed: Notice[] = [
@@ -45,76 +88,245 @@ const news = [
   { id: "asset-guide", tag: "平台", title: "比赛结束后，哪些记录会继续保留？", summary: "赛事经历、成绩、证书与学习成果会沉淀到长期账号。", body: "赛事期权限会随着生命周期结束，但长期账号中的可信事实不会随赛事工作区一起消失。" },
 ];
 
-
-
-
-const storySeed: Story[] = [
+const showcaseProjectsSeed: ShowcaseProject[] = [
   {
-    id: "team-retail",
-    type: "story",
-    title: "从校赛复盘到零售数据实习",
-    summary: "一个学生团队如何把比赛里的数据复盘经验整理成长期履历，最终拿到零售企业的数据分析实习机会。",
-    body: "去年参加三创赛时，我们团队选择了一个零售数据分析赛道。从选题、调研到最终的路演，整个过程最大的收获不是奖项，而是学会了把比赛项目中的方法论沉淀下来。\n\n比赛结束后，我把这段经历写进了长期简历，并补充了课程学习和证书。后来在企业实践机会中看到一家零售企业在招数据分析实习生，我直接投递了长期简历，HR 在面试时特别问了比赛中的数据复盘思路。\n\n现在回头看，参赛最重要的价值是把一次完整的项目经历变成可复用的能力证据。",
-    author: "李思远",
-    authorInitial: "李",
-    tags: ["赛友故事", "实习", "数据分析"],
-    publishTime: "2026-08-10",
-    likes: 128,
+    id: "zhinong",
+    title: "智农云仓 · 县域冷链SaaS",
+    awardLevel: "金奖",
+    edition: "第十六届",
+    description: "为县域农业合作社提供从产地到仓配的全链路数字化解决方案，已落地 12 个县域，签约 23 家合作社。",
+    tags: ["农业科技", "乡村振兴"],
+    school: "中国农业大学",
+    teamSize: 5,
   },
   {
-    id: "brand-project",
-    type: "story",
-    title: "第一次和企业真实做项目",
-    summary: "从需求澄清、协作到阶段汇报，一次并不完美但真实的项目实践，让我理解了课堂之外的商业节奏。",
-    body: "大三那年，我通过平台的企业实践机会加入了一个品牌策划项目。最开始以为只是写方案，真正开始后才发现需要反复和客户确认需求、协调组员分工、在截止日期前迭代多版。\n\n项目最后并没有拿到最佳，但企业导师给了我们一份很详细的反馈报告，指出了我们在用户洞察和可行性分析上的不足。这些反馈后来成了我参加三创赛时的重要参考。\n\n真实项目和课堂作业最大的区别是：没有标准答案，但必须给出一个能落地的答案。",
-    author: "王浩然",
-    authorInitial: "王",
-    tags: ["赛友故事", "企业项目", "品牌策划"],
-    publishTime: "2026-08-05",
-    likes: 96,
-  },
-
-  {
-    id: "wechat-next",
-    type: "wechat",
-    title: "公众号精选：三创赛后的下一站",
-    summary: "比赛结束不是终点，如何把参赛经历转化为长期履历、实习机会与职业方向。",
-    body: "很多同学在赛后会有类似的疑问：比赛结束后，我这段时间的投入算什么？\n\n答案取决于你怎么整理它。赛事经历、项目成果、证书和学习记录，都是长期账号里的可信资产。在投递实习或企业项目时，这些资产比一段空泛的描述更有说服力。\n\n三创赛后的下一站，不是某一场比赛，而是把这些经历连接成一条可持续的成长路径。",
-    author: "官方公众号",
-    authorInitial: "官",
-    tags: ["公众号精选", "成长路径"],
-    publishTime: "2026-08-12",
-    external: true,
-    externalUrl: "https://mp.weixin.qq.com/",
-    likes: 243,
+    id: "cloud-psy",
+    title: "云端心理咨询平台",
+    awardLevel: "银奖",
+    edition: "第十六届",
+    description: "AI 辅助心理咨询师，匹配高校学生心理需求，已合作 5 所高校心理中心，服务学生超 8000 人次。",
+    tags: ["心理健康", "AI应用"],
+    school: "华东师范大学",
+    teamSize: 4,
   },
   {
-    id: "wechat-pitch",
-    type: "wechat",
-    title: "公众号精选：路演答辩的五个常见失误",
-    summary: "从评委视角整理的路演注意事项，帮助你在有限时间内把项目价值说清楚。",
-    body: "路演答辩时间通常很短，评委最想知道的是：你在解决什么问题、为什么是你、能不能落地。\n\n常见失误包括：过度介绍背景而缺少结论、把技术细节讲得太细、对商业模式验证不足、回避风险问题、没有时间观念。\n\n建议提前用一句话讲清楚项目价值，再用一分钟展开逻辑，最后留出答疑空间。",
-    author: "官方公众号",
-    authorInitial: "官",
-    tags: ["公众号精选", "路演", "答辩技巧"],
-    publishTime: "2026-08-08",
-    external: true,
-    externalUrl: "https://mp.weixin.qq.com/",
-    likes: 189,
+    id: "campus-recycle",
+    title: "校园回收宝 · 闲置交易平台",
+    awardLevel: "铜奖",
+    edition: "第十六届",
+    description: "高校闲置物品循环交易平台，已覆盖 8 所高校，DAU 3000+，月成交 12000+ 单。",
+    tags: ["循环经济", "校园服务"],
+    school: "厦门大学",
+    teamSize: 3,
   },
 ];
+
+const alumniSeed: Alumni[] = [
+  {
+    id: "zhang-mingyuan",
+    name: "张明远",
+    verified: true,
+    school: "浙江大学",
+    edition: "第15届",
+    role: "队长",
+    awardLevel: "金奖",
+    tags: ["农业科技", "现役创业者"],
+    likes: 238,
+    postCount: 12,
+    initial: "张",
+    projects: [
+      { id: "p1", title: "智农云仓 · 县域冷链SaaS平台", awardLevel: "金奖", edition: "第十六届", description: "为县域农业合作社提供从产地到仓配的全链路数字化解决方案，已落地 12 个县域，签约 23 家合作社，获天使轮融资 300 万。", tags: ["农业科技", "乡村振兴"], school: "中国农业大学", teamSize: 5 },
+      { id: "p2", title: "校园二手书流转平台", awardLevel: "金奖", edition: "第十五届", description: "高校二手教材循环交易平台，已覆盖 3 所高校，累计交易 2 万册。", tags: ["循环经济", "校园服务"], school: "浙江大学", teamSize: 4 },
+    ],
+    posts: [
+      { id: "post-1", title: "两次省赛被毙，第三次冲进国赛金奖", date: "2026-06-15", tag: "金奖复盘", excerpt: "最关键的转变：从「我们想做的」变成「他们需要的」。评委不是来看你炫技的，是来看你能不能解决真问题的。建议每一个团队在备赛前先做 50 份用户访谈，不要闭门造车。", likes: 238, comments: 56, bookmarks: 12 },
+      { id: "post-2", title: "选人比选题更重要", date: "2026-03-02", tag: "团队组建", excerpt: "我的三个标准：① 能熬夜但第二天能正常交流的 ② 在某个领域比你强至少一档的 ③ 吵完架不会记仇的。技术、设计、路演，三个岗位缺一不可。", likes: 312, comments: 89, bookmarks: 23 },
+      { id: "post-3", title: "不要把三创赛当作终点", date: "2026-01-20", tag: "赛后落地", excerpt: "拿到金奖只是开始，真正的考验是你敢不敢把项目真的做下去。我们跑了 12 个县城的农业局，被拒绝了 8 次才签下第一个合作社。", likes: 456, comments: 102, bookmarks: 34 },
+    ],
+  },
+  {
+    id: "li-siyu",
+    name: "李思雨",
+    verified: true,
+    school: "复旦大学",
+    edition: "第14届",
+    role: "队员",
+    awardLevel: "银奖",
+    tags: ["教育科技", "早期投资人"],
+    likes: 186,
+    postCount: 8,
+    initial: "李",
+    projects: [
+      { id: "p3", title: "学伴 — AI 个性化学习路径生成器", awardLevel: "银奖", edition: "第十四届", description: "基于知识图谱和 NLP 的个性化学习规划工具，为中学生提供自适应学习路径推荐，已获评教育部\"互联网+教育\"优秀案例。", tags: ["教育科技", "AI应用"], school: "复旦大学", teamSize: 4 },
+    ],
+    posts: [
+      { id: "post-4", title: "我的路演秘诀就两个字：讲故事", date: "2026-05-10", tag: "路演心法", excerpt: "评委一天听几十个项目，你不讲故事他们根本记不住。先说一个真实的用户痛点场景，再引出你的方案，最后给数据。", likes: 189, comments: 43, bookmarks: 15 },
+    ],
+  },
+  {
+    id: "wang-qihang",
+    name: "王启航",
+    verified: true,
+    school: "中南大学",
+    edition: "第15届",
+    role: "技术负责人",
+    awardLevel: "金奖",
+    tags: ["全栈开发", "创业中"],
+    likes: 312,
+    postCount: 15,
+    initial: "王",
+    projects: [
+      { id: "p4", title: "CodePilot — 低代码 AI 应用生成平台", awardLevel: "金奖", edition: "第十五届", description: "通过自然语言描述即可生成企业级应用，内置 50+ 模板，服务 200+ 中小企业，月活 1.5 万。", tags: ["低代码", "AI应用"], school: "中南大学", teamSize: 5 },
+    ],
+    posts: [
+      { id: "post-5", title: "比赛不是炫技场", date: "2026-04-18", tag: "技术干货", excerpt: "别一上来就微服务+K8S，MVP 阶段一个单体+云函数就够了。评委看的是你能不能把技术讲清楚、把价值说明白。", likes: 423, comments: 97, bookmarks: 28 },
+    ],
+  },
+  {
+    id: "chen-xiaonan",
+    name: "陈晓楠",
+    verified: false,
+    school: "武汉大学",
+    edition: "第16届",
+    role: "产品负责人",
+    awardLevel: "金奖",
+    tags: ["心理健康", "产品设计"],
+    likes: 145,
+    postCount: 5,
+    initial: "陈",
+    projects: [],
+    posts: [
+      { id: "post-6", title: "我们的选题踩过 3 个大坑", date: "2026-06-28", tag: "选题心法", excerpt: "① 选了太热门的赛道竞争惨烈 ② 选了太冷门的评委看不懂 ③ 选了\"校内自嗨\"的需求。小而精准的痛点才是比赛的制胜点。", likes: 267, comments: 58, bookmarks: 19 },
+    ],
+  },
+  {
+    id: "zhou-tianyu",
+    name: "周天宇",
+    verified: true,
+    school: "中国农业大学",
+    edition: "第15届",
+    role: "队长",
+    awardLevel: "金奖",
+    tags: ["AI+农业", "创业中"],
+    likes: 198,
+    postCount: 10,
+    initial: "周",
+    projects: [],
+    posts: [
+      { id: "post-7", title: "导师不是用来挂名的", date: "2026-02-14", tag: "导师关系", excerpt: "我们的导师帮我们联系了 5 个县的农业局做实地调研，没有这些一手数据根本过不了省赛。用你的热情去打动他，让他愿意为你牵线搭桥。", likes: 178, comments: 35, bookmarks: 11 },
+    ],
+  },
+  {
+    id: "xu-ruoxi",
+    name: "徐若曦",
+    verified: false,
+    school: "华东师范大学",
+    edition: "第14届",
+    role: "队员",
+    awardLevel: "银奖",
+    tags: ["心理学", "公益方向"],
+    likes: 92,
+    postCount: 3,
+    initial: "徐",
+    projects: [],
+    posts: [
+      { id: "post-8", title: "社会价值是隐藏的加分项", date: "2026-07-10", tag: "社会价值", excerpt: "三创赛不只是比商业模式，社会价值是隐藏的加分项。我们在答辩时专门加了一页\"社会影响力评估\"——服务了多少人、创造了什么改变、有没有可持续性。", likes: 134, comments: 28, bookmarks: 9 },
+    ],
+  },
+];
+
+const projectPostsSeed: ProjectPost[] = [
+  {
+    id: "post-xu-1",
+    type: "找合作",
+    tag: "求助",
+    title: "寻高校心理中心合作",
+    description: "云端心理咨询平台已服务 5 所高校，希望拓展更多高校心理中心资源，可免费提供系统部署。",
+    author: "徐若曦",
+    authorSchool: "华东师大",
+    authorInitial: "徐",
+    likes: 12,
+    comments: 8,
+  },
+  {
+    id: "post-lin-1",
+    type: "招聘",
+    tag: "招募",
+    title: "招后端 + 运营合伙人",
+    description: "校园回收宝已上线，覆盖 8 校，DAU 3000，急招有热情的后端开发和运营同学加入团队。",
+    author: "林书豪",
+    authorSchool: "厦门大学",
+    authorInitial: "林",
+    likes: 28,
+    comments: 15,
+  },
+  {
+    id: "post-zhou-1",
+    type: "资源置换",
+    tag: "置换",
+    title: "技术换渠道：AI 识别工具寻农业推广",
+    description: "我们提供 AI 病虫害识别 API，换取农技推广渠道或农业合作社资源，非诚勿扰。",
+    author: "周天宇",
+    authorSchool: "中国农大",
+    authorInitial: "周",
+    likes: 19,
+    comments: 6,
+  },
+  {
+    id: "post-zhang-1",
+    type: "经验分享",
+    tag: "干货",
+    title: "金奖复盘：评委到底看什么？",
+    description: "两次省赛被毙，第三次冲进国赛金奖。最关键的转变：从「我们想做的」变成「他们需要的」。",
+    author: "张明远",
+    authorSchool: "浙江大学",
+    authorInitial: "张",
+    likes: 156,
+    comments: 34,
+  },
+];
+
+const boostTasksSeed: BoostTask[] = [
+  { id: "watch-video", title: "观看赛事宣传片", points: 20, tag: "为赛事助力" },
+  { id: "browse-benefit", title: "浏览赞助商权益", points: 15, tag: "解锁福利" },
+  { id: "watch-ad", title: "观看三创赛公益广告", points: 30, tag: "今日高价值" },
+  { id: "invite", title: "邀请新赛友加入同学会", points: 50, tag: "上不封顶" },
+];
+
+const boostRecordsSeed: BoostRecord[] = [
+  { title: "观看赛事宣传片", points: 20 },
+  { title: "浏览赞助商权益", points: 15 },
+  { title: "分享三创风采", points: 10 },
+];
+
+const awardOptions: { key: "all" | AwardLevel; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "金奖", label: "金奖" },
+  { key: "银奖", label: "银奖" },
+  { key: "铜奖", label: "铜奖" },
+  { key: "专项奖", label: "专项奖" },
+];
+
+function awardTone(level: AwardLevel): "success" | "info" | "warning" | "neutral" {
+  if (level === "金奖") return "success";
+  if (level === "银奖") return "info";
+  if (level === "铜奖") return "warning";
+  return "neutral";
+}
 
 const SupportContext = createContext<SupportState | null>(null);
 
 export function SupportProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState(noticeSeed);
   const [bindings, setBindings] = useState<string[]>(["email"]);
-  const [submittedStories, setSubmittedStories] = useState<Story[]>([]);
+  const [followedAlumni, setFollowedAlumni] = useState<string[]>([]);
+  const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const markRead = useCallback((id: string) => setNotifications(current => current.map(item => item.id === id && !item.read ? { ...item, read: true } : item)), []);
   const markAllRead = useCallback(() => setNotifications(current => current.some(item => !item.read) ? current.map(item => ({ ...item, read: true })) : current), []);
   const toggleBinding = useCallback((id: string) => setBindings(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
-  const submitStory = useCallback((story: Story) => setSubmittedStories(current => [story, ...current]), []);
-  const value = useMemo(() => ({ notifications, bindings, submittedStories, markRead, markAllRead, toggleBinding, submitStory }), [notifications, bindings, submittedStories, markRead, markAllRead, toggleBinding, submitStory]);
+  const toggleFollowAlumni = useCallback((id: string) => setFollowedAlumni(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
+  const toggleLikePost = useCallback((id: string) => setLikedPosts(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
+  const value = useMemo(() => ({ notifications, bindings, followedAlumni, likedPosts, markRead, markAllRead, toggleBinding, toggleFollowAlumni, toggleLikePost }), [notifications, bindings, followedAlumni, likedPosts, markRead, markAllRead, toggleBinding, toggleFollowAlumni, toggleLikePost]);
   return <SupportContext.Provider value={value}>{children}</SupportContext.Provider>;
 }
 
@@ -174,28 +386,32 @@ export function GrowthScorePage() {
 }
 
 export function StoriesPage() {
-  const { submittedStories } = useSupport();
   const view = useViewState();
-  const [activeTab, setActiveTab] = useState<StoryType | "submit">("story");
-  const allItems = useMemo(() => [...submittedStories.map(s => ({ ...s, type: "story" as StoryType })), ...storySeed], [submittedStories]);
-  const visibleItems = useMemo(() => {
-    if (activeTab === "submit") return [];
-    return allItems.filter(item => item.type === activeTab);
-  }, [activeTab, allItems]);
+  const [activeTab, setActiveTab] = useState<"showcase" | "projects" | "boost">("showcase");
+  const [awardFilter, setAwardFilter] = useState<"all" | AwardLevel>("all");
+  const [myPoints, setMyPoints] = useState(1280);
+  const [records, setRecords] = useState<BoostRecord[]>(boostRecordsSeed);
+
+  const filteredProjects = useMemo(() => awardFilter === "all" ? showcaseProjectsSeed : showcaseProjectsSeed.filter(p => p.awardLevel === awardFilter), [awardFilter]);
+
+  const completeTask = (task: BoostTask) => {
+    setMyPoints(current => current + task.points);
+    setRecords(current => [{ title: task.title, points: task.points }, ...current]);
+  };
 
   return (
     <PublicShell>
-      <PageHeader title="三创同学会" subtitle="赛友故事 · 公众号精选 · 投稿" />
+      <PageHeader title="三创同学会" subtitle="亲爱的三创赛友，欢迎你" />
       <div className="space-y-5 px-4 py-5">
         <div className="flex gap-2 overflow-x-auto">
           {[
-            { key: "story", label: "赛友故事" },
-            { key: "wechat", label: "公众号精选" },
-            { key: "submit", label: "投稿入口" },
+            { key: "showcase", label: "赛友风采" },
+            { key: "projects", label: "创·项目" },
+            { key: "boost", label: "赛事助力" },
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as StoryType | "submit")}
+              onClick={() => setActiveTab(tab.key as "showcase" | "projects" | "boost")}
               className={`min-h-touch shrink-0 rounded-control px-4 text-sm font-medium ${activeTab === tab.key ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
             >
               {tab.label}
@@ -203,169 +419,303 @@ export function StoriesPage() {
           ))}
         </div>
 
-        {activeTab === "submit" ? (
-          <Card className="space-y-4 py-6 text-center">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary-container text-text-brand">
-              <PenLine size={26} aria-hidden="true" />
-            </span>
-            <h2 className="text-base font-semibold text-text-primary">投稿你的赛友故事</h2>
-            <p className="text-sm leading-5 text-text-secondary">分享参赛经历、项目实践或成长故事，经运营审核后展示给更多同学。</p>
-            <Link to="/stories/submit" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去投稿</Link>
-          </Card>
-        ) : view === "ready" ? (
-          <div className="space-y-3">
-            {visibleItems.length ? visibleItems.map(item => (
-              <Link key={item.id} to={`/stories/${item.id}`} className="block">
-                <Card interactive className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-sm font-medium text-text-brand">{item.authorInitial}</span>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-base font-semibold leading-6 text-text-primary">{item.title}</h2>
-                      <p className="mt-1 text-xs text-text-tertiary">{item.author} · {item.publishTime}</p>
+        {activeTab === "showcase" && (
+          <div className="space-y-5">
+            <div className="flex gap-2 overflow-x-auto">
+              {awardOptions.map(option => (
+                <button
+                  key={option.key}
+                  onClick={() => setAwardFilter(option.key as "all" | AwardLevel)}
+                  className={`min-h-touch shrink-0 rounded-full px-3 text-xs font-medium ${awardFilter === option.key ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <Section title={`第十六届优秀团队 ${awardFilter === "all" ? "全部" : awardFilter} ${filteredProjects.length} 个`} action={<span className="text-xs text-text-tertiary">示例数据</span>}>
+              <div className="space-y-3">
+                {filteredProjects.map(project => (
+                  <Card key={project.id} interactive className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <span className="flex size-14 shrink-0 items-center justify-center rounded-container bg-surface text-xs text-text-tertiary">项目展示图</span>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-base font-semibold leading-6 text-text-primary">{project.title}</h2>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <StatusTag tone={awardTone(project.awardLevel)}>{project.awardLevel}</StatusTag>
+                          {project.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <p className="line-clamp-2 text-sm leading-5 text-text-secondary">{item.summary}</p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {item.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
-                    {item.external && <StatusTag tone="info">公众号来源</StatusTag>}
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-text-tertiary">
-                    <span className="flex items-center gap-1"><Heart size={14} aria-hidden="true" /> {item.likes}</span>
-                    <span className="flex items-center gap-1"><MessageCircle size={14} aria-hidden="true" /> 示例数据</span>
-                  </div>
-                </Card>
-              </Link>
-            )) : <StateBlock state="empty" />}
-            {visibleItems.length > 0 && <p className="py-2 text-center text-xs text-text-tertiary">— 已加载全部示例数据 —</p>}
+                    <p className="text-sm leading-5 text-text-secondary">{project.description}</p>
+                    <p className="text-xs text-text-tertiary">{project.school} · {project.teamSize} 人团队</p>
+                  </Card>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="历届优秀赛友" action={<Link to="/stories/alumni" className="text-sm font-medium text-text-brand">查看更多</Link>}>
+              <div className="grid grid-cols-2 gap-3">
+                {alumniSeed.slice(0, 4).map(alumni => (
+                  <Link key={alumni.id} to={`/stories/${alumni.id}`} className="block">
+                    <Card interactive className="space-y-3 text-center">
+                      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary-container text-lg font-medium text-text-brand">{alumni.initial}</span>
+                      <div>
+                        <h3 className="text-sm font-semibold text-text-primary">{alumni.name} {alumni.verified && "✓"}</h3>
+                        <p className="mt-1 text-xs text-text-tertiary">{alumni.school} · {alumni.edition}</p>
+                        <p className="mt-1 text-xs text-text-secondary">{alumni.role}</p>
+                      </div>
+                      <StatusTag tone={awardTone(alumni.awardLevel)}>{alumni.awardLevel}</StatusTag>
+                      <div className="flex flex-wrap justify-center gap-1">
+                        {alumni.tags.map(tag => <span key={tag} className="text-[10px] text-text-tertiary">#{tag}</span>)}
+                      </div>
+                      <div className="flex items-center justify-center gap-3 text-xs text-text-tertiary">
+                        <span className="flex items-center gap-1"><Heart size={12} aria-hidden="true" /> {alumni.likes}</span>
+                        <span className="flex items-center gap-1"><Bookmark size={12} aria-hidden="true" /> {alumni.postCount}篇经验</span>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </Section>
           </div>
-        ) : <StateBlock state={view} />}
+        )}
+
+        {activeTab === "projects" && (
+          <div className="space-y-4">
+            <Link to="/stories/submit" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去发布 ›</Link>
+            <div className="space-y-3">
+              {projectPostsSeed.map(post => (
+                <ProjectPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "boost" && (
+          <div className="space-y-5">
+            <Card className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">我的学力值</span>
+                <Zap size={18} className="text-warning-text" aria-hidden="true" />
+              </div>
+              <strong className="block text-3xl font-semibold text-text-primary">{myPoints.toLocaleString()}</strong>
+              <p className="text-xs leading-5 text-text-tertiary">每完成一个任务即可为第十六届三创赛助力，赛事组委会将获得对应资金支持。</p>
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {[
+                  { label: "已助力人数", value: "8,432" },
+                  { label: "累计学力值", value: "12.6万" },
+                  { label: "已筹资金", value: "¥32,580" },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-control bg-surface p-2 text-center">
+                    <strong className="block text-sm font-semibold text-text-primary">{stat.value}</strong>
+                    <span className="text-[10px] text-text-tertiary">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Section title="今日任务">
+              <div className="space-y-2">
+                {boostTasksSeed.map(task => (
+                  <Card key={task.id} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-medium text-text-primary">{task.title}</h3>
+                      <p className="mt-1 text-xs text-text-tertiary">{task.tag}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-warning-text">+{task.points}</span>
+                      <button onClick={() => completeTask(task)} className="min-h-touch rounded-control bg-primary px-3 py-2 text-xs font-medium text-on-primary">去完成</button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="助力记录">
+              <div className="space-y-2">
+                {records.map((record, index) => (
+                  <div key={`${record.title}-${index}`} className="flex items-center justify-between text-sm">
+                    <span className="text-text-secondary">{record.title}</span>
+                    <span className="font-medium text-warning-text">+{record.points}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          </div>
+        )}
       </div>
       <PrototypeStateTools />
     </PublicShell>
   );
 }
 
+function ProjectPostCard({ post }: { post: ProjectPost }) {
+  const { likedPosts, toggleLikePost } = useSupport();
+  const liked = likedPosts.includes(post.id);
+  return (
+    <Card interactive className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <StatusTag tone="info">{post.type}</StatusTag>
+          <StatusTag tone="neutral">#{post.tag}</StatusTag>
+        </div>
+      </div>
+      <h3 className="text-base font-semibold text-text-primary">{post.title}</h3>
+      <p className="text-sm leading-5 text-text-secondary">{post.description}</p>
+      <div className="flex items-center gap-2">
+        <span className="flex size-6 items-center justify-center rounded-full bg-primary-container text-xs font-medium text-text-brand">{post.authorInitial}</span>
+        <span className="text-xs text-text-tertiary">{post.author} · {post.authorSchool}</span>
+      </div>
+      <div className="flex items-center gap-4 text-xs text-text-tertiary">
+        <button onClick={() => toggleLikePost(post.id)} className={`flex items-center gap-1 ${liked ? "text-danger" : ""}`}>
+          <Heart size={14} aria-hidden="true" fill={liked ? "currentColor" : "none"} /> {post.likes + (liked ? 1 : 0)}
+        </button>
+        <span className="flex items-center gap-1"><MessageCircle size={14} aria-hidden="true" /> {post.comments}</span>
+      </div>
+    </Card>
+  );
+}
+
 export function StoryDetailPage() {
-  const { submittedStories } = useSupport();
-  const item = [...submittedStories.map(s => ({ ...s, type: "story" as StoryType })), ...storySeed].find(value => value.id === useParams().storyId);
-  const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(item?.likes ?? 0);
-  if (!item) return <Missing title="故事不存在" backTo="/stories" />;
-  const toggleLike = () => { setLiked(current => !current); setLikes(current => liked ? current - 1 : current + 1); };
-  const paragraphs = item.body.split("\n\n");
+  const { followedAlumni, toggleFollowAlumni } = useSupport();
+  const alumni = alumniSeed.find(value => value.id === useParams().storyId);
+  if (!alumni) return <Missing title="赛友不存在" backTo="/stories" />;
+  const followed = followedAlumni.includes(alumni.id);
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title={item.type === "wechat" ? "公众号精选" : "赛友故事"} backTo="/stories" />
-      <article className="space-y-5 px-4 py-6">
-        <div>
-          <div className="flex flex-wrap gap-2">
-            {item.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
-            {item.external && <StatusTag tone="info">公众号来源</StatusTag>}
-          </div>
-          <h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-full bg-primary-container text-sm font-medium text-text-brand">{item.authorInitial}</span>
-            <div>
-              <p className="text-sm font-medium text-text-primary">{item.author}</p>
-              <p className="text-xs text-text-tertiary">{item.publishTime}</p>
+      <PageHeader title="赛友主页" backTo="/stories" />
+      <div className="space-y-5 px-4 py-5">
+        <Card className="space-y-4 text-center">
+          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary-container text-2xl font-medium text-text-brand">{alumni.initial}</span>
+          <div>
+            <h1 className="text-lg font-semibold text-text-primary">{alumni.name} {alumni.verified && <span className="text-text-brand">✓</span>}</h1>
+            <p className="mt-1 text-sm text-text-secondary">{alumni.school} · {alumni.edition} · {alumni.role}</p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <StatusTag tone={awardTone(alumni.awardLevel)}>{alumni.awardLevel}</StatusTag>
+              {alumni.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
             </div>
           </div>
-        </div>
-        <Card className="space-y-4">
-          {paragraphs.map((paragraph, index) => <p key={index} className="text-base leading-7 text-text-primary">{paragraph}</p>)}
-          <p className="text-xs leading-5 text-text-tertiary">正式内容由运营审核后发布；原型只验证来源、阅读与互动动线。示例数据。</p>
-          {item.external && item.externalUrl && (
-            <>
-              <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">阅读全文（公众号原文）</a>
-              <p className="text-xs leading-5 text-text-tertiary">具体文章 URL 由运营内容配置；当前使用公众号域名验证真实外部跳转，不伪造一篇不存在的原文。</p>
-            </>
-          )}
+          <div className="flex items-center justify-center gap-4 text-xs text-text-tertiary">
+            <span className="flex items-center gap-1"><Heart size={14} aria-hidden="true" /> {alumni.likes}</span>
+            <span className="flex items-center gap-1"><Bookmark size={14} aria-hidden="true" /> {alumni.postCount} 篇经验</span>
+          </div>
+          <Button className="w-full" onClick={() => toggleFollowAlumni(alumni.id)}>{followed ? "已关注" : "关注赛友"}</Button>
         </Card>
-        <div className="flex gap-3">
-          <button onClick={toggleLike} className={`flex flex-1 items-center justify-center gap-2 rounded-control py-3 text-sm font-medium transition ${liked ? "bg-danger text-on-primary" : "bg-surface text-text-primary"}`}>
-            <Heart size={18} aria-hidden="true" fill={liked ? "currentColor" : "none"} /> {likes}
-          </button>
-          <button className="flex flex-1 items-center justify-center gap-2 rounded-control bg-surface py-3 text-sm font-medium text-text-primary transition active:bg-surface-pressed">
-            <Share2 size={18} aria-hidden="true" /> 分享
-          </button>
-        </div>
-      </article>
+
+        {alumni.projects.length > 0 && (
+          <Section title="🏅 获奖项目">
+            <div className="space-y-3">
+              {alumni.projects.map(project => (
+                <Card key={project.id} className="space-y-2">
+                  <h3 className="text-sm font-semibold text-text-primary">{project.title}</h3>
+                  <p className="text-xs text-text-tertiary">{project.edition}全国大学生三创赛{project.awardLevel}。{project.school} · {project.teamSize} 人团队。</p>
+                  <p className="text-sm leading-5 text-text-secondary">{project.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {project.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section title="📝 备赛经验分享">
+          <div className="space-y-3">
+            {alumni.posts.map(post => (
+              <Card key={post.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded-full bg-primary-container text-xs font-medium text-text-brand">{alumni.initial}</span>
+                  <span className="text-xs font-semibold text-text-primary">{alumni.name}</span>
+                  <span className="text-xs text-text-tertiary">{post.date} · {post.tag}</span>
+                </div>
+                <h3 className="text-sm font-semibold text-text-primary">#{post.tag} {post.title}</h3>
+                <p className="text-sm leading-5 text-text-secondary">{post.excerpt}</p>
+                <div className="flex items-center gap-4 text-xs text-text-tertiary">
+                  <span className="flex items-center gap-1"><Heart size={14} aria-hidden="true" /> {post.likes}</span>
+                  <span className="flex items-center gap-1"><MessageCircle size={14} aria-hidden="true" /> {post.comments}</span>
+                  <span className="flex items-center gap-1"><Bookmark size={14} aria-hidden="true" /> {post.bookmarks}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      </div>
     </PublicShell>
   );
 }
 
 export function StorySubmitPage() {
   const navigate = useNavigate();
-  const { submitStory } = useSupport();
+  const [type, setType] = useState<ProjectPostType>("找合作");
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [description, setDescription] = useState("");
+  const [tag, setTag] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const valid = title.trim() && body.trim();
-  const addImage = () => setImages(current => [...current, `https://placehold.co/120x120/eef2ff/4f46e5?text=图${current.length + 1}`]);
-  const removeImage = (index: number) => setImages(current => current.filter((_, i) => i !== index));
+  const valid = title.trim() && description.trim();
+  const postTypes: ProjectPostType[] = ["找合作", "招聘", "资源置换", "经验分享"];
+
   const submit = () => {
-    submitStory({
-      id: `submitted-${Date.now()}`,
-      type: "story",
-      title: title.trim(),
-      summary: body.trim().slice(0, 80) + (body.trim().length > 80 ? "…" : ""),
-      body: body.trim(),
-      author: "我的投稿",
-      authorInitial: "我",
-      tags: ["赛友投稿"],
-      publishTime: new Date().toISOString().slice(0, 10),
-      likes: 0,
-    });
     setSubmitted(true);
   };
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="投稿赛友经历" backTo="/stories" />
+      <PageHeader title="发布项目需求" backTo="/stories" />
       <div className="space-y-5 px-4 py-5">
         {submitted ? (
           <Card className="border border-success bg-success-bg py-6 text-center">
-            <h1 className="text-lg font-semibold text-success-text">投稿已提交</h1>
-            <p className="mt-2 text-sm text-success-text">内容进入运营审核；审核通过后将在「赛友故事」中展示。</p>
+            <h1 className="text-lg font-semibold text-success-text">发布已提交</h1>
+            <p className="mt-2 text-sm text-success-text">内容进入运营审核；审核通过后将在「创·项目」中展示。</p>
             <Button className="mt-4 w-full" onClick={() => navigate("/stories")}>返回三创同学会</Button>
           </Card>
         ) : (
           <>
-            <Card className="border border-info bg-info-bg">
-              <h2 className="text-sm font-semibold text-info-text">投稿须知</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-info-text">
-                <li>内容需为原创或已获得授权，禁止抄袭。</li>
-                <li>建议围绕参赛经历、项目实践、成长故事展开。</li>
-                <li>配图仅作原型展示，真实上传需运营配置。</li>
-                <li>审核结果不会发送通知，本次会话可在列表查看。</li>
-              </ul>
-            </Card>
-            <Field label="标题" value={title} onChange={setTitle} />
-            <label className="block">
-              <span className="text-sm font-medium text-text-primary">故事正文</span>
-              <textarea rows={8} value={body} onChange={event => setBody(event.target.value)} placeholder="写下你的经历…" className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" />
-            </label>
             <div className="space-y-2">
-              <span className="text-sm font-medium text-text-primary">配图（原型模拟）</span>
-              <div className="flex flex-wrap gap-3">
-                {images.map((src, index) => (
-                  <div key={`${src}-${index}`} className="relative">
-                    <img src={src} alt={`配图 ${index + 1}`} className="size-20 rounded-container object-cover" />
-                    <button onClick={() => removeImage(index)} className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-danger text-xs text-on-primary">×</button>
-                  </div>
+              <span className="text-sm font-medium text-text-primary">发布类型</span>
+              <div className="flex flex-wrap gap-2">
+                {postTypes.map(t => (
+                  <button key={t} onClick={() => setType(t)} className={`min-h-touch rounded-control px-3 text-xs font-medium ${type === t ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{t}</button>
                 ))}
-                {images.length < 4 && (
-                  <button onClick={addImage} className="flex size-20 flex-col items-center justify-center gap-1 rounded-container border border-dashed border-border bg-surface text-text-secondary transition active:bg-surface-pressed">
-                    <ImagePlus size={20} aria-hidden="true" />
-                    <span className="text-xs">添加配图</span>
-                  </button>
-                )}
               </div>
             </div>
+            <Field label="标题" value={title} onChange={setTitle} />
+            <label className="block">
+              <span className="text-sm font-medium text-text-primary">需求描述</span>
+              <textarea rows={6} value={description} onChange={event => setDescription(event.target.value)} placeholder="描述你的需求或经验…" className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" />
+            </label>
+            <Field label="标签（如：求助、招募、置换、干货）" value={tag} onChange={setTag} />
             <Button className="w-full" disabled={!valid} onClick={submit}>提交审核</Button>
           </>
         )}
+      </div>
+    </PublicShell>
+  );
+}
+
+export function AlumniListPage() {
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader title="历届优秀赛友" backTo="/stories" />
+      <div className="space-y-3 px-4 py-5">
+        {alumniSeed.map(alumni => (
+          <Link key={alumni.id} to={`/stories/${alumni.id}`} className="block">
+            <Card interactive className="flex items-center gap-3">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-container text-lg font-medium text-text-brand">{alumni.initial}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-text-primary">{alumni.name} {alumni.verified && <span className="text-text-brand">✓</span>}</h3>
+                  <StatusTag tone={awardTone(alumni.awardLevel)}>{alumni.awardLevel}</StatusTag>
+                </div>
+                <p className="mt-1 text-xs text-text-tertiary">{alumni.school} · {alumni.edition} · {alumni.role}</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {alumni.tags.map(t => <span key={t} className="text-[10px] text-text-tertiary">#{t}</span>)}
+                </div>
+              </div>
+              <ChevronRight size={18} className="text-text-tertiary" aria-hidden="true" />
+            </Card>
+          </Link>
+        ))}
       </div>
     </PublicShell>
   );
