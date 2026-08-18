@@ -1,77 +1,47 @@
-export type CompetitionControlSource = "平台配置" | "API 同步" | "文件导入" | "人工修正" | "Runtime";
+import { adminDomains, type DataSource } from "./data";
+
+export type CompetitionControlSource = DataSource;
 export type RegistrationMode = "platformPortal" | "externalUrl" | "thirdPartyApi" | "offline";
 export type PlatformReviewStatus = "pending" | "approved" | "rejected";
 export type OfficialQualificationStatus = "pending" | "confirmed" | "rejected" | "notRequired";
+type CompetitionStatus = "upcoming" | "registrationOpen" | "inProgress" | "ended";
 
-export type CompetitionControlRecord = {
-  id: string;
-  name: string;
-  status: "upcoming" | "registrationOpen" | "inProgress" | "ended";
-  source: CompetitionControlSource;
-  sourceDetail: string;
+type Relation = { label: string; stableId: string; to?: string };
+
+type CompetitionControlExtension = {
   organizer: string;
-  organizerId?: string;
   authorityMode: "externalAuthority" | "platformConfigured";
   tracks: { id: string; name: string; group: string }[];
-  registration: {
-    mode: RegistrationMode;
-    label: string;
-    detail: string;
-    portalPath?: string;
-  };
-  sync: {
-    state: "healthy" | "attention" | "notRequired";
-    lastSync: string;
-    priority: string;
-    fallback: string;
-    conflictPolicy: string;
-  };
-  qualification: {
-    platformReview: PlatformReviewStatus;
-    officialQualification: OfficialQualificationStatus;
-    workspaceRule: string;
-  };
+  registration: { mode: RegistrationMode; label: string; detail: string; portalPath?: string };
+  sync: { state: "healthy" | "attention" | "notRequired"; lastSync: string; priority: string; fallback: string; conflictPolicy: string };
+  qualification: { platformReview: PlatformReviewStatus; officialQualification: OfficialQualificationStatus; workspaceRule: string };
   windows: {
     official: { label: string; value: string; owner: string }[];
     local: { id: string; label: string; value: string; owner: string; scope: string }[];
   };
-  schoolScope: {
-    reviewOwnerRule: string;
-    authorizedSchools: string[];
-    note: string;
-  };
-  team: {
-    id: string;
-    name: string;
-    captainSchool: string;
-    members: { id: string; name: string; role: string; school: string }[];
-  };
-  project: {
-    id: string;
-    name: string;
-    track: string;
-    summary: string;
-    stage: string;
-  };
+  schoolScope: { reviewOwnerRule: string; authorizedSchools: string[]; note: string };
+  team: { id: string; name: string; captainSchool: string; members: { id: string; name: string; role: string; school: string }[] };
+  project: { id: string; name: string; track: string; summary: string; stage: string };
   resources: { id: string; title: string; category: string; source: CompetitionControlSource; updatedAt: string }[];
   services: {
     courses: { id: string; name: string }[];
     benefits: { id: string; name: string }[];
     activities: { id: string; name: string }[];
   };
-  workshop: {
-    enabled: boolean;
-    scope: string;
-    lifecycle: string;
-    skillPack: string[];
-    privacy: string;
-  };
-  teacherScope: {
-    allowed: string[];
-    denied: string[];
-  };
+  workshop: { enabled: boolean; scope: string; lifecycle: string; skillPack: string[]; privacy: string };
+  teacherScope: { allowed: string[]; denied: string[] };
+  additionalAppConsumers: string[];
+  additionalRelations: Relation[];
+};
+
+export type CompetitionControlRecord = CompetitionControlExtension & {
+  id: string;
+  name: string;
+  status: CompetitionStatus;
+  source: CompetitionControlSource;
+  sourceDetail: string;
   appConsumers: string[];
-  relations: { label: string; stableId: string; to?: string }[];
+  relations: Relation[];
 };
 
 export const registrationModeLabels: Record<RegistrationMode, string> = {
@@ -81,13 +51,8 @@ export const registrationModeLabels: Record<RegistrationMode, string> = {
   offline: "无线上报名",
 };
 
-export const competitionControlRecords: CompetitionControlRecord[] = [
-  {
-    id: "sanchuang-16",
-    name: "第十六届全国大学生电子商务“创新、创意及创业”挑战赛",
-    status: "registrationOpen",
-    source: "API 同步",
-    sourceDetail: "外部权威赛事事实以官方 API 为优先来源；平台承接报名流程与学院叠加服务分别保留自己的责任边界。",
+const competitionExtensions: Record<string, CompetitionControlExtension> = {
+  "sanchuang-16": {
     organizer: "全国大学生电子商务“创新、创意及创业”挑战赛竞赛组织委员会",
     authorityMode: "externalAuthority",
     tracks: [
@@ -164,32 +129,19 @@ export const competitionControlRecords: CompetitionControlRecord[] = [
       allowed: ["当前赛事报名资料", "当前授权学校的团队与成员", "CompetitionProject 材料", "必要联系方式", "学校审核状态", "被授权赛事变更事项"],
       denied: ["学生其它赛事", "长期问卷 / 画像", "求职简历", "投递记录", "权益消费记录", "Workshop 私人回答 / AI 内容", "与审核无关的长期账号数据"],
     },
-    appConsumers: [
-      "/competitions",
-      "/competitions/sanchuang-16",
+    additionalAppConsumers: [
       "/registration → /registration-portal/*",
       "/competitions/sanchuang-16/workspace",
       "/competitions/sanchuang-16/workspace/team",
       "/competitions/sanchuang-16/workspace/resources",
       "/competitions/sanchuang-16/workshop",
     ],
-    relations: [
-      { label: "北辰美妆", stableId: "northstar-beauty", to: "/admin/organizations/objects/northstar-beauty" },
-      { label: "品牌电商实战课", stableId: "brand-ecommerce" },
-      { label: "北辰美妆校园体验权益", stableId: "benefit-beauty-sample" },
-    ],
+    additionalRelations: [{ label: "校赛路演训练营", stableId: "activity-roadshow" }],
   },
-  {
-    id: "innovation-cup-2026",
-    name: "2026 青年品牌创新挑战赛",
-    status: "upcoming",
-    source: "平台配置",
-    sourceDetail: "普通合作赛事由平台赛事运营直接配置；仍使用同一 Competition 控制面与 stable id 规则。",
+  "innovation-cup-2026": {
     organizer: "青年品牌创新联盟",
     authorityMode: "platformConfigured",
-    tracks: [
-      { id: "track-brand", name: "品牌创新赛道", group: "综合组" },
-    ],
+    tracks: [{ id: "track-brand", name: "品牌创新赛道", group: "综合组" }],
     registration: {
       mode: "platformPortal",
       label: "平台承接报名",
@@ -205,12 +157,10 @@ export const competitionControlRecords: CompetitionControlRecord[] = [
     qualification: {
       platformReview: "approved",
       officialQualification: "notRequired",
-      workspaceRule: "该合作赛事不要求外部权威资格回流；平台资格规则满足后即可按赛事生命周期开放 Workspace。",
+      workspaceRule: "该合作赛事不要求外部权威资格回流；平台资格规则满足后仍按赛事生命周期开放 Workspace。",
     },
     windows: {
-      official: [
-        { label: "平台报名窗口", value: "2026-09-01 → 2026-10-15", owner: "平台赛事运营" },
-      ],
+      official: [{ label: "平台报名窗口", value: "2026-09-01 → 2026-10-15", owner: "平台赛事运营" }],
       local: [],
     },
     schoolScope: {
@@ -231,12 +181,10 @@ export const competitionControlRecords: CompetitionControlRecord[] = [
       id: "project-brand-2026",
       name: "校园轻运动品牌验证计划",
       track: "品牌创新",
-      summary: "同样是赛事期 CompetitionProject；赛事结束后仅把摘要、经历、团队角色与可信成果 handoff 到长期资产。",
+      summary: "赛事期 CompetitionProject；赛事结束后只 handoff 摘要、经历、团队角色与可信成果。",
       stage: "报名准备",
     },
-    resources: [
-      { id: "brand-cup-guide", title: "赛事说明与提交规范", category: "规则", source: "平台配置", updatedAt: "2026-08-18" },
-    ],
+    resources: [{ id: "brand-cup-guide", title: "赛事说明与提交规范", category: "规则", source: "平台配置", updatedAt: "2026-08-18" }],
     services: {
       courses: [{ id: "course-brand-basics", name: "品牌验证基础课" }],
       benefits: [],
@@ -253,20 +201,38 @@ export const competitionControlRecords: CompetitionControlRecord[] = [
       allowed: ["当前赛事报名资料", "授权学校团队与成员", "CompetitionProject 材料", "审核状态"],
       denied: ["学生其它赛事", "长期画像", "求职简历与投递", "权益消费记录", "Workshop 私人回答 / AI 内容"],
     },
-    appConsumers: [
-      "/competitions",
-      "/competitions/innovation-cup-2026",
-      "/registration",
-      "/competitions/innovation-cup-2026/workspace",
-      "/competitions/innovation-cup-2026/workshop",
-    ],
-    relations: [
+    additionalAppConsumers: ["/registration", "/competitions/innovation-cup-2026/workspace", "/competitions/innovation-cup-2026/workshop"],
+    additionalRelations: [
       { label: "品牌验证基础课", stableId: "course-brand-basics" },
       { label: "品牌诊断开放日", stableId: "activity-brand-clinic" },
     ],
   },
-];
+};
 
-export function competitionControlById(competitionId: string | undefined) {
-  return competitionControlRecords.find(record => record.id === competitionId);
+function normalizeCompetitionStatus(value: string): CompetitionStatus | undefined {
+  return value === "upcoming" || value === "registrationOpen" || value === "inProgress" || value === "ended" ? value : undefined;
+}
+
+function baseCompetitionById(competitionId: string | undefined) {
+  if (!competitionId) return undefined;
+  return adminDomains.find(domain => domain.id === "competitions")?.sampleObjects.find(item => item.stableId === competitionId);
+}
+
+export function competitionControlById(competitionId: string | undefined): CompetitionControlRecord | undefined {
+  const base = baseCompetitionById(competitionId);
+  const extension = competitionId ? competitionExtensions[competitionId] : undefined;
+  const status = base ? normalizeCompetitionStatus(base.businessState) : undefined;
+  if (!base || !extension || !status) return undefined;
+
+  const { additionalAppConsumers, additionalRelations, ...control } = extension;
+  return {
+    ...control,
+    id: base.stableId,
+    name: base.name,
+    status,
+    source: base.source,
+    sourceDetail: base.sourceDetail,
+    appConsumers: [...new Set([...base.mobileConsumers, ...additionalAppConsumers])],
+    relations: [...base.relations, ...additionalRelations],
+  };
 }
