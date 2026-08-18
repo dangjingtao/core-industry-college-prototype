@@ -70,9 +70,10 @@ function RegistrationPortalRoute() {
 export function App() {
   return (
     <Routes>
-      <Route path="/admin/organizations/*" element={<PC03Console />} />
+      <Route path="/admin/organizations" element={<PC03Console />} />
+      <Route path="/admin/organizations/:organizationId" element={<PC03Console />} />
       <Route path="/admin/opportunities/*" element={<PC03Console />} />
-      <Route path="/admin/content/*" element={<PC03Console />} />
+      <Route path="/admin/content" element={<PC03Console />} />
       <Route path="/admin/*" element={<AdminConsole />} />
       <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
       <Route path="/" element={<Navigate to="/admin" replace />} />
