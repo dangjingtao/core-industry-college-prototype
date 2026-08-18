@@ -56,7 +56,7 @@
 | T013 | 创赛工坊完整功能 | 施工 | 待执行 | 赛事工作区上下文 |
 | T014 | 我的页面设计语言总结 + 功能补齐 | 施工 | 待执行 | F03、T009、T010 |
 | T015 | 登录注册流程 | 施工 | 待执行 | F01、F03 |
-| PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | 待执行 | 无 |
+| PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | 待评审 | 无 |
 | PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | 待执行 | PC01 |
 | PC03 | Organization + 机会 + 内容运营 | 施工 | 待执行 | PC01 |
 | PC04 | 平台课程 + 权益 + 可信证书 | 施工 | 待执行 | PC01 |
@@ -591,7 +591,7 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 # PC01｜PC 控制面总壳 + APP 数据接入地图
 
 **类型：施工卡**  
-**状态：待执行**  
+**状态：待评审**  
 **优先级：P0**  
 **前置：无**
 
@@ -644,6 +644,27 @@ App 有什么
 ## 验收
 
 任意从 PC 总览进入的核心对象，都能清楚看到或追溯：来源、状态、关联主体、App 消费位置和责任人。
+
+## 施工记录
+
+- 开始时 branch HEAD：`9ac37b56dbe0d09e0ea4b53e55f0a37aea088886`；
+- 施工前已完成 APP → PC 数据映射，详见 `docs/workbench/PC01-admin-control-plane.md`；映射提交：`74521cda4c0df0ff0e926140a71c9b63f95f1744`；
+- 实际修改范围：
+  - `apps/pc/src/admin/data.ts`
+  - `apps/pc/src/admin/AdminConsole.tsx`
+  - `apps/pc/tests/admin-skeleton.spec.ts`
+  - `docs/workbench/PC01-admin-control-plane.md`
+  - `docs/workbench/00-work-ledger.md`
+- 核心实现提交：`46269896096eff98ba6ae599dd387ea058a6dbe6`；浏览器断言对齐提交：`3d5f59e031dce7d84383d01e01c1ce69fec6463f`；施工记录提交：`52f99c650e153a5e44f03d30cf871c2bb7ecf637`；
+- 已实现 7 个既有管理域的 PC01 控制面总壳、桌面 / 窄屏全局导航、Role + Module Permission + Data Scope、五类数据来源标签、stable ID Pattern、APP → PC 8 组入口接入地图、统一实体契约 / 列表 / 详情 / 编辑 Pattern 与跨域 stable relation；
+- Competition / Opportunity / Course / Benefit / Certificate 等示例均沿用当前 App stable id / 状态语义；Content / Workshop 没有足够当前 stable object 证据时不硬造业务记录；
+- `/tasks` 保持由 `identities[] / Application / CourseLearning / Benefit / WorkshopRun` 派生，不新增 Task 管理域或第二真相源；
+- 发现并保留真实缺口：当前 Mobile `session` 只有 `loggedIn / profileComplete`，没有显式 `accountId`；PC01 只展示 `Account ID` 缺口，不自行生成第二账号真相源；
+- 本卡没有修改 Mobile 产品逻辑，也没有修改现有三创赛报名门户业务实现；
+- TypeScript 静态验证：`data.ts` 使用 TypeScript 5.8 严格解析通过；`AdminConsole.tsx + data.ts` 在与仓库 `strict / moduleResolution=Bundler / jsx=react-jsx` 对齐的隔离检查中通过。该隔离检查用于发现本卡自身语法 / 类型问题，不冒充真实依赖安装后的 Vite build；
+- Browser regression 已扩展 `apps/pc/tests/admin-skeleton.spec.ts`：覆盖总览 / 数据来源 / stable ID / APP → PC map、Competition → Organization 跨域详情、统一编辑 Pattern、CompetitionIdentity 真相源边界、现有报名门户独立入口；
+- 仓库 `deploy-pc.yml` 与 `r-final-check.yml` 都会在 `apps/pc/**` 推送 `dev` 时执行真实 build / PC browser regression；当前 GitHub connector 的 commit workflow 查询只返回 PR 触发 run，本卡为直接 push `dev`，施工线程无法可靠取得本次 push run 的 run id / 最终状态，因此**不伪造 CI PASS**；
+- 当前结论：PC01 实现完成，状态进入 `待评审`；独立评审需补齐仓库真实 build / browser / CI 结果，如有红灯则改为 `CHANGES REQUIRED`；施工线程不自行标记 `PASS`。
 
 ---
 
