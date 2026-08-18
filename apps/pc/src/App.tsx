@@ -14,6 +14,7 @@ import { PC04StateProvider } from "./admin/PC04State";
 import { PC05AdminOverview } from "./admin/PC05AdminOverview";
 import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
+import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 
@@ -115,6 +116,7 @@ export function App() {
       <PC04StateProvider>
         <PC05StateProvider>
           <Routes>
+            <Route path="/" element={<PCPublicLanding />} />
             <Route path="/admin" element={<AdminRoute><PC05AdminOverview /></AdminRoute>} />
             <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
             <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
@@ -137,8 +139,7 @@ export function App() {
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminNotFound /></AdminRoute>} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </PC05StateProvider>
       </PC04StateProvider>
