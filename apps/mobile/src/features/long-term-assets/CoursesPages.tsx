@@ -17,7 +17,7 @@ export function CoursesPage() {
     return filter === "all" || (filter === "learning" ? record.status === "inProgress" : record.status === "completed");
   }), [filter, learningFor, loggedIn]);
 
-  return <PublicShell><PageHeader title="课程" subtitle="支撑参赛与就业成长，学习结果长期保留" /><div className="space-y-5 px-4 py-5">
+  return <PublicShell><PageHeader title="课程" subtitle="支撑参赛与就业成长，学习结果长期保留" backTo="-1" /><div className="space-y-5 px-4 py-5">
     {loggedIn && <div className="flex gap-2">{(["all","learning","completed"] as const).map(value => <button key={value} onClick={() => setFilter(value)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${filter === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{value === "all" ? "全部" : value === "learning" ? "学习中" : "已完成"}</button>)}</div>}
     <div className="space-y-3">{visible.map(course => { const record = loggedIn ? learningFor(course.id) : undefined; return <Link key={course.id} to={`/courses/${course.id}`} className="block"><Card interactive className="space-y-3"><SourceLine source={course.source} /><div><h2 className="text-base font-semibold text-text-primary">{course.title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{course.summary}</p></div><div className="flex items-center justify-between text-xs text-text-secondary"><span>{course.duration}</span>{record ? <StatusTag tone={record.status === "completed" ? "success" : record.status === "inProgress" ? "info" : "neutral"}>{statusLabel(record.status)}</StatusTag> : <StatusTag tone="neutral">登录查看进度</StatusTag>}</div>{record && <ProgressBar value={record.progress} />}</Card></Link>; })}</div>
   </div></PublicShell>;
