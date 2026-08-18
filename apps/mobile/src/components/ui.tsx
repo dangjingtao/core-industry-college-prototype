@@ -37,10 +37,14 @@ export function StatusTag({ tone = "info", children }: { tone?: "info" | "succes
 
 export function PageHeader({ title, backTo, right }: { title: string; backTo?: string; subtitle?: string; right?: ReactNode }) {
   const navigate = useNavigate();
+  const handleBack = () => {
+    if (backTo === "-1") navigate(-1);
+    else if (backTo) navigate(backTo);
+  };
   return (
     <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
       <div className="relative mx-auto flex min-h-11 w-full max-w-md items-center justify-center px-14">
-        {backTo && <button type="button" aria-label="返回" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={() => navigate(backTo)}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>}
+        {backTo && <button type="button" aria-label="返回" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={handleBack}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>}
         <div className="min-w-0 text-center">
           <h1 className="truncate text-base font-semibold leading-5 text-text-primary">{title}</h1>
         </div>
@@ -75,6 +79,22 @@ export function StateBlock({ state, onRetry }: { state: "loading" | "empty" | "e
   if (state === "loading") return <div className="space-y-3 py-4">{[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-container bg-surface-subtle" />)}</div>;
   if (state === "empty") return <Card className="py-8 text-center"><p className="text-base font-semibold text-text-primary">暂时没有内容</p><p className="mt-2 text-sm text-text-secondary">调整筛选条件，或稍后再看。</p></Card>;
   return <Card className="border border-danger bg-danger-bg py-6 text-center"><p className="text-base font-semibold text-danger-text">加载失败</p><p className="mt-2 text-sm text-danger-text">网络状态异常，请重新加载。</p>{onRetry && <Button className="mt-4" onClick={onRetry}>重新加载</Button>}</Card>;
+}
+
+export function ConfirmDialog({ open, title, description, cancelText = "关闭", confirmText = "确认", onCancel, onConfirm }: { open: boolean; title: string; description?: ReactNode; cancelText?: string; confirmText?: string; onCancel: () => void; onConfirm: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 px-6">
+      <div className="w-full max-w-xs rounded-container bg-surface p-5 shadow-floating">
+        <h3 className="text-center text-base font-semibold text-text-primary">{title}</h3>
+        {description && <p className="mt-2 text-center text-sm leading-5 text-text-secondary">{description}</p>}
+        <div className="mt-5 flex gap-3">
+          <SecondaryButton className="flex-1" onClick={onCancel}>{cancelText}</SecondaryButton>
+          <Button className="flex-1" onClick={onConfirm}>{confirmText}</Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function PrototypeStateTools() {

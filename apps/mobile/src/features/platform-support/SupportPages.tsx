@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, PenLine, Plus, Send, Settings, Share2, ShieldCheck, Trophy, Users, X, Zap } from "lucide-react";
-import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
+import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { competitionById } from "../public-platform/data";
@@ -369,7 +369,7 @@ export function OnboardingReadyPage() {
 
 export function NewsPage() {
   const view = useViewState();
-  return <PublicShell><PageHeader title="公告与资讯" subtitle="赛事、机会与平台通知" /><div className="space-y-4 px-4 py-5">{view === "ready" ? news.map(item => <Link key={item.id} to={`/news/${item.id}`} className="block"><Card interactive><StatusTag tone="neutral">{item.tag}</StatusTag><h2 className="mt-3 text-base font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.summary}</p></Card></Link>) : <StateBlock state={view} />}</div><PrototypeStateTools /></PublicShell>;
+  return <PublicShell><PageHeader title="公告与资讯" subtitle="赛事、机会与平台通知" backTo="/home" /><div className="space-y-4 px-4 py-5">{view === "ready" ? news.map(item => <Link key={item.id} to={`/news/${item.id}`} className="block"><Card interactive><StatusTag tone="neutral">{item.tag}</StatusTag><h2 className="mt-3 text-base font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.summary}</p></Card></Link>) : <StateBlock state={view} />}</div><PrototypeStateTools /></PublicShell>;
 }
 
 export function NewsDetailPage() {
@@ -403,7 +403,7 @@ export function StoriesPage() {
 
   return (
     <PublicShell>
-      <PageHeader title="三创同学会" subtitle="亲爱的三创赛友，欢迎你" />
+      <PageHeader title="三创同学会" subtitle="亲爱的三创赛友，欢迎你" backTo="/home" />
       <div className="space-y-5 px-4 py-5">
         <div className="flex gap-2 overflow-x-auto">
           {[
@@ -698,7 +698,7 @@ export function AlumniListPage() {
 
 export function SupportHomePage() {
   const questions = ["报名后为什么还不能进入赛事工作区？", "比赛结束后证书和成绩在哪里？", "投递使用的是哪一份简历？"];
-  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><div className="mt-4 grid grid-cols-2 gap-3"><Link to="/support/chat" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link><Link to="/me/feedback" className="block min-h-touch rounded-control border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-text-primary">提交反馈</Link></div></Card></div></PublicShell>;
+  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" backTo="/home" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><div className="mt-4 grid grid-cols-2 gap-3"><Link to="/support/chat" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link><Link to="/me/feedback" className="block min-h-touch rounded-control border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-text-primary">提交反馈</Link></div></Card></div></PublicShell>;
 }
 
 function MockQRCode({ size = 160, label }: { size?: number; label: string }) {
@@ -833,8 +833,14 @@ export function SubjectDecisionPage() {
 export function NotificationsPage() {
   const { notifications, markAllRead } = useSupport();
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const visible = unreadOnly ? notifications.filter(item => !item.read) : notifications;
-  return <PublicShell showNavigation={false}><PageHeader title="通知中心" backTo="/me" /><div className="space-y-5 px-4 py-5"><div className="flex gap-2"><button onClick={() => setUnreadOnly(false)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${!unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>全部</button><button onClick={() => setUnreadOnly(true)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>未读</button><GhostButton className="ml-auto" onClick={markAllRead}>全部已读</GhostButton></div>{visible.length ? visible.map(item => <Link key={item.id} to={`/me/notifications/${item.id}`} className="block"><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.body}</p><p className="mt-3 text-xs text-text-tertiary">{item.time}</p></div>{!item.read && <StatusTag tone="info">未读</StatusTag>}</div></Card></Link>) : <StateBlock state="empty" />}</div></PublicShell>;
+  const unreadCount = notifications.filter(item => !item.read).length;
+  const handleConfirm = () => {
+    markAllRead();
+    setShowConfirm(false);
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="通知中心" backTo="/me" /><div className="space-y-5 px-4 py-5"><div className="flex gap-2"><button onClick={() => setUnreadOnly(false)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${!unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>全部</button><button onClick={() => setUnreadOnly(true)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>未读</button><GhostButton className="ml-auto" onClick={() => setShowConfirm(true)} disabled={unreadCount === 0}>全部已读</GhostButton></div>{visible.length ? visible.map(item => <Link key={item.id} to={`/me/notifications/${item.id}`} className="block"><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.body}</p><p className="mt-3 text-xs text-text-tertiary">{item.time}</p></div>{!item.read && <StatusTag tone="info">未读</StatusTag>}</div></Card></Link>) : <StateBlock state="empty" />}<ConfirmDialog open={showConfirm} title="一键已读" description="是否将所有未读消息标记为已读？" cancelText="关闭" confirmText="确认" onCancel={() => setShowConfirm(false)} onConfirm={handleConfirm} /></div></PublicShell>;
 }
 
 export function NotificationDetailPage() {
