@@ -1,0 +1,115 @@
+name: PC-BD01 Full Regression Validation
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/pc-bd01-validation.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        id: install
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci 2>&1 | tee /tmp/install.log
+
+      - name: Install Chromium
+        id: chromium
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npx playwright install --with-deps chromium 2>&1 | tee /tmp/chromium.log
+
+      - name: Verify mobile routes, types and build
+        id: mobile_verify
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify --workspace @core/mobile 2>&1 | tee /tmp/mobile-verify.log
+
+      - name: Run mobile mother flows and feature regressions
+        id: mobile_e2e
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run e2e --workspace @core/mobile -- tests/mother-flows.spec.ts tests/f001-phone-verification.spec.ts tests/f002-trust-status.spec.ts tests/f003.spec.ts tests/r-final.spec.ts 2>&1 | tee /tmp/mobile-e2e.log
+
+      - name: Run real Mobile-PC-Mobile handoff
+        id: handoff
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify:browser:handoff --workspace @core/mobile 2>&1 | tee /tmp/handoff.log
+
+      - name: Verify PC types and build
+        id: pc_verify
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify --workspace @core/pc 2>&1 | tee /tmp/pc-verify.log
+
+      - name: Run PC browser regressions
+        id: pc_e2e
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run e2e --workspace @core/pc 2>&1 | tee /tmp/pc-e2e.log
+
+      - name: Record outcome and remove one-shot workflow
+        if: always()
+        shell: bash
+        env:
+          INSTALL: ${{ steps.install.outcome }}
+          CHROMIUM: ${{ steps.chromium.outcome }}
+          MOBILE_VERIFY: ${{ steps.mobile_verify.outcome }}
+          MOBILE_E2E: ${{ steps.mobile_e2e.outcome }}
+          HANDOFF: ${{ steps.handoff.outcome }}
+          PC_VERIFY: ${{ steps.pc_verify.outcome }}
+          PC_E2E: ${{ steps.pc_e2e.outcome }}
+        run: |
+          set -e
+          SUMMARY="install=$INSTALL chromium=$CHROMIUM mobile-verify=$MOBILE_VERIFY mobile-e2e=$MOBILE_E2E handoff=$HANDOFF pc-verify=$PC_VERIFY pc-e2e=$PC_E2E"
+          DETAILS=""
+          for pair in "install:$INSTALL:/tmp/install.log" "chromium:$CHROMIUM:/tmp/chromium.log" "mobile-verify:$MOBILE_VERIFY:/tmp/mobile-verify.log" "mobile-e2e:$MOBILE_E2E:/tmp/mobile-e2e.log" "handoff:$HANDOFF:/tmp/handoff.log" "pc-verify:$PC_VERIFY:/tmp/pc-verify.log" "pc-e2e:$PC_E2E:/tmp/pc-e2e.log"; do
+            IFS=: read -r name outcome logfile <<< "$pair"
+            if [ "$outcome" != "success" ] && [ -f "$logfile" ]; then
+              DETAILS="$DETAILS\n\n[$name tail]\n$(tail -n 20 "$logfile")"
+            fi
+          done
+          rm -f .github/workflows/pc-bd01-validation.yml
+          git config user.name "Mira PC-BD01"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "test(pc): PC-BD01 full regression $SUMMARY" -m "$(printf '%b' "$DETAILS")"
+          git pull --rebase origin dev
+          git push origin HEAD:dev
+          if [ "$INSTALL" != "success" ] || [ "$CHROMIUM" != "success" ] || [ "$MOBILE_VERIFY" != "success" ] || [ "$MOBILE_E2E" != "success" ] || [ "$HANDOFF" != "success" ] || [ "$PC_VERIFY" != "success" ] || [ "$PC_E2E" != "success" ]; then
+            exit 1
+          fi
