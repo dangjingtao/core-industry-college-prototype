@@ -21,7 +21,6 @@ type Story = {
   externalUrl?: string;
   likes: number;
 };
-
 type SupportState = {
   notifications: Notice[];
   bindings: string[];
@@ -43,7 +42,6 @@ const news = [
   { id: "internship-week", tag: "机会", title: "企业实践机会本周更新", summary: "品牌、电商、数据分析与供应链方向新增实践岗位。", body: "本周机会来自平台合作企业。投递前可先整理长期简历中的赛事经历、学习成果和证书。" },
   { id: "asset-guide", tag: "平台", title: "比赛结束后，哪些记录会继续保留？", summary: "赛事经历、成绩、证书与学习成果会沉淀到长期账号。", body: "赛事期权限会随着生命周期结束，但长期账号中的可信事实不会随赛事工作区一起消失。" },
 ];
-
 
 const storySeed: Story[] = [
   {
