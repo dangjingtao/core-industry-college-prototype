@@ -7,4 +7,6 @@ export const clientLabels: Record<ClientKind, string> = {
   mobile: "手机端",
 };
 
+export * from "./course-learning";
 export * from "./registration-handoff";
+export * from "./Dialog";

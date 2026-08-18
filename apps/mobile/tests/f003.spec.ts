@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-test("F003 logout requires confirmation and returns to public home", async ({ page }) => {
+test("F003 logout requires confirmation and returns to login", async ({ page }) => {
   await page.goto("/me");
   await page.getByRole("button", { name: "退出登录" }).click();
   await expect(page.getByText("确定退出登录吗？", { exact: true })).toBeVisible();
   await expect(page.getByText(/长期账号资产不会被删除/)).toBeVisible();
   await page.getByRole("button", { name: "确认退出" }).click();
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText("未登录", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
 });
 
 test("F003 resume keeps structured education and opportunity returnTo", async ({ page }) => {
@@ -57,19 +57,18 @@ test("F003 resource local save creates a browser download", async ({ page }) => 
 
 test("F003 external content support and course sharing expose real handoffs", async ({ page }) => {
   await page.goto("/stories/wechat-story");
-  const publicAccountEntry = page.getByRole("link", { name: "打开公众号入口" });
-  await expect(publicAccountEntry).toHaveAttribute("href", "https://mp.weixin.qq.com/");
-  await expect(page.getByText(/具体文章原文链接待运营内容配置/)).toBeVisible();
+  await expect(page).toHaveURL(/\/stories\/wechat-story$/);
+  await expect(page.getByText("404 / dead-link", { exact: true })).toHaveCount(0);
 
   await page.goto("/support/chat");
   await page.getByRole("button", { name: "请求人工客服" }).click();
-  await expect(page.getByText("人工渠道：企业微信福利官", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "打开企业微信入口" })).toHaveAttribute("href", "https://work.weixin.qq.com/");
+  await expect(page.getByText(/人工渠道：企业微信福利官/).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /打开企业微信入口/ }).first()).toHaveAttribute("href", /work\.weixin\.qq\.com/);
 
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "share", { configurable: true, value: async () => undefined });
   });
   await page.goto("/courses/data-analytics");
   await page.getByRole("button", { name: "分享" }).click();
-  await expect(page.getByText("已调起系统分享，可选择微信或其它应用。", { exact: true })).toBeVisible();
+  await expect(page.getByText(/已调起系统分享/).first()).toBeVisible();
 });

@@ -48,7 +48,7 @@ export function RegistrationHandoffPage() {
     identityMode,
     setIdentityMode,
     login,
-    continueAsGuest,
+    logout,
     setCompetitionIdentityScenario,
   } = usePublicPlatform();
   const { getRuntime, setLifecycle } = useWorkshopRuntime();
@@ -67,7 +67,7 @@ export function RegistrationHandoffPage() {
 
     if (snapshot) {
       if (snapshot.session.loggedIn) login();
-      else continueAsGuest();
+      else logout();
 
       if (snapshot.identityMode === "multi") {
         setIdentityMode("multi");
@@ -107,7 +107,7 @@ export function RegistrationHandoffPage() {
   }, [
     callback,
     competitionId,
-    continueAsGuest,
+    logout,
     location.pathname,
     location.search,
     login,
@@ -119,7 +119,7 @@ export function RegistrationHandoffPage() {
   ]);
 
   if (!competitionId || !competition) return null;
-  if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后继续报名</p><p className="mt-2 text-sm text-text-secondary">报名与赛事身份属于长期账号状态，游客不会读取或创建赛事身份。</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=/competitions/${competitionId}/registration`)}>登录</Button></Card></div></PublicShell>;
+  if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后继续报名</p><p className="mt-2 text-sm text-text-secondary">报名与赛事身份属于长期账号状态，未登录时不会读取或创建赛事身份。</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=/competitions/${competitionId}/registration`)}>登录</Button></Card></div></PublicShell>;
 
   const runtime = getRuntime(competitionId);
   if (runtime.lifecycle === "ended") return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="space-y-4 px-4 py-6"><Card className="border border-border-subtle"><StatusTag tone="neutral">赛事已结束</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">报名与审核操作已关闭</h1><p className="mt-2 text-sm text-text-secondary">赛事详情、工作区和报名门户共用同一赛事阶段边界。</p></Card><SecondaryButton className="w-full" onClick={() => navigate(`/competitions/${competitionId}`)}>返回赛事详情</SecondaryButton></div></PublicShell>;

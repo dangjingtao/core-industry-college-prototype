@@ -30,11 +30,12 @@ export function useAccountAction() {
 }
 
 export function AccountRequired({ children }: { children: ReactNode }) {
-  const loggedIn = useAccountLoggedIn();
+  const { session } = usePublicPlatform();
   const navigate = useNavigate();
   const location = useLocation();
-  if (loggedIn) return <>{children}</>;
+  if (session.loggedIn && session.profileComplete) return <>{children}</>;
   const returnTo = accountReturnTo(location.pathname, location.search);
+  if (session.loggedIn) return <div className="px-4 py-6"><Card className="py-8 text-center"><p className="text-base font-semibold text-text-primary">先完成基础资料</p><p className="mt-2 text-sm leading-5 text-text-secondary">注册已经完成，补齐昵称、学校、专业、地区与身份类型后即可继续。</p><Button className="mt-4" onClick={() => navigate(`/onboarding/profile?returnTo=${encodeURIComponent(returnTo)}`)}>完善资料</Button></Card></div>;
   return <div className="px-4 py-6"><Card className="py-8 text-center"><p className="text-base font-semibold text-text-primary">登录后查看长期账号内容</p><p className="mt-2 text-sm leading-5 text-text-secondary">赛事、课程、证书、权益记录和长期简历都属于同一长期账号。登录后会回到当前页面继续。</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`)}>登录后继续</Button></Card></div>;
 }
 

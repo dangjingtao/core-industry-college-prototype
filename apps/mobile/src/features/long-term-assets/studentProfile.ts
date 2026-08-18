@@ -34,6 +34,26 @@ export type StudentProfile = {
 export type StudentProfileField = keyof StudentProfile;
 export type StudentProfileSources = Partial<Record<StudentProfileField, ProfileSource>>;
 
+export const emptyStudentProfile: StudentProfile = {
+  name: "",
+  nickname: "",
+  gender: "",
+  phone: "",
+  phoneVerified: "unverified",
+  birthday: "",
+  school: "",
+  major: "",
+  city: "",
+  email: "",
+  identityType: "",
+  competitionExperience: "",
+  industryFields: "",
+  educationLevel: "",
+  workYears: "",
+  coreNeeds: "",
+  serviceInterests: "",
+};
+
 export const seedStudentProfile: StudentProfile = {
   name: "林晓",
   nickname: "小晓",

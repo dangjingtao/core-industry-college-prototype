@@ -15,6 +15,7 @@ import {
   type StudentProfile,
 } from "./studentProfile";
 import { useLongTermAssets } from "./store";
+import { usePublicPlatform } from "../public-platform/PublicPlatform";
 
 const sourceLabels = {
   seed: "原型种子",
@@ -23,6 +24,11 @@ const sourceLabels = {
   registration: "赛事报名回流",
   workshop: "创赛工坊问卷",
 } as const;
+
+function safeReturnTo(search: string, fallback = "/home") {
+  const value = new URLSearchParams(search).get("returnTo");
+  return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
+}
 
 function TextField({ label, value, onChange, type = "text", hint }: { label: string; value: string; onChange: (value: string) => void; type?: string; hint?: string }) {
   return <label className="block"><span className="text-sm font-medium text-text-primary">{label}</span><input type={type} value={value} onChange={event => onChange(event.target.value)} className="mt-2 min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-primary" />{hint && <span className="mt-1 block text-xs leading-5 text-text-tertiary">{hint}</span>}</label>;
@@ -58,15 +64,19 @@ function PhoneVerification({ phone, originalPhone, originalVerified, verified, o
 
 export function OnboardingProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, updateProfile } = useLongTermAssets();
+  const { completeProfile } = usePublicPlatform();
   const [draft, setDraft] = useState(profile);
   const [phoneVerified, setPhoneVerified] = useState(profile.phoneVerified === "verified");
-  const valid = Boolean(draft.nickname.trim() && /^1\d{10}$/.test(draft.phone) && phoneVerified && draft.school.trim() && draft.major.trim() && draft.city.trim());
+  const returnTo = safeReturnTo(location.search);
+  const valid = Boolean(draft.nickname.trim() && (/^1\d{10}$/.test(draft.phone) ? phoneVerified : draft.email.trim()) && draft.school.trim() && draft.major.trim() && draft.city.trim() && draft.identityType);
   const save = () => {
     updateProfile({ ...draft, phoneVerified: phoneVerified ? "verified" : "unverified" }, "onboarding");
-    navigate("/onboarding/survey");
+    completeProfile();
+    navigate(`/onboarding/survey?returnTo=${encodeURIComponent(returnTo)}`);
   };
-  return <PublicShell showNavigation={false}><PageHeader title="完善基础资料" backTo="/auth/login" /><div className="space-y-5 px-4 py-6"><Card><StatusTag tone="info">长期学生主档</StatusTag><p className="mt-3 text-sm leading-5 text-text-secondary">这里只收当前账号长期需要的基础资料。赛事报名已经取得的字段应回流到同一主档，不再建立第二份报名 Profile。</p></Card><TextField label="昵称" value={draft.nickname} onChange={nickname => setDraft(current => ({ ...current, nickname }))} /><PhoneVerification phone={draft.phone} originalPhone={profile.phone} originalVerified={profile.phoneVerified === "verified"} verified={phoneVerified} onPhoneChange={phone => setDraft(current => ({ ...current, phone }))} onVerifiedChange={setPhoneVerified} /><TextField label="学校" value={draft.school} onChange={school => setDraft(current => ({ ...current, school }))} /><TextField label="专业" value={draft.major} onChange={major => setDraft(current => ({ ...current, major }))} /><TextField label="所在地区" value={draft.city} onChange={city => setDraft(current => ({ ...current, city }))} /><Card className="border border-border-subtle"><p className="text-sm font-medium text-text-primary">其它资料不强迫一次填完</p><p className="mt-2 text-xs leading-5 text-text-secondary">性别、生日、身份类型、学历、产业方向与使用需求可在个人资料或下一步可跳过问卷中补充。</p></Card><Button className="w-full" disabled={!valid} onClick={save}>保存并继续</Button></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="完善基础资料" backTo="/auth/register" /><div className="space-y-5 px-4 py-6"><Card><StatusTag tone="info">长期学生主档</StatusTag><p className="mt-3 text-sm leading-5 text-text-secondary">这里只收当前账号长期需要的基础资料。赛事报名已经取得的字段应回流到同一主档，不再建立第二份报名 Profile。</p></Card><TextField label="昵称" value={draft.nickname} onChange={nickname => setDraft(current => ({ ...current, nickname }))} />{draft.phone ? <PhoneVerification phone={draft.phone} originalPhone={profile.phone} originalVerified={profile.phoneVerified === "verified"} verified={phoneVerified} onPhoneChange={phone => setDraft(current => ({ ...current, phone }))} onVerifiedChange={setPhoneVerified} /> : <TextField label="邮箱" type="email" value={draft.email} onChange={email => setDraft(current => ({ ...current, email }))} hint="注册邮箱已通过原型验证码确认。" />}<TextField label="学校" value={draft.school} onChange={school => setDraft(current => ({ ...current, school }))} /><TextField label="专业" value={draft.major} onChange={major => setDraft(current => ({ ...current, major }))} /><TextField label="所在地区" value={draft.city} onChange={city => setDraft(current => ({ ...current, city }))} /><SelectField label="身份类型" value={draft.identityType} options={identityTypeOptions} onChange={identityType => setDraft(current => ({ ...current, identityType: identityType as StudentProfile["identityType"] }))} /><Card className="border border-border-subtle"><p className="text-sm font-medium text-text-primary">其它资料不强迫一次填完</p><p className="mt-2 text-xs leading-5 text-text-secondary">性别、生日、学历、产业方向与使用需求可在个人资料或下一步可跳过问卷中补充。</p></Card><Button className="w-full" disabled={!valid} onClick={save}>保存并继续</Button></div></PublicShell>;
 }
 
 export function OnboardingSurveyPage() {
@@ -74,8 +84,8 @@ export function OnboardingSurveyPage() {
   const location = useLocation();
   const { profile, updateProfile } = useLongTermAssets();
   const [draft, setDraft] = useState(profile);
-  const returnTo = new URLSearchParams(location.search).get("returnTo");
-  const donePath = returnTo || "/onboarding/ready";
+  const returnTo = safeReturnTo(location.search);
+  const readyPath = `/onboarding/ready?returnTo=${encodeURIComponent(returnTo)}`;
   const save = () => {
     updateProfile({
       identityType: draft.identityType,
@@ -86,15 +96,17 @@ export function OnboardingSurveyPage() {
       coreNeeds: draft.coreNeeds,
       serviceInterests: draft.serviceInterests,
     }, "onboarding");
-    navigate(donePath);
+    navigate(readyPath);
   };
-  return <PublicShell showNavigation={false}><PageHeader title="可选需求问卷" backTo={returnTo || "/onboarding/profile"} /><div className="space-y-6 px-4 py-6"><Card><StatusTag tone="neutral">可跳过</StatusTag><p className="mt-3 text-sm leading-5 text-text-secondary">这些信息用于全平台的内容、赛事、课程与机会排序。地区已在基础资料采集，这里不重复追问；以后创赛工坊需要补充时也写回同一主档。</p></Card><SingleChoice title="你的身份" value={draft.identityType} options={identityTypeOptions} onChange={identityType => setDraft(current => ({ ...current, identityType: identityType as StudentProfile["identityType"] }))} /><SingleChoice title="三创赛经历" value={draft.competitionExperience} options={competitionExperienceOptions} onChange={competitionExperience => setDraft(current => ({ ...current, competitionExperience: competitionExperience as StudentProfile["competitionExperience"] }))} /><MultiChoice title="所属 / 意向产业领域" value={draft.industryFields} options={industryOptions} onChange={industryFields => setDraft(current => ({ ...current, industryFields }))} /><SingleChoice title="最高学历" value={draft.educationLevel} options={educationLevelOptions} onChange={educationLevel => setDraft(current => ({ ...current, educationLevel: educationLevel as StudentProfile["educationLevel"] }))} /><SingleChoice title="从业年限" value={draft.workYears} options={workYearsOptions} onChange={workYears => setDraft(current => ({ ...current, workYears: workYears as StudentProfile["workYears"] }))} /><MultiChoice title="核心使用需求" value={draft.coreNeeds} options={coreNeedOptions} onChange={coreNeeds => setDraft(current => ({ ...current, coreNeeds }))} /><MultiChoice title="关注的服务类型" value={draft.serviceInterests} options={serviceInterestOptions} onChange={serviceInterests => setDraft(current => ({ ...current, serviceInterests }))} /><div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => navigate(donePath)}>暂时跳过</SecondaryButton><Button onClick={save}>保存问卷</Button></div></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="可选需求问卷" backTo="/onboarding/profile" /><div className="space-y-6 px-4 py-6"><Card><StatusTag tone="neutral">可跳过</StatusTag><p className="mt-3 text-sm leading-5 text-text-secondary">这些信息用于全平台的内容、赛事、课程与机会排序。地区已在基础资料采集，这里不重复追问；以后创赛工坊需要补充时也写回同一主档。</p></Card><SingleChoice title="你的身份" value={draft.identityType} options={identityTypeOptions} onChange={identityType => setDraft(current => ({ ...current, identityType: identityType as StudentProfile["identityType"] }))} /><SingleChoice title="三创赛经历" value={draft.competitionExperience} options={competitionExperienceOptions} onChange={competitionExperience => setDraft(current => ({ ...current, competitionExperience: competitionExperience as StudentProfile["competitionExperience"] }))} /><MultiChoice title="所属 / 意向产业领域" value={draft.industryFields} options={industryOptions} onChange={industryFields => setDraft(current => ({ ...current, industryFields }))} /><SingleChoice title="最高学历" value={draft.educationLevel} options={educationLevelOptions} onChange={educationLevel => setDraft(current => ({ ...current, educationLevel: educationLevel as StudentProfile["educationLevel"] }))} /><SingleChoice title="从业年限" value={draft.workYears} options={workYearsOptions} onChange={workYears => setDraft(current => ({ ...current, workYears: workYears as StudentProfile["workYears"] }))} /><MultiChoice title="核心使用需求" value={draft.coreNeeds} options={coreNeedOptions} onChange={coreNeeds => setDraft(current => ({ ...current, coreNeeds }))} /><MultiChoice title="关注的服务类型" value={draft.serviceInterests} options={serviceInterestOptions} onChange={serviceInterests => setDraft(current => ({ ...current, serviceInterests }))} /><div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => navigate(readyPath)}>暂时跳过</SecondaryButton><Button onClick={save}>保存问卷</Button></div></div></PublicShell>;
 }
 
 export function OnboardingReadyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useLongTermAssets();
-  return <PublicShell showNavigation={false}><PageHeader title="准备好了" /><div className="space-y-5 px-4 py-8"><Card><StatusTag tone="success">主档已保存</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{profile.nickname || profile.name}，先从比赛或机会开始</h1><p className="mt-2 text-sm leading-5 text-text-secondary">后续报名、个人资料和工坊问卷会围绕同一份长期学生主档补充，不要求你反复填写同一组基础信息。</p></Card><Button className="w-full" onClick={() => navigate("/home")}>进入首页</Button></div></PublicShell>;
+  const returnTo = safeReturnTo(location.search);
+  return <PublicShell showNavigation={false}><PageHeader title="准备好了" /><div className="space-y-5 px-4 py-8"><Card><StatusTag tone="success">主档已保存</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{profile.nickname || profile.name}，先从比赛或机会开始</h1><p className="mt-2 text-sm leading-5 text-text-secondary">后续报名、个人资料和工坊问卷会围绕同一份长期学生主档补充，不要求你反复填写同一组基础信息。</p></Card><Button className="w-full" onClick={() => navigate(returnTo, { replace: true })}>{returnTo === "/home" ? "进入首页" : "继续之前的操作"}</Button></div></PublicShell>;
 }
 
 export function ProfilePage() {

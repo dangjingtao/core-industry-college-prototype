@@ -61,3 +61,73 @@ test("R-Final account bindings no longer masquerade as third-party business acco
     await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
   }
 });
+
+test("R-Final home notification control reaches the account notification center", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: "消息通知" }).click();
+  await expect(page).toHaveURL(/\/me\/notifications$/);
+  await expect(page.getByRole("heading", { name: "通知中心", exact: true })).toBeVisible();
+
+  await page.goto("/auth/login?returnTo=%2Fme%2Fnotifications");
+  await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
+  await page.getByLabel("手机号或邮箱").fill("13800138000");
+  await page.getByRole("textbox", { name: /^密码/ }).fill("prototype123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page).toHaveURL(/\/me\/notifications$/);
+});
+
+test("R-Final account and support routes have visible entries from My", async ({ page }) => {
+  await page.goto("/me");
+  const entries = [
+    ["消息通知", "/me/notifications"],
+    ["账号绑定", "/me/accounts"],
+    ["帮助与客服", "/support"],
+    ["用户协议", "/legal/user-agreement"],
+    ["隐私政策", "/legal/privacy"],
+    ["关于", "/about"],
+  ] as const;
+
+  for (const [name, href] of entries) {
+    await expect(page.getByRole("link", { name: new RegExp(name) })).toHaveAttribute("href", href);
+  }
+
+  await page.getByRole("link", { name: /帮助与客服/ }).click();
+  await expect(page.getByRole("heading", { name: "帮助与客服", exact: true })).toBeVisible();
+  const chatEntry = page.getByRole("link", { name: /进入客服会话/ });
+  await expect(chatEntry).toBeVisible();
+  await expect(chatEntry).toHaveAttribute("href", /\/support\/chat/);
+});
+
+test("R-Final course completion waits for passed assessment", async ({ page }) => {
+  await page.goto("/courses/brand-ecommerce/learn");
+  await page.getByRole("button", { name: "完成课程并考试" }).click();
+  await page.getByRole("button", { name: "先扩大投放" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("本次未通过，可重新作答", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "返回" }).click();
+  await page.getByRole("button", { name: "返回" }).click();
+  await expect(page.getByText("学习中", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "继续学习" })).toBeVisible();
+
+  await page.getByRole("button", { name: "继续学习" }).click();
+  await page.getByRole("button", { name: "进入课程考试" }).click();
+  await page.getByRole("button", { name: "先确认目标、口径与真实数据" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("考试通过，课程成果已写入长期学习记录", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "返回" }).click();
+  await page.getByRole("button", { name: "返回" }).click();
+  await expect(page.getByText("已完成", { exact: true })).toBeVisible();
+});
+
+test("R-Final low-progress assessment pass does not create a course certificate", async ({ page }) => {
+  await page.goto("/courses/brand-ecommerce/assessment");
+  await page.getByRole("button", { name: "先确认目标、口径与真实数据" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("考试通过，课程成果已写入长期学习记录", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "查看成绩与证书" }).click();
+  await expect(page.getByText(/课程进度 38%/)).toBeVisible();
+  await expect(page.getByText("完成课程并通过考试后，证书会进入统一证书记录。", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "领取证书" })).toHaveCount(0);
+});

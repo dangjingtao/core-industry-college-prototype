@@ -1,0 +1,49 @@
+.core-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 48%);
+  overscroll-behavior: contain;
+}
+.core-dialog-panel {
+  width: min(100%, 480px);
+  max-height: min(720px, calc(100dvh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle, #e5e7eb);
+  border-radius: var(--radius-overlay, 16px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text-primary, #111827);
+  box-shadow: var(--shadow-2, 0 20px 60px rgb(15 23 42 / 22%));
+  outline: none;
+}
+.core-dialog-panel-sm { width: min(100%, 360px); }
+.core-dialog-panel-lg { width: min(100%, 640px); }
+.core-dialog-header,
+.core-dialog-footer { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; }
+.core-dialog-header { border-bottom: 1px solid var(--color-border-subtle, #e5e7eb); }
+.core-dialog-footer { align-items: center; justify-content: flex-end; border-top: 1px solid var(--color-border-subtle, #e5e7eb); }
+.core-dialog-heading { min-width: 0; flex: 1; }
+.core-dialog-title { margin: 0; font-size: 18px; line-height: 24px; font-weight: 650; }
+.core-dialog-description { margin: 6px 0 0; color: var(--color-text-secondary, #6b7280); font-size: 14px; line-height: 20px; }
+.core-dialog-content { overflow: auto; padding: 24px; }
+.core-dialog-close { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -10px -10px 0 0; border: 0; border-radius: var(--radius-control, 8px); color: var(--color-text-secondary, #6b7280); background: transparent; cursor: pointer; }
+.core-dialog-close:hover { background: var(--color-surface-subtle, #f3f4f6); color: var(--color-text-primary, #111827); }
+.core-dialog-close:focus-visible { outline: 2px solid var(--color-border-focused, #6366f1); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .core-dialog-backdrop { align-items: flex-end; padding: 0; }
+  .core-dialog-panel, .core-dialog-panel-sm, .core-dialog-panel-lg { width: 100%; max-height: min(88dvh, 720px); border-right: 0; border-bottom: 0; border-radius: var(--radius-overlay, 16px) var(--radius-overlay, 16px) 0 0; }
+  .core-dialog-header, .core-dialog-footer { padding-left: 16px; padding-right: 16px; }
+  .core-dialog-content { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .core-dialog-backdrop { animation: core-dialog-fade-in 160ms ease-out; }
+  .core-dialog-panel { animation: core-dialog-rise-in 180ms ease-out; }
+  @keyframes core-dialog-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes core-dialog-rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+}

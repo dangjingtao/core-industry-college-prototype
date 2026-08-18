@@ -16,11 +16,17 @@
    产品定位、业务访谈、账号 / 赛事 / 长期资产等不可破坏原则。
 3. [`product/03-pc-admin-data-skeleton.md`](./product/03-pc-admin-data-skeleton.md)  
    PC 管理端作为数据控制面的骨架：主数据、关系、状态、长期资产、权限角色、写入责任和首期 CRUD 范围。
-4. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
+4. [`product/05-pc-admin-product-decisions.md`](./product/05-pc-admin-product-decisions.md)  
+   PC 管理端已确认产品决策：平台定位、三创赛接入边界、赛事报名与官方状态、学校审核、Organization、课程、证书、权益、机会、权限、审计与高风险审批。
+5. [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)  
    直接检查 Google Drive 原始 Mockplus 后得到的功能级缺口；解决“路由有了但功能缩水”的问题。
-5. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
+6. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
    明确该补、待决策、继续冻结的 backlog。
-6. 与当前任务直接相关的 migration / reference 文档。
+7. [`product/05-pluggable-simulation-module-design.md`](./product/05-pluggable-simulation-module-design.md)
+   运营沙盒等模拟小游戏作为赛事、课程或活动可选模块时的边界、接入协议和首期验收标准。
+8. [`product/06-business-simulation-demo-confirmation.md`](./product/06-business-simulation-demo-confirmation.md)
+   面向负责人的“经营决策体验”首期产品定位、范围、风险和确认项。
+9. 与当前任务直接相关的 migration / reference 文档。
 
 不要只看当前页面代码就自行推导产品模型，也不要只因为旧页面已经映射到新路由就认为旧功能完整覆盖。
 
@@ -52,6 +58,20 @@
 当前已形成 `/admin/*` 数据责任骨架，用于承接手机端快速演进后逐步暴露的数据来源问题。
 
 它不是一张“后台 UI 设计稿”，而是后续 PC 管理端施工的约束文档。
+
+### PC 管理端已确认决策
+
+[`product/05-pc-admin-product-decisions.md`](./product/05-pc-admin-product-decisions.md)
+
+这份文档记录 PC 后台产品访谈后已经确认的业务边界，可作为 `03-pc-admin-data-skeleton.md` 的决策补充。
+
+重点包括：
+
+- 核心产业学院是平台控制面，三创赛重要但不是后台唯一中心；
+- 外部权威赛事事实、平台报名流程、平台叠加服务必须分层；
+- 三创赛 API 优先，文件导入兜底，人工覆盖必须审计；
+- 学校审核、Organization、平台托管课程、可信证书、权益、机会与内容的已确认范围；
+- 超级管理员 / 普通运营、模块 + 数据范围权限、审计日志、高风险审批与账号冻结。
 
 ---
 
@@ -88,6 +108,42 @@ PC 管理端数据控制面骨架。
 - 默认优先 archive / close / expire / revoke，而不是删除被长期事实引用的业务对象。
 
 文档内包含当前对象关系图、数据流图、写入责任矩阵、权限角色和首期 CRUD 范围。
+
+### [`product/05-pc-admin-product-decisions.md`](./product/05-pc-admin-product-decisions.md)
+
+PC 管理端已确认产品决策纪要。
+
+当前进一步确认：
+
+- 核心产业学院后台是平台控制面，不能按三创赛官方后台设计；
+- 三创赛分为外部权威事实、平台承接报名流程和平台叠加服务三层；
+- 外部权威数据 API 优先，文件导入兜底，数据来源和人工覆盖必须可追溯；
+- 对需官方确认资格的赛事，正式赛事工作区必须等待权威资格结果；
+- 赛事项目是 `CompetitionProject`，赛后保留摘要和可信经历，不建设跨赛事长期 Project；
+- 跨校团队由队长所在学校统一审核，学校老师只访问授权赛事必要数据；
+- 学校、企业、赛事组织方、合作机构统一为 Organization；
+- 课程全部平台托管，首期以视频进度 + 小测试作为主要完成方式；
+- 课程可成为赛事专属任务，完成状态可被权益、证书和平台服务规则引用；
+- 课程证书按运营预配置规则自动触发真实外部权威签发流程；
+- 权益首期按个人领取，支持卡密、外部领取、线下核销三种方式；
+- 机会由平台分发、App 内正式投递、运营维护状态，不演化为完整招聘平台；
+- PC 后台需要超级管理员 / 普通运营、简单模块 + 数据范围授权、P0 审计、高风险审批和账号冻结。
+
+### [`product/04-leadership-signoff-gate.md`](./product/04-leadership-signoff-gate.md)
+
+正式原型版本的外部领导审批 Gate 设计。
+
+当前方案明确：
+
+- 领导不要求拥有 GitHub 账号；
+- 审批通过第三方邮箱触达，正式决策发生在独立 Signoff Gateway；
+- Signoff 精确绑定 Release PR 当前 commit SHA；
+- 代码变化后旧批准不能继承；
+- MVP 只卡 `dev → prod` 的正式 Release PR，不干扰日常功能 PR；
+- R-Final 是工程验收，Leadership Signoff 是交付/业务验收，两者都通过才能进入 `prod`；
+- Signoff 不侵入 `apps/mobile`、`apps/pc` 或产业学院业务后台。
+
+文档内包含审批流程、状态机、邮箱 OTP、数据模型、API 边界、GitHub gate、异常处理、审计要求和 SG01–SG04 实施拆分。
 
 ### [`product/01-legacy-mockplus-audit.md`](./product/01-legacy-mockplus-audit.md)
 
@@ -208,19 +264,16 @@ Com Design Core 的组件、token、视觉规则、触摸目标和已知 reduced
 
 **这只是可施工骨架，不等于真实 CRUD / 后端 / 权限体系已经完成。**
 
-后续施工优先按照：
+后续 PC 管理端施工应同时参考：
 
 ```text
-赛事中心
-→ Organization / 企业 / 学校
-→ 资源运营
-→ 学生 / 赛事身份
-→ 长期资产
-→ 内容活动
-→ 工坊配置
+03-pc-admin-data-skeleton.md
++ 05-pc-admin-product-decisions.md
 ```
 
-小卡推进。
+其中 `03` 定义数据骨架，`05` 固化本轮已经确认的业务决策。
+
+后续优先按 P0 小卡推进，不因为三创赛接入较深就把后台收缩成单一赛事系统。
 
 ### PC / Responsive Registration Portal
 

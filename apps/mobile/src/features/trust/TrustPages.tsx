@@ -119,18 +119,25 @@ export function CompanyDetailTrustedPage() {
 export function CertificateDetailTrustedPage() {
   const { certificateId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { certificates, claimCertificate } = useLongTermAssets();
   const [saved, setSaved] = useState(false);
   const [handoffOpened, setHandoffOpened] = useState(false);
   const item = certificates.find(value => value.id === certificateId);
+  const justClaimed = new URLSearchParams(location.search).get("claimed") === "1";
   if (!item) return <PublicShell showNavigation={false}><PageHeader title="证书不存在" backTo="/assets/certificates" /></PublicShell>;
   const sourceTitle = item.sourceType === "competition" ? competitionById(item.competitionId)?.name : courses.find(course => course.id === item.courseId)?.title;
   const statusLabel = item.status === "claimed" ? "已领取" : item.status === "claimable" ? "可领取" : item.status === "pending" ? "待发放" : "已撤销";
   const isClaimed = item.status === "claimed";
+  const claim = () => {
+    claimCertificate(item.id);
+    navigate(`${location.pathname}?claimed=1`, { replace: true });
+  };
 
   return <PublicShell showNavigation={false}><PageHeader title="证书详情" backTo="/assets/certificates" /><div className="space-y-5 px-4 py-5">
+    {justClaimed && isClaimed && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">领取成功</p><p className="mt-2 text-sm leading-5 text-success-text">证书已加入你的长期资产，可随时保存、下载或前往官方平台验真。</p></Card>}
     <Card className="space-y-4"><div><p className="text-xs text-text-secondary">{item.issuer}</p><h1 className="mt-1 text-xl font-semibold leading-7 text-text-primary">{item.title}</h1></div><div className="grid grid-cols-2 gap-3 text-sm"><div><p className="text-text-tertiary">来源</p><p className="mt-1 text-text-primary">{sourceTitle ?? "—"}</p></div><div><p className="text-text-tertiary">状态</p><p className="mt-1 text-text-primary">{statusLabel}</p></div></div><div className="border-t border-border-subtle pt-3"><p className="text-xs text-text-tertiary">{isClaimed ? "验真码" : "凭证编号（尚未生效）"}</p><p className="mt-1 font-mono text-sm text-text-primary">{item.verificationCode}</p></div></Card>
-    {item.status === "claimable" && <><Button className="w-full" onClick={() => claimCertificate(item.id)}>领取证书</Button><Card className="border border-info bg-info-bg"><p className="font-semibold text-info-text">领取后才成为已签发可信凭证</p><p className="mt-2 text-sm leading-5 text-info-text">当前仅表示具备领取资格；保存、下载、验真与官方平台 handoff 尚未开放。</p></Card></>}
+    {item.status === "claimable" && <><Button className="w-full" onClick={claim}>领取证书</Button><Card className="border border-info bg-info-bg"><p className="font-semibold text-info-text">领取后才成为已签发可信凭证</p><p className="mt-2 text-sm leading-5 text-info-text">当前仅表示具备领取资格；保存、下载、验真与官方平台 handoff 尚未开放。</p></Card></>}
     {item.status === "pending" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">证书待发放</p><p className="mt-2 text-sm leading-5 text-warning-text">签发处理中，暂不能保存、下载或进行可信验真。</p></Card>}
     {item.status === "revoked" && <Card className="border border-danger bg-danger-bg"><p className="font-semibold text-danger-text">证书已撤销</p><p className="mt-2 text-sm leading-5 text-danger-text">该凭证已失效，可信动作已关闭。</p></Card>}
     {isClaimed && <>

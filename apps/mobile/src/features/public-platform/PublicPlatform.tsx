@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Check, ChevronRight, ClipboardList, Gift, MessageCircle, Sparkles, Trophy, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -12,12 +12,15 @@ type ApplicationRecord = { opportunityId: string; status: "submitted" | "statusU
 type IdentityMode = "multi" | "none" | "runtime";
 type SessionState = { loggedIn: boolean; profileComplete: boolean };
 type ListViewState = {
-  competitionKeyword: string;
+  competitionKeywords: string[];
   competitionStatus: string;
-  opportunityKeyword: string;
+  opportunityKeywords: string[];
   opportunityMode: string;
-  companyKeyword: string;
+  companyKeywords: string[];
+  companyIndustry: string;
 };
+const matchesKeywords = (haystack: string, keywords: readonly string[]) => keywords.every(term => haystack.includes(term));
+const companyIndustries = Array.from(new Set(companies.map(item => item.industry)));
 type ListKey = "competitions" | "opportunities" | "companies";
 export type IdentityScenario = "none" | "pending" | "rejected" | "active" | "revoked";
 
@@ -31,6 +34,9 @@ type PublicPlatformState = {
   listScroll: Record<ListKey, number>;
   setIdentityMode: (mode: "multi" | "none") => void;
   login: () => void;
+  registerAccount: () => void;
+  completeProfile: () => void;
+  logout: () => void;
   continueAsGuest: () => void;
   setCompetitionIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
   upsertRegistrationPending: (competitionId: string) => void;
@@ -53,11 +59,12 @@ function multiIdentitySeed() {
 }
 
 const initialListView: ListViewState = {
-  competitionKeyword: "",
+  competitionKeywords: [],
   competitionStatus: "all",
-  opportunityKeyword: "",
+  opportunityKeywords: [],
   opportunityMode: "all",
-  companyKeyword: "",
+  companyKeywords: [],
+  companyIndustry: "all",
 };
 
 export function PublicPlatformProvider({ children }: { children: ReactNode }) {
@@ -80,6 +87,15 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
     setIdentities(mode === "multi" ? multiIdentitySeed() : []);
   }, []);
   const login = useCallback(() => setSession({ loggedIn: true, profileComplete: true }), []);
+  const registerAccount = useCallback(() => {
+    setSession({ loggedIn: true, profileComplete: false });
+    setApplications([]);
+    setFollowedCompanies([]);
+    setIdentities([]);
+    setIdentityModeValue("runtime");
+  }, []);
+  const completeProfile = useCallback(() => setSession(current => current.loggedIn ? { ...current, profileComplete: true } : current), []);
+  const logout = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
   const continueAsGuest = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
   const setCompetitionIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => {
     setIdentities(current => {
@@ -111,7 +127,7 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PublicPlatformState>(() => ({
     session, applications, followedCompanies, identities, identityMode, listView, listScroll,
-    setIdentityMode, login, continueAsGuest,
+    setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest,
     setCompetitionIdentityScenario: guardedIdentityScenario,
     upsertRegistrationPending,
     submitApplication: guardedSubmitApplication,
@@ -178,24 +194,6 @@ function CompetitionCarousel() {
   })} />;
 }
 
-const opportunityBannerStyles = [
-  "from-[#2879D0] to-[#5AA6E8]",
-  "from-[#6F4BC2] to-[#9A7DDB]",
-  "from-[#147A4C] to-[#36A573]",
-];
-
-function OpportunityCarousel() {
-  const featured = opportunities.filter(item => item.status === "open").slice(0, 3);
-  return <Carousel size="sm" ariaLabel="精选机会" autoPlay interval={5000} items={featured.map((item, index) => {
-    const company = companyById(item.companyId);
-    return {
-      id: item.id,
-      ariaLabel: `${item.title}，${company?.name ?? "合作企业"}`,
-      content: <Link to={`/opportunities/${item.id}`} aria-label={`查看第 ${index + 1} 个精选机会`} className={`flex h-full flex-col justify-between bg-gradient-to-br p-4 pr-12 text-on-primary ${opportunityBannerStyles[index % opportunityBannerStyles.length]}`}><span className="text-xs font-medium opacity-85">{item.mode} · {item.city}</span><span><strong className="line-clamp-2 block text-base font-semibold leading-6">{item.title}</strong><span className="mt-1 block truncate text-xs opacity-80">{company?.name}</span></span></Link>,
-    };
-  })} />;
-}
-
 function ViewGate({ children }: { children: ReactNode }) {
   const view = usePrototypeView();
   if (view !== "ready") return <div className="px-4 py-6"><StateBlock state={view} /></div>;
@@ -249,6 +247,7 @@ export function HomePage() {
   const activeIdentity = identities.find(identity => identity.identityStatus === "active");
   const activeCompetition = guest ? undefined : competitionById(activeIdentity?.competitionId);
   const openOpportunityCount = opportunities.filter(item => item.status === "open").length;
+  const openCompetitionCount = competitions.filter(item => item.status === "registrationOpen").length;
   const taskEntries: HomeTaskEntry[] = [
     ...(activeCompetition ? [{
       id: "workshop",
@@ -297,19 +296,27 @@ export function HomePage() {
   ];
   const growthResources = [
     { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
-    { label: "权益", description: "查看可领取的支持", to: "/benefits", icon: Gift },
+    { label: "创赛福利", description: "学力值、权益与兑换", to: "/benefits", icon: Gift },
     { label: "可信成果", description: "沉淀证书与成绩", to: "/assets", icon: Award },
     { label: "合作企业", description: "发现品牌与机会", to: "/companies", icon: Building2 },
+    { label: "三创同学会", description: "赛友风采与项目资源", to: "/stories", icon: Users },
   ];
-  return <PublicShell><header className="flex items-center justify-between px-4 pb-4 pt-6"><div><div className="flex items-center gap-2"><p className="text-xs font-medium text-text-brand">核心产业学院</p>{guest && <span className="text-xs text-text-tertiary">未登录</span>}</div><h1 className="mt-1 text-xl font-semibold text-text-primary">{guest ? "你好，欢迎来看看" : "嗨，今天也一起向前"}</h1></div><button aria-label="消息通知" className="relative flex size-11 items-center justify-center rounded-full bg-surface text-text-primary"><Bell size={21} aria-hidden="true" /><span className="absolute right-2 top-2 size-2 rounded-full bg-danger" /></button></header>
+  return <PublicShell><header className="flex items-center justify-between px-4 pb-4 pt-6"><div><div className="flex items-center gap-2"><p className="text-xs font-medium text-text-brand">核心产业学院</p>{guest && <span className="text-xs text-text-tertiary">未登录</span>}</div><h1 className="mt-1 text-xl font-semibold text-text-primary">{guest ? "你好，欢迎来看看" : "嗨，今天也一起向前"}</h1></div><button aria-label="消息通知" onClick={() => navigate(guest ? "/auth/login?returnTo=/me/notifications" : "/me/notifications")} className="relative flex size-11 items-center justify-center rounded-full bg-surface text-text-primary"><Bell size={21} aria-hidden="true" /><span className="absolute right-2 top-2 size-2 rounded-full bg-danger" /></button></header>
     {view !== "ready" ? <div className="px-4"><StateBlock state={view} /></div> : <div className="space-y-7 px-4">
       <section className="overflow-hidden rounded-[20px] bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary shadow-floating"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium opacity-80">{activeCompetition ? "我的赛事" : "正在报名"}</p><h2 className="mt-2 text-xl font-semibold leading-7">{activeCompetition?.name ?? competitions[0].name}</h2><p className="mt-2 text-sm opacity-85">{activeCompetition ? "赛事身份有效，继续推进你的参赛项目" : "发现适合你的赛事，开启一段新经历"}</p></div><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><Trophy size={22} aria-hidden="true" /></span></div><div className="mt-5 flex gap-2">{activeCompetition ? <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate(`/competitions/${activeCompetition.id}/workspace`)}>进入当前赛事</button> : <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate("/competitions")}>发现比赛</button>}<button className="flex min-h-touch items-center justify-center rounded-control bg-white/15 px-4 text-sm font-medium" onClick={() => navigate("/competitions")}>全部赛事<ChevronRight size={16} aria-hidden="true" /></button></div></section>
 
-      <section><div className="grid grid-cols-4 gap-2">{growthResources.map(({ label, to, icon: Icon }) => <button key={to} onClick={() => navigate(to)} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-container bg-surface text-center active:bg-surface-pressed"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">{label}</span></button>)}</div></section>
+      <section aria-labelledby="home-explore-title" className="space-y-3">
+        <div className="flex min-h-6 items-center justify-between gap-3"><h2 id="home-explore-title" className="text-base font-semibold text-text-primary">探索你的下一站</h2><span className="text-xs font-medium text-text-tertiary">参赛 · 就业</span></div>
+        <div className="overflow-hidden rounded-container border border-border-subtle bg-surface">
+          <div className="grid grid-cols-2 gap-3 p-4">
+            <button type="button" onClick={() => navigate("/competitions")} aria-label={`赛事推荐：正在报名的赛事，${openCompetitionCount} 场报名中`} className="flex min-h-[132px] flex-col justify-between rounded-container bg-[linear-gradient(135deg,#fff0e2_0%,#fff7ef_72%)] p-4 text-left transition active:scale-95"><span className="flex items-start justify-between gap-2"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[#e66d20] shadow-sm"><Trophy size={18} aria-hidden="true" /></span><span className="rounded-full bg-white/85 px-2 py-1 text-xs font-medium text-[#c45b1b]">{openCompetitionCount} 场 · 报名中</span></span><span className="mt-3"><strong className="block text-base font-semibold leading-6 text-text-primary">赛事推荐</strong><span className="mt-1 block text-xs text-text-secondary">正在报名的赛事</span></span></button>
+            <button type="button" onClick={() => navigate("/opportunities")} aria-label={`实习与项目：找到真实实践机会，${openOpportunityCount} 个开放中`} className="flex min-h-[132px] flex-col justify-between rounded-container bg-[linear-gradient(135deg,#e6f3ff_0%,#f1f8ff_72%)] p-4 text-left transition active:scale-95"><span className="flex items-start justify-between gap-2"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[#2879d0] shadow-sm"><BriefcaseBusiness size={18} aria-hidden="true" /></span><span className="rounded-full bg-white/85 px-2 py-1 text-xs font-medium text-[#1f5fa8]">{openOpportunityCount} 个 · 开放中</span></span><span className="mt-3"><strong className="block text-base font-semibold leading-6 text-text-primary">实习与项目</strong><span className="mt-1 block text-xs text-text-secondary">找到真实实践机会</span></span></button>
+          </div>
+          <div className="grid grid-cols-5 gap-1.5 border-t border-border-subtle bg-surface-subtle p-3">{growthResources.map(({ label, to, icon: Icon }) => <button key={to} type="button" onClick={() => navigate(to)} aria-label={label} className="flex min-h-[76px] flex-col items-center justify-center gap-1 rounded-control bg-surface p-1 text-center transition active:bg-surface-pressed"><span className="flex size-8 items-center justify-center rounded-[10px] bg-primary-container text-text-brand"><Icon size={16} aria-hidden="true" /></span><span className="text-[11px] font-medium leading-4 text-text-primary">{label}</span></button>)}</div>
+        </div>
+      </section>
 
       <HomeTaskZone entries={taskEntries} />
-
-      <Section title="为你推荐"><div className="grid grid-cols-2 gap-3"><button className="rounded-container bg-[#fff2e8] p-4 text-left" onClick={() => navigate("/competitions")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#e66d20]"><Trophy size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">赛事推荐</strong><span className="mt-1 block text-xs text-text-secondary">正在报名的赛事</span></button><button className="rounded-container bg-[#eaf5ff] p-4 text-left" onClick={() => navigate("/opportunities")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#2879d0]"><BriefcaseBusiness size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">实习与项目</strong><span className="mt-1 block text-xs text-text-secondary">找到真实实践机会</span></button></div></Section>
 
       {!guest && !activeCompetition && <Card className="border border-border-subtle"><h2 className="text-base font-semibold text-text-primary">还没有可用赛事工作区</h2><p className="mt-2 text-sm leading-5 text-text-secondary">公共赛事、机会和成长资源仍可正常使用。</p></Card>}
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}
@@ -318,24 +325,56 @@ export function HomePage() {
 
       <Section title="精选机会" action={<Link to="/opportunities" className="text-sm font-medium text-text-brand">查看全部</Link>}><div className="space-y-3">{opportunities.filter(item => item.status === "open").slice(0,2).map(item => <OpportunityCard item={item} key={item.id} />)}</div></Section>
       {!guest && <div className="flex justify-center pb-2"><AccountScenarioSwitch /></div>}
-    </div>}<PrototypeStateTools /></PublicShell>;
+    </div>}<PrototypeStateTools />
+    <Link to="/support/chat" aria-label="智能客服" className="fixed bottom-20 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-floating transition active:scale-95"><MessageCircle size={26} aria-hidden="true" /></Link>
+  </PublicShell>;
 }
 
 export function CompetitionsPage() {
   useListScroll("competitions");
   const { listView, updateListView } = usePublicPlatform();
   const view = usePrototypeView();
-  const filtered = useMemo(() => competitions.filter(item => (listView.competitionStatus === "all" || item.status === listView.competitionStatus) && `${item.name}${item.organizer}${item.tags.join("")}`.toLowerCase().includes(listView.competitionKeyword.toLowerCase())), [listView.competitionKeyword, listView.competitionStatus]);
-  return <PublicShell><PageHeader title="赛事" subtitle="公开赛事发现，不要求先拥有赛事身份" /><div className="space-y-6 px-4 py-5"><CompetitionCarousel /><MobileFilter query={listView.competitionKeyword} onQueryChange={competitionKeyword => updateListView({ competitionKeyword })} searchPlaceholder="搜索赛事名称、主办方或关键词" options={[{ value: "all", label: "全部" }, { value: "registrationOpen", label: "报名中" }, { value: "inProgress", label: "进行中" }, { value: "upcoming", label: "即将开放" }, { value: "ended", label: "已结束" }]} value={listView.competitionStatus} onValueChange={competitionStatus => updateListView({ competitionStatus })} defaultValue="all" filterAriaLabel="赛事筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="场赛事" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <CompetitionCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
+  const filtered = useMemo(() => competitions.filter(item => {
+    const matchesStatus = listView.competitionStatus === "all" || item.status === listView.competitionStatus;
+    const haystack = `${item.name}${item.organizer}${item.tags.join("")}`.toLowerCase();
+    return matchesStatus && matchesKeywords(haystack, listView.competitionKeywords);
+  }), [listView.competitionKeywords, listView.competitionStatus]);
+  return <PublicShell><PageHeader title="赛事" subtitle="公开赛事发现，不要求先拥有赛事身份" /><div className="space-y-6 px-4 py-5"><CompetitionCarousel /><MobileFilter keywords={listView.competitionKeywords} onKeywordsChange={competitionKeywords => updateListView({ competitionKeywords: [...competitionKeywords] })} inputPlaceholder="搜索赛事名称、主办方或关键词" groups={[{ key: "competitionStatus", label: "赛事状态", options: [{ value: "all", label: "不限" }, { value: "registrationOpen", label: "报名中" }, { value: "inProgress", label: "进行中" }, { value: "upcoming", label: "即将开放" }, { value: "ended", label: "已结束" }], value: listView.competitionStatus, onChange: competitionStatus => updateListView({ competitionStatus }) }]} filterAriaLabel="赛事筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="场赛事" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <CompetitionCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
 }
+
+const opportunityTabs = [
+  { key: "positions", label: "岗位" },
+  { key: "applications", label: "我的投递" },
+  { key: "companies", label: "合作企业" },
+] as const;
+
+type OpportunityTab = (typeof opportunityTabs)[number]["key"];
 
 export function OpportunitiesPage() {
   useListScroll("opportunities");
-  const { listView, updateListView } = usePublicPlatform();
+  const navigate = useNavigate();
+  const { listView, updateListView, applications, session, setApplicationStatus } = usePublicPlatform();
   const view = usePrototypeView();
-  const filtered = useMemo(() => opportunities.filter(item => (listView.opportunityMode === "all" || item.mode === listView.opportunityMode) && `${item.title}${companyById(item.companyId)?.name}${item.city}`.toLowerCase().includes(listView.opportunityKeyword.toLowerCase())), [listView.opportunityKeyword, listView.opportunityMode]);
-  return <PublicShell><PageHeader title="机会" subtitle="实习、校招与企业项目实践" /><div className="space-y-5 px-4 py-5"><OpportunityCarousel /><MobileFilter query={listView.opportunityKeyword} onQueryChange={opportunityKeyword => updateListView({ opportunityKeyword })} searchPlaceholder="搜索岗位、企业或城市" options={[{ value: "all", label: "全部" }, { value: "实习", label: "实习" }, { value: "校招", label: "校招" }, { value: "项目实践", label: "项目实践" }]} value={listView.opportunityMode} onValueChange={opportunityMode => updateListView({ opportunityMode })} defaultValue="all" filterAriaLabel="机会筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="个机会" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <OpportunityCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}<Link to="/companies" className="block min-h-touch rounded-control bg-surface px-4 py-3 text-center text-sm font-medium text-text-brand">浏览合作企业</Link></div><PrototypeStateTools /></PublicShell>;
+  const [activeTab, setActiveTab] = useState<OpportunityTab>("positions");
+  const filtered = useMemo(() => opportunities.filter(item => {
+    const matchesMode = listView.opportunityMode === "all" || item.mode === listView.opportunityMode;
+    const haystack = `${item.title}${companyById(item.companyId)?.name}${item.city}`.toLowerCase();
+    return matchesMode && matchesKeywords(haystack, listView.opportunityKeywords);
+  }), [listView.opportunityKeywords, listView.opportunityMode]);
+  const filteredCompanies = companies.filter(item => {
+    const matchesIndustry = listView.companyIndustry === "all" || item.industry === listView.companyIndustry;
+    const haystack = `${item.name}${item.industry}${item.summary}`.toLowerCase();
+    return matchesIndustry && matchesKeywords(haystack, listView.companyKeywords);
+  });
+  return <PublicShell><PageHeader title="机会" subtitle="实习、校招与企业项目实践" /><div className="flex border-b border-border-subtle bg-surface px-4" role="tablist" aria-label="机会页内容切换">{opportunityTabs.map(tab => { const active = activeTab === tab.key; return <button key={tab.key} type="button" role="tab" aria-selected={active} onClick={() => setActiveTab(tab.key)} className={`relative min-h-touch flex-1 transition-all duration-300 ease-out ${active ? "scale-[1.08] text-text-primary" : "scale-95 text-text-tertiary hover:text-text-secondary active:scale-90"}`}><span className={`block text-sm ${active ? "font-semibold" : "font-medium"}`}>{tab.label}</span><span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-text-brand transition-all duration-300 ${active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"}`} /></button>; })}</div>{activeTab === "positions" ? <div className="space-y-5 px-4 py-5"><MobileFilter keywords={listView.opportunityKeywords} onKeywordsChange={opportunityKeywords => updateListView({ opportunityKeywords: [...opportunityKeywords] })} inputPlaceholder="搜索岗位、企业或城市" groups={[{ key: "opportunityMode", label: "机会类型", options: [{ value: "all", label: "不限" }, { value: "实习", label: "实习" }, { value: "校招", label: "校招" }, { value: "项目实践", label: "项目实践" }], value: listView.opportunityMode, onChange: opportunityMode => updateListView({ opportunityMode }) }]} filterAriaLabel="机会筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="个机会" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map(item => <OpportunityCard key={item.id} item={item} />)}</div> : <StateBlock state="empty" />}</div> : activeTab === "applications" ? <div className="space-y-3 px-4 py-5">{view !== "ready" ? <StateBlock state={view} /> : !session.loggedIn ? <Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后查看投递记录</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent("/opportunities")}`)}>登录</Button></Card> : applications.length ? <div className="space-y-3">{applications.map(record => { const item = opportunityById(record.opportunityId); const company = companyById(item?.companyId); if (!item) return null; return <Card key={record.opportunityId}><Link to={`/opportunities/${record.opportunityId}`} className="block"><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-1 text-sm text-text-secondary">{company?.name}</p></div><StatusTag tone={record.status === "submitted" ? "success" : "warning"}>{record.status === "submitted" ? "已投递" : "状态待回流"}</StatusTag></div></Link><details className="mt-3 border-t border-border-subtle pt-3 text-xs text-text-secondary"><summary className="cursor-pointer">原型投递状态</summary><div className="mt-2 flex gap-2"><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "submitted")}>submitted</button><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "statusUnknown")}>statusUnknown</button></div></details></Card>; })}</div> : <Card className="py-8 text-center"><p className="font-semibold text-text-primary">还没有投递记录</p><p className="mt-2 text-sm text-text-secondary">先去看看适合你的实习与项目机会。</p><Button className="mt-4" onClick={() => setActiveTab("positions")}>去找机会</Button></Card>}</div> : <div className="space-y-4 px-4 py-5"><MobileFilter keywords={listView.companyKeywords} onKeywordsChange={companyKeywords => updateListView({ companyKeywords: [...companyKeywords] })} inputPlaceholder="搜索企业或行业" groups={[{ key: "companyIndustry", label: "所属行业", options: [{ value: "all", label: "不限" }, ...companyIndustries.map(industry => ({ value: industry, label: industry }))], value: listView.companyIndustry, onChange: companyIndustry => updateListView({ companyIndustry }) }]} filterAriaLabel="企业筛选" resultCount={view === "ready" ? filteredCompanies.length : undefined} resultLabel="家企业" />{view !== "ready" ? <StateBlock state={view} /> : filteredCompanies.length ? filteredCompanies.map(item => <Link key={item.id} to={`/companies/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.name}</h2><p className="mt-1 text-sm text-text-brand">{item.industry}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">关联 {item.resourceRelations.length} 项赛事 / 权益 / 课程 / 活动 / 岗位资源</p></Card></Link>) : <StateBlock state="empty" />}</div>}<PrototypeStateTools /></PublicShell>;
 }
+
+const applicationFeedbackSteps = [
+  { label: "简历已送达", hint: "简历已通过平台送达企业" },
+  { label: "企业已查看", hint: "HR 已查看你的简历" },
+  { label: "进入筛选", hint: "简历进入岗位筛选流程" },
+  { label: "邀约面试", hint: "企业已发出面试邀约" },
+];
 
 export function OpportunityDetailPage() {
   const navigate = useNavigate();
@@ -344,19 +383,26 @@ export function OpportunityDetailPage() {
   const item = opportunityById(opportunityId);
   const { applications, submitApplication } = usePublicPlatform();
   const [resumeCheck, setResumeCheck] = useState(false);
+  const [feedbackStage, setFeedbackStage] = useState(0);
   if (!item) return <PublicShell showNavigation={false}><PageHeader title="机会不存在" backTo="/opportunities" /><div className="px-4 py-6"><StateBlock state="error" /></div></PublicShell>;
   const company = companyById(item.companyId);
   const applied = applications.some(record => record.opportunityId === item.id);
   const apply = () => { submitApplication(item.id); navigate("/applications"); };
-  return <PublicShell showNavigation={false}><PageHeader title="机会详情" backTo="/opportunities" /><ViewGate><div className="space-y-6 px-4 py-5"><div><StatusTag tone={item.status === "open" ? "success" : "neutral"}>{item.status === "open" ? item.mode : "已结束"}</StatusTag><h1 className="mt-3 text-2xl font-semibold text-text-primary">{item.title}</h1><button className="mt-2 min-h-touch text-left text-sm font-medium text-text-brand" onClick={() => navigate(`/companies/${item.companyId}?from=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>{company?.name} · 查看企业</button><p className="mt-3 text-base leading-6 text-text-secondary">{item.summary}</p></div><Section title="岗位信息"><Card><p className="text-sm text-text-secondary">工作地点</p><p className="mt-1 font-medium text-text-primary">{item.city}</p><div className="mt-4 flex flex-wrap gap-2">{item.skills.map(skill => <StatusTag key={skill} tone="neutral">{skill}</StatusTag>)}</div></Card></Section>{resumeCheck && item.status === "open" && !applied && <Card className="border border-info bg-info-bg"><h2 className="font-semibold text-info-text">投递前检查长期简历</h2><p className="mt-2 text-sm leading-5 text-info-text">使用长期账号中的可信经历与学生自己维护的简历表达。</p><div className="mt-4 flex gap-2"><SecondaryButton className="flex-1" onClick={() => navigate(`/me/resume?returnTo=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>查看长期简历</SecondaryButton><Button className="flex-1" onClick={apply}>确认投递</Button></div></Card>}<div>{item.status === "closed" ? <Button className="w-full" disabled>机会已结束</Button> : applied ? <Button className="w-full" disabled>已投递</Button> : guest ? <Button className="w-full" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>登录后投递</Button> : <Button className="w-full" onClick={() => setResumeCheck(true)}>使用长期简历投递</Button>}</div></div></ViewGate><PrototypeStateTools /></PublicShell>;
+  const feedback = applicationFeedbackSteps[feedbackStage];
+  const feedbackTone: "info" | "success" | "warning" | "danger" | "neutral" = feedbackStage >= 3 ? "success" : feedbackStage >= 2 ? "warning" : "info";
+  return <PublicShell showNavigation={false}><PageHeader title="机会详情" backTo="/opportunities" /><ViewGate><div className="space-y-6 px-4 py-5"><div><StatusTag tone={item.status === "open" ? "success" : "neutral"}>{item.status === "open" ? item.mode : "已结束"}</StatusTag><h1 className="mt-3 text-2xl font-semibold text-text-primary">{item.title}</h1><button className="mt-2 min-h-touch text-left text-sm font-medium text-text-brand" onClick={() => navigate(`/companies/${item.companyId}?from=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>{company?.name} · 查看企业</button><p className="mt-3 text-base leading-6 text-text-secondary">{item.summary}</p></div><Section title="岗位信息"><Card><p className="text-sm text-text-secondary">工作地点</p><p className="mt-1 font-medium text-text-primary">{item.city}</p><div className="mt-4 flex flex-wrap gap-2">{item.skills.map(skill => <StatusTag key={skill} tone="neutral">{skill}</StatusTag>)}</div></Card></Section>{applied && <Section title="投递记录" action={<Link to="/applications" className="text-sm font-medium text-text-brand">查看全部</Link>}><Card className="p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-text-primary">{item.title}</p><p className="mt-1 text-xs text-text-secondary">{company?.name} · 简历投递回馈</p></div><StatusTag tone={feedbackTone}>{feedback.label}</StatusTag></div><ol className="mt-4 space-y-3">{applicationFeedbackSteps.map((step, index) => { const done = index <= feedbackStage; return <li key={step.label} className="flex gap-3"><span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${done ? "bg-primary-container text-text-brand" : "bg-surface-subtle text-text-tertiary"}`}>{done ? <Check size={12} aria-hidden="true" /> : <span className="size-1.5 rounded-full bg-current" />}</span><div className="min-w-0"><p className={`text-sm font-medium ${done ? "text-text-primary" : "text-text-tertiary"}`}>{step.label}</p><p className="mt-0.5 text-xs text-text-secondary">{step.hint}</p></div></li>; })}</ol><details className="mt-4 border-t border-border-subtle pt-3 text-xs text-text-secondary"><summary className="cursor-pointer">原型回馈状态</summary><div className="mt-2 flex flex-wrap gap-2">{applicationFeedbackSteps.map((step, index) => <button key={step.label} className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setFeedbackStage(index)}>{step.label}</button>)}</div></details></Card></Section>}{resumeCheck && item.status === "open" && !applied && <Card className="border border-info bg-info-bg"><h2 className="font-semibold text-info-text">投递前检查长期简历</h2><p className="mt-2 text-sm leading-5 text-info-text">使用长期账号中的可信经历与学生自己维护的简历表达。</p><div className="mt-4 flex gap-2"><SecondaryButton className="flex-1" onClick={() => navigate(`/me/resume?returnTo=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>查看长期简历</SecondaryButton><Button className="flex-1" onClick={apply}>确认投递</Button></div></Card>}<div>{item.status === "closed" ? <Button className="w-full" disabled>机会已结束</Button> : applied ? <Button className="w-full" disabled>已投递</Button> : guest ? <Button className="w-full" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent(`/opportunities/${item.id}`)}`)}>登录后投递</Button> : <Button className="w-full" onClick={() => setResumeCheck(true)}>使用长期简历投递</Button>}</div></div></ViewGate><PrototypeStateTools /></PublicShell>;
 }
 
 export function CompaniesPage() {
   useListScroll("companies");
   const { listView, updateListView } = usePublicPlatform();
   const view = usePrototypeView();
-  const filtered = companies.filter(item => `${item.name}${item.industry}${item.summary}`.toLowerCase().includes(listView.companyKeyword.toLowerCase()));
-  return <PublicShell><PageHeader title="企业" subtitle="资源、品牌与机会合作方" backTo="/opportunities" /><div className="space-y-4 px-4 py-5"><input value={listView.companyKeyword} onChange={event => updateListView({ companyKeyword: event.target.value })} placeholder="搜索企业或行业" className="min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm outline-none focus:border-primary" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? filtered.map(item => <Link key={item.id} to={`/companies/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.name}</h2><p className="mt-1 text-sm text-text-brand">{item.industry}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">关联 {item.resourceRelations.length} 项赛事 / 权益 / 课程 / 活动 / 岗位资源</p></Card></Link>) : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
+  const filtered = companies.filter(item => {
+    const matchesIndustry = listView.companyIndustry === "all" || item.industry === listView.companyIndustry;
+    const haystack = `${item.name}${item.industry}${item.summary}`.toLowerCase();
+    return matchesIndustry && matchesKeywords(haystack, listView.companyKeywords);
+  });
+  return <PublicShell><PageHeader title="企业" subtitle="资源、品牌与机会合作方" backTo="/opportunities" /><div className="space-y-4 px-4 py-5"><MobileFilter keywords={listView.companyKeywords} onKeywordsChange={companyKeywords => updateListView({ companyKeywords: [...companyKeywords] })} inputPlaceholder="搜索企业或行业" groups={[{ key: "companyIndustry", label: "所属行业", options: [{ value: "all", label: "不限" }, ...companyIndustries.map(industry => ({ value: industry, label: industry }))], value: listView.companyIndustry, onChange: companyIndustry => updateListView({ companyIndustry }) }]} filterAriaLabel="企业筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="家企业" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? filtered.map(item => <Link key={item.id} to={`/companies/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.name}</h2><p className="mt-1 text-sm text-text-brand">{item.industry}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">关联 {item.resourceRelations.length} 项赛事 / 权益 / 课程 / 活动 / 岗位资源</p></Card></Link>) : <StateBlock state="empty" />}</div><PrototypeStateTools /></PublicShell>;
 }
 
 export function CompanyDetailPage() {

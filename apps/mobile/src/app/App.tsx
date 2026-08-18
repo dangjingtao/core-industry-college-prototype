@@ -6,11 +6,11 @@ import {
   CompaniesPage,
   CompetitionsPage,
   HomePage,
-  LoginBoundaryPage,
   OpportunitiesPage,
   OpportunityDetailPage,
   PublicPlatformProvider,
 } from "../features/public-platform/PublicPlatform";
+import { ForgotPasswordPage, LoginPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
 import {
   CompetitionLifecycleDetailPage,
   CompetitionResourceDetailPage,
@@ -24,20 +24,21 @@ import {
   WorkshopComputePage,
   WorkshopHomePage,
   WorkshopProjectPage,
-  WorkshopResultDetailPage,
   WorkshopResultsPage,
   WorkshopSkillPage,
   WorkshopSkillsPage,
 } from "../features/competition-workspace/WorkshopPages";
-import { TaskAnswerPage, TaskProgressPage, TaskReviewPage } from "../features/competition-workspace/TaskRuntimePages";
+import { T013BTaskAnswerPage, T013BTaskProgressPage, T013BTaskReviewPage } from "../features/competition-workspace/T013BTaskPages";
+import { T013BResultDetailPage } from "../features/competition-workspace/T013BResultPage";
 import { WorkshopRuntimeProvider } from "../features/competition-workspace/runtime";
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
 import { AccountRequired } from "../features/long-term-assets/shared";
-import { CourseAchievementPage, CourseAssessmentPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
-import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage } from "../features/long-term-assets/BenefitsPages";
+import { CourseAchievementPage, CourseAssessmentPage, CourseCenterPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
+import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, ExchangeCenterPage, ExchangeDetailPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
 import {
   AssetsHomePage,
   CertificatesPage,
+  EducationIdentityPage,
   ExperienceDetailPage,
   ExperiencesPage,
   LearningAssetsPage,
@@ -55,9 +56,13 @@ import {
 } from "../features/trust/TrustPages";
 import {
   AboutPage,
+  AuthorizationPage,
   AccountsPage,
+  AlumniListPage,
   GrowthScorePage,
   LegalPage,
+  EmailReminderPage,
+  FeedbackPage,
   NewsDetailPage,
   NewsPage,
   NotificationDetailPage,
@@ -67,6 +72,9 @@ import {
   StoryDetailPage,
   StorySubmitPage,
   SubjectDecisionPage,
+  SettingsPage,
+  TeamDetailPage,
+  TeamsPage,
   SupportChatPage,
   SupportHomePage,
   SupportProvider,
@@ -81,9 +89,14 @@ export function App() {
         <LongTermAssetsProvider>
           <SupportProvider>
             <Routes>
-              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/" element={<Navigate to="/welcome" replace />} />
               <Route path="/dev/routes" element={<RouteLab />} />
-              <Route path="/auth/login" element={<LoginBoundaryPage />} />
+              <Route path="/welcome" element={<WelcomePage />} />
+              <Route path="/auth/login" element={<LoginPage />} />
+              <Route path="/auth/register" element={<RegisterPage />} />
+              <Route path="/auth/wechat/authorize" element={<WechatAuthorizePage />} />
+              <Route path="/auth/wechat/phone" element={<WechatPhonePage />} />
+              <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/onboarding/profile" element={<OnboardingProfilePage />} />
               <Route path="/onboarding/survey" element={<OnboardingSurveyPage />} />
               <Route path="/onboarding/ready" element={<OnboardingReadyPage />} />
@@ -101,11 +114,11 @@ export function App() {
               <Route path="/competitions/:competitionId/workspace/workshop/compute" element={<WorkshopComputePage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/skills" element={<WorkshopSkillsPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/skills/:skillId" element={<WorkshopSkillPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/answer" element={<TaskAnswerPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/review" element={<TaskReviewPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/progress" element={<TaskProgressPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/answer" element={<T013BTaskAnswerPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/review" element={<T013BTaskReviewPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/progress" element={<T013BTaskProgressPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/results" element={<WorkshopResultsPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<WorkshopResultDetailPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<T013BResultDetailPage />} />
               <Route path="/opportunities" element={<OpportunitiesPage />} />
               <Route path="/opportunities/:opportunityId" element={<OpportunityDetailPage />} />
               <Route path="/applications" element={<ApplicationsPage />} />
@@ -114,14 +127,19 @@ export function App() {
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:contentId" element={<NewsDetailPage />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/center" element={<CourseCenterPage />} />
               <Route path="/courses/:courseId" element={<CourseDetailPage />} />
               <Route path="/courses/:courseId/learn" element={account(<CourseLearnPage />)} />
               <Route path="/courses/:courseId/assessment" element={account(<CourseAssessmentPage />)} />
               <Route path="/courses/:courseId/achievement" element={account(<CourseAchievementPage />)} />
               <Route path="/benefits" element={<BenefitsPage />} />
+              <Route path="/benefits/free" element={<FreeBenefitsPage />} />
+              <Route path="/benefits/exchange" element={<ExchangeCenterPage />} />
+              <Route path="/benefits/exchange/:exchangeId" element={<ExchangeDetailPage />} />
+              <Route path="/benefits/credits" element={<CreditDetailsPage />} />
               <Route path="/benefits/wallet" element={account(<BenefitsWalletPage />)} />
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
-              <Route path="/growth/score" element={account(<GrowthScorePage />)} />
+              <Route path="/growth/score" element={account(<GrowthScorePage />} />
               <Route path="/assets" element={account(<AssetsHomePage />)} />
               <Route path="/assets/experiences" element={account(<ExperiencesPage />)} />
               <Route path="/assets/experiences/:experienceId" element={account(<ExperienceDetailPage />)} />
@@ -130,8 +148,10 @@ export function App() {
               <Route path="/assets/results/:resultId" element={account(<ResultDetailTrustedPage />)} />
               <Route path="/assets/certificates" element={account(<CertificatesPage />)} />
               <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailTrustedPage />)} />
+              <Route path="/assets/education-identity" element={account(<EducationIdentityPage />)} />
               <Route path="/assets/verification" element={<VerificationTrustedPage />} />
               <Route path="/stories" element={<StoriesPage />} />
+              <Route path="/stories/alumni" element={<AlumniListPage />} />
               <Route path="/stories/:storyId" element={<StoryDetailPage />} />
               <Route path="/stories/submit" element={account(<StorySubmitPage />)} />
               <Route path="/support" element={<SupportHomePage />} />
@@ -142,6 +162,12 @@ export function App() {
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />
               <Route path="/me/resume/education" element={account(<ResumeEducationPage />)} />
               <Route path="/me/accounts" element={account(<AccountsPage />)} />
+              <Route path="/me/email-reminder" element={account(<EmailReminderPage />)} />
+              <Route path="/me/teams" element={account(<TeamsPage />)} />
+              <Route path="/me/teams/:competitionId" element={account(<TeamDetailPage />)} />
+              <Route path="/me/settings" element={account(<SettingsPage />)} />
+              <Route path="/me/authorization" element={account(<AuthorizationPage />)} />
+              <Route path="/me/feedback" element={account(<FeedbackPage />)} />
               <Route path="/me/subjects" element={account(<SubjectDecisionPage />)} />
               <Route path="/me/notifications" element={account(<NotificationsPage />)} />
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />

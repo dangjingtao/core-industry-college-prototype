@@ -46,6 +46,31 @@ export type WorkshopTask = {
   resultId: string;
 };
 
+export type WorkshopQuestion = {
+  id: string;
+  label: string;
+  type: "single" | "multiple" | "scale";
+  options: string[];
+  required?: boolean;
+  helper?: string;
+};
+
+export type WorkshopComputePolicy = {
+  estimateMin: number;
+  estimateMax: number;
+  actual: number;
+};
+
+export type WorkshopResultDetail = {
+  finding: string;
+  weakness: string;
+  risks: string[];
+  actions: string[];
+  score: number;
+  rating: string;
+  dimensions: { label: string; score: number }[];
+};
+
 export type WorkshopResultTemplate = {
   id: string;
   taskId: string;
@@ -259,6 +284,75 @@ export const workshopTasks: WorkshopTask[] = [
   },
 ];
 
+export const workshopQuestions: Record<string, WorkshopQuestion[]> = {
+  "s1-product-score": [
+    { id: "price", label: "核心单品的定价区间？", type: "single", options: ["29 元以下", "30–59 元", "60–99 元", "100 元以上"], required: true },
+    { id: "advantages", label: "选品比较突出的优势是？", type: "multiple", options: ["成分差异化", "包装颜值", "性价比", "品牌故事"], required: true },
+    { id: "audience", label: "优先验证的目标用户？", type: "multiple", options: ["校园女性", "敏感头皮人群", "国货成分党", "内容电商用户"], required: true },
+    { id: "focus", label: "本次洞察重点", type: "single", options: ["市场可行性", "用户需求", "竞争分析", "资源评估"], required: true },
+  ],
+  "s2-market-feasibility": [
+    { id: "channels", label: "目前主要通过哪些渠道销售？", type: "multiple", options: ["抖音小店", "快团团", "三创好物", "校园私域"], required: true },
+    { id: "sellingPoints", label: "产品的核心卖点是什么？", type: "multiple", options: ["植物萃取 / 无硅油", "头皮修护", "控油蓬松", "成分安全", "性价比"], required: true },
+    { id: "evidence", label: "目前已有的真实性证据", type: "multiple", options: ["用户访谈", "试用反馈", "成交记录", "供应链证明", "尚未形成"], required: true },
+    { id: "model", label: "当前商业模式清晰度", type: "scale", options: ["1", "2", "3", "4", "5"], required: true, helper: "1 表示仍在探索，5 表示已完成真实验证。" },
+  ],
+  "s3-copy-kit": [
+    { id: "platform", label: "本轮优先运营的平台", type: "single", options: ["小红书", "抖音", "视频号", "校园社群"], required: true },
+    { id: "goal", label: "最重要的运营目标", type: "single", options: ["品牌认知", "种草互动", "首购转化", "复购召回"], required: true },
+    { id: "sellingPointOrder", label: "希望优先表达的卖点", type: "multiple", options: ["真实成分", "使用场景", "价格利益", "校园试用", "品牌故事"], required: true },
+    { id: "tone", label: "内容风格", type: "single", options: ["真实体验", "专业测评", "轻松种草", "直播转化"], required: true },
+  ],
+  "s3-visual-kit": [
+    { id: "format", label: "希望生成的内容形式", type: "multiple", options: ["商品主图", "图文笔记", "短视频分镜", "直播间贴片"], required: true },
+    { id: "scene", label: "优先使用的场景", type: "multiple", options: ["宿舍", "校园户外", "实验室 / 成分", "直播间"], required: true },
+    { id: "style", label: "视觉风格", type: "single", options: ["清爽自然", "成分专业", "年轻活力", "电商转化"], required: true },
+  ],
+  "s4-weekly-review": [
+    { id: "metrics", label: "本周重点指标", type: "multiple", options: ["曝光", "点击率", "加购率", "成交率", "复购率", "投放 ROI"], required: true },
+    { id: "anomaly", label: "团队认为最异常的环节", type: "single", options: ["流量下降", "点击偏低", "加购流失", "成交流失", "复购不足"], required: true },
+    { id: "goal", label: "下期最想验证的目标", type: "single", options: ["提升首购", "优化详情页", "降低获客成本", "验证复购", "扩大有效流量"], required: true },
+  ],
+  "s5-score-precheck": [
+    { id: "weakness", label: "最担心评委质疑的部分", type: "multiple", options: ["创新性", "真实性", "商业闭环", "团队分工", "社会价值"], required: true },
+    { id: "materials", label: "已经具备的比赛材料", type: "multiple", options: ["项目计划书", "交易证据", "用户调研", "财务测算", "路演 PPT"], required: true },
+    { id: "confidence", label: "团队当前准备程度", type: "scale", options: ["1", "2", "3", "4", "5"], required: true },
+  ],
+  "s5-pitch-ppt": [
+    { id: "duration", label: "路演时长", type: "single", options: ["5 分钟", "8 分钟", "10 分钟", "15 分钟"], required: true },
+    { id: "focus", label: "最需要强化的部分", type: "multiple", options: ["开场问题", "市场证据", "运营数据", "商业模式", "团队优势", "结尾诉求"], required: true },
+    { id: "qa", label: "模拟问答重点", type: "multiple", options: ["竞品差异", "数据真实性", "盈利方式", "规模化路径", "团队能力"], required: true },
+  ],
+  "s6-company-match": [
+    { id: "career", label: "更希望发展的职业方向", type: "multiple", options: ["品牌增长", "内容运营", "电商运营", "数据分析", "产品运营"], required: true },
+    { id: "strength", label: "比赛中最有信心的能力", type: "multiple", options: ["用户洞察", "内容表达", "数据复盘", "团队协作", "项目推进"], required: true },
+    { id: "readiness", label: "当前职业准备程度", type: "scale", options: ["1", "2", "3", "4", "5"], required: true },
+    { id: "city", label: "优先探索的城市", type: "multiple", options: ["广州", "深圳", "杭州", "上海", "不限"], required: true },
+  ],
+};
+
+export const workshopComputePolicies: Record<string, WorkshopComputePolicy> = {
+  "s1-product-score": { estimateMin: 60, estimateMax: 100, actual: 72 },
+  "s2-market-feasibility": { estimateMin: 60, estimateMax: 100, actual: 72 },
+  "s3-copy-kit": { estimateMin: 50, estimateMax: 80, actual: 58 },
+  "s3-visual-kit": { estimateMin: 90, estimateMax: 140, actual: 116 },
+  "s4-weekly-review": { estimateMin: 40, estimateMax: 70, actual: 35 },
+  "s5-score-precheck": { estimateMin: 40, estimateMax: 60, actual: 50 },
+  "s5-pitch-ppt": { estimateMin: 90, estimateMax: 150, actual: 128 },
+  "s6-company-match": { estimateMin: 50, estimateMax: 80, actual: 64 },
+};
+
+export const workshopResultDetails: Record<string, WorkshopResultDetail> = {
+  "result-s1-product-score": { finding: "头皮修护方向增长较快，校园内容场景与产品试用天然匹配。", weakness: "供应链与渠道资源尚未形成可验证证据。", risks: ["竞品差异仍偏概念", "定价区间需要真实样本验证"], actions: ["补充 2–3 个同价位竞品对比", "验证首单产能与校园试用转化"], score: 78, rating: "B+ 良好", dimensions: [{ label: "需求", score: 82 }, { label: "差异", score: 74 }, { label: "落地", score: 70 }] },
+  "result-s2-market-feasibility": { finding: "项目具有中等市场可行性，核心用户需求明确，但获客链路仍需验证。", weakness: "达人种草到直播转化缺少 ROI 数据。", risks: ["缺少近 30 天投放记录", "竞品定价证据不足"], actions: ["上传近 30 天投放数据", "补充直接竞品定价与渠道对比"], score: 78, rating: "B+ 良好", dimensions: [{ label: "需求", score: 84 }, { label: "模式", score: 70 }, { label: "证据", score: 68 }] },
+  "result-s3-copy-kit": { finding: "内容应先表达真实使用问题，再补充植物成分依据。", weakness: "当前表达过度依赖成分概念。", risks: ["平台内容同质化", "缺少真实试用素材"], actions: ["生成三组标题并小流量测试", "将校园试用反馈写入脚本"], score: 81, rating: "A- 可执行", dimensions: [{ label: "定位", score: 86 }, { label: "表达", score: 82 }, { label: "转化", score: 75 }] },
+  "result-s3-visual-kit": { finding: "产品近景、校园场景和真实试用可组成三套内容镜头。", weakness: "现有品牌素材缺少统一视觉规范。", risks: ["生成图片与实物不一致", "成分表达可能过度承诺"], actions: ["锁定不可修改的包装元素", "先采用一套分镜进入人工制作"], score: 80, rating: "A- 可执行", dimensions: [{ label: "一致性", score: 76 }, { label: "场景", score: 86 }, { label: "转化", score: 78 }] },
+  "result-s4-weekly-review": { finding: "曝光增长没有同步带来成交，主要损耗发生在详情页到加购。", weakness: "首购利益点不清晰。", risks: ["扩大投放会放大当前漏斗损耗", "复购样本仍然不足"], actions: ["先调整首购利益点", "下期仅验证详情页到加购转化"], score: 73, rating: "B 需验证", dimensions: [{ label: "流量", score: 88 }, { label: "加购", score: 64 }, { label: "成交", score: 68 }] },
+  "result-s5-score-precheck": { finding: "创新表达较清楚，真实性证据和商业闭环最可能被追问。", weakness: "交易证据与规模化路径不够完整。", risks: ["答辩时把预测当成事实", "竞品差异解释过于抽象"], actions: ["整理事实证据附录", "完成一轮全员模拟问答"], score: 76, rating: "B+ 可冲刺", dimensions: [{ label: "创新", score: 84 }, { label: "真实", score: 67 }, { label: "表达", score: 78 }] },
+  "result-s5-pitch-ppt": { finding: "8 分钟路演建议压缩为 9 页主叙事，证据页集中回答真实性与增长逻辑。", weakness: "中段数据页信息密度过高。", risks: ["超时导致结尾诉求丢失", "关键证据没有来源标注"], actions: ["前 90 秒讲问题与用户", "完成一次计时演练并记录追问"], score: 82, rating: "A- 可演练", dimensions: [{ label: "结构", score: 88 }, { label: "证据", score: 76 }, { label: "节奏", score: 82 }] },
+  "result-s6-company-match": { finding: "赛事表现体现了内容运营与数据复盘优势，适合品牌增长和电商运营方向。", weakness: "结构化数据表达仍需补强。", risks: ["职业建议不能替代本人选择", "不把赛事评分直接作为人才评分"], actions: ["完成品牌增长课程", "用赛事材料整理一段可验证项目经历"], score: 79, rating: "方向清晰", dimensions: [{ label: "运营", score: 86 }, { label: "数据", score: 72 }, { label: "协作", score: 82 }] },
+};
+
 export const resultTemplates: WorkshopResultTemplate[] = [
   {
     id: "result-s1-product-score",
@@ -329,4 +423,7 @@ export const resultTemplates: WorkshopResultTemplate[] = [
 export const skillById = (id?: string) => workshopSkills.find(item => item.id === id);
 export const taskById = (id?: string) => workshopTasks.find(item => item.id === id);
 export const resultById = (id?: string) => resultTemplates.find(item => item.id === id);
+export const questionsForTask = (id?: string) => workshopQuestions[id ?? ""] ?? [];
+export const computePolicyForTask = (id?: string) => workshopComputePolicies[id ?? ""] ?? { estimateMin: 40, estimateMax: 80, actual: 60 };
+export const resultDetailById = (id?: string) => workshopResultDetails[id ?? ""];
 export const resourceById = (competitionId?: string, resourceId?: string) => workspaceData[competitionId ?? ""]?.resources.find(item => item.id === resourceId);

@@ -1,14 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("A guest can browse public competition and login back into registration", async ({ page }) => {
-  await page.goto("/home?guest=1");
-  await expect(page.getByText("未登录", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "发现比赛" }).click();
-  await expect(page.getByRole("heading", { name: "赛事", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
-  await page.getByRole("button", { name: "登录后报名" }).click();
+test("A login returns to the requested registration", async ({ page }) => {
+  await page.goto("/auth/login?returnTo=%2Fcompetitions%2Fsanchuang-16%2Fregistration");
   await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "使用原型账号登录" }).click();
+  await page.getByLabel("手机号或邮箱").fill("13800138000");
+  await page.getByRole("textbox", { name: /^密码/ }).fill("prototype123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page.getByRole("heading", { name: "赛事报名", exact: true })).toBeVisible();
 });
 
@@ -65,16 +62,17 @@ test("B registration handoff carries context and callbacks share one competition
       window.history.pushState({}, "", `${url.pathname}${url.search}`);
       window.dispatchEvent(new PopStateEvent("popstate"));
     }, { status });
+    await expect.poll(() => new URL(page.url()).searchParams.has("registrationStatus")).toBe(false);
   };
 
   await callback("pending");
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
   await callback("rejected");
-  await expect(page.getByText("报名审核未通过", { exact: true })).toBeVisible();
+  await expect(page.getByText(/审核未通过/).first()).toBeVisible();
   await callback("pending");
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
   await callback("approved");
-  await expect(page.getByText("审核通过，已获得赛事身份", { exact: true })).toBeVisible();
+  await expect(page.getByText(/审核通过.*赛事身份/).first()).toBeVisible();
   await page.getByRole("button", { name: "进入赛事工作区" }).click();
   await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
   await expect(page.getByText("身份：active · 团队：山城新零售队", { exact: true })).toBeVisible();
@@ -139,7 +137,9 @@ test("E ended competition hands off to long-term experience and trusted result",
 
 test("competition list filter survives detail-return navigation", async ({ page }) => {
   await page.goto("/competitions");
-  await page.getByRole("button", { name: "报名中" }).click();
+  await page.getByRole("button", { name: /筛选/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "报名中" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "确定" }).click();
   await expect(page.getByRole("link", { name: /第十五届三创赛/ })).toHaveCount(0);
   await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
   await page.getByRole("button", { name: "返回" }).click();

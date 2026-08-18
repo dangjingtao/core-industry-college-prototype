@@ -1,6 +1,8 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Sparkles, ArrowRight, AlertTriangle, CheckCircle2, ListChecks, FileText } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
-import { materialLabels, resultById, skillById, taskById, workshopSkills, workshopTasks, workspaceData, type MaterialKey } from "./data";
+import { computePolicyForTask, materialLabels, resultById, resultDetailById, skillById, taskById, workshopSkills, workshopTasks, workspaceData, type MaterialKey } from "./data";
 import { completedResults, missingMaterials, nextReadyTask, taskAvailability, useWorkshopRuntime } from "./runtime";
 import { CompetitionContextLine, RequireCompetitionAccess, TaskScenarioTools } from "./shared";
 
@@ -28,6 +30,30 @@ function nextTaskAfter(runtime: ReturnType<ReturnType<typeof useWorkshopRuntime>
   return candidates.find(task => taskAvailability(runtime, task.id) === "ready") ?? nextReadyTask(runtime);
 }
 
+function skillAggregate(runtime: ReturnType<ReturnType<typeof useWorkshopRuntime>["getRuntime"]>, skillId: string) {
+  const skill = workshopSkills.find(item => item.id === skillId);
+  if (!skill) return null;
+  const states = skill.taskIds.map(id => taskAvailability(runtime, id));
+  const total = states.length;
+  const completed = states.filter(state => state === "completed").length;
+  const running = states.includes("running");
+  const queued = states.includes("queued");
+  const failed = states.includes("failed");
+  const lockedAll = states.length > 0 && states.every(state => state === "locked");
+  const lockedSome = states.includes("locked");
+  let label: string;
+  let tone: "neutral" | "info" | "success" | "warning" | "danger";
+  if (running) { label = "运行中"; tone = "info"; }
+  else if (queued) { label = "排队中"; tone = "info"; }
+  else if (failed) { label = "生成失败"; tone = "danger"; }
+  else if (completed === total) { label = "已完成"; tone = "success"; }
+  else if (completed > 0) { label = `进行中 ${completed}/${total}`; tone = "info"; }
+  else if (lockedAll) { label = "待补材料"; tone = "warning"; }
+  else if (lockedSome) { label = `待补 ${states.filter(state => state === "locked").length} 项`; tone = "warning"; }
+  else { label = "可开始"; tone = "neutral"; }
+  return { skill, total, completed, label, tone };
+}
+
 export function WorkshopHomePage() {
   const navigate = useNavigate();
   const { competitionId } = useParams();
@@ -38,15 +64,65 @@ export function WorkshopHomePage() {
   const activeRunTask = workshopTasks.find(task => ["queued", "running", "failed"].includes(runtime.taskRuns[task.id]?.status ?? ""));
   const nextTask = activeRunTask ?? nextReadyTask(runtime);
   const nextStatus = nextTask ? taskAvailability(runtime, nextTask.id) : undefined;
+  const nextSkill = nextTask ? skillById(nextTask.skillId) : undefined;
   const allMissing = workshopTasks.flatMap(task => missingMaterials(runtime, task.id)).filter((item, index, list) => list.findIndex(other => other.key === item.key) === index);
+  const blockingMissing = nextTask ? missingMaterials(runtime, nextTask.id) : [];
+  const completedCount = workshopTasks.filter(task => runtime.taskRuns[task.id]?.status === "completed").length;
+  const totalCount = workshopTasks.length;
+  const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const results = completedResults(runtime);
   const lastResult = results.length ? results[results.length - 1] : undefined;
+  const heroMode: "run" | "ready" | "blocked" | "done" = activeRunTask
+    ? "run"
+    : nextTask && blockingMissing.length === 0
+      ? "ready"
+      : nextTask
+        ? "blocked"
+        : "done";
+  const heroTitle = heroMode === "run"
+    ? `继续 ${activeRunTask?.skillId.toUpperCase()} · ${activeRunTask?.title}`
+    : heroMode === "ready"
+      ? `调用 ${nextSkill?.code ?? ""} · ${nextTask?.title}`
+      : heroMode === "blocked"
+        ? `补齐材料后调用 ${nextSkill?.code ?? ""} · ${nextTask?.title}`
+        : "本轮工坊任务已完成";
+  const heroSubtitle = heroMode === "run"
+    ? "异步任务执行中。任务可离开本页，完成后会通过站内消息通知。"
+    : heroMode === "ready"
+      ? `${nextSkill?.name ?? ""} · ${nextTask?.summary ?? ""}`
+      : heroMode === "blocked"
+        ? `当前缺少：${blockingMissing.map(item => item.label).join("、")}`
+        : "赛事成果会在比赛结束后 handoff 到长期资产。";
+  const heroPrimary = heroMode === "run"
+    ? "继续当前任务"
+    : heroMode === "ready"
+      ? "开始调用技能"
+      : heroMode === "blocked"
+        ? "去补齐材料"
+        : "查看本轮成果";
+  const heroPrimaryTo = heroMode === "run" && activeRunTask
+    ? taskDestination(competitionId, activeRunTask.id, taskAvailability(runtime, activeRunTask.id))
+    : heroMode === "ready" && nextTask && nextStatus
+      ? taskDestination(competitionId, nextTask.id, nextStatus)
+      : heroMode === "blocked"
+        ? `/competitions/${competitionId}/workspace/workshop/project`
+        : `/competitions/${competitionId}/workspace/workshop/results`;
 
   return <PublicShell showNavigation={false}><PageHeader title="创赛工坊" subtitle="三创赛赛事陪跑" backTo={`/competitions/${competitionId}/workspace`} /><RequireCompetitionAccess><div className="space-y-7 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
-    <Section title="我现在最该做什么？"><Card className="border border-border-subtle"><StatusTag tone={activeRunTask ? "info" : nextTask ? "warning" : "success"}>{activeRunTask ? "继续执行" : nextTask ? "下一任务" : "本轮已完成"}</StatusTag><h1 className="mt-3 text-xl font-semibold leading-7 text-text-primary">{nextTask?.title ?? "查看本轮成果，并准备赛后沉淀"}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">{nextTask?.summary ?? "当前没有新的可执行任务。赛事成果会在比赛结束后 handoff 到长期资产。"}</p>{nextTask && nextStatus && <Button className="mt-4 w-full" onClick={() => navigate(taskDestination(competitionId, nextTask.id, nextStatus))}>{activeRunTask ? "继续当前任务" : "开始下一任务"}</Button>}</Card></Section>
+    <Card className="border border-info bg-info-bg" data-testid="workshop-call-hero">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2"><Sparkles aria-hidden="true" size={18} strokeWidth={2} className="text-info-text" /><StatusTag tone="info">{heroMode === "run" ? "执行中" : heroMode === "ready" ? "可调用" : heroMode === "blocked" ? "待补材料" : "已完成"}</StatusTag>{nextSkill && <StatusTag tone="neutral">{nextSkill.code} · {nextSkill.name}</StatusTag>}</div>
+        <span className="text-xs font-medium text-info-text">{completedCount}/{totalCount} · {completionPct}%</span>
+      </div>
+      <h1 className="mt-3 text-xl font-semibold leading-7 text-info-text">{heroTitle}</h1>
+      <p className="mt-2 text-sm leading-5 text-info-text">{heroSubtitle}</p>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--color-surface)]"><div className="h-full bg-primary transition-all" style={{ width: `${completionPct}%` }} /></div>
+      <div className="mt-4 grid grid-cols-[1fr_auto] gap-2"><Button className="w-full" onClick={() => navigate(heroPrimaryTo)} data-testid="workshop-call-hero-primary">{heroPrimary}<ArrowRight aria-hidden="true" size={16} strokeWidth={2} className="ml-2 inline-block" /></Button><SecondaryButton onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/skills`)} data-testid="workshop-call-hero-secondary">查看技能矩阵</SecondaryButton></div>
+    </Card>
     {data && <Section title="当前项目 / 阶段"><Card><h2 className="font-semibold text-text-primary">{data.project.name}</h2><p className="mt-1 text-sm text-text-brand">{data.project.currentStage}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{data.project.summary}</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/project`)}>查看项目与材料</SecondaryButton></Card></Section>}
-    <Section title="还缺什么材料"><Card>{allMissing.length ? <div className="space-y-2">{allMissing.map(item => <div key={item.key} className="flex items-center justify-between gap-3"><span className="text-sm text-text-primary">{item.label}</span><StatusTag tone="warning">未补齐</StatusTag></div>)}<SecondaryButton className="mt-3 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/project`)}>去补材料</SecondaryButton></div> : <div><StatusTag tone="success">材料齐备</StatusTag><p className="mt-2 text-sm text-text-secondary">当前任务没有材料阻塞。</p></div>}</Card></Section>
+    {allMissing.length > 0 && <Section title="还缺什么材料"><Card><div className="space-y-2">{allMissing.map(item => <div key={item.key} className="flex items-center justify-between gap-3"><span className="text-sm text-text-primary">{item.label}</span><StatusTag tone="warning">未补齐</StatusTag></div>)}<SecondaryButton className="mt-3 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/project`)}>去补材料</SecondaryButton></div></Card></Section>}
+    <Section title="六阶段技能矩阵" subtitle="按赛事阶段挑当前最该用的技能包"><div data-testid="skill-matrix" className="grid grid-cols-2 gap-3">{workshopSkills.map(skill => { const summary = skillAggregate(runtime, skill.id); if (!summary) return null; const destination = `/competitions/${competitionId}/workspace/workshop/skills/${skill.id}`; return <Link key={skill.id} to={destination} className="block" data-skill={skill.id}><Card interactive className="h-full"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold tracking-wider text-text-brand">{skill.code}</p><StatusTag tone={summary.tone}>{summary.label}</StatusTag></div><h2 className="mt-2 text-base font-semibold leading-5 text-text-primary">{skill.name}</h2><p className="mt-1 line-clamp-2 text-xs leading-4 text-text-secondary">{skill.summary}</p><p className="mt-3 text-[11px] text-text-tertiary">任务 {summary.completed}/{summary.total}</p></Card></Link>; })}<Link to={`/competitions/${competitionId}/workspace/workshop/skills`} className="col-span-2 block"><Card interactive className="border border-dashed border-border bg-surface-subtle"><p className="text-sm font-medium text-text-primary">查看完整技能矩阵与历史任务</p><p className="mt-1 text-xs text-text-secondary">了解每个技能包的所有能力、任务明细与运行进度。</p></Card></Link></div></Section>
     <Section title="上一次结果"><Card>{lastResult ? <><StatusTag tone="success">已生成</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{lastResult.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{lastResult.summary}</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${lastResult.id}`)}>查看结果</SecondaryButton></> : <p className="text-sm text-text-secondary">还没有生成成果。</p>}</Card></Section>
     <Section title="工坊支撑"><div className="space-y-2">{[["技能矩阵",`/competitions/${competitionId}/workspace/workshop/skills`],["算力明细",`/competitions/${competitionId}/workspace/workshop/compute`],["历史成果",`/competitions/${competitionId}/workspace/workshop/results`]].map(([label,to]) => <button key={to} className="flex min-h-touch w-full items-center justify-between rounded-control bg-surface px-3 text-left text-sm font-medium text-text-primary active:bg-surface-pressed" onClick={() => navigate(to)}>{label}<span className="text-text-tertiary">›</span></button>)}</div></Section>
   </div></RequireCompetitionAccess></PublicShell>;
@@ -67,10 +143,7 @@ export function WorkshopComputePage() {
   const { getRuntime } = useWorkshopRuntime();
   if (!competitionId) return null;
   const runtime = getRuntime(competitionId);
-  const completed = workshopTasks.filter(task => runtime.taskRuns[task.id]?.status === "completed");
-  const used = completed.reduce((sum, task) => sum + task.computeCost, 0);
-  const total = 120;
-  return <PublicShell showNavigation={false}><PageHeader title="算力明细" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><p className="text-sm text-text-secondary">本赛事项目可用算力</p><p className="mt-2 text-2xl font-semibold text-text-primary">{Math.max(0, total-used)}</p><p className="mt-1 text-xs text-text-tertiary">总额 {total} · 已使用 {used}</p></Card><Section title="任务消耗"><div className="space-y-2">{workshopTasks.map(task => <Card key={task.id}><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{task.title}</p><p className="mt-1 text-xs text-text-secondary">{task.id}</p></div><span className="text-sm font-semibold text-text-primary">{runtime.taskRuns[task.id]?.status === "completed" ? `-${task.computeCost}` : `${task.computeCost} 预估`}</span></div></Card>)}</div></Section></div></RequireCompetitionAccess></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="算力明细" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><p className="text-sm text-text-secondary">由 OPC 提供 AI 算力 · 赛事期间有效</p><p className="mt-2 text-2xl font-semibold text-text-primary">{runtime.computeBalance}</p><p className="mt-1 text-xs text-text-tertiary">团队本阶段可用 · 本周已用 {runtime.computeUsed} · 冻结 {runtime.frozenCompute}</p></Card><Section title="算力流水"><div className="space-y-2">{runtime.computeLedger.map(entry => <Card key={entry.id}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{entry.title}</p><p className="mt-1 text-xs text-text-secondary">{entry.occurredAt} · <span data-reason="true" className="font-medium text-text-primary">{entry.reason}</span></p></div><strong className={entry.amount >= 0 ? "text-success-text" : "text-text-primary"}>{entry.amount > 0 ? "+" : ""}{entry.amount}</strong></div></Card>)}</div></Section><Section title="任务预估"><div className="space-y-2">{workshopTasks.map(task => { const policy = computePolicyForTask(task.id); const run = runtime.taskRuns[task.id]; return <Card key={task.id}><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{task.title}</p><p className="mt-1 text-xs text-text-secondary">{run?.status === "completed" ? `实际消耗 ${run.actualCompute ?? policy.actual}` : `预计 ${policy.estimateMin}–${policy.estimateMax}`}</p></div><StatusTag tone={run?.status === "completed" ? "success" : run?.status === "running" || run?.status === "queued" ? "info" : "neutral"}>{run?.status === "completed" ? "已结算" : run?.status === "running" || run?.status === "queued" ? "冻结中" : "未运行"}</StatusTag></div></Card>; })}</div></Section><Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">结算规则</p><p className="mt-2 text-sm leading-5 text-info-text">创建任务时按上限冻结，完成后按实际消耗结算并释放差额；任务失败或取消时全额退回。</p></Card></div></RequireCompetitionAccess></PublicShell>;
 }
 
 export function WorkshopSkillsPage() {
@@ -92,26 +165,64 @@ export function WorkshopSkillPage() {
   return <PublicShell showNavigation={false}><PageHeader title={`${skill.code} ${skill.name}`} backTo={`/competitions/${competitionId}/workspace/workshop/skills`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><h1 className="text-lg font-semibold text-text-primary">{skill.name}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">{skill.summary}</p><div className="mt-3 flex flex-wrap gap-2">{skill.capabilities.map(item => <StatusTag key={item} tone="neutral">{item}</StatusTag>)}</div></Card><Section title="任务"><div className="space-y-3">{skill.taskIds.map(taskId => { const task = taskById(taskId); if (!task) return null; const status = taskAvailability(runtime,taskId); const [label,tone] = taskStatusLabel(status); const missing = missingMaterials(runtime,taskId); return <Card key={taskId}><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{task.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{task.summary}</p></div><StatusTag tone={tone}>{label}</StatusTag></div>{missing.length > 0 && <p className="mt-3 text-xs text-warning-text">缺少：{missing.map(item => item.label).join("、")}</p>}<Button disabled={status === "locked"} className="mt-4 w-full" onClick={() => navigate(taskDestination(competitionId,task.id,status))}>{status === "completed" ? "查看成果" : status === "queued" || status === "running" || status === "failed" ? "继续任务" : "开始任务"}</Button></Card>; })}</div></Section></div></RequireCompetitionAccess></PublicShell>;
 }
 
+type ResultsTab = "generated" | "adopted" | "failed";
+
+function isResultsTab(value: string | null): value is ResultsTab {
+  return value === "generated" || value === "adopted" || value === "failed";
+}
+
 export function WorkshopResultsPage() {
+  const navigate = useNavigate();
   const { competitionId } = useParams();
   const { getRuntime } = useWorkshopRuntime();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const activeTab: ResultsTab = isResultsTab(requestedTab) ? requestedTab : "generated";
   if (!competitionId) return null;
   const runtime = getRuntime(competitionId);
   const results = completedResults(runtime);
-  return <PublicShell showNavigation={false}><PageHeader title="工坊成果" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-5"><CompetitionContextLine competitionId={competitionId} />{results.length ? results.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone={runtime.acceptedResultIds.includes(result.id) ? "success" : "neutral"}>{runtime.acceptedResultIds.includes(result.id) ? "已采纳" : "已生成"}</StatusTag></div></Card></Link>) : <Card className="py-8 text-center"><p className="font-semibold text-text-primary">还没有成果</p><p className="mt-2 text-sm text-text-secondary">从下一任务开始执行，完成后成果会出现在这里。</p></Card>}</div></RequireCompetitionAccess></PublicShell>;
+  const acceptedIds = runtime.acceptedResultIds;
+  const generated = results.filter(result => !acceptedIds.includes(result.id));
+  const adopted = results.filter(result => acceptedIds.includes(result.id));
+  const failedTasks = workshopTasks.filter(task => runtime.taskRuns[task.id]?.status === "failed");
+  const tabEntries: { id: ResultsTab; label: string; count: number; tone: "info" | "success" | "danger" }[] = [
+    { id: "generated", label: "已生成", count: generated.length, tone: "info" },
+    { id: "adopted", label: "已采纳", count: adopted.length, tone: "success" },
+    { id: "failed", label: "失败", count: failedTasks.length, tone: "danger" },
+  ];
+  const selectTab = (tab: ResultsTab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+  };
+  return <PublicShell showNavigation={false}><PageHeader title="工坊成果" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><div role="tablist" aria-label="工坊成果分组" className="inline-flex w-full rounded-control bg-surface p-1" data-testid="results-tablist">{tabEntries.map(entry => { const selected = activeTab === entry.id; return <button key={entry.id} role="tab" type="button" aria-selected={selected} data-testid={`results-tab-${entry.id}`} onClick={() => selectTab(entry.id)} className={`flex-1 rounded-control px-3 py-2 text-sm font-medium ${selected ? "bg-primary text-text-on-primary" : "text-text-secondary"}`}>{entry.label} <span className={selected ? "text-text-on-primary" : "text-text-tertiary"}>{entry.count}</span></button>; })}</div>{activeTab === "generated" && (generated.length ? <div className="space-y-3" data-testid="results-pane-generated">{generated.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="info">已生成</StatusTag></div></Card></Link>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-generated"><p className="font-semibold text-text-primary">还没有未采纳的成果</p><p className="mt-2 text-sm text-text-secondary">完成任务会自动生成成果，采纳后会进入"已采纳"分组。</p></Card>)}
+{activeTab === "adopted" && (adopted.length ? <div className="space-y-3" data-testid="results-pane-adopted">{adopted.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="success">已采纳</StatusTag></div></Card></Link>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-adopted"><p className="font-semibold text-text-primary">还没有被队长采纳的成果</p><p className="mt-2 text-sm text-text-secondary">队长在成果详情页确认后，会进入"已采纳"分组并锁定作为参赛材料。</p></Card>)}
+{activeTab === "failed" && (failedTasks.length ? <div className="space-y-3" data-testid="results-pane-failed">{failedTasks.map(task => <Card key={task.id}><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · {task.title}</p><p className="mt-2 text-sm leading-5 text-text-secondary">{task.summary}</p><p className="mt-2 text-xs text-text-tertiary">失败原因：本次运行未完成，原回答已保留。</p></div><StatusTag tone="danger">生成失败</StatusTag></div><SecondaryButton className="mt-3 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/tasks/${task.id}/progress`)}>查看失败任务</SecondaryButton></Card>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-failed"><p className="font-semibold text-text-primary">本轮没有失败任务</p><p className="mt-2 text-sm text-text-secondary">失败任务会保留草稿和原算力冻结记录，可重试或回到工坊首页。</p></Card>)}
+</div></RequireCompetitionAccess></PublicShell>;
 }
 
 export function WorkshopResultDetailPage() {
   const navigate = useNavigate();
   const { competitionId, resultId } = useParams();
-  const { getRuntime, acceptResult } = useWorkshopRuntime();
-  if (!competitionId) return null;
-  const runtime = getRuntime(competitionId);
+  const { getRuntime, updateResultDraft, saveResultVersion, acceptResult } = useWorkshopRuntime();
+  const currentCompetitionId = competitionId ?? "";
+  const runtime = getRuntime(currentCompetitionId);
   const result = resultById(resultId);
   const task = result ? taskById(result.taskId) : undefined;
   const completed = task ? runtime.taskRuns[task.id]?.status === "completed" : false;
+  const initialDraft = result ? runtime.resultDrafts[result.id] ?? { summary: result.summary, highlights: result.highlights, nextSuggestion: result.nextSuggestion } : { summary: "", highlights: [], nextSuggestion: "" };
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(initialDraft);
+  if (!competitionId) return null;
   if (!result || !task || !completed) return <PublicShell showNavigation={false}><PageHeader title="成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="px-4 py-6"><Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">该成果尚未生成</p><p className="mt-2 text-sm text-warning-text">成果严格绑定当前 task，不复用其它技能的错误结果。</p></Card></div></RequireCompetitionAccess></PublicShell>;
   const accepted = runtime.acceptedResultIds.includes(result.id);
   const nextTask = nextTaskAfter(runtime, task.id);
-  return <PublicShell showNavigation={false}><PageHeader title="成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · {task.title}</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{result.title}</h1></div><StatusTag tone={accepted ? "success" : "info"}>{accepted ? "已采纳" : "已生成"}</StatusTag></div><p className="mt-4 text-sm leading-6 text-text-secondary">{result.summary}</p></Card><Section title="关键结论"><div className="space-y-2">{result.highlights.map(item => <Card key={item}><p className="text-sm leading-5 text-text-primary">{item}</p></Card>)}</div></Section><Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">下一步建议</p><p className="mt-2 text-sm leading-5 text-info-text">{result.nextSuggestion}</p></Card><div className="space-y-2">{!accepted && <SecondaryButton className="w-full" onClick={() => acceptResult(competitionId,result.id)}>采纳到当前赛事成果</SecondaryButton>}{nextTask ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/tasks/${nextTask.id}/answer`)}>继续下一步：{nextTask.title}</Button> : <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop`)}>返回工坊</Button>}</div><TaskScenarioTools competitionId={competitionId} taskId={task.id} /></div></RequireCompetitionAccess></PublicShell>;
+  const detail = resultDetailById(result.id);
+  const versions = runtime.resultVersions[result.id] ?? [];
+  const saveDraft = () => { updateResultDraft(competitionId, result.id, draft); setEditing(false); };
+  return <PublicShell showNavigation={false}><PageHeader title="成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">AI 辅助生成 · {task.skillId.toUpperCase()} · {task.title}</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{result.title}</h1></div><StatusTag tone={accepted ? "success" : "info"}>{accepted ? "队长已采纳" : "待团队确认"}</StatusTag></div><p className="mt-4 text-sm leading-6 text-text-secondary">{editing ? <textarea aria-label="成果摘要" value={draft.summary} onChange={event => setDraft(current => ({ ...current, summary: event.target.value }))} rows={4} className="w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : draft.summary}</p></Card>{detail && <Card className="border border-info bg-info-bg" data-testid="result-score-hero"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-2"><div className="rounded-control bg-surface p-2 text-info-text"><CheckCircle2 aria-hidden="true" size={20} strokeWidth={2} /></div><p className="font-medium text-info-text">评分概览</p></div><div className="text-right"><strong className="block text-2xl font-semibold text-info-text" data-testid="result-score-value">{detail.score}</strong><span className="text-xs text-info-text">/ 100 · {detail.rating}</span></div></div><div className="mt-4 grid grid-cols-3 gap-2">{detail.dimensions.map(item => <div key={item.label} className="rounded-control bg-surface px-2 py-3 text-center"><strong className="block text-lg text-text-primary">{item.score}</strong><span className="text-xs text-text-secondary">{item.label}</span></div>)}</div></Card>}<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  <Card data-testid="result-quadrant-finding"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><FileText aria-hidden="true" size={18} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">关键结论</p><h3 className="mt-1 text-sm font-semibold text-text-primary">事实与判断</h3></div></div><ul className="mt-3 space-y-2">{draft.highlights.map((item, index) => <li key={`finding-${index}`}>{editing ? <textarea aria-label={`关键结论 ${index + 1}`} value={item} onChange={event => setDraft(current => ({ ...current, highlights: current.highlights.map((value, valueIndex) => valueIndex === index ? event.target.value : value) }))} rows={2} className="w-full rounded-control border border-border bg-surface p-2 text-sm text-text-primary" /> : <p className="text-sm leading-5 text-text-primary">· {item}</p>}</li>)}</ul></Card>
+  {detail && <Card data-testid="result-quadrant-weakness"><div className="flex items-start gap-3"><div className="rounded-control bg-warning-bg p-2 text-warning-text"><AlertTriangle aria-hidden="true" size={18} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">薄弱环节与风险</p><h3 className="mt-1 text-sm font-semibold text-text-primary">需要补强</h3></div></div><p className="mt-3 text-sm leading-5 text-text-primary">{detail.weakness}</p><ul className="mt-3 space-y-2">{detail.risks.map(risk => <li key={risk} className="text-sm leading-5 text-warning-text">· 风险：{risk}</li>)}</ul></Card>}
+</div>
+{detail && <Card data-testid="result-quadrant-actions"><div className="flex items-start gap-3"><div className="rounded-control bg-success-bg p-2 text-success-text"><ListChecks aria-hidden="true" size={18} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">优先行动清单</p><h3 className="mt-1 text-sm font-semibold text-text-primary">按优先级执行</h3></div></div><ul className="mt-3 space-y-2">{detail.actions.map(action => <li key={action} className="flex items-start gap-2 text-sm leading-5 text-text-primary"><ListChecks aria-hidden="true" size={14} strokeWidth={2} className="mt-1 shrink-0 text-text-tertiary" /><span>{action}</span></li>)}</ul></Card>}<Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">下一步建议</p>{editing ? <textarea aria-label="下一步建议" value={draft.nextSuggestion} onChange={event => setDraft(current => ({ ...current, nextSuggestion: event.target.value }))} rows={3} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-2 text-sm leading-5 text-info-text">{draft.nextSuggestion}</p>}</Card>{versions.length > 0 && <Section title="已保存版本"><div className="space-y-2">{versions.map(version => <Card key={version.id}><div className="flex items-center justify-between gap-3"><span className="text-sm font-medium text-text-primary">{version.id}</span><span className="text-xs text-text-secondary">{version.createdAt}</span></div></Card>)}</div></Section>}<div className="space-y-2">{editing ? <><Button className="w-full" onClick={saveDraft}>保存编辑</Button><SecondaryButton className="w-full" onClick={() => { setDraft(initialDraft); setEditing(false); }}>取消编辑</SecondaryButton></> : <><SecondaryButton className="w-full" onClick={() => setEditing(true)}>编辑成果</SecondaryButton><SecondaryButton className="w-full" onClick={() => saveResultVersion(competitionId, result.id)}>保存为新版本</SecondaryButton>{!accepted && <Button className="w-full" onClick={() => acceptResult(competitionId, result.id)}>队长采纳并用于比赛</Button>}</>}{nextTask ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/tasks/${nextTask.id}/answer`)}>继续下一步：{nextTask.title}</Button> : <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop`)}>返回工坊</Button>}</div><TaskScenarioTools competitionId={competitionId} taskId={task.id} /></div></RequireCompetitionAccess></PublicShell>;
 }

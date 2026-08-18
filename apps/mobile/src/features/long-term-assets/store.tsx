@@ -1,7 +1,9 @@
+import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord } from "./data";
+import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
+  emptyStudentProfile,
   initialProfileSources,
   seedStudentProfile,
   type ProfileSource,
@@ -36,28 +38,38 @@ export type ResumePresentation = {
 /** @deprecated Use StudentProfile. Kept as a compatibility alias for existing prototype code. */
 export type ProfileState = StudentProfile;
 
+export type EnrollmentResult = { success: true } | { success: false; reason: string };
+
 type LongTermAssetsContextValue = {
   learning: LearningRecord[];
   benefitStatuses: Record<string, BenefitStatus>;
   benefitStatusFor: (benefitId: string) => BenefitStatus;
   certificates: CertificateRecord[];
   competitionResults: CompetitionResultRecord[];
+  educationIdentity: EducationIdentityRecord | null;
   resume: ResumePresentation;
   profile: StudentProfile;
   profileSources: StudentProfileSources;
+  creditBalance: number;
+  enrolledCourseIds: string[];
   learningFor: (courseId: string) => LearningRecord;
+  courseCompletedFor: (courseId: string) => boolean;
+  enrolledFor: (courseId: string) => boolean;
   startCourse: (courseId: string) => void;
   advanceCourse: (courseId: string) => void;
   completeCourse: (courseId: string) => void;
   submitAssessment: (courseId: string, passed: boolean) => void;
+  enrollCourse: (courseId: string) => EnrollmentResult;
   claimBenefit: (benefitId: string) => void;
   useBenefit: (benefitId: string) => void;
   claimCertificate: (certificateId: string) => void;
+  claimEducationIdentity: () => void;
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
   updateEducationDetails: (patch: Partial<ResumeEducationDetails>) => void;
   updateProfile: (patch: Partial<StudentProfile>, source?: ProfileSource) => void;
+  initializeNewAccount: (contact: string) => void;
   mergeProfileFromSource: (patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode?: "fill-empty" | "replace") => void;
 };
 
@@ -66,6 +78,9 @@ const seedLearning: LearningRecord[] = [
   { courseId: "brand-ecommerce", status: "inProgress", progress: 38, assessment: "idle" },
   { courseId: "retail-project-lab", status: "notStarted", progress: 0, assessment: "idle" },
 ];
+
+const seedEnrolledCourseIds = ["data-analytics", "brand-ecommerce", "retail-project-lab"];
+const seedCreditBalance = 1280;
 
 const seedResume: ResumePresentation = {
   selectedFactKeys: ["experience:sanchuang-15", "certificate:cert-sanchuang-15", "learning:data-analytics"],
@@ -81,6 +96,20 @@ const seedResume: ResumePresentation = {
   updatedAt: "2026-08-17",
 };
 
+const emptyResume: ResumePresentation = {
+  selectedFactKeys: [],
+  strengths: "",
+  education: "",
+  educationDetails: {
+    graduationTime: "",
+    startDate: "",
+    endDate: "",
+    majorCourses: "",
+    campusExperience: "",
+  },
+  updatedAt: "2026-08-18",
+};
+
 const LongTermAssetsContext = createContext<LongTermAssetsContextValue | null>(null);
 
 function updateLearning(records: LearningRecord[], courseId: string, updater: (record: LearningRecord) => LearningRecord) {
@@ -88,6 +117,15 @@ function updateLearning(records: LearningRecord[], courseId: string, updater: (r
   return records.some(record => record.courseId === courseId)
     ? records.map(record => record.courseId === courseId ? updater(record) : record)
     : [...records, updater(existing)];
+}
+
+function normalizedLearningRecord(record: LearningRecord, progress: number, assessment: LearningRecord["assessment"]): LearningRecord {
+  return {
+    ...record,
+    progress,
+    assessment,
+    status: isCourseCompleted({ progress, assessment }) ? "completed" : progress > 0 ? "inProgress" : "notStarted",
+  };
 }
 
 function sourcePatch(patch: Partial<StudentProfile>, source: ProfileSource): StudentProfileSources {
@@ -102,9 +140,12 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [benefitStatuses, setBenefitStatuses] = useState<Record<string, BenefitStatus>>(() => Object.fromEntries(benefits.map(item => [item.id, item.initialStatus])));
   const [certificates, setCertificates] = useState<CertificateRecord[]>(initialCertificates);
   const [competitionResults] = useState<CompetitionResultRecord[]>(initialCompetitionResults);
+  const [educationIdentity, setEducationIdentity] = useState<EducationIdentityRecord | null>(initialEducationIdentity);
   const [resume, setResume] = useState<ResumePresentation>(seedResume);
   const [profile, setProfile] = useState<StudentProfile>(seedStudentProfile);
   const [profileSources, setProfileSources] = useState<StudentProfileSources>(() => initialProfileSources(seedStudentProfile));
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>(seedEnrolledCourseIds);
+  const [creditBalance, setCreditBalance] = useState<number>(seedCreditBalance);
 
   const benefitStatusFor = useCallback((benefitId: string): BenefitStatus => {
     const benefit = benefitById(benefitId);
@@ -121,6 +162,24 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     setProfile(current => ({ ...current, ...patch }));
     setProfileSources(current => ({ ...current, ...sourcePatch(patch, source) }));
   }, [session.loggedIn]);
+
+  const initializeNewAccount = useCallback((contact: string) => {
+    const isPhone = /^1\d{10}$/.test(contact);
+    const nextProfile: StudentProfile = {
+      ...emptyStudentProfile,
+      phone: isPhone ? contact : "",
+      phoneVerified: isPhone ? "verified" : "unverified",
+      email: isPhone ? "" : contact,
+    };
+    setLearning([]);
+    setBenefitStatuses(Object.fromEntries(benefits.map(item => [item.id, item.initialStatus])));
+    setCertificates([]);
+    setEnrolledCourseIds([]);
+    setCreditBalance(seedCreditBalance);
+    setResume(emptyResume);
+    setProfile(nextProfile);
+    setProfileSources(initialProfileSources(nextProfile));
+  }, []);
 
   const mergeProfileFromSource = useCallback((patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode: "fill-empty" | "replace" = "fill-empty") => {
     if (!session.loggedIn) return;
@@ -140,29 +199,40 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     benefitStatusFor,
     certificates,
     competitionResults,
+    educationIdentity,
     resume,
     profile,
     profileSources,
+    creditBalance,
+    enrolledCourseIds,
     learningFor: courseId => learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted", progress: 0, assessment: "idle" },
+    courseCompletedFor: courseId => {
+      const record = learning.find(item => item.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
+      return isCourseCompleted(record);
+    },
+    enrolledFor: courseId => enrolledCourseIds.includes(courseId),
     startCourse: courseId => {
-      if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => record.status === "notStarted" ? { ...record, status: "inProgress", progress: 8 } : record));
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
+      setLearning(records => updateLearning(records, courseId, record => record.status === "notStarted" ? normalizedLearningRecord(record, 8, record.assessment) : record));
     },
     advanceCourse: courseId => {
-      if (!session.loggedIn) return;
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
       setLearning(records => updateLearning(records, courseId, record => {
         const nextProgress = Math.min(100, Math.max(record.progress, 8) + 22);
-        return { ...record, status: nextProgress >= 100 ? "completed" : "inProgress", progress: nextProgress };
+        return normalizedLearningRecord(record, nextProgress, record.assessment);
       }));
     },
     completeCourse: courseId => {
-      if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => ({ ...record, status: "completed", progress: 100 })));
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
+      setLearning(records => updateLearning(records, courseId, record => normalizedLearningRecord(record, 100, record.assessment)));
     },
     submitAssessment: (courseId, passed) => {
-      if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => ({ ...record, status: passed ? "completed" : record.status, progress: passed ? 100 : record.progress, assessment: passed ? "passed" : "failed" })));
-      if (passed) {
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
+      const currentRecord = learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
+      const assessment = passed ? "passed" as const : "failed" as const;
+      const updatedRecord = normalizedLearningRecord(currentRecord, currentRecord.progress, assessment);
+      setLearning(records => updateLearning(records, courseId, () => updatedRecord));
+      if (isCourseCompleted(updatedRecord)) {
         const course = courses.find(item => item.id === courseId);
         const certificateId = course?.certificateId;
         if (course && certificateId) {
@@ -180,6 +250,27 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
         }
       }
     },
+    enrollCourse: courseId => {
+      if (!session.loggedIn) return { success: false, reason: "请先登录" };
+      if (enrolledCourseIds.includes(courseId)) return { success: true };
+      const course = courses.find(item => item.id === courseId);
+      if (!course) return { success: false, reason: "课程不存在" };
+      if (course.entitlement === "benefitRequired") {
+        if (!course.unlockBenefitId) return { success: false, reason: "课程配置缺少解锁权益" };
+        const status = benefitStatusFor(course.unlockBenefitId);
+        if (!["claimed", "used"].includes(status)) {
+          return { success: false, reason: `需要先领取「${benefitById(course.unlockBenefitId)?.title ?? "对应权益"}」` };
+        }
+      }
+      if (course.entitlement === "creditRequired") {
+        if (creditBalance < course.cost) {
+          return { success: false, reason: `学力值不足，当前余额 ${creditBalance}，需要 ${course.cost}` };
+        }
+        setCreditBalance(current => current - course.cost);
+      }
+      setEnrolledCourseIds(current => [...current, courseId]);
+      return { success: true };
+    },
     claimBenefit: benefitId => {
       if (!session.loggedIn || benefitStatusFor(benefitId) !== "eligible") return;
       setBenefitStatuses(current => ({ ...current, [benefitId]: "claimed" }));
@@ -191,6 +282,10 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     claimCertificate: certificateId => {
       if (!session.loggedIn) return;
       setCertificates(current => current.map(item => item.id === certificateId && item.status === "claimable" ? { ...item, status: "claimed", issuedAt: "2026-08-17" } : item));
+    },
+    claimEducationIdentity: () => {
+      if (!session.loggedIn) return;
+      setEducationIdentity(current => current && current.status === "claimable" ? { ...current, status: "claimed", issuedAt: "2026-08-17" } : current);
     },
     toggleResumeFact: factKey => {
       if (!session.loggedIn) return;
@@ -213,8 +308,9 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       setResume(current => ({ ...current, educationDetails: { ...current.educationDetails, ...patch }, updatedAt: "2026-08-17" }));
     },
     updateProfile,
+    initializeNewAccount,
     mergeProfileFromSource,
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }
