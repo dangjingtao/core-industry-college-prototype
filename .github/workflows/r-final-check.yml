@@ -80,14 +80,14 @@ jobs:
               },
             ],
           },
-'''
+          '''
           path.write_text(text[:start] + replacement + text[end:])
           PY
 
       - name: Restore regression workflow and commit patch
         shell: bash
         run: |
-          git show HEAD^:.github/workflows/r-final-check.yml > .github/workflows/r-final-check.yml
+          git show HEAD^^:.github/workflows/r-final-check.yml > .github/workflows/r-final-check.yml
           rm -f .github/workflows/pc-bd01-one-shot.yml
           git config user.name "Mira PC-BD01"
           git config user.email "github-actions[bot]@users.noreply.github.com"
