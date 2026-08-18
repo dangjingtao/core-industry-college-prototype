@@ -56,7 +56,7 @@
 | T013 | 创赛工坊完整功能 | 施工 | 待执行 | 赛事工作区上下文 |
 | T014 | 我的页面设计语言总结 + 功能补齐 | 施工 | 待执行 | F03、T009、T010 |
 | T015 | 登录注册流程 | 施工 | 待执行 | F01、F03 |
-| PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | 待评审 | 无 |
+| PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | PASS | 无 |
 | PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | PASS | PC01 |
 | PC03 | Organization + 机会 + 内容运营 | 施工 | PASS | PC01 |
 | PC04 | 平台课程 + 权益 + 可信证书 | 施工 | PASS | PC01 |
@@ -591,7 +591,8 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 # PC01｜PC 控制面总壳 + APP 数据接入地图
 
 **类型：施工卡**  
-**状态：待评审**  
+**状态：PASS**  
+**独立复审：`docs/workbench/PC01-review.md`，结论 `PASS`，复审提交 `250e1fc868de720c86192b572da65955d3364a42`**  
 **优先级：P0**  
 **前置：无**
 
@@ -664,7 +665,7 @@ App 有什么
 - TypeScript 静态验证：`data.ts` 使用 TypeScript 5.8 严格解析通过；`AdminConsole.tsx + data.ts` 在与仓库 `strict / moduleResolution=Bundler / jsx=react-jsx` 对齐的隔离检查中通过。该隔离检查用于发现本卡自身语法 / 类型问题，不冒充真实依赖安装后的 Vite build；
 - Browser regression 已扩展 `apps/pc/tests/admin-skeleton.spec.ts`：覆盖总览 / 数据来源 / stable ID / APP → PC map、Competition → Organization 跨域详情、统一编辑 Pattern、CompetitionIdentity 真相源边界、现有报名门户独立入口；
 - 仓库 `deploy-pc.yml` 与 `r-final-check.yml` 都会在 `apps/pc/**` 推送 `dev` 时执行真实 build / PC browser regression；当前 GitHub connector 的 commit workflow 查询只返回 PR 触发 run，本卡为直接 push `dev`，施工线程无法可靠取得本次 push run 的 run id / 最终状态，因此**不伪造 CI PASS**；
-- 当前结论：PC01 实现完成，状态进入 `待评审`；独立评审需补齐仓库真实 build / browser / CI 结果，如有红灯则改为 `CHANGES REQUIRED`；施工线程不自行标记 `PASS`。
+- 独立复审已结合 PC02–PC04 的实际落地结果反向验证底座契约，结论 `PASS`；非阻断的 Shell 合并与旧示例详情路由收口留给 PC05 统一处理。
 
 ---
 
