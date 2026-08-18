@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
 import { PC01OperationsConsole } from "./admin/PC01OperationsConsole";
 import { PC03Console } from "./admin/PC03Console";
+import { PC03HumanOrganizationConsole } from "./admin/PC03HumanOrganizationConsole";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { PC03StateProvider } from "./admin/PC03State";
 import { PC04Console } from "./admin/PC04Console";
@@ -81,6 +82,11 @@ function AdminRoute({ children }: { children: ReactNode }) {
   return <AdminControlPlaneShell>{children}</AdminControlPlaneShell>;
 }
 
+function LegacyOrganizationRedirect() {
+  const { organizationId } = useParams();
+  return <Navigate to={organizationId ? `/admin/organizations/${organizationId}` : "/admin/organizations"} replace />;
+}
+
 export function App() {
   return (
     <PC03StateProvider>
@@ -92,9 +98,9 @@ export function App() {
             <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
             <Route path="/admin/workshop" element={<AdminRoute><PC01OperationsConsole section="workshop" /></AdminRoute>} />
             <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><CompetitionConsole /></AdminRoute>} />
-            <Route path="/admin/organizations" element={<AdminRoute><PC03Console /></AdminRoute>} />
-            <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03Console /></AdminRoute>} />
-            <Route path="/admin/organizations/objects/:organizationId" element={<Navigate to="/admin/organizations" replace />} />
+            <Route path="/admin/organizations" element={<AdminRoute><PC03HumanOrganizationConsole /></AdminRoute>} />
+            <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03HumanOrganizationConsole /></AdminRoute>} />
+            <Route path="/admin/organizations/objects/:organizationId" element={<LegacyOrganizationRedirect />} />
             <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
             <Route path="/admin/content/*" element={<AdminRoute><PC03Console /></AdminRoute>} />
             <Route path="/admin/pc04/*" element={<AdminRoute><PC04Console /></AdminRoute>} />
