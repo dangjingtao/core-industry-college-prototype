@@ -137,7 +137,9 @@ test("E ended competition hands off to long-term experience and trusted result",
 
 test("competition list filter survives detail-return navigation", async ({ page }) => {
   await page.goto("/competitions");
-  await page.getByRole("button", { name: "报名中" }).click();
+  await page.getByRole("button", { name: /筛选/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "报名中" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "确定" }).click();
   await expect(page.getByRole("link", { name: /第十五届三创赛/ })).toHaveCount(0);
   await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
   await page.getByRole("button", { name: "返回" }).click();

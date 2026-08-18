@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, PenLine, Plus, Send, Settings, Share2, ShieldCheck, Trophy, Users, X, Zap } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
@@ -320,7 +320,7 @@ const SupportContext = createContext<SupportState | null>(null);
 
 export function SupportProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState(noticeSeed);
-  const [bindings, setBindings] = useState<string[]>(["email"]);
+  const [bindings, setBindings] = useState<string[]>(["douyin", "ktt", "scmall"]);
   const [followedAlumni, setFollowedAlumni] = useState<string[]>([]);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const markRead = useCallback((id: string) => setNotifications(current => current.map(item => item.id === id && !item.read ? { ...item, read: true } : item)), []);
@@ -777,10 +777,33 @@ export function SupportChatPage() {
   </PublicShell>;
 }
 
+type AccountOption = { id: string; label: string; description: string; handle: string; icon: LucideIcon };
+
+const accountOptions: AccountOption[] = [
+  { id: "douyin", label: "抖音", description: "短视频内容创作与粉丝互动", handle: "@sanchuang", icon: Music2 },
+  { id: "ktt", label: "快团团", description: "社群团购与分销工具", handle: "三创好物团长", icon: ShoppingBag },
+  { id: "scmall", label: "三创好物", description: "校园文创与赛事周边商城", handle: "三创好物会员", icon: Store },
+];
+
 export function AccountsPage() {
   const { bindings, toggleBinding } = useSupport();
-  const accounts = [["email","邮箱"],["wecom","企业微信"],["wechat","微信"]] as const;
-  return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
+  const [pending, setPending] = useState<AccountOption | null>(null);
+  const [unbindTarget, setUnbindTarget] = useState<AccountOption | null>(null);
+  return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">
+    <Card className="border border-border-subtle"><p className="text-sm leading-6 text-text-secondary">将常用电商与内容账号绑定到长期账号，报名、参赛与就业过程中可复用账号信息，无需重复授权。</p></Card>
+    {accountOptions.map(account => { const bound = bindings.includes(account.id); return <Card key={account.id}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className={`flex size-10 shrink-0 items-center justify-center rounded-[12px] ${bound ? "bg-primary-container text-text-brand" : "bg-surface-subtle text-text-secondary"}`}><account.icon size={20} aria-hidden="true" /></span>
+          <div className="min-w-0"><h2 className="font-semibold text-text-primary">{account.label}</h2><p className="mt-0.5 text-xs text-text-secondary">{account.description}</p></div>
+        </div>
+        <StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag>
+      </div>
+      {bound ? <><div className="mt-3 flex items-center justify-between rounded-control bg-surface-subtle px-3 py-2"><span className="text-xs text-text-secondary">已授权账号</span><span className="text-sm font-medium text-text-primary">{account.handle}</span></div><SecondaryButton className="mt-3 w-full" onClick={() => setUnbindTarget(account)}>解除绑定</SecondaryButton></> : <Button className="mt-3 w-full" onClick={() => setPending(account)}>绑定账号</Button>}
+    </Card>; })}
+    {pending && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={event => { if (event.target === event.currentTarget) setPending(null); }}><div className="w-full max-w-[320px] rounded-container bg-surface p-5 text-center shadow-floating"><div className="flex items-center justify-between"><h2 className="text-base font-semibold text-text-primary">授权绑定{pending.label}</h2><button aria-label="关闭" onClick={() => setPending(null)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button></div><div className="mt-5 flex justify-center"><span className="flex size-14 items-center justify-center rounded-[18px] bg-primary-container text-text-brand"><pending.icon size={28} aria-hidden="true" /></span></div><p className="mt-4 text-sm font-medium text-text-primary">允许「{pending.label}」接入长期账号</p><p className="mt-2 text-xs leading-5 text-text-secondary">授权后将使用{pending.label}昵称与头像，用于报名、参赛与就业场景复用（原型模拟授权）。</p><div className="mt-5 flex gap-3"><SecondaryButton className="flex-1" onClick={() => setPending(null)}>取消</SecondaryButton><Button className="flex-1" onClick={() => { toggleBinding(pending.id); setPending(null); }}>确认授权</Button></div></div></div>}
+    <ConfirmDialog open={Boolean(unbindTarget)} title={unbindTarget ? `解除绑定${unbindTarget.label}` : ""} description={unbindTarget ? `解除后「${unbindTarget.label}」将不再关联当前长期账号，需要时可在本页重新绑定。` : ""} cancelText="取消" confirmText="确认解除" onCancel={() => setUnbindTarget(null)} onConfirm={() => { if (unbindTarget) toggleBinding(unbindTarget.id); setUnbindTarget(null); }} />
+  </div></PublicShell>;
 }
 
 export function EmailReminderPage() {

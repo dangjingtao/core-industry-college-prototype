@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Award, Bell, BriefcaseBusiness, ChevronRight, Download, FileText, GraduationCap, Headphones, HelpCircle, Info, Link2, Save, Settings, ShieldCheck, Users, Wallet } from "lucide-react";
+import { Award, Bell, BriefcaseBusiness, Check, ChevronRight, Download, FileText, GraduationCap, Headphones, HelpCircle, Info, Link2, PenLine, Save, Settings, ShieldCheck, Users, Wallet } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { workspaceData, resultById } from "../competition-workspace/data";
@@ -7,6 +7,7 @@ import { completedResults, useWorkshopRuntime } from "../competition-workspace/r
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { companyById, competitionById, opportunityById } from "../public-platform/data";
 import { courses } from "./data";
+import { competitionExperienceOptions, educationLevelOptions, labelFor } from "./studentProfile";
 import { FactCard, ProgressBar, TrustNote } from "./shared";
 import { useLongTermAssets } from "./store";
 
@@ -29,11 +30,11 @@ function lifecycleLabel(lifecycle: "notStarted" | "inProgress" | "ended", identi
 
 export function MyPage() {
   const navigate = useNavigate();
-  const { applications, followedCompanies, session, continueAsGuest } = usePublicPlatform();
-  const { certificates, profile } = useLongTermAssets();
+  const { session, continueAsGuest } = usePublicPlatform();
+  const { profile } = useLongTermAssets();
+  const competitionTag = profile.competitionExperience ? labelFor(competitionExperienceOptions, profile.competitionExperience) : "";
+  const educationTag = profile.educationLevel ? labelFor(educationLevelOptions, profile.educationLevel) : "";
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const experiences = useExperienceFacts();
-  const activeCertificates = certificates.filter(item => item.status !== "revoked").length;
   const logout = () => {
     continueAsGuest();
     navigate("/auth/login", { replace: true });
@@ -53,9 +54,7 @@ export function MyPage() {
     { label: "隐私政策", to: "/legal/privacy", icon: ShieldCheck },
     { label: "关于", to: "/about", icon: Info },
   ];
-  const summaryLine = `${experiences.length} 段经历 · ${activeCertificates} 张证书 · ${applications.length} 份投递 · 关注 ${followedCompanies.length} 家企业`;
-  return <PublicShell><PageHeader title="我的" subtitle="长期账号资产，不随单场赛事结束" /><div className="space-y-7 px-4 py-5"><Card className="space-y-3"><div><p className="text-xs text-text-secondary">{profile.school} · {profile.major}</p><h1 className="mt-1 text-xl font-semibold text-text-primary">{profile.name}</h1><p className="mt-2 text-sm text-text-secondary">{profile.city} · {profile.email}</p></div><GhostButton className="w-full" onClick={() => navigate("/me/profile")}>编辑基础资料</GhostButton></Card>
-    <Link to="/assets" className="block"><Card interactive className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{summaryLine}</p><p className="mt-1 text-xs text-text-secondary">查看长期资产</p></div><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Card></Link>
+  return <PublicShell><PageHeader title="我的" subtitle="长期账号资产，不随单场赛事结束" /><div className="space-y-7 px-4 py-5"><Card className="overflow-hidden"><div aria-hidden="true" className="h-20 bg-gradient-to-br from-primary to-primary-pressed" /><div className="-mt-10 px-4 pb-4"><div className="flex items-end justify-between"><span className="flex size-20 items-center justify-center rounded-full bg-primary-container text-2xl font-semibold text-text-brand ring-4 ring-surface">{profile.nickname.slice(0, 1) || profile.name.slice(0, 1)}</span>{competitionTag && <span className="mb-1 rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-text-secondary">{competitionTag}</span>}</div><div className="mt-3 flex items-center gap-1.5"><h1 className="text-xl font-semibold text-text-primary">{profile.name}</h1>{profile.phoneVerified === "verified" && <Check size={16} className="shrink-0 text-text-brand" aria-hidden="true" />}</div><p className="mt-1 text-sm text-text-secondary">{profile.school} · {profile.major}</p><div className="mt-3 flex flex-wrap gap-2">{profile.city && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{profile.city}</span>}{educationTag && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{educationTag}</span>}</div><p className="mt-3 text-xs text-text-tertiary">{profile.email}</p></div><Link to="/me/profile" className="flex min-h-touch items-center gap-3 border-t border-border-subtle px-4 active:bg-surface-pressed"><PenLine size={16} className="shrink-0 text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm font-medium text-text-primary">编辑基础资料</span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link></Card>
     <Section title="服务入口"><div className="overflow-hidden rounded-container bg-surface">{serviceEntries.map(({ label, to, icon: Icon }, index) => <Link key={to} to={to} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Icon size={18} aria-hidden="true" /></span><span className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong></span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
     <Section title="关于与协议"><div className="overflow-hidden rounded-container bg-surface">{aboutEntries.map(({ label, to, icon: Icon }, index) => <Link key={to} to={to} className={`flex min-h-touch items-center gap-3 px-4 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><Icon size={18} className="shrink-0 text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm font-medium text-text-primary">{label}</span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
     <Section title="账号"><Card>{confirmLogout ? <div><h2 className="font-semibold text-text-primary">确定退出登录吗？</h2><p className="mt-2 text-sm leading-6 text-text-secondary">只会清除当前登录 session。简历、赛事经历、课程、证书和其它长期账号资产不会被删除。</p><div className="mt-4 grid grid-cols-2 gap-3"><GhostButton onClick={() => setConfirmLogout(false)}>取消</GhostButton><Button onClick={logout}>确认退出</Button></div></div> : <div><h2 className="font-semibold text-text-primary">当前登录会话</h2><p className="mt-2 text-sm text-text-secondary">退出后仍可浏览公共平台，重新登录后继续使用长期资产。</p><SecondaryButton className="mt-4 w-full" onClick={() => setConfirmLogout(true)}>退出登录</SecondaryButton></div>}</Card></Section>

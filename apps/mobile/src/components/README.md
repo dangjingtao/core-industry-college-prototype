@@ -25,4 +25,4 @@ It accepts local React content through `items`, supports native swipe/scroll sna
 
 ## MobileFilter
 
-`MobileFilter.tsx` is a controlled mobile list filter. It combines a searchable input, horizontally scrollable single-select options, reset action, and optional result count. The parent remains the only source of filter state.
+`MobileFilter.tsx` is a controlled mobile list filter. A keyword input sits next to a filter trigger button that shows an active-condition badge. Committing a keyword (Enter or the trigger) turns it into a removable tag, and the trigger opens the shared `Dialog` bottom sheet where grouped single-select conditions are applied with 重置 / 确定. Active conditions backfill into the filter bar as removable tags. The parent remains the only source of filter state; the component only keeps pending input and dialog draft locally.
