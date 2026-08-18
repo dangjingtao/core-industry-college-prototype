@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy, Users } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, FileText, Gift, ShieldCheck, Sparkles, Trophy, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { scenarios } from "../../mock/scenarios";
 import type { CompetitionIdentityState } from "../../state/model";
+import { useLongTermAssets } from "../long-term-assets/store";
 import { companies, companyById, competitions, competitionById, opportunities, opportunityById, type Competition, type Opportunity } from "./data";
 
 type ApplicationRecord = { opportunityId: string; status: "submitted" | "statusUnknown" };
@@ -241,6 +242,33 @@ function HomeTaskZone({ entries }: { entries: HomeTaskEntry[] }) {
   </section>;
 }
 
+type TrustHomeEntry = { id: string; label: string; description: string; to: string; icon: ReactNode; count?: number };
+
+function TrustSpaceHomeSection() {
+  const navigate = useNavigate();
+  const { certificates, competitionResults } = useLongTermAssets();
+  const claimableCount = certificates.filter(item => item.status === "claimable").length;
+  const entries: TrustHomeEntry[] = [
+    { id: "certificates", label: "我的证书", description: "领取、保存与验真", to: "/assets/certificates", icon: <Award size={18} aria-hidden="true" />, count: certificates.filter(item => item.status !== "revoked").length },
+    { id: "results", label: "成绩查询", description: "赛事结果与工坊成果", to: "/assets/results", icon: <FileText size={18} aria-hidden="true" />, count: competitionResults.length },
+    { id: "verification", label: "快速验真", description: "验真码 / 二维码 / 文件", to: "/assets/verification", icon: <ShieldCheck size={18} aria-hidden="true" /> },
+  ];
+  return <section aria-labelledby="home-trust-title" className="space-y-3">
+    <div className="flex min-h-6 items-center justify-between gap-3"><h2 id="home-trust-title" className="text-base font-semibold text-text-primary">可信成果</h2><Link to="/assets" className="text-sm font-medium text-text-brand">查看全部</Link></div>
+    <Card className="divide-y divide-border-subtle overflow-hidden p-0">
+      {entries.map((entry, index) => <button key={entry.id} type="button" onClick={() => navigate(entry.to)} className={`flex min-h-touch w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand">{entry.icon}</span>
+        <span className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{entry.label}</strong><span className="mt-0.5 block text-xs leading-5 text-text-secondary">{entry.description}</span></span>
+        <span className="flex items-center gap-2">
+          {entry.id === "certificates" && claimableCount > 0 && <StatusTag tone="info">{claimableCount} 张可领取</StatusTag>}
+          {typeof entry.count === "number" && <span className="text-sm font-semibold text-text-primary">{entry.count}</span>}
+          <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+        </span>
+      </button>)}
+    </Card>
+  </section>;
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const guest = useGuest();
@@ -295,17 +323,18 @@ export function HomePage() {
       iconClass: "bg-[#f3efff] text-[#6f4bc2]",
     },
   ];
-  const growthResources = [
-    { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
-    { label: "权益", description: "查看可领取的支持", to: "/benefits", icon: Gift },
-    { label: "可信成果", description: "沉淀证书与成绩", to: "/assets", icon: Award },
-    { label: "合作企业", description: "发现品牌与机会", to: "/companies", icon: Building2 },
+  const growthShortcuts = [
+    { label: "课程", to: "/courses", icon: BookOpen },
+    { label: "权益", to: "/benefits", icon: Gift },
+    { label: "合作企业", to: "/companies", icon: Building2 },
   ];
   return <PublicShell><header className="flex items-center justify-between px-4 pb-4 pt-6"><div><div className="flex items-center gap-2"><p className="text-xs font-medium text-text-brand">核心产业学院</p>{guest && <span className="text-xs text-text-tertiary">未登录</span>}</div><h1 className="mt-1 text-xl font-semibold text-text-primary">{guest ? "你好，欢迎来看看" : "嗨，今天也一起向前"}</h1></div><button aria-label="消息通知" onClick={() => navigate(guest ? "/auth/login?returnTo=/me/notifications" : "/me/notifications")} className="relative flex size-11 items-center justify-center rounded-full bg-surface text-text-primary"><Bell size={21} aria-hidden="true" /><span className="absolute right-2 top-2 size-2 rounded-full bg-danger" /></button></header>
     {view !== "ready" ? <div className="px-4"><StateBlock state={view} /></div> : <div className="space-y-7 px-4">
       <section className="overflow-hidden rounded-[20px] bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary shadow-floating"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium opacity-80">{activeCompetition ? "我的赛事" : "正在报名"}</p><h2 className="mt-2 text-xl font-semibold leading-7">{activeCompetition?.name ?? competitions[0].name}</h2><p className="mt-2 text-sm opacity-85">{activeCompetition ? "赛事身份有效，继续推进你的参赛项目" : "发现适合你的赛事，开启一段新经历"}</p></div><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><Trophy size={22} aria-hidden="true" /></span></div><div className="mt-5 flex gap-2">{activeCompetition ? <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate(`/competitions/${activeCompetition.id}/workspace`)}>进入当前赛事</button> : <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate("/competitions")}>发现比赛</button>}<button className="flex min-h-touch items-center justify-center rounded-control bg-white/15 px-4 text-sm font-medium" onClick={() => navigate("/competitions")}>全部赛事<ChevronRight size={16} aria-hidden="true" /></button></div></section>
 
-      <section><div className="grid grid-cols-4 gap-2">{growthResources.map(({ label, to, icon: Icon }) => <button key={to} onClick={() => navigate(to)} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-container bg-surface text-center active:bg-surface-pressed"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">{label}</span></button>)}</div></section>
+      <section><div className="grid grid-cols-3 gap-2">{growthShortcuts.map(({ label, to, icon: Icon }) => <button key={to} onClick={() => navigate(to)} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-container bg-surface text-center active:bg-surface-pressed"><span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">{label}</span></button>)}</div></section>
+
+      <TrustSpaceHomeSection />
 
       <HomeTaskZone entries={taskEntries} />
 
@@ -316,9 +345,9 @@ export function HomePage() {
           <Card interactive className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-[#fff2e8] text-[#c45b1b]"><Users size={20} aria-hidden="true" /></span>
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-text-primary">赛友故事与公众号精选</h3>
-              <p className="mt-1 text-sm leading-5 text-text-secondary">看看其他同学的参赛经历，或投稿分享自己的故事。</p>
-              <div className="mt-3 flex flex-wrap gap-2"><StatusTag tone="neutral">赛友投稿</StatusTag><StatusTag tone="info">公众号来源</StatusTag></div>
+              <h3 className="text-base font-semibold text-text-primary">赛友风采与项目资源</h3>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">优秀团队、历届赛友、项目合作与赛事助力。</p>
+              <div className="mt-3 flex flex-wrap gap-2"><StatusTag tone="neutral">赛友风采</StatusTag><StatusTag tone="info">创·项目</StatusTag><StatusTag tone="success">赛事助力</StatusTag></div>
             </div>
           </Card>
         </Link>
