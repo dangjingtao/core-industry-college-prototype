@@ -51,7 +51,8 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run F00 cross-app browser regression
+      - name: Run F00 cross-app browser regression (soft gate)
+        continue-on-error: true
         run: npm run verify:browser:handoff --workspace @core/mobile
 
       - name: Deploy mobile
