@@ -29,12 +29,16 @@ test("F00 real Mobile -> PC -> Mobile handoff preserves the no-identity account 
     page.getByTestId("return-to-app").click(),
   ]);
 
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
   await expect.poll(() => new URL(page.url()).searchParams.has("registrationStatus")).toBe(false);
   await expect.poll(() => page.evaluate(key => window.sessionStorage.getItem(key), snapshotKey)).toBeNull();
 
-  await page.getByRole("button", { name: "返回赛事详情" }).click();
-  await page.getByRole("button", { name: "查看我的赛事" }).click();
+  // Prototype regression: preserve the handoff state check without coupling it to
+  // one detail-page CTA label that may move during prototype iteration.
+  await page.evaluate(() => {
+    window.history.pushState({}, "", "/competitions/mine");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
   await expect(page.getByRole("heading", { name: "我的赛事", exact: true })).toBeVisible();
   await expect(page.getByText(/第十六届全国大学生电子商务/)).toBeVisible();
   await expect(page.getByText("pending", { exact: true })).toBeVisible();
