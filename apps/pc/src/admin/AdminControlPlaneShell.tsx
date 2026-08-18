@@ -94,8 +94,6 @@ function PermissionDetails() {
 function adminViewClass(pathname: string) {
   if (pathname.startsWith("/admin/pc04/")) return "pc05-pc04-view";
   if (pathname.startsWith("/admin/competitions/objects/")) return "pc05-pc02-view";
-  if (pathname.startsWith("/admin/opportunities")) return "pc05-opportunity-view";
-  if (pathname.startsWith("/admin/content")) return "pc05-content-view";
   return "";
 }
 
@@ -111,8 +109,6 @@ export function AdminControlPlaneShell({ children }: { children: ReactNode }) {
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>div:first-child>p{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>span{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view section.border-info.bg-info-bg{display:none!important}
-      .pc05-tech-hidden.pc05-opportunity-view>div>section:first-child p,
-      .pc05-tech-hidden.pc05-content-view>div>section:first-child p{display:none!important}
     `}</style>
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-subtle bg-surface lg:flex lg:flex-col">
       <div className="border-b border-border-subtle px-5 py-5"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-control bg-primary text-on-primary"><Database size={20} aria-hidden="true" /></div><div><p className="text-sm font-semibold text-text-primary">核心产业学院</p><p className="mt-0.5 text-xs text-text-tertiary">运营后台</p></div></div></div>
