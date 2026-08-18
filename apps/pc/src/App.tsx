@@ -3,6 +3,7 @@ import { buildRegistrationReturnUrl, parseRegistrationHandoff, type Registration
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
 import { PC03Console } from "./admin/PC03Console";
+import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 
@@ -72,7 +73,7 @@ export function App() {
     <Routes>
       <Route path="/admin/organizations" element={<PC03Console />} />
       <Route path="/admin/organizations/:organizationId" element={<PC03Console />} />
-      <Route path="/admin/opportunities/*" element={<PC03Console />} />
+      <Route path="/admin/opportunities/*" element={<PC03OpportunityRoute />} />
       <Route path="/admin/content" element={<PC03Console />} />
       <Route path="/admin/*" element={<AdminConsole />} />
       <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
