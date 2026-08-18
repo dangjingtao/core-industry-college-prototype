@@ -64,10 +64,10 @@ export function PC01OperationsConsole({ section }: { section: Section }) {
 
   if (section === "basicData") {
     const items = [
-      { title: "报名学生基础数据", detail: "学生长期 Profile：学校、专业、年级、联系方式、可信状态与来源归属。", to: "/admin/basic-data/students", tone: "info" as const, tag: "运营录入" },
-      { title: "参赛学校基础数据", detail: "学校主数据：院校名称、省份、地区代码、参赛范围与负责人。", to: "/admin/basic-data/schools", tone: "success" as const, tag: "主数据" },
-      { title: "赛事 / 赛道字典", detail: "赛事分类、赛道、阶段、学段，作为长期字段引用基线。", to: "/admin/basic-data/dictionaries", tone: "warning" as const, tag: "字典" },
-      { title: "证书 / 协议模板", detail: "证书类型、协议模板、Banner 与权益规则模板，统一从这里发布。", to: "/admin/basic-data/templates", tone: "info" as const, tag: "模板" },
+      { title: "报名学生基础数据", detail: "学生基础资料聚合入口：查看学校、专业、年级、联系方式和来源记录，具体治理回学生控制台。", to: "/admin/basic-data/students", tone: "info" as const, tag: "学生资料" },
+      { title: "参赛学校基础数据", detail: "学校主体资料聚合入口：查看学校基础信息、赛事授权关系和负责人，具体维护回主体与学校。", to: "/admin/basic-data/schools", tone: "success" as const, tag: "学校主体" },
+      { title: "赛事 / 赛道字典", detail: "赛事配置索引：按具体赛事查看赛道与阶段，并回赛事中心维护。", to: "/admin/basic-data/dictionaries", tone: "warning" as const, tag: "配置索引" },
+      { title: "证书 / 协议模板", detail: "证书、协议、Banner 与权益规则的跨模块索引，分别回所属业务模块维护与发布。", to: "/admin/basic-data/templates", tone: "info" as const, tag: "跨域索引" },
       { title: "管理员与角色", detail: "后台账号、角色、模块权限与数据范围；普通运营不能自建。", to: "/admin/governance", tone: "danger" as const, tag: "高风险" },
       { title: "导入与批处理", detail: "Excel / CSV 兜底导入、批次管理和来源审计。", to: "/admin/basic-data/imports", tone: "neutral" as const, tag: "兜底" },
     ];
@@ -76,7 +76,7 @@ export function PC01OperationsConsole({ section }: { section: Section }) {
         <section className="rounded-container border border-border-subtle bg-surface p-6 lg:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">基础数据</p>
           <h1 className="mt-2 text-2xl font-semibold">基础数据管理</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-text-secondary">维护报名学生、参赛学校、赛事、证书、权益、机会、字典、模板等长期复用的主数据；这一层只负责定义、归一、版本和归属，不复制 Runtime 状态。</p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-text-secondary">作为跨模块维护工作台，集中找到学生资料、学校主体、赛事配置、模板规则和数据接入记录；真正业务状态继续由所属模块维护。</p>
         </section>
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map(item => (
@@ -93,7 +93,7 @@ export function PC01OperationsConsole({ section }: { section: Section }) {
         </section>
         <section className="rounded-container border border-info bg-info-bg p-5 text-sm text-info-text">
           <h3 className="font-semibold">基础数据管理 · 范围说明</h3>
-          <p className="mt-2 leading-6">这里只放“长期复用的主数据 + 字典 + 模板 + 权限 + 导入批处理”。业务状态、Runtime 状态、长期资产、审计和高风险审批继续在各自域里管理，不在这一层复制第二份真相源。</p>
+          <p className="mt-2 leading-6">这里只提供跨模块索引、聚合查看和数据接入治理。学生、学校、赛事、证书、内容、权益和权限仍回各自业务入口维护，不在这里复制第二份业务记录。</p>
         </section>
       </div>
     );
