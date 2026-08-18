@@ -46,9 +46,9 @@ test("PC03 Organization keeps business relations first and stable ids in explici
   await expect(page.getByText(/只使用 PC01 canonical 五类来源/)).toBeVisible();
 });
 
-test("PC03 Opportunity edit persists to detail, includes skills and keeps Application consumer-aligned", async ({ page }) => {
+test("PC03 opportunity edit persists while technical identifiers stay secondary", async ({ page }) => {
   await page.goto("/admin/opportunities/intern-1");
-  await expect(page.getByRole("heading", { name: "机会管理 + App 内投递" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "机会与投递" })).toBeVisible();
   await expect(page.getByText("opportunityId · intern-1", { exact: true })).not.toBeVisible();
   await showTechnical(page);
   await expect(page.getByText("opportunityId · intern-1", { exact: true })).toBeVisible();
@@ -70,23 +70,23 @@ test("PC03 Opportunity edit persists to detail, includes skills and keeps Applic
   await expect(page.getByText("广州 / 深圳", { exact: true })).toBeVisible();
   await expect(page.getByLabel("技能标签")).toContainText("用户研究");
 
-  const applicationStatus = page.getByLabel("更新 匿名学生 B Application 状态");
+  const applicationStatus = page.getByLabel("更新 匿名学生 B 投递状态");
   await expect(applicationStatus).toHaveValue("statusUnknown");
   await expect(applicationStatus.locator('option[value="failed"]')).toHaveCount(0);
   await applicationStatus.selectOption("submitted");
   await expect(applicationStatus).toHaveValue("submitted");
 });
 
-test("PC03 Opportunity create carries Mobile skills[] and targeting remains explainable", async ({ page }) => {
+test("PC03 opportunity creation uses business fields and keeps targeting explainable", async ({ page }) => {
   await page.goto("/admin/opportunities/intern-1");
   await showTechnical(page);
   await page.getByRole("button", { name: "新建机会" }).click();
-  await page.getByLabel("opportunityId").fill("campus-ops-2026");
-  await page.getByLabel("标题").fill("校园运营项目实践");
-  await page.getByLabel("技能标签 skills[]").fill("活动运营, 用户研究");
-  await page.getByRole("button", { name: "创建为 open" }).click();
+  await expect(page.getByLabel("opportunityId")).toHaveCount(0);
+  await page.getByLabel("机会名称").fill("校园运营项目实践");
+  await page.getByLabel("技能标签", { exact: true }).fill("活动运营, 用户研究");
+  await page.getByRole("button", { name: "保存并开放" }).click();
   await page.getByRole("link", { name: /校园运营项目实践/ }).click();
-  await expect(page.getByText("opportunityId · campus-ops-2026", { exact: true })).toBeVisible();
+  await expect(page.getByText("opportunityId · opportunity-draft-005", { exact: true })).toBeVisible();
   await expect(page.getByLabel("技能标签")).toContainText("活动运营");
   await expect(page.getByLabel("技能标签")).toContainText("用户研究");
 
@@ -96,6 +96,7 @@ test("PC03 Opportunity create carries Mobile skills[] and targeting remains expl
   await expect(page.getByText("课程完成", { exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: /匿名学生 C/ }).click();
   await page.getByRole("button", { name: "确认发送范围" }).click();
+  await expect(page.getByTestId("audience-confirmed")).toContainText("发送范围已确认");
   await expect(page.getByTestId("audience-confirmed")).toContainText("不生成 CandidateRecord");
 });
 
