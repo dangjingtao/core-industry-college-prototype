@@ -1,3 +1,4 @@
+import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord } from "./data";
@@ -46,6 +47,7 @@ type LongTermAssetsContextValue = {
   profile: StudentProfile;
   profileSources: StudentProfileSources;
   learningFor: (courseId: string) => LearningRecord;
+  courseCompletedFor: (courseId: string) => boolean;
   startCourse: (courseId: string) => void;
   advanceCourse: (courseId: string) => void;
   completeCourse: (courseId: string) => void;
@@ -88,6 +90,15 @@ function updateLearning(records: LearningRecord[], courseId: string, updater: (r
   return records.some(record => record.courseId === courseId)
     ? records.map(record => record.courseId === courseId ? updater(record) : record)
     : [...records, updater(existing)];
+}
+
+function normalizedLearningRecord(record: LearningRecord, progress: number, assessment: LearningRecord["assessment"]): LearningRecord {
+  return {
+    ...record,
+    progress,
+    assessment,
+    status: isCourseCompleted({ progress, assessment }) ? "completed" : progress > 0 ? "inProgress" : "notStarted",
+  };
 }
 
 function sourcePatch(patch: Partial<StudentProfile>, source: ProfileSource): StudentProfileSources {
@@ -144,24 +155,31 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     profile,
     profileSources,
     learningFor: courseId => learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted", progress: 0, assessment: "idle" },
+    courseCompletedFor: courseId => {
+      const record = learning.find(item => item.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
+      return isCourseCompleted(record);
+    },
     startCourse: courseId => {
       if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => record.status === "notStarted" ? { ...record, status: "inProgress", progress: 8 } : record));
+      setLearning(records => updateLearning(records, courseId, record => record.status === "notStarted" ? normalizedLearningRecord(record, 8, record.assessment) : record));
     },
     advanceCourse: courseId => {
       if (!session.loggedIn) return;
       setLearning(records => updateLearning(records, courseId, record => {
         const nextProgress = Math.min(100, Math.max(record.progress, 8) + 22);
-        return { ...record, status: nextProgress >= 100 ? "completed" : "inProgress", progress: nextProgress };
+        return normalizedLearningRecord(record, nextProgress, record.assessment);
       }));
     },
     completeCourse: courseId => {
       if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => ({ ...record, status: "completed", progress: 100 })));
+      setLearning(records => updateLearning(records, courseId, record => normalizedLearningRecord(record, 100, record.assessment)));
     },
     submitAssessment: (courseId, passed) => {
       if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => ({ ...record, status: passed ? "completed" : record.status, progress: passed ? 100 : record.progress, assessment: passed ? "passed" : "failed" })));
+      setLearning(records => updateLearning(records, courseId, record => {
+        const assessment = passed ? "passed" as const : "failed" as const;
+        return normalizedLearningRecord(record, record.progress, assessment);
+      }));
       if (passed) {
         const course = courses.find(item => item.id === courseId);
         const certificateId = course?.certificateId;

@@ -6,6 +6,8 @@ import {
   ChevronRight,
   Database,
   FileBadge,
+  GraduationCap,
+  Gift,
   LayoutDashboard,
   Sparkles,
   Target,
@@ -46,6 +48,10 @@ function OperatorContext() {
   );
 }
 
+function subItemClass(active: boolean) {
+  return `mb-1 ml-8 flex min-h-9 items-center gap-2 rounded-control px-3 text-xs font-medium ${active ? "bg-primary-container text-text-brand" : "text-text-tertiary hover:bg-surface-subtle hover:text-text-secondary"}`;
+}
+
 function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
   const location = useLocation();
   const itemClass = (active: boolean) =>
@@ -60,9 +66,13 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
       {adminDomains.map(domain => {
         const Icon = domainIcons[domain.id] ?? Database;
         const basePath = `/admin/${domain.id}`;
+        const pc04Resource = location.pathname.startsWith("/admin/pc04/courses") || location.pathname.startsWith("/admin/pc04/benefits");
+        const pc04Assets = location.pathname.startsWith("/admin/pc04/certificates");
         const active = domain.id === "resources"
-          ? location.pathname.startsWith(basePath) || location.pathname.startsWith("/admin/opportunities")
-          : location.pathname.startsWith(basePath);
+          ? location.pathname.startsWith(basePath) || location.pathname.startsWith("/admin/opportunities") || pc04Resource
+          : domain.id === "assets"
+            ? location.pathname.startsWith(basePath) || pc04Assets
+            : location.pathname.startsWith(basePath);
         return (
           <div key={domain.id}>
             <NavLink to={basePath} className={() => itemClass(active)}>
@@ -70,17 +80,30 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
               {domain.label}
             </NavLink>
             {!mobile && domain.id === "organizations" && (
-              <NavLink to="/admin/organizations" end className={({ isActive }) => `mb-1 ml-8 flex min-h-9 items-center gap-2 rounded-control px-3 text-xs font-medium ${isActive ? "bg-primary-container text-text-brand" : "text-text-tertiary hover:bg-surface-subtle hover:text-text-secondary"}`}>
+              <NavLink to="/admin/organizations" end className={({ isActive }) => subItemClass(isActive)}>
                 <ChevronRight size={13} />Organization 主数据
               </NavLink>
             )}
             {!mobile && domain.id === "resources" && (
-              <NavLink to="/admin/opportunities" className={({ isActive }) => `mb-1 ml-8 flex min-h-9 items-center gap-2 rounded-control px-3 text-xs font-medium ${isActive ? "bg-primary-container text-text-brand" : "text-text-tertiary hover:bg-surface-subtle hover:text-text-secondary"}`}>
-                <Target size={13} />机会与投递
+              <>
+                <NavLink to="/admin/opportunities" className={({ isActive }) => subItemClass(isActive)}>
+                  <Target size={13} />机会与投递
+                </NavLink>
+                <NavLink to="/admin/pc04/courses" className={() => subItemClass(location.pathname.startsWith("/admin/pc04/courses"))}>
+                  <GraduationCap size={13} />平台课程
+                </NavLink>
+                <NavLink to="/admin/pc04/benefits" className={() => subItemClass(location.pathname.startsWith("/admin/pc04/benefits"))}>
+                  <Gift size={13} />权益
+                </NavLink>
+              </>
+            )}
+            {!mobile && domain.id === "assets" && (
+              <NavLink to="/admin/pc04/certificates" className={() => subItemClass(location.pathname.startsWith("/admin/pc04/certificates"))}>
+                <FileBadge size={13} />可信证书
               </NavLink>
             )}
             {!mobile && domain.id === "content" && (
-              <NavLink to="/admin/content/operations" className={({ isActive }) => `mb-1 ml-8 flex min-h-9 items-center gap-2 rounded-control px-3 text-xs font-medium ${isActive ? "bg-primary-container text-text-brand" : "text-text-tertiary hover:bg-surface-subtle hover:text-text-secondary"}`}>
+              <NavLink to="/admin/content/operations" className={({ isActive }) => subItemClass(isActive)}>
                 <ChevronRight size={13} />内容运营
               </NavLink>
             )}

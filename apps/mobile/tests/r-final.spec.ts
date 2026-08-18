@@ -95,3 +95,25 @@ test("R-Final account and support routes have visible entries from My", async ({
   await page.getByRole("link", { name: "进入客服会话" }).click();
   await expect(page.getByRole("heading", { name: "客服会话", exact: true })).toBeVisible();
 });
+
+test("R-Final course completion waits for passed assessment", async ({ page }) => {
+  await page.goto("/courses/brand-ecommerce/learn");
+  await page.getByRole("button", { name: "完成课程并考试" }).click();
+  await page.getByRole("button", { name: "先扩大投放" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("本次未通过，可重新作答", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "返回" }).click();
+  await page.getByRole("button", { name: "返回" }).click();
+  await expect(page.getByText("学习中", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "继续学习" })).toBeVisible();
+
+  await page.getByRole("button", { name: "继续学习" }).click();
+  await page.getByRole("button", { name: "进入课程考试" }).click();
+  await page.getByRole("button", { name: "先确认目标、口径与真实数据" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("考试通过，课程成果已写入长期学习记录", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "返回" }).click();
+  await page.getByRole("button", { name: "返回" }).click();
+  await expect(page.getByText("已完成", { exact: true })).toBeVisible();
+});

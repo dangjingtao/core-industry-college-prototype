@@ -1,7 +1,10 @@
+import { isCourseCompleted } from "@core/shared";
+
 export type CourseRuntimeStatus = "notStarted" | "inProgress" | "completed";
 export type AssessmentStatus = "idle" | "passed" | "failed";
 export type BenefitRuntimeStatus = "eligible" | "ineligible" | "claimed" | "used" | "expired";
-export type CertificateRuntimeStatus = "claimable" | "claimed" | "pending" | "revoked";
+export type CertificateClaimStatus = "claimable" | "claimed" | "pending" | "revoked";
+export type IssuanceStatus = "notTriggered" | "requested" | "processing" | "issued" | "failed" | "revoked";
 export type FulfillmentType = "code" | "externalLink" | "manual";
 
 export type CourseChapter = {
@@ -29,7 +32,7 @@ export type CourseAdminRecord = {
 
 export type BenefitEligibilityRule = {
   label: string;
-  fact: "profileComplete" | "competitionIdentityActive" | "courseCompleted";
+  fact: "profileComplete" | "competitionIdentityActive" | "courseCompleted" | "partnerGrant" | "activityAttendance" | "historicalRecord";
   referenceId?: string;
 };
 
@@ -56,7 +59,8 @@ export type CertificateAdminRecord = {
   triggerRule: string;
   triggerMode: "automatic" | "operatorInitiated";
   channel: string;
-  status: CertificateRuntimeStatus;
+  issuanceStatus: IssuanceStatus;
+  claimStatus?: CertificateClaimStatus;
   certificateNumber: string;
   credential: string;
   verification: string;
@@ -76,8 +80,20 @@ const quizChapter = (id: string, title: string): CourseChapter => ({
   id,
   title,
   type: "quiz",
-  requirement: "达到课程配置及格线后计入 Course Completed 判定",
+  requirement: "小测试通过后计入 Course Completed 判定",
 });
+
+export const fulfillmentLabels: Record<FulfillmentType, string> = {
+  code: "兑换码 / 卡码",
+  externalLink: "外部领取链接",
+  manual: "线下核销 / 人工履约",
+};
+
+export const fulfillmentDetailByType: Record<FulfillmentType, string> = {
+  code: "领取后分配单人兑换码 / 卡码；码库存属于履约配置，不改变个人 claimed / used 状态语义。",
+  externalLink: "领取后进入已配置的外部领取链接；第三方领取结果按实际对接能力回流。",
+  manual: "线下工作人员核销 / 人工履约；核销结果回写既有个人权益 Runtime。",
+};
 
 export const pc04Courses: CourseAdminRecord[] = [
   {
@@ -91,8 +107,8 @@ export const pc04Courses: CourseAdminRecord[] = [
       videoChapter("da-02", "数据整理"),
       videoChapter("da-03", "漏斗分析"),
       videoChapter("da-04", "复盘表达"),
-      videoChapter("da-05", "练习与考试准备"),
-      quizChapter("da-06", "成果确认测试"),
+      videoChapter("da-05", "练习与考试"),
+      quizChapter("da-06", "成果确认"),
     ],
     videoCompletionPercent: 100,
     quizPassScore: 80,
@@ -150,7 +166,7 @@ export const pc04Benefits: BenefitAdminRecord[] = [
     providerLabel: "核心产业学院",
     expiresAt: "2026-09-30",
     fulfillment: "code",
-    fulfillmentDetail: "领取后分配单人兑换码；码库存属于履约配置，不改变个人 claimed / used 状态语义。",
+    fulfillmentDetail: fulfillmentDetailByType.code,
     eligibility: [{ label: "账号资料已完成", fact: "profileComplete" }],
     runtimeStatus: "eligible",
   },
@@ -163,9 +179,21 @@ export const pc04Benefits: BenefitAdminRecord[] = [
     competitionId: "sanchuang-16",
     expiresAt: "2026-08-31",
     fulfillment: "manual",
-    fulfillmentDetail: "线下工作人员核销 / 人工履约；核销结果回写既有个人权益 Runtime。",
+    fulfillmentDetail: fulfillmentDetailByType.manual,
     eligibility: [{ label: "第十六届三创赛身份为 active", fact: "competitionIdentityActive", referenceId: "sanchuang-16" }],
     runtimeStatus: "claimed",
+  },
+  {
+    id: "benefit-cloud-lab",
+    title: "云栖零售项目课学习资格",
+    summary: "企业共建项目课的学习兑换资格。",
+    providerLabel: "云栖零售实验室",
+    organizationId: "cloud-retail",
+    expiresAt: "2026-10-31",
+    fulfillment: "code",
+    fulfillmentDetail: fulfillmentDetailByType.code,
+    eligibility: [{ label: "云栖零售合作项目开放资格", fact: "partnerGrant", referenceId: "cloud-retail" }],
+    runtimeStatus: "eligible",
   },
   {
     id: "benefit-sanchuang-course",
@@ -175,9 +203,32 @@ export const pc04Benefits: BenefitAdminRecord[] = [
     competitionId: "sanchuang-16",
     expiresAt: "2026-10-15",
     fulfillment: "externalLink",
-    fulfillmentDetail: "外部领取链接由平台配置；当前原型不写入真实第三方地址。",
+    fulfillmentDetail: fulfillmentDetailByType.externalLink,
     eligibility: [{ label: "第十六届三创赛身份为 active", fact: "competitionIdentityActive", referenceId: "sanchuang-16" }],
     runtimeStatus: "eligible",
+  },
+  {
+    id: "benefit-activity-ride",
+    title: "青年创新日出行券",
+    summary: "线下活动现场发放的出行权益。",
+    providerLabel: "青年创新日",
+    expiresAt: "2026-08-20",
+    fulfillment: "code",
+    fulfillmentDetail: fulfillmentDetailByType.code,
+    eligibility: [{ label: "青年创新日活动签到完成", fact: "activityAttendance", referenceId: "青年创新日" }],
+    runtimeStatus: "ineligible",
+  },
+  {
+    id: "benefit-history",
+    title: "历史赛事资料兑换权益",
+    summary: "历史权益保留状态，不再允许使用。",
+    providerLabel: "第十五届三创赛",
+    competitionId: "sanchuang-15",
+    expiresAt: "2025-09-01",
+    fulfillment: "code",
+    fulfillmentDetail: fulfillmentDetailByType.code,
+    eligibility: [{ label: "历史赛事权益记录", fact: "historicalRecord", referenceId: "sanchuang-15" }],
+    runtimeStatus: "expired",
   },
 ];
 
@@ -188,19 +239,40 @@ export const pc04Certificates: CertificateAdminRecord[] = [
     certificateType: "course",
     actualIssuer: "核心产业学院",
     sourceId: "data-analytics",
-    triggerRule: "个人 CourseLearning = completed 且 assessment = passed",
+    triggerRule: "个人视频学习进度达到配置阈值且 assessment = passed",
     triggerMode: "automatic",
     channel: "当前 App 原型为平台签发；接入外部权威渠道后必须记录真实 issuer 与回流结果",
-    status: "claimable",
-    certificateNumber: "未签发",
-    credential: "未签发；App 当前未提供文件 URL",
+    issuanceStatus: "issued",
+    claimStatus: "claimable",
+    certificateNumber: "App 当前未单列签发编号",
+    credential: "已形成签发记录；App 当前未提供证书文件 URL",
     verification: "verificationCode: COURSE-DA-26001",
     requestTrail: [
-      "Course Completed 条件已满足",
-      "系统自动进入签发流程，不要求运营逐张点击发证",
-      "当前 App Runtime 暴露 claimable；后续签发结果必须回流同一 Certificate 记录",
+      "正式 Course Completed 条件已满足",
+      "系统自动触发签发流程，不要求运营逐张点击发证",
+      "签发记录已形成；App Runtime 当前为 claimable，等待学生领取",
     ],
     relatedCourseId: "data-analytics",
+  },
+  {
+    id: "cert-course-brand-ecommerce",
+    title: "品牌电商实战课课程证书",
+    certificateType: "course",
+    actualIssuer: "核心产业学院",
+    sourceId: "brand-ecommerce",
+    triggerRule: "个人视频学习进度达到配置阈值且 assessment = passed",
+    triggerMode: "automatic",
+    channel: "课程完成后自动触发；当前学生尚未满足条件，因此尚无个人 Certificate Runtime 记录",
+    issuanceStatus: "notTriggered",
+    certificateNumber: "未生成",
+    credential: "未生成",
+    verification: "未生成",
+    requestTrail: [
+      "课程证书规则已配置",
+      "当前学习进度 38%，assessment = idle",
+      "条件满足后才进入签发流程并生成学生 claim state",
+    ],
+    relatedCourseId: "brand-ecommerce",
   },
   {
     id: "cert-sanchuang-15",
@@ -211,24 +283,19 @@ export const pc04Certificates: CertificateAdminRecord[] = [
     triggerRule: "赛事成果由真实赛事结果 / 签发回流确认",
     triggerMode: "operatorInitiated",
     channel: "外部权威结果 / 签发回流",
-    status: "claimed",
+    issuanceStatus: "issued",
+    claimStatus: "claimed",
     certificateNumber: "App 当前未单列签发编号",
-    credential: "App 当前未提供证书文件 URL；PC 不伪造文件",
+    credential: "已形成外部权威签发记录；App 当前未提供证书文件 URL",
     verification: "verificationCode: SC15-TOMZ-24001",
     requestTrail: [
       "2025-08-28 · 外部权威结果回流",
-      "Certificate 状态：claimed",
-      "验真码进入长期资产；撤销时只改为 revoked，不物理删除",
+      "issuanceStatus：issued",
+      "App claimStatus：claimed；撤销时长期记录保留并显式标记 revoked",
     ],
     relatedCompetitionId: "sanchuang-15",
   },
 ];
-
-export const fulfillmentLabels: Record<FulfillmentType, string> = {
-  code: "兑换码 / 卡码",
-  externalLink: "外部领取链接",
-  manual: "线下核销 / 人工履约",
-};
 
 export const certificateTypeLabels: Record<CertificateAdminRecord["certificateType"], string> = {
   course: "课程证书",
@@ -236,3 +303,7 @@ export const certificateTypeLabels: Record<CertificateAdminRecord["certificateTy
   practice: "项目实践证书",
   activity: "活动证书",
 };
+
+export function courseCompleted(record: CourseAdminRecord) {
+  return isCourseCompleted(record.runtime, record.videoCompletionPercent);
+}
