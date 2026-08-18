@@ -61,7 +61,7 @@ const navItems = [
   { label: "我的", to: "/me", icon: UserRound },
 ];
 
-export function PublicShell({ children, showNavigation = true }: { children: ReactNode; showNavigation?: boolean }) {
+export function PublicShell({ children, showNavigation = false }: { children: ReactNode; showNavigation?: boolean }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className={`mx-auto w-full max-w-md ${showNavigation ? "pb-24" : "pb-8"}`}>{children}</main>
