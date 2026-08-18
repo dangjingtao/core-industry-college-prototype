@@ -95,6 +95,48 @@ test("PC02 uses the same Competition console for a platform-configured partner e
   await expect(page.getByText("同一 SchoolScope 模型适用于普通合作赛事，不建立三创赛专属学校权限表。", { exact: true })).toBeVisible();
 });
 
+test("PC02 competition details retain the canonical shell and operator context", async ({ page }) => {
+  for (const competitionId of ["sanchuang-16", "innovation-cup-2026"]) {
+    await page.goto(`/admin/competitions/objects/${competitionId}`);
+    const navigation = page.getByRole("navigation", { name: "管理端主导航" });
+    await expect(navigation.getByRole("link", { name: "赛事中心", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "主体与学校", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "资源运营", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "学生与赛事身份", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "资产与可信凭证", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "内容与活动", exact: true })).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "创赛工坊配置", exact: true })).toBeVisible();
+
+    const operatorContext = page.getByLabel("当前管理角色与数据范围");
+    await expect(operatorContext).toBeVisible();
+    await expect(operatorContext).toContainText("Role");
+    await expect(operatorContext).toContainText("Module");
+    await expect(operatorContext).toContainText("Data Scope");
+  }
+});
+
+test("PC02 organization relationships use stable ids instead of display names", async ({ page }) => {
+  await page.goto("/admin/competitions/objects/sanchuang-16");
+
+  await expect(page.getByTestId("organizer-organization")).toContainText("三创赛组委会");
+  await expect(page.getByTestId("organizer-organization")).toContainText("org-sanchuang-committee");
+  await expect(page.getByTestId("organizer-organization")).toHaveAttribute("href", "/admin/organizations/org-sanchuang-committee");
+
+  await expect(page.getByTestId("leader-school-id")).toContainText("org-huanan-commerce-college");
+  const crossSchoolMember = page.getByTestId("team-member-row").filter({ hasText: "陈语" });
+  await expect(crossSchoolMember).toContainText("岭南科技学院");
+  await expect(crossSchoolMember).toContainText("org-lingnan-tech-college");
+  await expect(crossSchoolMember).toContainText("org-huanan-commerce-college");
+
+  const authorizedSchools = page.getByTestId("authorized-school-organization");
+  await expect(authorizedSchools.first()).toContainText("org-huanan-commerce-college");
+
+  await page.goto("/admin/competitions/objects/innovation-cup-2026");
+  await expect(page.getByTestId("organizer-organization")).toContainText("青年品牌创新联盟");
+  await expect(page.getByTestId("organizer-organization")).toContainText("org-youth-brand-alliance");
+  await expect(page.getByTestId("leader-school-id")).toContainText("org-lingnan-tech-college");
+});
+
 test("registration portal remains an independent PC business entry", async ({ page }) => {
   await page.goto("/admin");
   const portalLink = page.getByRole("link", { name: "三创赛报名门户" });
