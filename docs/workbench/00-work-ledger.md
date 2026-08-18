@@ -18,7 +18,9 @@
 4. `docs/reference/legacy-page-map.tsv`：旧 140 页 → 新结构映射；
 5. `docs/migrations/mobile-from-com-design.md`：手机端迁移、66 semantic routes、母动线与验收证据；
 6. `apps/mobile/`：当前手机端实际实现；
-7. `apps/pc/src/registration-portal/`：当前 PC / 响应式三创赛报名门户实际实现。
+7. `apps/pc/src/registration-portal/`：当前 PC / 响应式三创赛报名门户实际实现；
+8. `docs/product/03-pc-admin-data-skeleton.md`：PC 管理端数据控制面骨架；
+9. `docs/product/05-pc-admin-product-decisions.md`：PC 管理端已确认产品决策，后续 PC 施工优先遵守。
 
 ### 当前产品基线不可破坏
 
@@ -29,7 +31,9 @@
 - 赛事结束后经历、项目、成绩、证书、学习成果继续归长期账号；
 - 企业是赛事 / 权益 / 课程 / 活动 / 机会的资源与品牌主体，不只是招聘公司；
 - 不重复建立 session / identities / lifecycle / applications 真相源；
-- `/tasks`（D03）在聚合展示层已由 2026-08-17 后续决策解冻；`/me/subjects`（D08）继续冻结。
+- `/tasks`（D03）在聚合展示层已由 2026-08-17 后续决策解冻；`/me/subjects`（D08）继续冻结；
+- PC 管理端是平台控制面，不是学生 App 的桌面版，也不是某一赛事的官方后台；
+- PC 新增对象 / 状态必须能明确映射到 App 真实消费位置，不得另造与 App 冲突的业务语义。
 
 ---
 
@@ -52,6 +56,11 @@
 | T013 | 创赛工坊完整功能 | 施工 | 待执行 | 赛事工作区上下文 |
 | T014 | 我的页面设计语言总结 + 功能补齐 | 施工 | 待执行 | F03、T009、T010 |
 | T015 | 登录注册流程 | 施工 | 待执行 | F01、F03 |
+| PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | 待执行 | 无 |
+| PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | 待执行 | PC01 |
+| PC03 | Organization + 机会 + 内容运营 | 施工 | 待执行 | PC01 |
+| PC04 | 平台课程 + 权益 + 可信证书 | 施工 | 待执行 | PC01 |
+| PC05 | 学生 / 长期资产 + 权限治理 + PC 总回归 | 施工 / 收口 | 待执行 | PC02、PC03、PC04 |
 
 推荐主顺序：
 
@@ -75,6 +84,16 @@ T015 登录注册 → T014 我的页面设计语言
                    T007 三创同学会
                   ↘
                    T012 社区重构（依赖 F04 C）
+
+PC 管理端：
+
+PC01 控制面底座
+  → PC02 赛事控制台
+  → PC03 Organization / 机会 / 内容 ┐
+  → PC04 课程 / 权益 / 证书         ├→ PC05 学生 / 资产 / 权限 / 跨端总回归
+                                   ┘
+
+PC03 与 PC04 可在 PC01 完成后并行；PC05 必须在 PC02–PC04 合入后收口。
 ```
 
 ---
@@ -532,6 +551,498 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 
 ---
 
+# PC 原型施工卡｜统一开工门槛
+
+以下规则适用于 PC01–PC05。任何 PC 施工线程未完成这些动作前，不得直接开始画后台页面或扩展业务对象。
+
+## 开工前必须完成
+
+1. 阅读：
+   - `docs/README.md`
+   - `docs/product/00-product-master-context.md`
+   - `docs/product/03-pc-admin-data-skeleton.md`
+   - `docs/product/05-pc-admin-product-decisions.md`
+   - `docs/migrations/mobile-from-com-design.md`
+   - `docs/workbench/00-work-ledger.md`
+2. 阅读 `apps/mobile/src/routes/registry.ts`，并检查本卡对应的 `apps/mobile` 实际页面、state、mock，不允许只依据 PC 文档猜 App。
+3. 实际走一遍本卡对应的 App 业务动线，确认页面、状态、入口、返回关系和异常状态。
+4. 施工前在本卡施工记录中先写一份简短 **APP → PC 数据映射**，至少包含：
+   - PC 业务对象；
+   - 谁写；
+   - App 哪个 route / 页面消费；
+   - 当前状态名；
+   - stable id / 关联 id；
+   - 赛事结束或资源下架后是否长期保留。
+5. PC 是控制面，不是桌面版 App；不得复制第二份 `session / identities / lifecycle / applications` 真相源。
+6. 若产品文档、App 当前实现和旧 Mockplus 冲突，先判断是否为历史实现落后于已确认产品决策；不得自行折中创造第四种业务语义。
+7. 不得顺手修改不属于本卡的 Mobile 产品逻辑；如确认 App 本身与已确认决策冲突，先记录问题再单独处理。
+8. PC 可以提高信息密度，但必须沿用当前产品的品牌、状态语义和 Com Design / 现有 token，不另造明显不一致的视觉系统。
+
+## 统一验收原则
+
+每个新增 PC 对象至少都必须回答：
+
+> 谁创建它？谁能修改？App 哪里消费？事实来源是什么？关联谁？结束后是否保留？
+
+回答不了的对象不得进入原型主流程。
+
+---
+
+# PC01｜PC 控制面总壳 + APP 数据接入地图
+
+**类型：施工卡**  
+**状态：待执行**  
+**优先级：P0**  
+**前置：无**
+
+## 目标
+
+把当前 `/admin/*` 从概念 Skeleton 提升为可持续施工的 PC 原型底座。
+
+不是先堆完整 CRUD，而是先统一：
+
+```text
+App 有什么
+→ PC 谁管理
+→ 数据从哪里来
+→ 状态和 stable id 如何跨端一致
+```
+
+## 必须理解的 App
+
+重点检查：
+
+- `/home`
+- `/competitions`
+- `/opportunities`
+- `/courses`
+- `/benefits`
+- `/assets`
+- `/me`
+- `/tasks`
+
+必须理解 Account、StudentProfile、CompetitionIdentity、Application、赛事 Runtime、长期资产之间的真相源边界。
+
+## 最低交付
+
+- 完善 PC 总览与全局导航；
+- 形成统一列表 / 详情 / 编辑 Pattern；
+- 统一数据来源标签：平台配置 / API 同步 / 文件导入 / 人工修正 / Runtime；
+- Organization / Competition / Account 等 stable ID 的统一展示方式；
+- 当前角色与数据 Scope 表达；
+- 各管理域之间可通过稳定业务关系跳转；
+- 当前 7 个管理域继续作为施工骨架，不因为页面方便随意增加平行业务真相源；
+- 输出并维护全局 APP → PC 数据接入地图。
+
+## 禁止
+
+- 不按照旧 Mockplus 一级导航反推 PC IA；
+- 不把手机端四个一级导航复制成 PC 菜单；
+- 不在总览页创造新的业务状态；
+- 不把 Skeleton 中的说明文字直接当作最终 CRUD 设计。
+
+## 验收
+
+任意从 PC 总览进入的核心对象，都能清楚看到或追溯：来源、状态、关联主体、App 消费位置和责任人。
+
+---
+
+# PC02｜赛事控制台 + 报名资格 + 学校审核 + Workshop
+
+**类型：施工卡**  
+**状态：待执行**  
+**优先级：P0**  
+**前置：PC01**
+
+## 必须理解的 App / PC 现有流程
+
+完整走通：
+
+```text
+/competitions
+→ /competitions/:competitionId
+→ /registration
+→ /registration-portal/*
+→ pending / rejected / approved
+→ official confirmed
+→ /workspace
+→ team / resources
+→ workshop
+```
+
+必须检查现有响应式报名 Portal，不得再造第二套报名系统。
+
+## 最低交付
+
+形成真正的赛事详情型控制台，至少支持：
+
+- 赛事基础资料与赛道；
+- 报名接入方式：平台承接门户 / 外部 URL / API 或第三方 / 无线上报名；
+- 官方数据同步状态；
+- API / 文件 / 人工修正的数据来源；
+- 官方资格确认；
+- 官方统一窗口与地方赛节点；
+- 学校授权范围；
+- 团队 / TeamMember / `CompetitionProject` 查询；
+- 跨校团队由队长学校承担统一审核；
+- CompetitionIdentity；
+- 赛事资料；
+- 赛事专属课程 / 权益 / 活动关联；
+- Workshop 配置与赛事 scope。
+
+### 三层事实必须分清
+
+```text
+外部权威赛事事实
+平台承接报名流程
+核心产业学院叠加服务
+```
+
+三创赛是当前最重要的外部赛事接入案例，但整个后台不能被设计成“三创赛官方后台”。
+
+## 禁止
+
+- `platformApproved = officialConfirmed`；
+- 外部权威资格未确认就让学生进入正式 Workspace；
+- 跨校团队要求多个学校重复审批；
+- 建立跨赛事长期 Project；
+- 学校老师看到其它赛事、长期问卷 / 画像、求职简历、投递记录、权益消费、Workshop 私人回答 / AI 内容；
+- 在 `/admin` 重建响应式报名表。
+
+## 验收
+
+至少用两个赛事场景验证同一个 Competition 模型：
+
+1. 三创赛：外部权威 API 优先 + 平台承接部分报名；
+2. 普通合作赛事：平台直接配置。
+
+两者必须共用同一赛事控制面，而不是两套后台。
+
+---
+
+# PC03｜Organization + 机会 + 内容运营
+
+**类型：施工卡**  
+**状态：待执行**  
+**优先级：P0**  
+**前置：PC01**
+
+## 必须理解的 App
+
+完整检查：
+
+- `/companies`
+- `/companies/:companyId`
+- `/opportunities`
+- `/opportunities/:opportunityId`
+- `/applications`
+- `/home`
+- `/news`
+- `/stories`
+
+必须确认 Opportunity 与 Application 的现有状态语义，Application 继续作为平台投递事实。
+
+## Organization
+
+统一主体主数据覆盖：
+
+- 学校；
+- 企业；
+- 赛事组织方；
+- 合作机构 / 资源提供方。
+
+Organization 详情应真实表达它与：
+
+```text
+赛事 / 课程 / 权益 / 活动 / 机会 / 内容
+```
+
+的关系，不再分别维护互不相认的企业表 / 学校表 / 合作机构表。
+
+## 机会管理
+
+至少支持：
+
+- 创建 / 编辑 / 上下架；
+- 来源 Organization；
+- 学校 / 专业 / 地区 / 赛事经历 / 课程完成 / 证书 / 比赛成绩等可解释字段圈选；
+- 规则初筛后由运营确认最终发送范围，并允许手工增删；
+- App 内正式投递；
+- Application 后续状态由核心产业学院运营维护。
+
+核心学院只做机会分发、App 内投递与状态跟踪，不建设招聘平台。
+
+## 内容运营
+
+首期由核心产业学院运营统一发布：
+
+- 首页 Banner；
+- 资讯；
+- 赛友内容；
+- 活动。
+
+支持定向范围：
+
+- 赛事；
+- 学校；
+- 地区。
+
+学校 / 企业可以供稿，但首期没有直接发布权。
+
+## 禁止
+
+- 候选人 CRM；
+- 黑盒人才评分；
+- 个性化岗位偏好学习；
+- 企业招聘 SaaS；
+- 企业首期直接拥有平台发布权；
+- 把 Organization 与手机 D08 `/me/subjects` 混为一谈。
+
+---
+
+# PC04｜平台课程 + 权益 + 可信证书
+
+**类型：施工卡**  
+**状态：待执行**  
+**优先级：P0**  
+**前置：PC01**
+
+## 必须理解的 App
+
+完整检查：
+
+```text
+/courses
+→ /courses/:courseId
+→ /courses/:courseId/learn
+→ /courses/:courseId/assessment
+→ /courses/:courseId/achievement
+
+/benefits
+→ /benefits/:benefitId
+→ /benefits/wallet
+
+/assets/certificates
+→ /assets/certificates/:certificateId
+→ /assets/verification
+```
+
+不得在 PC 侧另造与 App 冲突的课程完成、权益领取或证书有效状态。
+
+## 课程
+
+课程全部平台托管。PC 直接管理：
+
+- 课程；
+- 章节；
+- 视频；
+- 小测试；
+- 视频学习完成要求；
+- 测试及格线；
+- Course Completed；
+- 赛事专属关系；
+- 权益关系；
+- 证书规则。
+
+首期主要完成模型：
+
+```text
+视频学习进度
++ 小测试通过
+→ Course Completed
+```
+
+不建设万能学习规则引擎。
+
+课程任务按个人完成；“必修”默认不直接阻断赛事报名或 Workspace，可由其它明确规则引用 Course Completed。
+
+## 权益
+
+首期按个人领取，平台运营配置资格。
+
+固定支持三种履约：
+
+1. 兑换码 / 卡码；
+2. 外部领取链接；
+3. 线下核销 / 人工履约。
+
+资格规则可引用明确、可解释的已有事实，例如课程完成状态。
+
+## 可信证书
+
+PC 至少表达：
+
+- 证书类型；
+- 实际签发主体；
+- 签发规则；
+- 签发状态；
+- 编号；
+- 文件 / 凭证；
+- 验真信息；
+- 申请 / 回流记录。
+
+课程满足预设条件后自动触发外部权威签发流程，不要求运营逐张点击发证。
+
+其它赛事成果、项目实践、活动等可以由运营按实际业务发起签发。
+
+## 禁止
+
+- 把外部课程 URL 当正式课程主形态；
+- 万能课程 / 权益规则引擎；
+- 团队共享 Course Completed；
+- 把所有证书写死成赛事获奖证书；
+- 把平台自身记录伪装成外部权威机构签发；
+- 因课程“必修”默认改变官方赛事资格。
+
+---
+
+# PC05｜学生 / 长期资产 + 权限治理 + PC 总回归
+
+**类型：施工 / 收口卡**  
+**状态：待执行**  
+**优先级：P0**  
+**前置：PC02、PC03、PC04**
+
+## 必须理解的 App
+
+重点检查：
+
+- `/me/profile`
+- `/me/resume`
+- `/competitions/mine`
+- `/applications`
+- `/assets`
+- `/assets/experiences`
+- `/assets/results`
+- `/assets/certificates`
+
+并完整验证：
+
+```text
+ended / revoked
+→ 赛事期能力关闭
+→ 经历 / 项目摘要 / 团队角色 / 成绩 / 证书 / 课程成果继续长期存在
+```
+
+## 学生控制台
+
+至少支持查询 / 治理：
+
+- Account；
+- StudentProfile；
+- CompetitionIdentity[]；
+- Registration；
+- Team / TeamMember；
+- Application；
+- 冻结 / 解冻。
+
+学生长期资料优先由学生本人维护；运营只处理明确授权字段与治理事项。
+
+冻结账号不删除长期资产、赛事历史、证书、投递等记录。
+
+## 长期资产
+
+统一管理 / 查询：
+
+- Experience；
+- Result；
+- Certificate；
+- CourseAchievement；
+- VerificationRecord。
+
+赛事下架、课程下架、企业退出合作都不得导致已产生的可信历史资产物理消失，应使用 archived / revoked / invalid 等明确状态。
+
+## 后台权限治理
+
+必须区分：
+
+### 超级管理员
+
+- 创建 / 禁用后台管理员；
+- 分配 / 提升权限；
+- 处理高风险治理动作。
+
+### 普通运营
+
+采用首期简单模型：
+
+```text
+Role
++ Module Permission
++ Data Scope
+```
+
+数据 Scope 可以限制到具体赛事 / Organization 等范围。
+
+### Audit Log｜P0
+
+记录：
+
+- 谁；
+- 什么时间；
+- 对什么对象；
+- 修改前 / 修改后；
+- 原因；
+- 关联审批（若有）。
+
+### 高风险审批
+
+至少覆盖：
+
+- 批量证书签发 / 撤销；
+- 官方参赛状态人工修正；
+- 批量赛事身份修改；
+- 权限提升；
+- 学生账号冻结 / 解冻等治理动作。
+
+普通内容编辑不进入重型审批链。
+
+## PC ↔ APP 一致性总审计
+
+PC05 合入前，逐项反查：
+
+1. 每个 PC 长期业务对象都有 App consumer 或明确后台治理用途；
+2. 每个 App 长期业务对象都有明确 PC / 外部 / Runtime 数据来源；
+3. stable id 与关联 id 不出现语义重复；
+4. 相同业务状态跨端名称、含义一致，或有显式映射；
+5. 赛事结束 / revoked / certificate revoked 等非 happy path 跨端一致。
+
+以下情况视为明显不一致，直接 `CHANGES REQUIRED`：
+
+```text
+APP active
+PC 只有 approved，且二者被当成同一语义
+
+APP CompetitionIdentity
+PC 又造 Participant 作为第二真相源
+
+APP Application
+PC 又造 CandidateRecord 作为投递事实
+
+APP CompetitionProject
+PC 变成跨赛事长期 Project
+
+APP Course Completed
+PC 又有另一套“培训通过”状态
+
+APP Certificate revoked
+PC 仍显示有效
+```
+
+## 验收
+
+PC05 不是只验 `/admin/students` 页面。它必须对 PC01–PC04 做一次跨域、跨端收口，并提供：
+
+- TypeScript / Vite build；
+- PC 核心管理动线浏览器回归；
+- 至少一个赛事、一个 Organization、一个课程、一个权益、一个机会、一个学生长期资产的串联验证；
+- 权限 / scope / audit / 高风险审批的中保真演示；
+- PC ↔ App 数据对象与状态一致性检查结果。
+
+施工线程不得自行把 PC05 标记为 `PASS`，必须独立评审。
+
+---
+
 # R-Final｜功能级总回归（所有施工卡完成后）
 
 这不是普通 route audit。
@@ -546,8 +1057,10 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 6. Google Drive 140 页原始 Mockplus 的高风险页面 feature-level spot check；
 7. 本台账 F00–F03 每项为：完成 / 明确废弃 / 有替代方案；
 8. F04 每项为：已决策 / 继续冻结，并说明原因；
-9. 无新的 duplicate session / identities / lifecycle / applications truth source；
-10. 页面合并后没有再次出现“路由在，但关键字段 / 按钮 / handoff 消失”。
+9. PC01–PC04 已完成且 PC05 已进行 PC ↔ App 一致性独立复审；
+10. 无新的 duplicate session / identities / lifecycle / applications truth source；
+11. 页面合并后没有再次出现“路由在，但关键字段 / 按钮 / handoff 消失”；
+12. PC 管理端没有出现与 App 明显冲突的对象、状态、权限与长期资产语义。
 
 最终判断优先级：
 
@@ -557,6 +1070,7 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 > 功能覆盖
 > 状态完整
 > 跨端闭环
+> PC ↔ App 数据语义一致性
 > 可维护性
 > 视觉一致性
 ```
