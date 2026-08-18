@@ -1,6 +1,6 @@
 # PC01｜PC 控制面总壳 + APP 数据接入地图
 
-> 状态：施工记录 / 待独立评审  
+> 状态：施工完成 / 待独立评审  
 > 开工基线：`9ac37b56dbe0d09e0ea4b53e55f0a37aea088886`  
 > 目标：把 `/admin/*` 从概念 Skeleton 提升为可持续施工底座，不在 PC01 提前实现 PC02–PC05 的具体业务 CRUD。
 
@@ -24,6 +24,8 @@
 - `apps/mobile/src/features/long-term-assets/store.tsx`
 - `apps/mobile/src/features/long-term-assets/CoursesPages.tsx`
 - `apps/mobile/src/features/long-term-assets/BenefitsPages.tsx`
+- `apps/mobile/src/features/long-term-assets/AssetsPages.tsx`
+- `apps/mobile/src/mock/scenarios.ts`
 - 当前 `apps/pc/src/admin/*` 与 PC Playwright 骨架用例。
 
 确认的真相源边界：
@@ -83,7 +85,8 @@ PC01 只固定跨域共用 Pattern：
 - 7 个既有管理域保持不变；
 - 总览继续表达“PC 是控制面，不是桌面版 App”；
 - 顶部固定显示当前 Role、Module Permission、Data Scope；
-- 报名门户继续保持独立业务入口。
+- 报名门户继续保持独立业务入口；
+- 桌面侧栏之外补窄屏横向全局导航，不让 `/admin/*` 在非桌面宽度失去入口。
 
 ### 数据来源标签
 
@@ -136,9 +139,10 @@ PC01 只固定编辑布局和治理字段，不实现 PC02–PC05 的真实 CRUD
 
 - stable ID 只读；
 - 业务字段编辑区；
-- 数据来源只读/受控；
+- 数据来源统一枚举；
 - 人工修正必须填写原因；
 - 明确“保存后影响哪些 App consumer”；
+- PC01 示例保存按钮明确禁用，不把 Pattern 演示误装成真实写入；
 - 高风险能力留给 PC05 权限/审批收口。
 
 ---
@@ -179,7 +183,7 @@ PC01 只固定编辑布局和治理字段，不实现 PC02–PC05 的真实 CRUD
 
 ---
 
-## 6. 预期验收
+## 6. 验收目标
 
 PC01 完成后，从 `/admin` 进入任一示例核心对象，应能看清：
 
@@ -195,4 +199,49 @@ stable ID
 
 并能从关系链接跨到对应的既有 7 个管理域。
 
-施工线程只在实现与 CI / browser 回归完成后把 PC01 标记为“待评审”，不自行标记 `PASS`。
+---
+
+## 7. 实现与验证记录
+
+### 提交
+
+- APP → PC 施工前映射文档：`74521cda4c0df0ff0e926140a71c9b63f95f1744`；
+- PC01 控制面实现：`46269896096eff98ba6ae599dd387ea058a6dbe6`；
+- 浏览器断言对齐详情 Pattern：`3d5f59e031dce7d84383d01e01c1ce69fec6463f`。
+
+### 实际修改范围
+
+- `apps/pc/src/admin/data.ts`
+- `apps/pc/src/admin/AdminConsole.tsx`
+- `apps/pc/tests/admin-skeleton.spec.ts`
+- `docs/workbench/PC01-admin-control-plane.md`
+- `docs/workbench/00-work-ledger.md`（状态与施工记录）
+
+没有修改 Mobile 产品逻辑，也没有修改报名门户业务实现。
+
+### 已实现
+
+- 7 个原有管理域继续作为唯一 PC IA 骨架；
+- 全局总览、桌面 / 窄屏导航、Role + Module Permission + Data Scope；
+- 五类统一数据来源标签；
+- Competition / Organization / Account stable ID Pattern，其中 Account ID 缺口被明确暴露；
+- APP → PC 8 组入口接入地图；
+- 统一实体契约、对象列表、对象详情、编辑 Pattern；
+- Competition → Organization → Opportunity / Course / Benefit 等跨域 stable relation 跳转；
+- `/tasks` 明确保持派生层，不新增 Task 管理域或第二真相源；
+- Content / Workshop 缺少足够当前 stable object 证据时展示“Pattern 已固定、对象待后续卡接入”，没有为页面丰满度虚构业务记录。
+
+### 验证
+
+- `apps/pc/src/admin/data.ts` 使用 TypeScript 5.8 严格解析通过；
+- `AdminConsole.tsx + data.ts` 在与仓库 `strict / moduleResolution=Bundler / jsx=react-jsx` 对齐的隔离 TypeScript 检查中通过；隔离检查只为发现本卡自身语法 / 类型问题，不冒充真实依赖安装后的 Vite build；
+- `apps/pc/tests/admin-skeleton.spec.ts` 已扩展 4 条 browser assertion：
+  1. 总览 / 来源 / stable ID / APP → PC map；
+  2. Competition 列表 → 详情 → Organization 跨域关系 → 编辑 Pattern；
+  3. Resource / CompetitionIdentity 真相源边界；
+  4. 现有三创赛报名门户继续保持独立入口。
+- 仓库现有 `.github/workflows/deploy-pc.yml` 与 `.github/workflows/r-final-check.yml` 都会在 `apps/pc/**` 推送 `dev` 时执行真实 build / PC browser regression；当前 GitHub connector 只能按 commit 查询 PR 触发的 workflow runs，本卡为直接 push `dev`，因此施工线程无法可靠读取这次 push run 的 run id / 最终状态。**这里不伪造 CI PASS。**
+
+### 当前结论
+
+PC01 实现已完成并进入 `待评审`。施工线程不自行标记 `PASS`；独立评审应以仓库真实 build / browser / CI 结果补齐最终证据，如有红灯则回到 `CHANGES REQUIRED`。
