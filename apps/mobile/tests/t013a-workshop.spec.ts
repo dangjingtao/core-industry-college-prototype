@@ -8,7 +8,12 @@ test("T013A S1 dynamic answer adapts, generates and keeps the correct report", a
   await runtimeTools.click();
   await page.getByRole("button", { name: "ready", exact: true }).click();
 
-  await page.goto(`${workshop}/skills/s1`);
+  await page.getByRole("button", { name: "返回", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "历史成果", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "返回", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "创赛工坊", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "查看全部", exact: true }).click();
+  await page.getByRole("link", { name: /项目洞察包/ }).click();
   await page.getByRole("button", { name: "开始任务", exact: true }).click();
   await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
   await expect(page.getByText("你的选品比较突出的优势是？", { exact: true })).toHaveCount(0);
