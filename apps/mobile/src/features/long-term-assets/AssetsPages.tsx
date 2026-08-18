@@ -42,7 +42,7 @@ export function MyPage() {
   if (!session.loggedIn) return <PublicShell showNavigation={true}><PageHeader title="我的" /><div className="space-y-4 px-4 py-6"><Card><h2 className="font-semibold text-text-primary">登录后查看长期账号资产</h2><p className="mt-2 text-sm text-text-secondary">赛事经历、课程成果、证书、投递和简历都归长期账号保存。</p></Card><Button className="w-full" onClick={() => navigate("/auth/login?returnTo=/me")}>登录</Button></div></PublicShell>;
   const serviceEntries = [
     { label: "长期资产", to: "/assets", icon: BriefcaseBusiness },
-    { label: "我的卡包", to: "/benefits/wallet", icon: Wallet },
+    { label: "我的卡券", to: "/benefits/wallet", icon: Wallet },
     { label: "消息通知", to: "/me/notifications", icon: Bell },
     { label: "比赛团队", to: "/me/teams", icon: Users },
     { label: "账号绑定", to: "/me/accounts", icon: Link2 },
