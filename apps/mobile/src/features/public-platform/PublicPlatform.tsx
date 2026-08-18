@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ChevronRight, ClipboardList, Gift, Sparkles, Trophy, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -310,6 +310,19 @@ export function HomePage() {
       <HomeTaskZone entries={taskEntries} />
 
       <Section title="为你推荐"><div className="grid grid-cols-2 gap-3"><button className="rounded-container bg-[#fff2e8] p-4 text-left" onClick={() => navigate("/competitions")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#e66d20]"><Trophy size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">赛事推荐</strong><span className="mt-1 block text-xs text-text-secondary">正在报名的赛事</span></button><button className="rounded-container bg-[#eaf5ff] p-4 text-left" onClick={() => navigate("/opportunities")}><span className="flex size-9 items-center justify-center rounded-full bg-white text-[#2879d0]"><BriefcaseBusiness size={18} aria-hidden="true" /></span><strong className="mt-4 block text-base text-text-primary">实习与项目</strong><span className="mt-1 block text-xs text-text-secondary">找到真实实践机会</span></button></div></Section>
+
+      <Section title="三创同学会" action={<Link to="/stories" className="text-sm font-medium text-text-brand">查看全部</Link>}>
+        <Link to="/stories" className="block">
+          <Card interactive className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-[#fff2e8] text-[#c45b1b]"><Users size={20} aria-hidden="true" /></span>
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold text-text-primary">赛友故事与公众号精选</h3>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">看看其他同学的参赛经历，或投稿分享自己的故事。</p>
+              <div className="mt-3 flex flex-wrap gap-2"><StatusTag tone="neutral">赛友投稿</StatusTag><StatusTag tone="info">公众号来源</StatusTag></div>
+            </div>
+          </Card>
+        </Link>
+      </Section>
 
       {!guest && !activeCompetition && <Card className="border border-border-subtle"><h2 className="text-base font-semibold text-text-primary">还没有可用赛事工作区</h2><p className="mt-2 text-sm leading-5 text-text-secondary">公共赛事、机会和成长资源仍可正常使用。</p></Card>}
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}

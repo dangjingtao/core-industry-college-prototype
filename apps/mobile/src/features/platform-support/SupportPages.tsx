@@ -1,11 +1,26 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { BookOpen, BriefcaseBusiness, Calendar, ChevronRight, Heart, ImagePlus, MessageCircle, PenLine, Share2, Users } from "lucide-react";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 
 type Notice = { id: string; title: string; body: string; read: boolean; time: string };
-type Story = { id: string; title: string; summary: string; author: string; external?: boolean; externalUrl?: string };
+type StoryType = "story" | "wechat";
+type Story = {
+  id: string;
+  type: StoryType;
+  title: string;
+  summary: string;
+  body: string;
+  author: string;
+  authorInitial: string;
+  tags: string[];
+  publishTime: string;
+  external?: boolean;
+  externalUrl?: string;
+  likes: number;
+};
 type SupportState = {
   notifications: Notice[];
   bindings: string[];
@@ -29,9 +44,58 @@ const news = [
 ];
 
 const storySeed: Story[] = [
-  { id: "team-retail", title: "从校赛复盘到零售数据实习", summary: "一个学生团队如何把比赛里的数据复盘经验整理成长期履历。", author: "赛友投稿" },
-  { id: "brand-project", title: "第一次和企业真实做项目", summary: "从需求澄清、协作到阶段汇报，一次并不完美但真实的项目实践。", author: "赛友投稿" },
-  { id: "wechat-story", title: "公众号精选：三创赛后的下一站", summary: "外部内容镜像入口，保留来源说明。", author: "官方公众号", external: true, externalUrl: "https://mp.weixin.qq.com/" },
+  {
+    id: "team-retail",
+    type: "story",
+    title: "从校赛复盘到零售数据实习",
+    summary: "一个学生团队如何把比赛里的数据复盘经验整理成长期履历，最终拿到零售企业的数据分析实习机会。",
+    body: "去年参加三创赛时，我们团队选择了一个零售数据分析赛道。从选题、调研到最终的路演，整个过程最大的收获不是奖项，而是学会了把比赛项目中的方法论沉淀下来。\n\n比赛结束后，我把这段经历写进了长期简历，并补充了课程学习和证书。后来在企业实践机会中看到一家零售企业在招数据分析实习生，我直接投递了长期简历，HR 在面试时特别问了比赛中的数据复盘思路。\n\n现在回头看，参赛最重要的价值是把一次完整的项目经历变成可复用的能力证据。",
+    author: "李思远",
+    authorInitial: "李",
+    tags: ["赛友故事", "实习", "数据分析"],
+    publishTime: "2026-08-10",
+    likes: 128,
+  },
+  {
+    id: "brand-project",
+    type: "story",
+    title: "第一次和企业真实做项目",
+    summary: "从需求澄清、协作到阶段汇报，一次并不完美但真实的项目实践，让我理解了课堂之外的商业节奏。",
+    body: "大三那年，我通过平台的企业实践机会加入了一个品牌策划项目。最开始以为只是写方案，真正开始后才发现需要反复和客户确认需求、协调组员分工、在截止日期前迭代多版。\n\n项目最后并没有拿到最佳，但企业导师给了我们一份很详细的反馈报告，指出了我们在用户洞察和可行性分析上的不足。这些反馈后来成了我参加三创赛时的重要参考。\n\n真实项目和课堂作业最大的区别是：没有标准答案，但必须给出一个能落地的答案。",
+    author: "王浩然",
+    authorInitial: "王",
+    tags: ["赛友故事", "企业项目", "品牌策划"],
+    publishTime: "2026-08-05",
+    likes: 96,
+  },
+  {
+    id: "wechat-next",
+    type: "wechat",
+    title: "公众号精选：三创赛后的下一站",
+    summary: "比赛结束不是终点，如何把参赛经历转化为长期履历、实习机会与职业方向。",
+    body: "很多同学在赛后会有类似的疑问：比赛结束后，我这段时间的投入算什么？\n\n答案取决于你怎么整理它。赛事经历、项目成果、证书和学习记录，都是长期账号里的可信资产。在投递实习或企业项目时，这些资产比一段空泛的描述更有说服力。\n\n三创赛后的下一站，不是某一场比赛，而是把这些经历连接成一条可持续的成长路径。",
+    author: "官方公众号",
+    authorInitial: "官",
+    tags: ["公众号精选", "成长路径"],
+    publishTime: "2026-08-12",
+    external: true,
+    externalUrl: "https://mp.weixin.qq.com/",
+    likes: 243,
+  },
+  {
+    id: "wechat-pitch",
+    type: "wechat",
+    title: "公众号精选：路演答辩的五个常见失误",
+    summary: "从评委视角整理的路演注意事项，帮助你在有限时间内把项目价值说清楚。",
+    body: "路演答辩时间通常很短，评委最想知道的是：你在解决什么问题、为什么是你、能不能落地。\n\n常见失误包括：过度介绍背景而缺少结论、把技术细节讲得太细、对商业模式验证不足、回避风险问题、没有时间观念。\n\n建议提前用一句话讲清楚项目价值，再用一分钟展开逻辑，最后留出答疑空间。",
+    author: "官方公众号",
+    authorInitial: "官",
+    tags: ["公众号精选", "路演", "答辩技巧"],
+    publishTime: "2026-08-08",
+    external: true,
+    externalUrl: "https://mp.weixin.qq.com/",
+    likes: 189,
+  },
 ];
 
 const SupportContext = createContext<SupportState | null>(null);
@@ -100,31 +164,205 @@ export function GrowthScorePage() {
   const completed = learning.filter(item => item.status === "completed").length;
   const rows: [string, number][] = [["基础账号", 60], ["已完成学习", completed * 20], ["真实投递", applications.length * 10]];
   const score = rows.reduce((sum, [, value]) => sum + value, 0);
-  return <PublicShell showNavigation={false}><PageHeader title="成长概览" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">成长记录汇总</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="学力值" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">当前学力值</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
 }
 
 export function StoriesPage() {
   const { submittedStories } = useSupport();
   const view = useViewState();
-  const items = [...submittedStories, ...storySeed];
-  return <PublicShell><PageHeader title="赛友风采" subtitle="精选经历，不做开放论坛" /><div className="space-y-5 px-4 py-5"><div className="flex justify-end"><Link to="/stories/submit" className="min-h-touch rounded-control bg-primary-container px-4 py-3 text-sm font-medium text-text-brand">投稿经历</Link></div>{view === "ready" ? items.map(item => <Link key={item.id} to={`/stories/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">{item.author}{item.external ? " · 外部内容" : ""}</p></Card></Link>) : <StateBlock state={view} />}</div><PrototypeStateTools /></PublicShell>;
+  const [activeTab, setActiveTab] = useState<StoryType | "submit">("story");
+  const allItems = useMemo(() => [...submittedStories.map(s => ({ ...s, type: "story" as StoryType })), ...storySeed], [submittedStories]);
+  const visibleItems = useMemo(() => {
+    if (activeTab === "submit") return [];
+    return allItems.filter(item => item.type === activeTab);
+  }, [activeTab, allItems]);
+
+  return (
+    <PublicShell>
+      <PageHeader title="三创同学会" subtitle="赛友故事 · 公众号精选 · 投稿" />
+      <div className="space-y-5 px-4 py-5">
+        <div className="flex gap-2 overflow-x-auto">
+          {[
+            { key: "story", label: "赛友故事" },
+            { key: "wechat", label: "公众号精选" },
+            { key: "submit", label: "投稿入口" },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as StoryType | "submit")}
+              className={`min-h-touch shrink-0 rounded-control px-4 text-sm font-medium ${activeTab === tab.key ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "submit" ? (
+          <Card className="space-y-4 py-6 text-center">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary-container text-text-brand">
+              <PenLine size={26} aria-hidden="true" />
+            </span>
+            <h2 className="text-base font-semibold text-text-primary">投稿你的赛友故事</h2>
+            <p className="text-sm leading-5 text-text-secondary">分享参赛经历、项目实践或成长故事，经运营审核后展示给更多同学。</p>
+            <Link to="/stories/submit" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去投稿</Link>
+          </Card>
+        ) : view === "ready" ? (
+          <div className="space-y-3">
+            {visibleItems.length ? visibleItems.map(item => (
+              <Link key={item.id} to={`/stories/${item.id}`} className="block">
+                <Card interactive className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-sm font-medium text-text-brand">{item.authorInitial}</span>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-base font-semibold leading-6 text-text-primary">{item.title}</h2>
+                      <p className="mt-1 text-xs text-text-tertiary">{item.author} · {item.publishTime}</p>
+                    </div>
+                  </div>
+                  <p className="line-clamp-2 text-sm leading-5 text-text-secondary">{item.summary}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
+                    {item.external && <StatusTag tone="info">公众号来源</StatusTag>}
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-text-tertiary">
+                    <span className="flex items-center gap-1"><Heart size={14} aria-hidden="true" /> {item.likes}</span>
+                    <span className="flex items-center gap-1"><MessageCircle size={14} aria-hidden="true" /> 示例数据</span>
+                  </div>
+                </Card>
+              </Link>
+            )) : <StateBlock state="empty" />}
+            {visibleItems.length > 0 && <p className="py-2 text-center text-xs text-text-tertiary">— 已加载全部示例数据 —</p>}
+          </div>
+        ) : <StateBlock state={view} />}
+      </div>
+      <PrototypeStateTools />
+    </PublicShell>
+  );
 }
 
 export function StoryDetailPage() {
   const { submittedStories } = useSupport();
-  const item = [...submittedStories, ...storySeed].find(value => value.id === useParams().storyId);
+  const item = [...submittedStories.map(s => ({ ...s, type: "story" as StoryType })), ...storySeed].find(value => value.id === useParams().storyId);
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(item?.likes ?? 0);
   if (!item) return <Missing title="故事不存在" backTo="/stories" />;
-  return <PublicShell showNavigation={false}><PageHeader title="赛友故事" backTo="/stories" /><div className="space-y-5 px-4 py-6"><div><StatusTag tone={item.external ? "info" : "neutral"}>{item.external ? "公众号来源" : "站内投稿"}</StatusTag><h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1><p className="mt-2 text-sm text-text-secondary">{item.author}</p></div><Card><p className="text-base leading-7 text-text-primary">{item.summary}</p><p className="mt-4 text-sm leading-6 text-text-secondary">正式内容由运营审核后发布；原型只验证来源和阅读动线。</p>{item.external && item.externalUrl && <><a href={item.externalUrl} target="_blank" rel="noreferrer" className="mt-5 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">打开公众号入口</a><p className="mt-2 text-xs leading-5 text-text-tertiary">当前只配置公众号入口；具体文章原文链接待运营内容配置，不伪造不存在的文章 URL。</p></>}</Card></div></PublicShell>;
+  const toggleLike = () => { setLiked(current => !current); setLikes(current => liked ? current - 1 : current + 1); };
+  const paragraphs = item.body.split("\n\n");
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader title={item.type === "wechat" ? "公众号精选" : "赛友故事"} backTo="/stories" />
+      <article className="space-y-5 px-4 py-6">
+        <div>
+          <div className="flex flex-wrap gap-2">
+            {item.tags.map(tag => <StatusTag key={tag} tone="neutral">{tag}</StatusTag>)}
+            {item.external && <StatusTag tone="info">公众号来源</StatusTag>}
+          </div>
+          <h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1>
+          <div className="mt-3 flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary-container text-sm font-medium text-text-brand">{item.authorInitial}</span>
+            <div>
+              <p className="text-sm font-medium text-text-primary">{item.author}</p>
+              <p className="text-xs text-text-tertiary">{item.publishTime}</p>
+            </div>
+          </div>
+        </div>
+        <Card className="space-y-4">
+          {paragraphs.map((paragraph, index) => <p key={index} className="text-base leading-7 text-text-primary">{paragraph}</p>)}
+          <p className="text-xs leading-5 text-text-tertiary">正式内容由运营审核后发布；原型只验证来源、阅读与互动动线。示例数据。</p>
+          {item.external && item.externalUrl && (
+            <>
+              <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">阅读全文（公众号原文）</a>
+              <p className="text-xs leading-5 text-text-tertiary">具体文章 URL 由运营内容配置；当前使用公众号域名验证真实外部跳转，不伪造一篇不存在的原文。</p>
+            </>
+          )}
+        </Card>
+        <div className="flex gap-3">
+          <button onClick={toggleLike} className={`flex flex-1 items-center justify-center gap-2 rounded-control py-3 text-sm font-medium transition ${liked ? "bg-danger text-on-primary" : "bg-surface text-text-primary"}`}>
+            <Heart size={18} aria-hidden="true" fill={liked ? "currentColor" : "none"} /> {likes}
+          </button>
+          <button className="flex flex-1 items-center justify-center gap-2 rounded-control bg-surface py-3 text-sm font-medium text-text-primary transition active:bg-surface-pressed">
+            <Share2 size={18} aria-hidden="true" /> 分享
+          </button>
+        </div>
+      </article>
+    </PublicShell>
+  );
 }
 
 export function StorySubmitPage() {
   const navigate = useNavigate();
   const { submitStory } = useSupport();
   const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
+  const [body, setBody] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const submit = () => { submitStory({ id: `submitted-${Date.now()}`, title: title.trim(), summary: summary.trim(), author: "我的投稿" }); setSubmitted(true); };
-  return <PublicShell showNavigation={false}><PageHeader title="投稿赛友经历" backTo="/stories" /><div className="space-y-5 px-4 py-5">{submitted ? <Card className="border border-success bg-success-bg"><h1 className="text-lg font-semibold text-success-text">投稿已提交</h1><p className="mt-2 text-sm text-success-text">内容进入运营审核；本次会话可返回列表查看。</p><Button className="mt-4 w-full" onClick={() => navigate("/stories")}>返回赛友风采</Button></Card> : <><Field label="标题" value={title} onChange={setTitle} /><label className="block"><span className="text-sm font-medium text-text-primary">经历摘要</span><textarea rows={7} value={summary} onChange={event => setSummary(event.target.value)} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" /></label><Button className="w-full" disabled={!title.trim() || !summary.trim()} onClick={submit}>提交审核</Button></>}</div></PublicShell>;
+  const valid = title.trim() && body.trim();
+  const addImage = () => setImages(current => [...current, `https://placehold.co/120x120/eef2ff/4f46e5?text=图${current.length + 1}`]);
+  const removeImage = (index: number) => setImages(current => current.filter((_, i) => i !== index));
+  const submit = () => {
+    submitStory({
+      id: `submitted-${Date.now()}`,
+      type: "story",
+      title: title.trim(),
+      summary: body.trim().slice(0, 80) + (body.trim().length > 80 ? "…" : ""),
+      body: body.trim(),
+      author: "我的投稿",
+      authorInitial: "我",
+      tags: ["赛友投稿"],
+      publishTime: new Date().toISOString().slice(0, 10),
+      likes: 0,
+    });
+    setSubmitted(true);
+  };
+
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader title="投稿赛友经历" backTo="/stories" />
+      <div className="space-y-5 px-4 py-5">
+        {submitted ? (
+          <Card className="border border-success bg-success-bg py-6 text-center">
+            <h1 className="text-lg font-semibold text-success-text">投稿已提交</h1>
+            <p className="mt-2 text-sm text-success-text">内容进入运营审核；审核通过后将在「赛友故事」中展示。</p>
+            <Button className="mt-4 w-full" onClick={() => navigate("/stories")}>返回三创同学会</Button>
+          </Card>
+        ) : (
+          <>
+            <Card className="border border-info bg-info-bg">
+              <h2 className="text-sm font-semibold text-info-text">投稿须知</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-info-text">
+                <li>内容需为原创或已获得授权，禁止抄袭。</li>
+                <li>建议围绕参赛经历、项目实践、成长故事展开。</li>
+                <li>配图仅作原型展示，真实上传需运营配置。</li>
+                <li>审核结果不会发送通知，本次会话可在列表查看。</li>
+              </ul>
+            </Card>
+            <Field label="标题" value={title} onChange={setTitle} />
+            <label className="block">
+              <span className="text-sm font-medium text-text-primary">故事正文</span>
+              <textarea rows={8} value={body} onChange={event => setBody(event.target.value)} placeholder="写下你的经历…" className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 outline-none focus:border-primary" />
+            </label>
+            <div className="space-y-2">
+              <span className="text-sm font-medium text-text-primary">配图（原型模拟）</span>
+              <div className="flex flex-wrap gap-3">
+                {images.map((src, index) => (
+                  <div key={`${src}-${index}`} className="relative">
+                    <img src={src} alt={`配图 ${index + 1}`} className="size-20 rounded-container object-cover" />
+                    <button onClick={() => removeImage(index)} className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-danger text-xs text-on-primary">×</button>
+                  </div>
+                ))}
+                {images.length < 4 && (
+                  <button onClick={addImage} className="flex size-20 flex-col items-center justify-center gap-1 rounded-container border border-dashed border-border bg-surface text-text-secondary transition active:bg-surface-pressed">
+                    <ImagePlus size={20} aria-hidden="true" />
+                    <span className="text-xs">添加配图</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            <Button className="w-full" disabled={!valid} onClick={submit}>提交审核</Button>
+          </>
+        )}
+      </div>
+    </PublicShell>
+  );
 }
 
 export function SupportHomePage() {
@@ -143,7 +381,7 @@ export function SupportChatPage() {
 export function AccountsPage() {
   const { bindings, toggleBinding } = useSupport();
   const accounts = [["email","邮箱"],["wecom","企业微信"],["wechat","微信"]] as const;
-  return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="第三方账号" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
 }
 
 export function SubjectDecisionPage() {
