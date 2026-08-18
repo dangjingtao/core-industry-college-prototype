@@ -299,18 +299,20 @@ function CoursePrototypeTools() {
     setSearchParams(next, { replace: true });
   };
   return (
-    <details className="mx-4 mt-4 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
-      <summary className="cursor-pointer font-medium text-text-secondary">原型状态</summary>
-      <div className="mt-2 grid grid-cols-2 gap-1">
-        {[undefined, ...courseDemoStates.map(s => s.value)].map(value => (
-          <button
-            key={value ?? "ready"}
-            className={`min-h-8 rounded-control px-2 text-text-brand active:bg-surface-pressed ${current === value ? "bg-primary-container font-semibold" : ""}`}
-            onClick={() => set(value)}
-          >
-            {value ? courseDemoStates.find(s => s.value === value)?.label : "真实状态"}
-          </button>
-        ))}
+    <details className="fixed bottom-4 right-4 z-40 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
+      <summary className="cursor-pointer list-none font-medium text-text-secondary">原型状态</summary>
+      <div className="absolute bottom-full right-0 mb-2 w-48 rounded-control border border-border-subtle bg-surface p-2 shadow-floating">
+        <div className="grid grid-cols-1 gap-1">
+          {[undefined, ...courseDemoStates.map(s => s.value)].map(value => (
+            <button
+              key={value ?? "ready"}
+              className={`min-h-8 rounded-control px-2 text-left text-text-brand active:bg-surface-pressed ${current === value ? "bg-primary-container font-semibold" : ""}`}
+              onClick={() => set(value)}
+            >
+              {value ? courseDemoStates.find(s => s.value === value)?.label : "真实状态"}
+            </button>
+          ))}
+        </div>
       </div>
     </details>
   );
@@ -437,7 +439,6 @@ export function CourseDetailPage() {
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="课程详情" backTo="/courses" />
-      <CoursePrototypeTools />
       <div className="space-y-5 px-4 py-5">
         <div className="relative aspect-video w-full overflow-hidden rounded-container">
           <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
@@ -596,6 +597,7 @@ export function CourseDetailPage() {
           </div>
         }
       />
+      <CoursePrototypeTools />
     </PublicShell>
   );
 }
