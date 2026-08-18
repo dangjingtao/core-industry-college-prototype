@@ -31,7 +31,7 @@ test("task center derives status from existing competition, learning and benefit
   await expect(page.getByRole("button", { name: /权益：校园视频会员月卡，可领取/ })).toBeVisible();
   await page.getByRole("button", { name: "赛事", exact: true }).click();
   await page.getByRole("button", { name: /创赛工坊：完成市场可行性诊断/ }).click();
-  await expect(page.getByRole("heading", { name: "任务答题", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/competitions\/sanchuang-16\/workspace\/workshop\/tasks\/s2-market-feasibility\/answer$/);
 });
 
@@ -90,17 +90,22 @@ test("C workshop task keeps task identity through answer, generation and result"
   await page.getByRole("button", { name: "进入当前赛事" }).click();
   await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "继续下一步" }).click();
-  await expect(page.getByRole("heading", { name: "任务答题", exact: true })).toBeVisible();
-  await page.getByPlaceholder("写下团队当前真实情况…").fill("已有真实用户反馈和竞品截图，当前重点验证校园渠道的购买转化。");
-  await page.getByRole("button", { name: "保存回答并检查生成内容" }).click();
+  await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: /抖音小店/ }).click();
+  await page.getByRole("button", { name: /植物萃取\/无硅油/ }).click();
+  await page.getByRole("button", { name: "市场可行性", exact: true }).click();
+  await page.getByRole("button", { name: "回答完毕，进入下一步", exact: true }).click();
+
   await expect(page.getByRole("heading", { name: "生成确认", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "确认并生成" }).click();
+  await page.getByRole("button", { name: "确认生成", exact: true }).click();
   await expect(page.getByRole("heading", { name: "任务进度", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "模拟进入运行" }).click();
-  await page.getByRole("button", { name: "模拟生成完成" }).click();
-  await page.getByRole("button", { name: "查看本任务成果" }).click();
+  await page.getByRole("button", { name: "模拟开始生成", exact: true }).click();
+  await page.getByRole("button", { name: "模拟完成", exact: true }).click();
+  await page.getByRole("button", { name: "查看成果详情", exact: true }).click();
   await expect(page.getByRole("heading", { name: "成果详情", exact: true })).toBeVisible();
-  await expect(page.getByText(/S2 · 完成市场可行性诊断/)).toBeVisible();
+  await expect(page.getByText("市场可行性分析小报告", { exact: true })).toBeVisible();
+  await expect(page.getByText("风险项与缺失证据", { exact: true })).toBeVisible();
 });
 
 test("D opportunity-company-resume-returnTo-application stays continuous", async ({ page }) => {
