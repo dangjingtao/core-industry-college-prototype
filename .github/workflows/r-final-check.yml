@@ -1,4 +1,4 @@
-name: R-Final Full Regression
+name: PC-BD01 Focused PC Debug
 
 on:
   push:
@@ -6,48 +6,102 @@ on:
       - dev
     paths:
       - ".github/workflows/r-final-check.yml"
-      - "apps/mobile/**"
-      - "apps/pc/**"
-      - "packages/shared/**"
-      - "package.json"
-      - "package-lock.json"
+
+permissions:
+  contents: write
 
 jobs:
-  r-final:
+  debug:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/checkout@v4
         with:
-          node-version: 24
+          ref: dev
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Run focused PC failures
+        shell: bash
+        run: |
+          set +e
+          cd apps/pc
+          npx playwright test \
+            tests/admin-skeleton.spec.ts:103 \
+            tests/pc03.spec.ts:49 \
+            tests/pc03.spec.ts:105 \
+            tests/pc05.spec.ts:51 \
+            tests/pc05.spec.ts:76 \
+            --reporter=line > ../../docs/workbench/PC-BD01-pc-debug.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> ../../docs/workbench/PC-BD01-pc-debug.log
+          exit 0
+      - name: Restore R-Final and publish debug log
+        shell: bash
+        run: |
+          cat > .github/workflows/r-final-check.yml <<'EOF'
+          name: R-Final Full Regression
 
-      - name: Verify mobile routes, types and build
-        run: npm run verify --workspace @core/mobile
+          on:
+            push:
+              branches:
+                - dev
+              paths:
+                - ".github/workflows/r-final-check.yml"
+                - "apps/mobile/**"
+                - "apps/pc/**"
+                - "packages/shared/**"
+                - "package.json"
+                - "package-lock.json"
 
-      - name: Run mobile mother flows and feature regressions
-        run: >-
-          npm run e2e --workspace @core/mobile --
-          tests/mother-flows.spec.ts
-          tests/f001-phone-verification.spec.ts
-          tests/f002-trust-status.spec.ts
-          tests/f003.spec.ts
-          tests/r-final.spec.ts
+          jobs:
+            r-final:
+              runs-on: ubuntu-latest
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v6
 
-      - name: Run real Mobile-PC-Mobile handoff
-        run: npm run verify:browser:handoff --workspace @core/mobile
+                - name: Set up Node.js
+                  uses: actions/setup-node@v6
+                  with:
+                    node-version: 24
+                    cache: npm
 
-      - name: Verify PC types and build
-        run: npm run verify --workspace @core/pc
+                - name: Install dependencies
+                  run: npm ci
 
-      - name: Run PC browser regressions
-        run: npm run e2e --workspace @core/pc
+                - name: Install Chromium
+                  run: npx playwright install --with-deps chromium
+
+                - name: Verify mobile routes, types and build
+                  run: npm run verify --workspace @core/mobile
+
+                - name: Run mobile mother flows and feature regressions
+                  run: >-
+                    npm run e2e --workspace @core/mobile --
+                    tests/mother-flows.spec.ts
+                    tests/f001-phone-verification.spec.ts
+                    tests/f002-trust-status.spec.ts
+                    tests/f003.spec.ts
+                    tests/r-final.spec.ts
+
+                - name: Run real Mobile-PC-Mobile handoff
+                  run: npm run verify:browser:handoff --workspace @core/mobile
+
+                - name: Verify PC types and build
+                  run: npm run verify --workspace @core/pc
+
+                - name: Run PC browser regressions
+                  run: npm run e2e --workspace @core/pc
+          EOF
+          git config user.name 'Mira PC-BD01'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/r-final-check.yml docs/workbench/PC-BD01-pc-debug.log
+          git commit -m 'test(pc): capture focused PC-BD01 failure details'
+          git push origin HEAD:dev
