@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, FileText, ListChecks } from "lucide-react";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { resultById, resultDetailById, taskById, workspaceData } from "./data";
@@ -56,7 +56,8 @@ export function T013AResultDetailPage() {
 
 function T013AReportPage({ competitionId, resultId, presentation }: { competitionId: string; resultId: string; presentation: T013AReportPresentation }) {
   const navigate = useNavigate();
-  const { getRuntime, updateResultDraft, saveResultVersion, acceptResult } = useWorkshopRuntime();
+  const location = useLocation();
+  const { getRuntime, updateResultDraft, saveResultVersion, submitResultForConfirmation, acceptResult } = useWorkshopRuntime();
   const runtime = getRuntime(competitionId);
   const result = resultById(resultId);
   const task = result ? taskById(result.taskId) : undefined;
@@ -65,14 +66,12 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
   const [draft, setDraft] = useState<WorkshopResultDraft>(initialDraft);
   const [editing, setEditing] = useState(false);
   const [shared, setShared] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!result) return;
     setDraft(runtime.resultDrafts[result.id] ?? emptyDraft(result));
     setEditing(false);
     setShared(false);
-    setSubmitted(false);
   }, [result?.id]);
 
   if (!result || !task || !completed) {
@@ -82,7 +81,9 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
   const detail = resultDetailById(result.id);
   const versions = runtime.resultVersions[result.id] ?? [];
   const accepted = runtime.acceptedResultIds.includes(result.id);
-  const isCaptain = workspaceData[competitionId]?.team.role.includes("队长") ?? false;
+  const submitted = runtime.resultConfirmationStatus[result.id] === "pending";
+  const prototypeRole = new URLSearchParams(location.search).get("prototypeRole");
+  const isCaptain = prototypeRole === "member" ? false : prototypeRole === "captain" ? true : workspaceData[competitionId]?.team.role.includes("队长") ?? false;
   const saveDraft = () => {
     updateResultDraft(competitionId, result.id, draft);
     setEditing(false);
@@ -91,6 +92,8 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
   return <PublicShell showNavigation={false}><PageHeader title="成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
     <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">AI 辅助生成 · {task.skillId.toUpperCase()} · {task.title}</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{presentation.title}</h1></div><StatusTag tone={accepted ? "success" : submitted ? "info" : "neutral"}>{accepted ? "队长已采纳" : submitted ? "已提交队长确认" : "待团队确认"}</StatusTag></div>{editing ? <textarea aria-label="成果摘要" value={draft.summary} onChange={event => setDraft(current => ({ ...current, summary: event.target.value }))} rows={4} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{draft.summary}</p>}</Card>
+
+    {isCaptain && submitted && !accepted && <Card className="border border-info bg-info-bg" data-testid="result-confirmation-pending"><p className="font-medium text-info-text">队员已提交确认</p><p className="mt-2 text-sm leading-5 text-info-text">该成果已进入队长确认状态，可直接采纳并用于比赛。</p></Card>}
 
     {detail && <Card className="border border-info bg-info-bg" data-testid="result-score-hero"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-2"><div className="rounded-control bg-surface p-2 text-info-text"><CheckCircle2 aria-hidden="true" size={20} strokeWidth={2} /></div><p className="font-medium text-info-text">评分概览</p></div><div className="text-right"><strong className="block text-2xl font-semibold text-info-text" data-testid="result-score-value">{detail.score}</strong><span className="text-xs text-info-text">/ 100 · {detail.rating}</span></div></div></Card>}
 
@@ -113,7 +116,7 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
       {editing ? <><Button className="w-full" onClick={saveDraft}>保存编辑</Button><SecondaryButton className="w-full" onClick={() => { setDraft(initialDraft); setEditing(false); }}>取消编辑</SecondaryButton></> : <>
         <div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => setEditing(true)}>编辑成果</SecondaryButton><SecondaryButton onClick={() => setShared(true)}>{shared ? "已分享" : "分享"}</SecondaryButton></div>
         <SecondaryButton className="w-full" onClick={() => saveResultVersion(competitionId, result.id)}>保存为新版本</SecondaryButton>
-        {isCaptain ? !accepted && <Button className="w-full" onClick={() => acceptResult(competitionId, result.id)}>队长采纳并用于比赛</Button> : <Button disabled={submitted} className="w-full" onClick={() => setSubmitted(true)}>{submitted ? "已提交队长确认" : "提交队长确认"}</Button>}
+        {isCaptain ? !accepted && <Button className="w-full" onClick={() => acceptResult(competitionId, result.id)}>队长采纳并用于比赛</Button> : <Button disabled={submitted} className="w-full" onClick={() => submitResultForConfirmation(competitionId, result.id)}>{submitted ? "已提交队长确认" : "提交队长确认"}</Button>}
       </>}
       <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results`)}>返回历史成果</Button>
     </div>
