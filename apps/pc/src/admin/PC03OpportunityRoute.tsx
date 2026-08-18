@@ -2,7 +2,7 @@ import { ArrowLeft, Pencil, Save } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { StatusTag } from "../components/ui";
-import { PC03Console } from "./PC03Console";
+import { PC03HumanOpportunityConsole } from "./PC03HumanOpportunityConsole";
 import { pc03Organizations, usePC03State, type OpportunityRecord } from "./PC03State";
 
 function OpportunityEditor({ opportunityId }: { opportunityId: string }) {
@@ -76,7 +76,7 @@ export function PC03OpportunityRoute() {
 
   return (
     <>
-      <PC03Console />
+      <PC03HumanOpportunityConsole selectedId={opportunityId} />
       {opportunityId && <Link to={`/admin/opportunities/${opportunityId}/edit`} className="fixed bottom-5 right-5 z-30 inline-flex min-h-11 items-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary shadow-floating"><Pencil size={16} />编辑机会</Link>}
     </>
   );
