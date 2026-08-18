@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
@@ -71,7 +71,7 @@ function RegistrationPortalRoute() {
   </>;
 }
 
-function Pc03Route({ children }: { children: React.ReactNode }) {
+function Pc03Route({ children }: { children: ReactNode }) {
   return <PC03AdminFrame>{children}</PC03AdminFrame>;
 }
 
