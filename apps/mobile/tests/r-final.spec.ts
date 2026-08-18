@@ -117,3 +117,15 @@ test("R-Final course completion waits for passed assessment", async ({ page }) =
   await page.getByRole("button", { name: "返回" }).click();
   await expect(page.getByText("已完成", { exact: true })).toBeVisible();
 });
+
+test("R-Final low-progress assessment pass does not create a course certificate", async ({ page }) => {
+  await page.goto("/courses/brand-ecommerce/assessment");
+  await page.getByRole("button", { name: "先确认目标、口径与真实数据" }).click();
+  await page.getByRole("button", { name: "提交答案" }).click();
+  await expect(page.getByText("考试通过，课程成果已写入长期学习记录", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "查看成绩与证书" }).click();
+  await expect(page.getByText(/课程进度 38%/)).toBeVisible();
+  await expect(page.getByText("完成课程并通过考试后，证书会进入统一证书记录。", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "领取证书" })).toHaveCount(0);
+});
