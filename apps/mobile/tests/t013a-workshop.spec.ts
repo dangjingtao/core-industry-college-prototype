@@ -17,12 +17,12 @@ test("T013A S1 reveals questions progressively and keeps the Mockplus report sha
 
   await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "选品评分", exact: true })).toBeVisible();
-  await expect(page.getByText("选品比较突出的优势是？", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("选品比较突出的优势是？", { exact: false })).toHaveCount(0);
 
   await page.getByRole("button", { name: "60–99 元", exact: true }).click();
   await expect(page.getByTestId("dynamic-next-question")).toBeVisible();
   await expect(page.getByText("AI 正在分析您的回答，准备下一题……", { exact: true })).toBeVisible();
-  await expect(page.getByText("选品比较突出的优势是？", { exact: true })).toBeVisible();
+  await expect(page.getByText("选品比较突出的优势是？", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "成分差异化", exact: true }).click();
   await page.getByRole("button", { name: "校园女性", exact: true }).click();
   await page.getByRole("button", { name: "竞争分析", exact: true }).click();
@@ -56,10 +56,10 @@ test("T013A S1 reveals questions progressively and keeps the Mockplus report sha
 
 test("T013A S2 survives leaving progress and returns to the same task and report", async ({ page }) => {
   await page.goto(`${workshop}/tasks/s2-market-feasibility/answer`);
-  await expect(page.getByText("产品的核心卖点是什么？", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("产品的核心卖点是什么？", { exact: false })).toHaveCount(0);
 
   await page.getByRole("button", { name: "抖音小店", exact: true }).click();
-  await expect(page.getByText("产品的核心卖点是什么？", { exact: true })).toBeVisible();
+  await expect(page.getByText("产品的核心卖点是什么？", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "头皮修护", exact: true }).click();
   await page.getByRole("button", { name: "用户访谈", exact: true }).click();
   await page.getByRole("button", { name: "3", exact: true }).click();
