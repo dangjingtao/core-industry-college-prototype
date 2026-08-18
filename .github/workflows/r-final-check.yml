@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - feat/t013a-workshop-s1-s2
     paths:
       - ".github/workflows/r-final-check.yml"
       - "apps/mobile/**"
@@ -42,6 +43,7 @@ jobs:
           tests/f002-trust-status.spec.ts
           tests/f003.spec.ts
           tests/r-final.spec.ts
+          tests/t013a-workshop.spec.ts
 
       - name: Run real Mobile-PC-Mobile handoff
         run: npm run verify:browser:handoff --workspace @core/mobile
