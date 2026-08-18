@@ -20,6 +20,7 @@
 ## 2. 实际修改范围
 
 - `apps/pc/src/admin/PC03Console.tsx`
+- `apps/pc/src/admin/PC03OpportunityRoute.tsx`
 - `apps/pc/src/App.tsx`
 - `apps/pc/tests/pc03.spec.ts`
 - `docs/workbench/PC03-organization-opportunity-content.md`
@@ -67,10 +68,10 @@ Organization 详情展示与以下对象的稳定关系：
 已实现中保真原型能力：
 
 - 创建 Opportunity，创建时显式填写 `opportunityId`；
-- 编辑范围通过当前对象面板表达；
+- 编辑标题、来源 Organization、地区、类型与摘要；
+- `opportunityId` 编辑时保持只读；
 - `open / closed` 上下架切换；
 - 来源 `organizationId`；
-- 地区 / 类型 / 摘要展示；
 - 可解释字段圈选：学校、专业、地区、赛事经历、课程完成、证书、比赛成绩；
 - 规则命中后由运营确认发送范围；
 - 发送范围允许人工增删；
@@ -86,6 +87,8 @@ App 内投递
 ```
 
 当前 PC03 只使用 Mobile 已存在的 Application 对齐状态 `submitted / statusUnknown / failed` 做演示，不自行发明一套新的候选人流程状态。
+
+编辑页当前保存到 PC03 原型内存态；正式后台接入时应替换为 Opportunity API 写入，不把前端原型态伪装成持久化成功。
 
 ## 5. 内容运营
 
@@ -124,14 +127,17 @@ App 内投递
 
 1. Organization 统一主体与 Mobile company stable value 映射；
 2. Organization → 赛事 / 机会 / 课程等跨域关系；
-3. Opportunity 新建、上下架；
-4. 可解释字段圈选、人工增删与运营确认；
-5. Application 继续作为唯一投递事实；
-6. 内容发布权限；
-7. 赛事 / 学校 / 地区 Scope；
-8. 内容新建、发布 / 下架。
+3. Opportunity 新建、编辑、上下架；
+4. 编辑时 stable `opportunityId` 只读；
+5. 可解释字段圈选、人工增删与运营确认；
+6. Application 继续作为唯一投递事实；
+7. 内容发布权限；
+8. 赛事 / 学校 / 地区 Scope；
+9. 内容新建、发布 / 下架。
 
-施工线程只提交测试与 CI 证据，不自行把 PC03 标记为 `PASS`；最终状态由独立评审确认。
+仓库工作流定义表明，`apps/pc/**` 推送到 `dev` 会触发 PC TypeScript/Vite build，R-Final workflow 还会执行 PC 全量 Playwright。当前 GitHub connector 的 workflow 查询只返回 PR 触发 run，且该轮为直接 push，因此施工线程无法可靠读取对应 push run 的 run id / 最终状态；不据此伪造 CI PASS。
+
+施工线程只提交实现与回归断言，不自行把 PC03 标记为 `PASS`；最终状态由独立评审确认。
 
 ## 8. 实现提交
 
@@ -140,6 +146,9 @@ App 内投递
 - `5e3da144dfba5bf02bcb50ade89bda7014bb7e63`：PC03 控制台主体；
 - `cb6657f6f6596da23afa08dde3ce99c596a04a04`：接入 App 路由；
 - `15eaba18d057fc804e71f3c2f9b5a62a60527fe4`：收窄路由，保留 PC01 Organization object Pattern；
-- `b05fc67c5c7b2a3d5e95238c5eff5851e4bcda51`：focused browser assertions。
+- `b05fc67c5c7b2a3d5e95238c5eff5851e4bcda51`：首轮 focused browser assertions；
+- `d9b7c1dc423557f26bb4530573e37e9e765f3271`：Opportunity 编辑交互；
+- `d0096bf78bfec124a1e6326ef38d21946d036855`：接入 Opportunity 编辑路由；
+- `1d34a308e25347f04235b8e59d296f672e5817d7`：补 Opportunity edit browser assertion。
 
 后续以包含本文件的最新 `dev` HEAD 作为独立评审基线。
