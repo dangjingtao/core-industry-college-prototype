@@ -123,7 +123,7 @@ function makeActiveRuntime(): CompetitionWorkshopRuntime {
   return {
     lifecycle: "inProgress",
     permissionDenied: false,
-    materials: { projectBrief: true, competitorScreens: true, operationData: false, brandAssets: false, pitchDraft: false },
+    materials: { projectBrief: true, competitorScreens: true, operationData: true, brandAssets: true, pitchDraft: false },
     taskRuns,
     forcedLockedTaskIds: [],
     acceptedResultIds: ["result-s1-product-score"],
