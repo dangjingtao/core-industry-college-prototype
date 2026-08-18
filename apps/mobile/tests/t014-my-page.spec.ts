@@ -53,20 +53,3 @@ test("T014 我的页 已精简为入口列表 + 摘要行，移除 3 个杂碎 S
   await expect(page).toHaveURL(/\/assets$/);
   await expect(page.getByRole("heading", { name: "长期资产", exact: true })).toBeVisible();
 });
-  await expect(summary).toBeVisible();
-  await expect(summary).toHaveAttribute("href", "/assets");
-
-  const serviceLinks = page.getByRole("link", { name: /^(长期资产|我的卡包|消息通知|比赛团队|账号绑定|设置中心|帮助与客服)$/ });
-  await expect(serviceLinks).toHaveCount(7);
-  await expect(page.getByRole("link", { name: "长期资产", exact: true })).toHaveAttribute("href", "/assets");
-
-  await expect(page.getByText("这个账号已经沉淀了什么")).toHaveCount(0);
-  await expect(page.getByText("继续使用", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("长期关系", { exact: true })).toHaveCount(0);
-
-  await expect(page.getByRole("button", { name: "退出登录" })).toBeVisible();
-
-  await summary.click();
-  await expect(page).toHaveURL(/\/assets$/);
-  await expect(page.getByRole("heading", { name: "长期资产", exact: true })).toBeVisible();
-});
