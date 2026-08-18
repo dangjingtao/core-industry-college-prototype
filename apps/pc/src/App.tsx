@@ -4,11 +4,13 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AdminConsole } from "./admin/AdminConsole";
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
+import { PC01OperationsConsole } from "./admin/PC01OperationsConsole";
 import { PC03Console } from "./admin/PC03Console";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { PC03StateProvider } from "./admin/PC03State";
 import { PC04Console } from "./admin/PC04Console";
 import { PC04StateProvider } from "./admin/PC04State";
+import { PC05AdminOverview } from "./admin/PC05AdminOverview";
 import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
@@ -85,9 +87,14 @@ export function App() {
       <PC04StateProvider>
         <PC05StateProvider>
           <Routes>
+            <Route path="/admin" element={<AdminRoute><PC05AdminOverview /></AdminRoute>} />
+            <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
+            <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
+            <Route path="/admin/workshop" element={<AdminRoute><PC01OperationsConsole section="workshop" /></AdminRoute>} />
             <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><CompetitionConsole /></AdminRoute>} />
             <Route path="/admin/organizations" element={<AdminRoute><PC03Console /></AdminRoute>} />
             <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03Console /></AdminRoute>} />
+            <Route path="/admin/organizations/objects/:organizationId" element={<Navigate to="/admin/organizations" replace />} />
             <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
             <Route path="/admin/content/*" element={<AdminRoute><PC03Console /></AdminRoute>} />
             <Route path="/admin/pc04/*" element={<AdminRoute><PC04Console /></AdminRoute>} />
