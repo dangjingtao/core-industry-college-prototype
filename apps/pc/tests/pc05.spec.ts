@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 1360, height: 940 } });
 
-test("PC05 human gate covers the whole admin surface, not only PC05 pages", async ({ page }) => {
+test("PC05 human gate covers the whole admin surface, including legacy routes and PC02-PC04 raw models", async ({ page }) => {
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "今天先处理这些业务" })).toBeVisible();
   await expect(page.getByText("Truth boundary", { exact: false })).not.toBeVisible();
@@ -11,12 +11,13 @@ test("PC05 human gate covers the whole admin surface, not only PC05 pages", asyn
 
   for (const [route, businessText, technicalText] of [
     ["/admin/competitions", "赛事中心", "统一对象列表 Pattern"],
-    ["/admin/competitions/objects/sanchuang-16", "第十六届三创赛", "外部权威赛事事实"],
+    ["/admin/competitions/objects/sanchuang-16", "报名中", "registrationOpen"],
     ["/admin/resources", "资源与服务", "ResourceRelation"],
     ["/admin/organizations/northstar-beauty", "北辰美妆", "organizationId · northstar-beauty"],
     ["/admin/opportunities/intern-1", "机会与投递", "opportunityId · intern-1"],
     ["/admin/content/operations", "内容与活动", "contentId=content-home-sanchuang-2026"],
-    ["/admin/pc04/courses/brand-ecommerce", "品牌电商实战课", "真相源边界"],
+    ["/admin/pc04/courses/brand-ecommerce", "课程完成条件", "Course Completed"],
+    ["/admin/pc04/certificates/cert-course-data-analytics", "签发状态", "issuanceStatus"],
     ["/admin/students", "学生长期服务与平台治理", "Mobile session 尚未显式接入"],
   ] as const) {
     await page.goto(route);
@@ -24,11 +25,27 @@ test("PC05 human gate covers the whole admin surface, not only PC05 pages", asyn
     await expect(page.getByText(technicalText, { exact: false }).first()).not.toBeVisible();
   }
 
-  await page.goto("/admin/pc04/courses/brand-ecommerce");
-  await expect(page.getByText("真相源边界", { exact: true })).not.toBeVisible();
+  await page.goto("/admin/resources/objects/opportunity-intern-1");
+  await expect(page).toHaveURL(/\/admin\/opportunities\/intern-1$/);
+  await expect(page.getByRole("heading", { name: "机会与投递" })).toBeVisible();
+  for (const legacyCopy of ["统一对象列表 Pattern", "PC01 Pattern only", "Truth boundary"]) {
+    await expect(page.getByText(legacyCopy, { exact: false }).first()).not.toBeVisible();
+  }
+
+  await page.goto("/admin/competitions/objects/sanchuang-16");
   await page.getByTestId("technical-mode-toggle").click();
-  await expect(page.getByText("真相源边界", { exact: true })).toBeVisible();
-  await expect(page.getByText("courseId", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/status=registrationOpen/).first()).toBeVisible();
+  await expect(page.getByText(/CompetitionIdentity/).first()).toBeVisible();
+
+  await page.goto("/admin/pc04/courses/brand-ecommerce");
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("Course Completed", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("assessment=", { exact: false }).first()).toBeVisible();
+
+  await page.goto("/admin/pc04/certificates/cert-course-data-analytics");
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByTestId("certificate-status-raw")).toContainText("issuanceStatus=issued");
+  await expect(page.getByTestId("certificate-status-raw")).toContainText("claimStatus=claimable");
 });
 
 test("PC05 student console keeps business tasks first while preserving App identity semantics", async ({ page }) => {
