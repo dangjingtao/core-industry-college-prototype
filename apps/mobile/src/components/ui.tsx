@@ -35,7 +35,7 @@ export function StatusTag({ tone = "info", children }: { tone?: "info" | "succes
   return <span className={`inline-flex min-h-6 items-center rounded-full px-2 text-xs font-medium ${toneClass}`}>{children}</span>;
 }
 
-export function PageHeader({ title, backTo }: { title: string; backTo?: string; subtitle?: string }) {
+export function PageHeader({ title, backTo, right }: { title: string; backTo?: string; subtitle?: string; right?: ReactNode }) {
   const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
@@ -44,6 +44,7 @@ export function PageHeader({ title, backTo }: { title: string; backTo?: string; 
         <div className="min-w-0 text-center">
           <h1 className="truncate text-base font-semibold leading-5 text-text-primary">{title}</h1>
         </div>
+        {right && <div className="absolute right-1 top-1/2 -translate-y-1/2">{right}</div>}
       </div>
     </header>
   );

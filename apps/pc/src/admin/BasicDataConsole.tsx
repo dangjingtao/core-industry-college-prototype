@@ -99,10 +99,11 @@ const importBatches: ImportBatchRow[] = [
 
 function StableId({ value, label, testId }: { value: string; label: string; testId?: string }) {
   return (
-    <span data-testid={testId} className="inline-flex items-center gap-1.5 rounded-control bg-surface-subtle px-2.5 py-1 font-mono text-xs">
-      <KeyRound size={13} />
+    <span className="inline-flex items-center gap-1.5 rounded-control bg-surface-subtle px-2.5 py-1 text-xs">
+      <KeyRound size={13} aria-hidden="true" />
       <span className="text-text-tertiary">{label}</span>
-      <strong>{value}</strong>
+      <span className="text-text-tertiary"> · </span>
+      <strong data-testid={testId} className="text-text-primary">{value}</strong>
     </span>
   );
 }
@@ -388,7 +389,7 @@ function SchoolDetail({ organizationId }: { organizationId: string }) {
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div><dt className="text-xs text-text-tertiary">学校名称</dt><dd className="mt-1 font-semibold">{school.name}</dd></div>
             <div><dt className="text-xs text-text-tertiary">省份</dt><dd className="mt-1 font-semibold">{school.province}</dd></div>
-            <div><dt className="text-xs text-text-tertiary">地区代码</dt><dd className="mt-1 font-mono text-sm">{school.regionCode}</dd></div>
+            <div><dt className="text-xs text-text-tertiary">地区代码</dt><dd className="mt-1 text-sm">{school.regionCode}</dd></div>
             <div><dt className="text-xs text-text-tertiary">负责人</dt><dd className="mt-1 font-semibold">{school.contact}</dd></div>
           </dl>
         </div>
@@ -507,7 +508,7 @@ function Templates() {
                 <tr key={row.id}>
                   <td className="px-4 py-3 font-semibold"><span className="inline-flex items-center gap-2"><FileBadge2 size={14} className="text-text-tertiary" />{row.name}</span></td>
                   <td className="px-4 py-3 text-text-secondary">{row.type}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{row.version}</td>
+                  <td className="px-4 py-3 text-xs">{row.version}</td>
                   <td className="px-4 py-3 text-text-secondary">{row.publisher}</td>
                   <td className="px-4 py-3 text-text-tertiary">{row.publishedAt}</td>
                 </tr>
@@ -599,13 +600,13 @@ function SampleObjects() {
 }
 
 export function BasicDataConsole() {
-  const { sub } = useParams();
-  if (!sub || sub === "overview" || sub === "students") return <StudentsList />;
-  if (sub.startsWith("students/")) return <StudentDetail studentId={sub.replace("students/", "")} />;
-  if (sub === "schools") return <SchoolsList />;
-  if (sub.startsWith("schools/")) return <SchoolDetail organizationId={sub.replace("schools/", "")} />;
-  if (sub === "dictionaries") return <Dictionaries />;
-  if (sub.startsWith("dictionaries/")) return <DictionaryDetail dictionaryId={sub.replace("dictionaries/", "")} />;
+  const { sub, id } = useParams();
+  if (!sub || ((sub === "overview" || sub === "students") && !id)) return <StudentsList />;
+  if (sub === "students" && id) return <StudentDetail studentId={id} />;
+  if (sub === "schools" && !id) return <SchoolsList />;
+  if (sub === "schools" && id) return <SchoolDetail organizationId={id} />;
+  if (sub === "dictionaries" && !id) return <Dictionaries />;
+  if (sub === "dictionaries" && id) return <DictionaryDetail dictionaryId={id} />;
   if (sub === "templates") return <Templates />;
   if (sub === "imports") return <Imports />;
   if (sub === "samples") return <SampleObjects />;

@@ -32,6 +32,8 @@ export type Benefit = {
   expiresAt?: string;
   initialStatus: BenefitStatus;
   requiresCompetitionId?: string;
+  externalUrl?: string;
+  claimHint?: string;
 };
 
 export type CertificateRecord = {
@@ -104,6 +106,28 @@ export const courses: Course[] = [
 ];
 
 export const benefits: Benefit[] = [
+  {
+    id: "benefit-tencent-map-ride",
+    title: "腾讯地图出行打车券",
+    summary: "腾讯地图合作出行券，领取后可在腾讯地图 App 内使用。",
+    source: { type: "platform", label: "腾讯地图" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-30",
+    initialStatus: "eligible",
+    externalUrl: "https://map.qq.com/?_wv=1027&coupon=student-ride",
+    claimHint: "在 H5 页面输入手机号即可领取打车券。",
+  },
+  {
+    id: "benefit-taobao-flash-takeout",
+    title: "淘宝闪购无门槛外卖券",
+    summary: "淘宝闪购合作外卖券，无门槛抵扣，领取后可在淘宝闪购使用。",
+    source: { type: "platform", label: "淘宝闪购" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-15",
+    initialStatus: "eligible",
+    externalUrl: "https://s.click.taobao.com/t?e=m%3D2%26s%3Dflash-takeout-coupon",
+    claimHint: "在 H5 页面输入手机号即可领取外卖券。",
+  },
   {
     id: "benefit-campus-video",
     title: "校园视频会员月卡",
@@ -215,5 +239,45 @@ export const initialEducationIdentity: EducationIdentityRecord = {
   status: "claimable",
 };
 
+export type ExchangeCategory = "all" | "course" | "ticket" | "virtual";
+
+export type ExchangeItem = {
+  id: string;
+  title: string;
+  summary: string;
+  category: Exclude<ExchangeCategory, "all">;
+  cost: number;
+  claimedCount: number;
+  status: "available" | "outOfStock" | "exchanged";
+};
+
+export const exchangeItems: ExchangeItem[] = [
+  { id: "exchange-course-data", title: "商业数据分析基础课", summary: "平台公共课程兑换资格", category: "course", cost: 200, claimedCount: 342, status: "available" },
+  { id: "exchange-course-brand", title: "品牌电商实战课", summary: "三创赛美妆电商赛道课程", category: "course", cost: 300, claimedCount: 189, status: "available" },
+  { id: "exchange-lab-cloud", title: "云栖零售项目课", summary: "企业共建项目课学习资格", category: "course", cost: 400, claimedCount: 76, status: "available" },
+  { id: "exchange-ride", title: "青年创新日出行券", summary: "线下活动现场出行权益", category: "ticket", cost: 50, claimedCount: 512, status: "outOfStock" },
+  { id: "exchange-video", title: "校园视频会员月卡", summary: "平台合作视频会员权益", category: "virtual", cost: 150, claimedCount: 1205, status: "available" },
+  { id: "exchange-cloud-storage", title: "云笔记年度会员", summary: "在线云笔记与文档协作权益", category: "virtual", cost: 120, claimedCount: 890, status: "available" },
+  { id: "exchange-music-vip", title: "音乐平台月度会员", summary: "主流音乐平台月度畅听权益", category: "virtual", cost: 100, claimedCount: 567, status: "available" },
+  { id: "exchange-mock-exam", title: "商业分析模拟考", summary: "在线模拟考试与能力测评", category: "ticket", cost: 80, claimedCount: 230, status: "available" },
+];
+
+export type LearningCreditRecord = {
+  id: string;
+  title: string;
+  amount: number;
+  type: "income" | "expense";
+  time: string;
+};
+
+export const learningCreditRecords: LearningCreditRecord[] = [
+  { id: "credit-1", title: "完善学生资料", amount: 100, type: "income", time: "2026-08-01 10:23" },
+  { id: "credit-2", title: "报名第十五届三创赛", amount: 200, type: "income", time: "2026-08-03 14:05" },
+  { id: "credit-3", title: "完成商业数据分析基础课", amount: 150, type: "income", time: "2026-08-08 16:40" },
+  { id: "credit-4", title: "兑换品牌电商实战课", amount: -300, type: "expense", time: "2026-08-10 09:12" },
+  { id: "credit-5", title: "参与创赛工坊任务", amount: 80, type: "income", time: "2026-08-12 11:30" },
+];
+
 export const courseById = (id?: string) => courses.find(item => item.id === id);
 export const benefitById = (id?: string) => benefits.find(item => item.id === id);
+export const exchangeItemById = (id?: string) => exchangeItems.find(item => item.id === id);
