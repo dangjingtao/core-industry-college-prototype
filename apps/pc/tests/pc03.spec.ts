@@ -99,29 +99,29 @@ test("PC03 Opportunity create carries Mobile skills[] and targeting remains expl
   await expect(page.getByTestId("audience-confirmed")).toContainText("不生成 CandidateRecord");
 });
 
-test("PC03 content scopes keep stable references available only in technical mode", async ({ page }) => {
+test("PC03 content creation uses business targeting while technical references remain available", async ({ page }) => {
   await page.goto("/admin/content/operations");
-  await expect(page.getByRole("heading", { name: "首页 Banner / 资讯 / 赛友内容 / 活动" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "内容与活动" })).toBeVisible();
   await expect(page.getByText("competitionId=sanchuang-16", { exact: true })).not.toBeVisible();
+  await expect(page.getByText("contentId=content-home-sanchuang-2026", { exact: true })).not.toBeVisible();
   await showTechnical(page);
   await expect(page.getByText("competitionId=sanchuang-16", { exact: true })).toBeVisible();
   await expect(page.getByText("organizationId=school-demo-gz", { exact: true })).toBeVisible();
-  await expect(page.getByText("地区 · 广州", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "新建内容" }).click();
-  await page.getByLabel("contentId").fill("content-school-open-day");
   await page.getByLabel("标题").fill("校园创新开放日");
-  await page.getByLabel("Scope").selectOption("学校");
-  await page.getByLabel("学校 stable ID").selectOption("school-demo-gz");
-  await page.getByRole("button", { name: "创建为 draft" }).click();
+  await page.getByLabel("定向范围").selectOption("学校");
+  await page.getByLabel("指定学校").selectOption("school-demo-gz");
+  await page.getByRole("button", { name: "保存草稿" }).click();
   await expect(page.getByText("校园创新开放日", { exact: true })).toBeVisible();
+  await expect(page.getByText("学校 · 广州示范高校", { exact: true })).toBeVisible();
   await expect(page.getByText("organizationId=school-demo-gz", { exact: true }).last()).toBeVisible();
 
   await page.getByRole("button", { name: "新建内容" }).click();
-  await page.getByLabel("contentId").fill("content-competition-brief");
   await page.getByLabel("标题").fill("赛事节点提醒");
-  await page.getByLabel("Scope").selectOption("赛事");
-  await page.getByLabel("赛事 stable ID").selectOption("innovation-cup-2026");
-  await page.getByRole("button", { name: "创建为 draft" }).click();
+  await page.getByLabel("定向范围").selectOption("赛事");
+  await page.getByLabel("指定赛事").selectOption("innovation-cup-2026");
+  await page.getByRole("button", { name: "保存草稿" }).click();
+  await expect(page.getByText("赛事 · 2026 青年品牌创新挑战赛", { exact: true })).toBeVisible();
   await expect(page.getByText("competitionId=innovation-cup-2026", { exact: true })).toBeVisible();
 });
