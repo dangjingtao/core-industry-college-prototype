@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - dev
+      - feat/t013a-s1-s2-current
     paths:
       - ".github/workflows/r-final-check.yml"
       - "apps/mobile/**"
