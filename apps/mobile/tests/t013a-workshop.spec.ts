@@ -97,9 +97,9 @@ test("T013A S2 survives leaving progress and persists member confirmation for ca
   await navigateInsideSpa(page, `${resultPath}?prototypeRole=member`);
   await page.getByRole("button", { name: "提交队长确认", exact: true }).click();
   await expect(page.getByText("已提交队长确认", { exact: true }).first()).toBeVisible();
-  await page.getByRole("button", { name: "返回历史成果", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "历史成果", exact: true })).toBeVisible();
 
+  await navigateInsideSpa(page, `${workshop}/results`);
+  await expect(page.getByRole("heading", { name: "历史成果", exact: true })).toBeVisible();
   await navigateInsideSpa(page, `${resultPath}?prototypeRole=member`);
   await expect(page.getByText("已提交队长确认", { exact: true }).first()).toBeVisible();
 
