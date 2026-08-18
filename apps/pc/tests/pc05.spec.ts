@@ -2,6 +2,30 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 1360, height: 940 } });
 
+test("PC05 human gate covers the whole admin surface, not only PC05 pages", async ({ page }) => {
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "今天先处理这些业务" })).toBeVisible();
+  await expect(page.getByText("Truth boundary", { exact: false })).not.toBeVisible();
+  await expect(page.getByText("Stable ID 统一展示", { exact: true })).not.toBeVisible();
+  await expect(page.getByText("Role", { exact: true })).not.toBeVisible();
+
+  for (const [route, businessText, technicalText] of [
+    ["/admin/competitions", "赛事中心", "统一对象列表 Pattern"],
+    ["/admin/resources", "资源与服务", "ResourceRelation"],
+    ["/admin/organizations/northstar-beauty", "北辰美妆", "organizationId · northstar-beauty"],
+    ["/admin/pc04/courses/brand-ecommerce", "品牌电商实战课", "courseId"],
+    ["/admin/students", "学生长期服务与平台治理", "Mobile session 尚未显式接入"],
+  ] as const) {
+    await page.goto(route);
+    await expect(page.getByText(businessText, { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(technicalText, { exact: false }).first()).not.toBeVisible();
+  }
+
+  await page.goto("/admin/pc04/courses/brand-ecommerce");
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("courseId", { exact: true }).first()).toBeVisible();
+});
+
 test("PC05 student console keeps business tasks first while preserving App identity semantics", async ({ page }) => {
   await page.goto("/admin/students");
   await expect(page.getByRole("navigation", { name: "管理端主导航" })).toBeVisible();
