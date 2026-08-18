@@ -1,8 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-test("PC03 stays inside the full PC01 control-plane navigation and operator context", async ({ page }) => {
+async function showTechnical(page: Page) {
+  const button = page.getByTestId("technical-mode-toggle");
+  if (await button.getByText("显示技术信息", { exact: true }).count()) await button.click();
+}
+
+test("PC03 stays inside the shared admin shell while permission metadata is secondary", async ({ page }) => {
   for (const route of ["/admin/organizations", "/admin/opportunities/intern-1", "/admin/content/operations"]) {
     await page.goto(route);
     const adminNav = page.getByRole("navigation", { name: "管理端主导航" });
@@ -11,6 +16,9 @@ test("PC03 stays inside the full PC01 control-plane navigation and operator cont
       await expect(adminNav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
     const operator = page.getByLabel("当前管理角色与数据范围");
+    await expect(operator).toBeVisible();
+    await expect(operator).not.toHaveAttribute("open", "");
+    await operator.locator("summary").click();
     await expect(operator).toContainText("Role");
     await expect(operator).toContainText("平台运营");
     await expect(operator).toContainText("Module");
@@ -22,9 +30,11 @@ test("PC03 stays inside the full PC01 control-plane navigation and operator cont
   await expect(contentOperations).toHaveAttribute("href", "/admin/content/operations");
 });
 
-test("PC03 Organization preserves stable ids and only uses PC01 canonical source tags", async ({ page }) => {
+test("PC03 Organization preserves stable ids but hides them from the default business view", async ({ page }) => {
   await page.goto("/admin/organizations/northstar-beauty");
   await expect(page.getByRole("heading", { name: "北辰美妆" })).toBeVisible();
+  await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
+  await showTechnical(page);
   await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).toBeVisible();
   await expect(page.getByText(/Mobile Company 使用同一 stable value/)).toBeVisible();
   await expect(page.getByText("平台配置", { exact: true })).toBeVisible();
@@ -36,6 +46,8 @@ test("PC03 Organization preserves stable ids and only uses PC01 canonical source
 test("PC03 Opportunity edit persists to detail, includes skills and keeps Application consumer-aligned", async ({ page }) => {
   await page.goto("/admin/opportunities/intern-1");
   await expect(page.getByRole("heading", { name: "机会管理 + App 内投递" })).toBeVisible();
+  await expect(page.getByText("opportunityId · intern-1", { exact: true })).not.toBeVisible();
+  await showTechnical(page);
   await expect(page.getByText("opportunityId · intern-1", { exact: true })).toBeVisible();
   await expect(page.getByLabel("技能标签")).toContainText("内容运营");
   await expect(page.getByLabel("技能标签")).toContainText("数据复盘");
@@ -64,6 +76,7 @@ test("PC03 Opportunity edit persists to detail, includes skills and keeps Applic
 
 test("PC03 Opportunity create carries Mobile skills[] and targeting remains explainable", async ({ page }) => {
   await page.goto("/admin/opportunities/intern-1");
+  await showTechnical(page);
   await page.getByRole("button", { name: "新建机会" }).click();
   await page.getByLabel("opportunityId").fill("campus-ops-2026");
   await page.getByLabel("标题").fill("校园运营项目实践");
@@ -83,9 +96,11 @@ test("PC03 Opportunity create carries Mobile skills[] and targeting remains expl
   await expect(page.getByTestId("audience-confirmed")).toContainText("不生成 CandidateRecord");
 });
 
-test("PC03 content scopes store competitionId or school organizationId instead of display names", async ({ page }) => {
+test("PC03 content scopes keep stable references available only in technical mode", async ({ page }) => {
   await page.goto("/admin/content/operations");
   await expect(page.getByRole("heading", { name: "首页 Banner / 资讯 / 赛友内容 / 活动" })).toBeVisible();
+  await expect(page.getByText("competitionId=sanchuang-16", { exact: true })).not.toBeVisible();
+  await showTechnical(page);
   await expect(page.getByText("competitionId=sanchuang-16", { exact: true })).toBeVisible();
   await expect(page.getByText("organizationId=school-demo-gz", { exact: true })).toBeVisible();
   await expect(page.getByText("地区 · 广州", { exact: true })).toBeVisible();
