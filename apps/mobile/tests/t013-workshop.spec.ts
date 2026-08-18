@@ -12,8 +12,13 @@ test("T013 structured task runs through freeze, async progress and result adopti
   await page.getByRole("button", { name: "回答完毕，进入下一步", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "生成确认", exact: true })).toBeVisible();
-  await expect(page.getByText(/预计算力消耗/)).toBeVisible();
-  await expect(page.getByText(/结果对全队可见/)).toBeVisible();
+  await expect(page.getByTestId("review-card-estimate")).toBeVisible();
+  await expect(page.getByTestId("review-card-freeze")).toBeVisible();
+  await expect(page.getByTestId("review-card-ownership")).toBeVisible();
+  await expect(page.getByTestId("review-card-team")).toBeVisible();
+  await expect(page.getByTestId("review-card-estimate").getByText(/本次预计消耗/)).toBeVisible();
+  await expect(page.getByTestId("review-card-freeze").getByText(/确认后冻结 \d+ 算力/)).toBeVisible();
+  await expect(page.getByTestId("review-card-team").getByText("全队可访问 · 事实 / 建议分区")).toBeVisible();
   await page.getByRole("button", { name: "确认生成", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "任务进度", exact: true })).toBeVisible();
@@ -55,4 +60,47 @@ test("T013 missing material keeps a task locked inside the competition", async (
   await expect(page.getByText("当前缺少任务材料", { exact: true })).toBeVisible();
   await expect(page.getByText("近 7 天经营数据", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "查看项目材料", exact: true })).toBeVisible();
+});
+
+test("T013 result detail shows the four-quadrant layout with score hero", async ({ page }) => {
+  await page.goto("/competitions/sanchuang-16/workspace/workshop/tasks/s2-market-feasibility/answer");
+  await page.getByRole("button", { name: "抖音小店", exact: true }).click();
+  await page.getByRole("button", { name: "头皮修护", exact: true }).click();
+  await page.getByRole("button", { name: "用户访谈", exact: true }).click();
+  await page.getByRole("button", { name: "3", exact: true }).click();
+  await page.getByPlaceholder("写下团队当前真实情况…").fill("已有真实用户反馈和竞品截图。");
+  await page.getByRole("button", { name: "回答完毕，进入下一步", exact: true }).click();
+  await page.getByRole("button", { name: "确认生成", exact: true }).click();
+  await page.getByRole("button", { name: "模拟进入运行", exact: true }).click();
+  await page.getByRole("button", { name: "模拟生成完成", exact: true }).click();
+  await page.getByRole("button", { name: "查看本任务成果", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "成果详情", exact: true })).toBeVisible();
+  await expect(page.getByTestId("result-score-hero")).toBeVisible();
+  await expect(page.getByTestId("result-score-value")).toBeVisible();
+  await expect(page.getByTestId("result-quadrant-finding")).toBeVisible();
+  await expect(page.getByTestId("result-quadrant-weakness")).toBeVisible();
+  await expect(page.getByTestId("result-quadrant-actions")).toBeVisible();
+  await expect(page.getByTestId("result-quadrant-weakness").getByText("薄弱环节与风险", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("result-quadrant-actions").getByText("优先行动清单", { exact: true })).toBeVisible();
+});
+
+test("T013 results page exposes three tabs and deep-links to failed tab", async ({ page }) => {
+  await page.goto("/competitions/sanchuang-16/workspace/workshop/results");
+  await expect(page.getByTestId("results-tablist")).toBeVisible();
+  await expect(page.getByTestId("results-tab-generated")).toHaveAttribute("aria-selected", "true");
+  await page.getByTestId("results-tab-adopted").click();
+  await expect(page.getByTestId("results-tab-adopted")).toHaveAttribute("aria-selected", "true");
+  await page.getByTestId("results-tab-failed").click();
+  await expect(page.getByTestId("results-tab-failed")).toHaveAttribute("aria-selected", "true");
+  await page.goto("/competitions/sanchuang-16/workspace/workshop/results?tab=adopted");
+  await expect(page.getByTestId("results-tab-adopted")).toHaveAttribute("aria-selected", "true");
+});
+
+test("T013 workshop home exposes a call-skill hero as the first visual anchor", async ({ page }) => {
+  await page.goto("/competitions/sanchuang-16/workspace/workshop");
+  await expect(page.getByTestId("workshop-call-hero")).toBeVisible();
+  const primary = page.getByTestId("workshop-call-hero-primary");
+  await expect(primary).toBeVisible();
+  await primary.click();
+  await expect(page.url()).toMatch(/\/competitions\/sanchuang-16\/workspace\/workshop\/(tasks|results|project)/);
 });

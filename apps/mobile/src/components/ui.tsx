@@ -17,8 +17,8 @@ export function GhostButton({ className = "", ...props }: ButtonHTMLAttributes<H
   return <button className={`min-h-touch rounded-control px-3 text-sm font-medium text-text-brand transition active:bg-surface-pressed disabled:cursor-not-allowed disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }
 
-export function Card({ children, className = "", interactive = false }: { children: ReactNode; className?: string; interactive?: boolean }) {
-  return <div className={`rounded-container bg-surface p-3 ${interactive ? "border border-border-subtle transition hover:bg-surface-subtle" : ""} ${className}`}>{children}</div>;
+export function Card({ children, className = "", interactive = false, ...rest }: { children: ReactNode; className?: string; interactive?: boolean } & React.HTMLAttributes<HTMLDivElement>) {
+  return <div {...rest} className={`rounded-container bg-surface p-3 ${interactive ? "border border-border-subtle transition hover:bg-surface-subtle" : ""} ${className}`}>{children}</div>;
 }
 
 export function Section({ title, subtitle, action, children, className = "" }: { title?: string; subtitle?: string; action?: ReactNode; children: ReactNode; className?: string }) {

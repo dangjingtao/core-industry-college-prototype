@@ -1,5 +1,5 @@
 import { Sparkles, ArrowRight, AlertTriangle, CheckCircle2, ListChecks, FileText } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { computePolicyForTask, materialLabels, resultById, resultDetailById, skillById, taskById, workshopSkills, workshopTasks, workspaceData, type MaterialKey } from "./data";
@@ -172,13 +172,12 @@ function isResultsTab(value: string | null): value is ResultsTab {
 }
 
 export function WorkshopResultsPage() {
+  const navigate = useNavigate();
   const { competitionId } = useParams();
   const { getRuntime } = useWorkshopRuntime();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab: ResultsTab = isResultsTab(requestedTab) ? requestedTab : "generated";
-  const [editing, setEditing] = useState(false);
-  void editing;
   if (!competitionId) return null;
   const runtime = getRuntime(competitionId);
   const results = completedResults(runtime);
@@ -196,8 +195,6 @@ export function WorkshopResultsPage() {
     next.set("tab", tab);
     setSearchParams(next, { replace: true });
   };
-  const activeCount = useMemo(() => ({ generated: generated.length, adopted: adopted.length, failed: failedTasks.length }), [generated.length, adopted.length, failedTasks.length]);
-  void activeCount;
   return <PublicShell showNavigation={false}><PageHeader title="工坊成果" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><div role="tablist" aria-label="工坊成果分组" className="inline-flex w-full rounded-control bg-surface p-1" data-testid="results-tablist">{tabEntries.map(entry => { const selected = activeTab === entry.id; return <button key={entry.id} role="tab" type="button" aria-selected={selected} data-testid={`results-tab-${entry.id}`} onClick={() => selectTab(entry.id)} className={`flex-1 rounded-control px-3 py-2 text-sm font-medium ${selected ? "bg-primary text-text-on-primary" : "text-text-secondary"}`}>{entry.label} <span className={selected ? "text-text-on-primary" : "text-text-tertiary"}>{entry.count}</span></button>; })}</div>{activeTab === "generated" && (generated.length ? <div className="space-y-3" data-testid="results-pane-generated">{generated.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="info">已生成</StatusTag></div></Card></Link>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-generated"><p className="font-semibold text-text-primary">还没有未采纳的成果</p><p className="mt-2 text-sm text-text-secondary">完成任务会自动生成成果，采纳后会进入"已采纳"分组。</p></Card>)}
 {activeTab === "adopted" && (adopted.length ? <div className="space-y-3" data-testid="results-pane-adopted">{adopted.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="success">已采纳</StatusTag></div></Card></Link>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-adopted"><p className="font-semibold text-text-primary">还没有被队长采纳的成果</p><p className="mt-2 text-sm text-text-secondary">队长在成果详情页确认后，会进入"已采纳"分组并锁定作为参赛材料。</p></Card>)}
 {activeTab === "failed" && (failedTasks.length ? <div className="space-y-3" data-testid="results-pane-failed">{failedTasks.map(task => <Card key={task.id}><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · {task.title}</p><p className="mt-2 text-sm leading-5 text-text-secondary">{task.summary}</p><p className="mt-2 text-xs text-text-tertiary">失败原因：本次运行未完成，原回答已保留。</p></div><StatusTag tone="danger">生成失败</StatusTag></div><SecondaryButton className="mt-3 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/tasks/${task.id}/progress`)}>查看失败任务</SecondaryButton></Card>)}</div> : <Card className="py-8 text-center" data-testid="results-pane-failed"><p className="font-semibold text-text-primary">本轮没有失败任务</p><p className="mt-2 text-sm text-text-secondary">失败任务会保留草稿和原算力冻结记录，可重试或回到工坊首页。</p></Card>)}
