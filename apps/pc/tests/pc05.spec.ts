@@ -55,14 +55,14 @@ test("PC05 student console keeps business tasks first while preserving App ident
   await expect(page.getByText("林晓", { exact: true })).toBeVisible();
   await expect(page.getByText("Mobile session 尚未显式接入", { exact: false })).not.toBeVisible();
 
-  const activeRow = page.getByRole("row").filter({ hasText: "sanchuang-16" });
+  const activeRow = page.getByRole("row").filter({ hasText: /第十六届.*挑战赛/ });
   await expect(activeRow).toContainText(/第十六届.*挑战赛/);
   await expect(activeRow).toContainText("报名中");
   await expect(activeRow).toContainText("正常");
   await expect(activeRow).toContainText("已通过");
   await expect(activeRow).toContainText("等待官方资格回流");
 
-  const endedRow = page.getByRole("row").filter({ hasText: "sanchuang-15" });
+  const endedRow = page.getByRole("row").filter({ hasText: "第十五届三创赛" });
   await expect(endedRow).toContainText("已结束");
   await expect(endedRow).toContainText("已撤销");
   await expect(page.getByTestId("retention-proof")).toContainText("赛事工作区保持关闭");
