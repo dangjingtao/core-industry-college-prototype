@@ -55,11 +55,13 @@ test("T013 compute ledger exposes historical spend and task settlement", async (
   await expect(page.getByText(/创建任务时按上限冻结/)).toBeVisible();
 });
 
-test("T013 missing material keeps a task locked inside the competition", async ({ page }) => {
+test("T013B S4 dynamic Q&A is not blocked by a mandatory operation-data upload", async ({ page }) => {
   await page.goto("/competitions/sanchuang-16/workspace/workshop/tasks/s4-weekly-review/answer");
-  await expect(page.getByText("当前缺少任务材料", { exact: true })).toBeVisible();
-  await expect(page.getByText("近 7 天经营数据", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "查看项目材料", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
+  await expect(page.getByTestId("t013b-dynamic-question")).toContainText("这周最关注哪组经营指标");
+  await expect(page.getByRole("button", { name: "GMV / 销售额", exact: true })).toBeVisible();
+  await expect(page.getByText(/不上传也可以继续完成经营周报分析/)).toBeVisible();
+  await expect(page.getByText("当前缺少任务材料", { exact: true })).toHaveCount(0);
 });
 
 test("T013 result detail shows the four-quadrant layout with score hero", async ({ page }) => {
