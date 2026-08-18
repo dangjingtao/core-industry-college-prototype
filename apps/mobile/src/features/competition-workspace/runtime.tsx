@@ -166,10 +166,13 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
       ...runtime,
       taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), ...patch } },
     }))),
-    setTaskStatus: (competitionId, taskId, status) => setStore(current => updateRuntime(current, competitionId, runtime => ({
-      ...runtime,
-      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), status } },
-    }))),
+    setTaskStatus: (competitionId, taskId, status) => setStore(current => updateRuntime(current, competitionId, runtime => {
+      const taskRun = taskRunFor(runtime, taskId);
+      const nextRun = status === "ready" && taskRun.status === "completed"
+        ? emptyTaskRun("ready")
+        : { ...taskRun, status };
+      return { ...runtime, taskRuns: { ...runtime.taskRuns, [taskId]: nextRun } };
+    })),
     setTaskLocked: (competitionId, taskId, locked) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
       forcedLockedTaskIds: locked
