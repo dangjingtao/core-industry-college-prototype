@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, FileText, ListChecks } from "lucide-react";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { resultById, resultDetailById, taskById, workspaceData } from "./data";
@@ -56,7 +56,6 @@ export function T013AResultDetailPage() {
 
 function T013AReportPage({ competitionId, resultId, presentation }: { competitionId: string; resultId: string; presentation: T013AReportPresentation }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { getRuntime, updateResultDraft, saveResultVersion, submitResultForConfirmation, acceptResult } = useWorkshopRuntime();
   const runtime = getRuntime(competitionId);
   const result = resultById(resultId);
@@ -66,12 +65,14 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
   const [draft, setDraft] = useState<WorkshopResultDraft>(initialDraft);
   const [editing, setEditing] = useState(false);
   const [shared, setShared] = useState(false);
+  const [rolePreview, setRolePreview] = useState<"default" | "member">("default");
 
   useEffect(() => {
     if (!result) return;
     setDraft(runtime.resultDrafts[result.id] ?? emptyDraft(result));
     setEditing(false);
     setShared(false);
+    setRolePreview("default");
   }, [result?.id]);
 
   if (!result || !task || !completed) {
@@ -82,8 +83,7 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
   const versions = runtime.resultVersions[result.id] ?? [];
   const accepted = runtime.acceptedResultIds.includes(result.id);
   const submitted = runtime.resultConfirmationStatus[result.id] === "pending";
-  const prototypeRole = new URLSearchParams(location.search).get("prototypeRole");
-  const isCaptain = prototypeRole === "member" ? false : prototypeRole === "captain" ? true : workspaceData[competitionId]?.team.role.includes("队长") ?? false;
+  const isCaptain = rolePreview === "member" ? false : workspaceData[competitionId]?.team.role.includes("队长") ?? false;
   const saveDraft = () => {
     updateResultDraft(competitionId, result.id, draft);
     setEditing(false);
@@ -120,6 +120,10 @@ function T013AReportPage({ competitionId, resultId, presentation }: { competitio
       </>}
       <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results`)}>返回历史成果</Button>
     </div>
+    <details className="rounded-container border border-border-subtle bg-surface p-3 text-xs text-text-secondary">
+      <summary className="cursor-pointer font-medium text-text-brand">成果角色原型</summary>
+      <div className="mt-2 flex gap-2"><button type="button" className="min-h-touch rounded-control bg-surface-subtle px-3" onClick={() => setRolePreview("member")}>模拟队员视角</button><button type="button" className="min-h-touch rounded-control bg-surface-subtle px-3" onClick={() => setRolePreview("default")}>恢复队长视角</button></div>
+    </details>
     <TaskScenarioTools competitionId={competitionId} taskId={task.id} />
   </div></RequireCompetitionAccess></PublicShell>;
 }
