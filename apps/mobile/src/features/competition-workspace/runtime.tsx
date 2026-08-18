@@ -3,13 +3,25 @@ import type { CompetitionIdentityState, TaskRunStatus } from "../../state/model"
 import { usePublicPlatform, type IdentityScenario } from "../public-platform/PublicPlatform";
 import { materialLabels, resultById, taskById, workshopTasks, type MaterialKey, type WorkshopLifecycle } from "./data";
 
+export type WorkshopTaskRun = {
+  status: TaskRunStatus;
+  answer: string;
+  answers: Record<string, string[]>;
+  focus: string[];
+  note: string;
+  files: string[];
+};
+
 export type CompetitionWorkshopRuntime = {
   lifecycle: WorkshopLifecycle;
   permissionDenied: boolean;
   materials: Record<MaterialKey, boolean>;
-  taskRuns: Record<string, { status: TaskRunStatus; answer: string }>;
+  taskRuns: Record<string, WorkshopTaskRun>;
   forcedLockedTaskIds: string[];
   acceptedResultIds: string[];
+  submittedResultIds: string[];
+  sharedResultIds: string[];
+  resultDrafts: Record<string, string>;
 };
 
 export type TeamChangeRequest = {
@@ -24,6 +36,7 @@ export type TeamChangeRequest = {
 
 type RuntimeStore = Record<string, CompetitionWorkshopRuntime>;
 type TeamChangeRequestStore = Record<string, TeamChangeRequest>;
+type TaskDraftPatch = Partial<Pick<WorkshopTaskRun, "answer" | "answers" | "focus" | "note" | "files">>;
 
 type WorkshopRuntimeContextValue = {
   identityFor: (competitionId: string) => CompetitionIdentityState | undefined;
@@ -35,25 +48,28 @@ type WorkshopRuntimeContextValue = {
   setPermissionDenied: (competitionId: string, denied: boolean) => void;
   setMaterial: (competitionId: string, material: MaterialKey, available: boolean) => void;
   saveAnswer: (competitionId: string, taskId: string, answer: string) => void;
+  saveTaskDraft: (competitionId: string, taskId: string, patch: TaskDraftPatch) => void;
   setTaskStatus: (competitionId: string, taskId: string, status: TaskRunStatus) => void;
   setTaskLocked: (competitionId: string, taskId: string, locked: boolean) => void;
   startTask: (competitionId: string, taskId: string) => void;
   advanceTask: (competitionId: string, taskId: string) => void;
   retryTask: (competitionId: string, taskId: string) => void;
+  saveResultDraft: (competitionId: string, resultId: string, value: string) => void;
+  shareResult: (competitionId: string, resultId: string) => void;
+  submitResult: (competitionId: string, resultId: string) => void;
   acceptResult: (competitionId: string, resultId: string) => void;
   resetCompetition: (competitionId: string) => void;
 };
 
+function emptyTaskRun(status: TaskRunStatus = "ready"): WorkshopTaskRun {
+  return { status, answer: "", answers: {}, focus: [], note: "", files: [] };
+}
+
 function makeTaskRuns() {
-  return Object.fromEntries(workshopTasks.map(task => [task.id, { status: "ready" as TaskRunStatus, answer: "" }]));
+  return Object.fromEntries(workshopTasks.map(task => [task.id, emptyTaskRun()]));
 }
 
 function makeActiveRuntime(): CompetitionWorkshopRuntime {
-  const taskRuns = makeTaskRuns();
-  taskRuns["s1-product-score"] = {
-    status: "completed",
-    answer: "主推岭南植物精粹护肤组合，目标用户是 18–24 岁校园女性；希望验证成分叙事能否转成真实购买理由。",
-  };
   return {
     lifecycle: "inProgress",
     permissionDenied: false,
@@ -64,15 +80,18 @@ function makeActiveRuntime(): CompetitionWorkshopRuntime {
       brandAssets: false,
       pitchDraft: false,
     },
-    taskRuns,
+    taskRuns: makeTaskRuns(),
     forcedLockedTaskIds: [],
-    acceptedResultIds: ["result-s1-product-score"],
+    acceptedResultIds: [],
+    submittedResultIds: [],
+    sharedResultIds: [],
+    resultDrafts: {},
   };
 }
 
 function makeEndedRuntime(): CompetitionWorkshopRuntime {
   const taskRuns = makeTaskRuns();
-  for (const task of workshopTasks) taskRuns[task.id] = { status: "completed", answer: "历史赛事任务记录" };
+  for (const task of workshopTasks) taskRuns[task.id] = { ...emptyTaskRun("completed"), answer: "历史赛事任务记录" };
   return {
     lifecycle: "ended",
     permissionDenied: false,
@@ -86,6 +105,9 @@ function makeEndedRuntime(): CompetitionWorkshopRuntime {
     taskRuns,
     forcedLockedTaskIds: [],
     acceptedResultIds: workshopTasks.map(task => task.resultId),
+    submittedResultIds: workshopTasks.map(task => task.resultId),
+    sharedResultIds: [],
+    resultDrafts: {},
   };
 }
 
@@ -96,6 +118,10 @@ function initialRuntime(competitionId: string) {
 function updateRuntime(store: RuntimeStore, competitionId: string, updater: (runtime: CompetitionWorkshopRuntime) => CompetitionWorkshopRuntime) {
   const current = store[competitionId] ?? initialRuntime(competitionId);
   return { ...store, [competitionId]: updater(current) };
+}
+
+function taskRunFor(runtime: CompetitionWorkshopRuntime, taskId: string) {
+  return runtime.taskRuns[taskId] ?? emptyTaskRun();
 }
 
 const WorkshopRuntimeContext = createContext<WorkshopRuntimeContextValue | null>(null);
@@ -115,22 +141,22 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
     teamChangeRequestFor: competitionId => teamChangeRequests[competitionId],
     submitTeamChangeRequest: request => setTeamChangeRequests(current => ({
       ...current,
-      [request.competitionId]: {
-        ...request,
-        status: "pending",
-        submittedAt: new Date().toISOString(),
-      },
+      [request.competitionId]: { ...request, status: "pending", submittedAt: new Date().toISOString() },
     })),
     setLifecycle: (competitionId, lifecycle) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, lifecycle }))),
     setPermissionDenied: (competitionId, permissionDenied) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, permissionDenied }))),
     setMaterial: (competitionId, material, available) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, materials: { ...runtime.materials, [material]: available } }))),
     saveAnswer: (competitionId, taskId, answer) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
-      taskRuns: { ...runtime.taskRuns, [taskId]: { ...(runtime.taskRuns[taskId] ?? { status: "ready" as TaskRunStatus }), answer } },
+      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), answer } },
+    }))),
+    saveTaskDraft: (competitionId, taskId, patch) => setStore(current => updateRuntime(current, competitionId, runtime => ({
+      ...runtime,
+      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), ...patch } },
     }))),
     setTaskStatus: (competitionId, taskId, status) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
-      taskRuns: { ...runtime.taskRuns, [taskId]: { ...(runtime.taskRuns[taskId] ?? { answer: "" }), status } },
+      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), status } },
     }))),
     setTaskLocked: (competitionId, taskId, locked) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
@@ -141,20 +167,33 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
     startTask: (competitionId, taskId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
       forcedLockedTaskIds: runtime.forcedLockedTaskIds.filter(id => id !== taskId),
-      taskRuns: { ...runtime.taskRuns, [taskId]: { ...(runtime.taskRuns[taskId] ?? { answer: "" }), status: "queued" } },
+      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), status: "queued" } },
     }))),
     advanceTask: (competitionId, taskId) => setStore(current => updateRuntime(current, competitionId, runtime => {
-      const taskRun = runtime.taskRuns[taskId] ?? { status: "ready" as TaskRunStatus, answer: "" };
+      const taskRun = taskRunFor(runtime, taskId);
       const next: TaskRunStatus = taskRun.status === "queued" ? "running" : taskRun.status === "running" ? "completed" : taskRun.status;
       return { ...runtime, taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRun, status: next } } };
     })),
     retryTask: (competitionId, taskId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
-      taskRuns: { ...runtime.taskRuns, [taskId]: { ...(runtime.taskRuns[taskId] ?? { answer: "" }), status: "queued" } },
+      taskRuns: { ...runtime.taskRuns, [taskId]: { ...taskRunFor(runtime, taskId), status: "queued" } },
+    }))),
+    saveResultDraft: (competitionId, resultId, value) => setStore(current => updateRuntime(current, competitionId, runtime => ({
+      ...runtime,
+      resultDrafts: { ...runtime.resultDrafts, [resultId]: value },
+    }))),
+    shareResult: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
+      ...runtime,
+      sharedResultIds: runtime.sharedResultIds.includes(resultId) ? runtime.sharedResultIds : [...runtime.sharedResultIds, resultId],
+    }))),
+    submitResult: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
+      ...runtime,
+      submittedResultIds: runtime.submittedResultIds.includes(resultId) ? runtime.submittedResultIds : [...runtime.submittedResultIds, resultId],
     }))),
     acceptResult: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
       ...runtime,
       acceptedResultIds: runtime.acceptedResultIds.includes(resultId) ? runtime.acceptedResultIds : [...runtime.acceptedResultIds, resultId],
+      submittedResultIds: runtime.submittedResultIds.includes(resultId) ? runtime.submittedResultIds : [...runtime.submittedResultIds, resultId],
     }))),
     resetCompetition: competitionId => {
       setStore(current => ({ ...current, [competitionId]: initialRuntime(competitionId) }));
