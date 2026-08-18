@@ -2,67 +2,76 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-test("PC root exposes the PC01 control-plane foundation", async ({ page }) => {
+test("PC root is an operations dashboard instead of a construction dashboard", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { name: /把 App 的业务真相接进同一套 PC 控制面/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "PC 管理端不是桌面版 App，而是手机端的数据控制面" })).toBeVisible();
-  await expect(page.getByText("平台配置", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("API 同步", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("文件导入", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("人工修正", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Runtime", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Stable ID 统一展示" })).toBeVisible();
-  await expect(page.getByText("Account stable ID 仍是明确缺口")).toBeVisible();
-  await expect(page.getByText("新增全局 Task 真相源", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "APP → PC 数据接入地图" })).toBeVisible();
-  await expect(page.getByText("/tasks", { exact: true })).toBeVisible();
-  await expect(page.getByText("跨域派生 · 不建立独立管理域", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "今天先处理这些业务" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "当前运营任务" })).toBeVisible();
+  await expect(page.getByText("第十六届三创赛资格待回流", { exact: true })).toBeVisible();
+  await expect(page.getByText("账号治理与高风险审批", { exact: true })).toBeVisible();
+
+  await expect(page.getByText("Truth boundary", { exact: false })).not.toBeVisible();
+  await expect(page.getByText("Stable ID 统一展示", { exact: true })).not.toBeVisible();
+  await expect(page.getByText("APP → PC 数据接入地图", { exact: true })).not.toBeVisible();
+
+  const permission = page.getByLabel("当前管理角色与数据范围");
+  await expect(permission).toBeVisible();
+  await expect(page.getByText("Role", { exact: true })).not.toBeVisible();
+  await permission.locator("summary").click();
+  await expect(page.getByText("Role", { exact: true })).toBeVisible();
+  await expect(page.getByText("Module", { exact: true })).toBeVisible();
+  await expect(page.getByText("Data Scope", { exact: true })).toBeVisible();
+
+  const technical = page.getByTestId("admin-technical-details");
+  await expect(technical).toBeVisible();
+  await expect(technical).not.toHaveAttribute("open", "");
+  await technical.locator("summary").click();
+  await expect(technical).toContainText("competitionId");
+  await expect(technical).toContainText("organizationId");
 });
 
-test("PC01 list detail and edit patterns keep stable ids and business relations traceable", async ({ page }) => {
+test("PC01 top-level domains lead with business work, not entity contracts", async ({ page }) => {
   await page.goto("/admin/competitions");
-  await expect(page.getByRole("heading", { name: "统一对象列表 Pattern" })).toBeVisible();
-  await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
-  await expect(page).toHaveURL(/\/admin\/competitions\/objects\/sanchuang-16$/);
-  await expect(page.getByText("competitionId", { exact: true })).toBeVisible();
-  await expect(page.getByText("sanchuang-16", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("registrationOpen", { exact: true })).toBeVisible();
-  await expect(page.getByText("API 同步", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "App 消费位置" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "稳定业务关系" })).toBeVisible();
-  await page.getByRole("link", { name: /北辰美妆/ }).click();
-  await expect(page).toHaveURL(/\/admin\/organizations\/objects\/northstar-beauty$/);
-  await expect(page.getByText("organizationId", { exact: true })).toBeVisible();
-  await expect(page.getByText("northstar-beauty", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/当前 Mobile 使用 companyId=northstar-beauty/)).toBeVisible();
-  await page.getByRole("link", { name: "编辑 Pattern" }).click();
-  await expect(page.getByRole("heading", { name: "统一编辑 Pattern" })).toBeVisible();
-  await expect(page.getByTestId("stable-id-readonly")).toHaveValue("organizationId: northstar-beauty");
-  await expect(page.getByText("人工修正原因", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /PC01 不写入业务真相/ })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "赛事中心" })).toBeVisible();
+  await expect(page.getByText("官方资格待回流", { exact: true })).toBeVisible();
+  await expect(page.getByText("统一对象列表 Pattern", { exact: true })).not.toBeVisible();
+  await expect(page.getByText("实体契约", { exact: true })).not.toBeVisible();
+
+  await page.goto("/admin/resources");
+  await expect(page.getByRole("heading", { name: "资源与服务" })).toBeVisible();
+  await expect(page.getByText("机会与投递", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("平台课程", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("可信证书", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("ResourceRelation", { exact: true })).not.toBeVisible();
+
+  await page.goto("/admin/workshop");
+  await expect(page.getByRole("heading", { name: "创赛工坊配置" })).toBeVisible();
+  await expect(page.getByText("隐私边界", { exact: true })).toBeVisible();
+  await expect(page.getByText("全局 AI", { exact: false })).toBeVisible();
 });
 
-test("admin domains expose existing truth ownership instead of copied mobile stores", async ({ page }) => {
-  await page.goto("/admin/resources");
-  await expect(page.getByRole("heading", { name: "资源运营", exact: true })).toBeVisible();
-  await expect(page.getByText("ResourceRelation", { exact: true })).toBeVisible();
-  await expect(page.getByText("EligibilityRule", { exact: true })).toBeVisible();
-  await page.goto("/admin/students");
-  await expect(page.getByText("CompetitionIdentity", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Account ↔ CompetitionIdentity[]", { exact: true })).toBeVisible();
-  await expect(page.getByText("accountId 未接入 × sanchuang-16", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /当前账号 × 第十六届三创赛/ }).click();
-  await expect(page).toHaveURL(/\/admin\/students\/objects\/identity-sanchuang-16$/);
-  await expect(page.getByText(/PC01 不复制这份数组/)).toBeVisible();
+test("technical identifiers are secondary across specialized admin pages", async ({ page }) => {
+  await page.goto("/admin/competitions/objects/sanchuang-16");
+  await expect(page.getByRole("heading", { name: "第十六届三创赛" })).toBeVisible();
+  await expect(page.getByText("competitionId", { exact: true })).not.toBeVisible();
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("competitionId", { exact: true }).first()).toBeVisible();
+
+  await page.goto("/admin/organizations/northstar-beauty");
+  await expect(page.getByRole("heading", { name: "北辰美妆" })).toBeVisible();
+  await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).toBeVisible();
+
+  await page.goto("/admin/pc04/courses/brand-ecommerce");
+  await expect(page.getByRole("heading", { name: "品牌电商实战课", exact: true })).toBeVisible();
+  await expect(page.getByText("courseId", { exact: true })).not.toBeVisible();
+  await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("courseId", { exact: true }).first()).toBeVisible();
 });
 
 test("PC02 keeps platform school review separate from external official qualification", async ({ page }) => {
   await page.goto("/admin/competitions/objects/sanchuang-16");
-  await expect(page.getByText("外部权威赛事事实", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("平台承接报名流程", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("核心产业学院叠加服务", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "CompetitionIdentity 映射" })).toBeVisible();
   await expect(page.getByTestId("platform-review-status")).toHaveText("pending");
   await expect(page.getByTestId("official-qualification-status")).toHaveText("pending");
   await expect(page.getByTestId("workspace-gate")).toContainText("保持锁定");
@@ -75,66 +84,22 @@ test("PC02 keeps platform school review separate from external official qualific
   await expect(page.getByTestId("workspace-gate")).toContainText("可进入");
 });
 
-test("PC02 applies captain-school review and hides workshop private content from school scope", async ({ page }) => {
+test("PC02 applies captain-school review and protects workshop private content", async ({ page }) => {
   await page.goto("/admin/competitions/objects/sanchuang-16");
   await expect(page.getByText("跨校团队由队长所在学校统一审核整个团队", { exact: true })).toBeVisible();
   await expect(page.getByText("陈语", { exact: true })).toBeVisible();
   await expect(page.getByText("岭南科技学院", { exact: true })).toBeVisible();
   await expect(page.getByText(/统一归队长学校：华南商贸学院/).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Workshop 配置与赛事 scope" })).toBeVisible();
   await expect(page.getByText("Workshop 私人回答 / AI 内容", { exact: true }).last()).toBeVisible();
 });
 
-test("PC02 uses the same Competition console for a platform-configured partner event", async ({ page }) => {
+test("PC02 uses the same competition console for a platform-configured partner event", async ({ page }) => {
   await page.goto("/admin/competitions/objects/innovation-cup-2026");
   await expect(page.getByRole("heading", { name: "2026 青年品牌创新挑战赛" })).toBeVisible();
-  await expect(page.getByText("平台配置", { exact: true }).first()).toBeVisible();
   await expect(page.getByTestId("official-qualification-status")).toHaveText("notRequired");
   await expect(page.getByTestId("workspace-gate")).toContainText("保持锁定");
   await expect(page.getByTestId("workspace-gate")).toContainText("赛事生命周期尚未开放");
   await expect(page.getByText("同一 SchoolScope 模型适用于普通合作赛事，不建立三创赛专属学校权限表。", { exact: true })).toBeVisible();
-});
-
-test("PC02 competition details retain the canonical shell and operator context", async ({ page }) => {
-  for (const competitionId of ["sanchuang-16", "innovation-cup-2026"]) {
-    await page.goto(`/admin/competitions/objects/${competitionId}`);
-    const navigation = page.getByRole("navigation", { name: "管理端主导航" });
-    await expect(navigation.getByRole("link", { name: "赛事中心", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "主体与学校", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "资源运营", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "学生与赛事身份", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "资产与可信凭证", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "内容与活动", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "创赛工坊配置", exact: true })).toBeVisible();
-
-    const operatorContext = page.getByLabel("当前管理角色与数据范围");
-    await expect(operatorContext).toBeVisible();
-    await expect(operatorContext).toContainText("Role");
-    await expect(operatorContext).toContainText("Module");
-    await expect(operatorContext).toContainText("Data Scope");
-  }
-});
-
-test("PC02 organization relationships use stable ids instead of display names", async ({ page }) => {
-  await page.goto("/admin/competitions/objects/sanchuang-16");
-
-  await expect(page.getByTestId("organizer-organization")).toContainText("三创赛组委会");
-  await expect(page.getByTestId("organizer-organization")).toContainText("org-sanchuang-committee");
-  await expect(page.getByTestId("organizer-organization")).toHaveAttribute("href", "/admin/organizations/org-sanchuang-committee");
-
-  await expect(page.getByTestId("leader-school-id")).toContainText("org-huanan-commerce-college");
-  const crossSchoolMember = page.getByTestId("team-member-row").filter({ hasText: "陈语" });
-  await expect(crossSchoolMember).toContainText("岭南科技学院");
-  await expect(crossSchoolMember).toContainText("org-lingnan-tech-college");
-  await expect(crossSchoolMember).toContainText("org-huanan-commerce-college");
-
-  const authorizedSchools = page.getByTestId("authorized-school-organization");
-  await expect(authorizedSchools.first()).toContainText("org-huanan-commerce-college");
-
-  await page.goto("/admin/competitions/objects/innovation-cup-2026");
-  await expect(page.getByTestId("organizer-organization")).toContainText("青年品牌创新联盟");
-  await expect(page.getByTestId("organizer-organization")).toContainText("org-youth-brand-alliance");
-  await expect(page.getByTestId("leader-school-id")).toContainText("org-lingnan-tech-college");
 });
 
 test("registration portal remains an independent PC business entry", async ({ page }) => {
