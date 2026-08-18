@@ -164,7 +164,7 @@ export function GrowthScorePage() {
   const completed = learning.filter(item => item.status === "completed").length;
   const rows: [string, number][] = [["基础账号", 60], ["已完成学习", completed * 20], ["真实投递", applications.length * 10]];
   const score = rows.reduce((sum, [, value]) => sum + value, 0);
-  return <PublicShell showNavigation={false}><PageHeader title="学力值" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">当前学力值</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="成长概览" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">成长记录汇总</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
 }
 
 export function StoriesPage() {
@@ -381,7 +381,7 @@ export function SupportChatPage() {
 export function AccountsPage() {
   const { bindings, toggleBinding } = useSupport();
   const accounts = [["email","邮箱"],["wecom","企业微信"],["wechat","微信"]] as const;
-  return <PublicShell showNavigation={false}><PageHeader title="第三方账号" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
 }
 
 export function SubjectDecisionPage() {
