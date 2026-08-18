@@ -8,6 +8,7 @@ import { PC03HumanContentConsole } from "./admin/PC03HumanContentConsole";
 import { PC03HumanOrganizationConsole } from "./admin/PC03HumanOrganizationConsole";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
 import { PC03StateProvider } from "./admin/PC03State";
+import { PC04HumanCertificates } from "./admin/PC04HumanCertificates";
 import { PC04HumanConsole } from "./admin/PC04HumanConsole";
 import { PC04StateProvider } from "./admin/PC04State";
 import { PC05AdminOverview } from "./admin/PC05AdminOverview";
@@ -124,6 +125,8 @@ export function App() {
             <Route path="/admin/organizations/objects/:organizationId" element={<LegacyOrganizationRedirect />} />
             <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
             <Route path="/admin/content/*" element={<AdminRoute><PC03HumanContentConsole /></AdminRoute>} />
+            <Route path="/admin/pc04/certificates" element={<AdminRoute><PC04HumanCertificates /></AdminRoute>} />
+            <Route path="/admin/pc04/certificates/:certificateId" element={<AdminRoute><PC04HumanCertificates /></AdminRoute>} />
             <Route path="/admin/pc04/*" element={<AdminRoute><PC04HumanConsole /></AdminRoute>} />
             <Route path="/admin/resources/objects/:resourceId/edit" element={<LegacyResourceRedirect edit />} />
             <Route path="/admin/resources/objects/:resourceId" element={<LegacyResourceRedirect />} />
