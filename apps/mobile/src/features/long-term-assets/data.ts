@@ -258,6 +258,7 @@ export const exchangeItems: ExchangeItem[] = [
   { id: "exchange-ride", title: "青年创新日出行券", summary: "线下活动现场出行权益", category: "ticket", cost: 50, claimedCount: 512, status: "outOfStock" },
   { id: "exchange-video", title: "校园视频会员月卡", summary: "平台合作视频会员权益", category: "virtual", cost: 150, claimedCount: 1205, status: "available" },
   { id: "exchange-cloud-storage", title: "云笔记年度会员", summary: "在线云笔记与文档协作权益", category: "virtual", cost: 120, claimedCount: 890, status: "available" },
+  { id: "exchange-music-vip", title: "音乐平台月度会员", summary: "主流音乐平台月度畅听权益", category: "virtual", cost: 100, claimedCount: 567, status: "available" },
   { id: "exchange-mock-exam", title: "商业分析模拟考", summary: "在线模拟考试与能力测评", category: "ticket", cost: 80, claimedCount: 230, status: "available" },
 ];
 

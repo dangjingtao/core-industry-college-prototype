@@ -81,7 +81,7 @@ const categoryTabs = [
   { value: "all" as const, label: "全部" },
   { value: "course" as const, label: "课程" },
   { value: "ticket" as const, label: "入场券" },
-  { value: "virtual" as const, label: "虚拟权益" },
+  { value: "virtual" as const, label: "会员权益" },
 ];
 
 const filterTabs = [
