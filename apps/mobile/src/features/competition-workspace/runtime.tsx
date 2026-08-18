@@ -62,6 +62,8 @@ export type TeamChangeRequest = {
 type RuntimeStore = Record<string, CompetitionWorkshopRuntime>;
 type TeamChangeRequestStore = Record<string, TeamChangeRequest>;
 
+const optionalMaterialTaskIds = new Set(["s3-visual-kit", "s4-weekly-review"]);
+
 type WorkshopRuntimeContextValue = {
   identityFor: (competitionId: string) => CompetitionIdentityState | undefined;
   setIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
@@ -123,7 +125,7 @@ function makeActiveRuntime(): CompetitionWorkshopRuntime {
   return {
     lifecycle: "inProgress",
     permissionDenied: false,
-    materials: { projectBrief: true, competitorScreens: true, operationData: true, brandAssets: true, pitchDraft: false },
+    materials: { projectBrief: true, competitorScreens: true, operationData: false, brandAssets: false, pitchDraft: false },
     taskRuns,
     forcedLockedTaskIds: [],
     acceptedResultIds: ["result-s1-product-score"],
@@ -273,13 +275,13 @@ export function useWorkshopRuntime() {
 export function taskAvailability(runtime: CompetitionWorkshopRuntime, taskId: string) {
   const task = taskById(taskId);
   if (!task || runtime.forcedLockedTaskIds.includes(taskId)) return "locked" as const;
-  if (task.requiredMaterials.some(material => !runtime.materials[material])) return "locked" as const;
+  if (!optionalMaterialTaskIds.has(taskId) && task.requiredMaterials.some(material => !runtime.materials[material])) return "locked" as const;
   return runtime.taskRuns[taskId]?.status ?? "ready";
 }
 
 export function missingMaterials(runtime: CompetitionWorkshopRuntime, taskId: string) {
   const task = taskById(taskId);
-  if (!task) return [];
+  if (!task || optionalMaterialTaskIds.has(taskId)) return [];
   return task.requiredMaterials.filter(material => !runtime.materials[material]).map(material => ({ key: material, label: materialLabels[material] }));
 }
 
