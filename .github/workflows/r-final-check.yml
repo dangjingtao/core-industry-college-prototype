@@ -44,6 +44,8 @@ jobs:
           tests/f002-trust-status.spec.ts
           tests/f003.spec.ts
           tests/r-final.spec.ts
+          tests/t013-workshop.spec.ts
+          tests/t013b-s3s4.spec.ts
 
       - name: Run real Mobile-PC-Mobile handoff (soft gate)
         id: mobile-pc-handoff
