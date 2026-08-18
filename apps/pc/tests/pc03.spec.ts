@@ -83,7 +83,7 @@ test("PC03 opportunity creation uses business fields and keeps targeting explain
   await page.getByRole("button", { name: "新建机会" }).click();
   await expect(page.getByLabel("opportunityId")).toHaveCount(0);
   await page.getByLabel("机会名称").fill("校园运营项目实践");
-  await page.getByLabel("技能标签", { exact: true }).fill("活动运营, 用户研究");
+  await page.getByRole("textbox", { name: "技能标签", exact: true }).fill("活动运营, 用户研究");
   await page.getByRole("button", { name: "保存并开放" }).click();
   await page.getByRole("link", { name: /校园运营项目实践/ }).click();
   await expect(page.getByText("opportunityId · opportunity-draft-005", { exact: true })).toBeVisible();
