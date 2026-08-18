@@ -65,6 +65,45 @@ test("admin domains expose existing truth ownership instead of copied mobile sto
   await expect(page.getByText(/PC01 不复制这份数组/)).toBeVisible();
 });
 
+test("PC02 keeps platform school review separate from external official qualification", async ({ page }) => {
+  await page.goto("/admin/competitions/objects/sanchuang-16");
+  await expect(page.getByText("外部权威赛事事实", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("平台承接报名流程", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("核心产业学院叠加服务", { exact: true }).first()).toBeVisible();
+
+  await expect(page.getByTestId("platform-review-status")).toHaveText("pending");
+  await expect(page.getByTestId("official-qualification-status")).toHaveText("pending");
+  await expect(page.getByTestId("workspace-gate")).toContainText("保持锁定");
+
+  await page.getByRole("button", { name: "学校审核通过" }).click();
+  await expect(page.getByTestId("platform-review-status")).toHaveText("approved");
+  await expect(page.getByTestId("official-qualification-status")).toHaveText("pending");
+  await expect(page.getByTestId("workspace-gate")).toContainText("保持锁定");
+
+  await page.getByRole("button", { name: "模拟 API 回流：官方确认" }).click();
+  await expect(page.getByTestId("official-qualification-status")).toHaveText("confirmed");
+  await expect(page.getByTestId("workspace-gate")).toContainText("可进入");
+});
+
+test("PC02 applies captain-school review and hides workshop private content from school scope", async ({ page }) => {
+  await page.goto("/admin/competitions/objects/sanchuang-16");
+  await expect(page.getByText("跨校团队由队长所在学校统一审核整个团队", { exact: true })).toBeVisible();
+  await expect(page.getByText("陈语", { exact: true })).toBeVisible();
+  await expect(page.getByText("岭南科技学院", { exact: true })).toBeVisible();
+  await expect(page.getByText(/统一归队长学校：华南商贸学院/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Workshop 配置与赛事 scope" })).toBeVisible();
+  await expect(page.getByText("Workshop 私人回答 / AI 内容", { exact: true }).last()).toBeVisible();
+});
+
+test("PC02 uses the same Competition console for a platform-configured partner event", async ({ page }) => {
+  await page.goto("/admin/competitions/objects/innovation-cup-2026");
+  await expect(page.getByRole("heading", { name: "2026 青年品牌创新挑战赛" })).toBeVisible();
+  await expect(page.getByText("平台配置", { exact: true }).first()).toBeVisible();
+  await expect(page.getByTestId("official-qualification-status")).toHaveText("notRequired");
+  await expect(page.getByTestId("workspace-gate")).toContainText("可进入");
+  await expect(page.getByText("同一 SchoolScope 模型适用于普通合作赛事，不建立三创赛专属学校权限表。", { exact: true })).toBeVisible();
+});
+
 test("registration portal remains an independent PC business entry", async ({ page }) => {
   await page.goto("/admin");
   const portalLink = page.getByRole("link", { name: "三创赛报名门户" });
