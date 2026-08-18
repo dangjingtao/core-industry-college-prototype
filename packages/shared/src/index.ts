@@ -9,3 +9,4 @@ export const clientLabels: Record<ClientKind, string> = {
 
 export * from "./course-learning";
 export * from "./registration-handoff";
+export * from "./Dialog";

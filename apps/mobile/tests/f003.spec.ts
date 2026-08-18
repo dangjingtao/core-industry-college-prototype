@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-test("F003 logout requires confirmation and returns to public home", async ({ page }) => {
+test("F003 logout requires confirmation and returns to login", async ({ page }) => {
   await page.goto("/me");
   await page.getByRole("button", { name: "退出登录" }).click();
   await expect(page.getByText("确定退出登录吗？", { exact: true })).toBeVisible();
   await expect(page.getByText(/长期账号资产不会被删除/)).toBeVisible();
   await page.getByRole("button", { name: "确认退出" }).click();
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText("未登录", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/auth\/login$/);
+  await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
 });
 
 test("F003 resume keeps structured education and opportunity returnTo", async ({ page }) => {

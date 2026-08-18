@@ -9,7 +9,12 @@ export type RouteDefinition = {
 };
 
 export const routeDefinitions: RouteDefinition[] = [
-  { id: "auth.login", path: "/auth/login", context: "public", purpose: "登录入口", states: ["default", "loading", "error", "authMethod"] },
+  { id: "auth.welcome", path: "/welcome", context: "public", purpose: "首次进入与登录注册引导", states: ["ready"] },
+  { id: "auth.login", path: "/auth/login", context: "public", purpose: "密码或验证码登录", states: ["password", "code", "error"] },
+  { id: "auth.register", path: "/auth/register", context: "public", purpose: "账号注册", states: ["editing", "verificationSent", "validating", "error"] },
+  { id: "auth.forgot-password", path: "/auth/forgot-password", context: "public", purpose: "找回密码", states: ["editing", "verificationSent", "completed"] },
+  { id: "auth.wechat.authorize", path: "/auth/wechat/authorize", context: "public", purpose: "微信身份授权", states: ["ready", "cancelled"] },
+  { id: "auth.wechat.phone", path: "/auth/wechat/phone", context: "public", purpose: "微信获取手机号", states: ["ready", "existingAccount", "cancelled"] },
   { id: "onboarding.profile", path: "/onboarding/profile", context: "public", purpose: "基础资料完善", states: ["editing", "validating", "saving", "error"] },
   { id: "onboarding.survey", path: "/onboarding/survey", context: "public", purpose: "问卷采集", states: ["question", "saving", "completed", "error"] },
   { id: "onboarding.ready", path: "/onboarding/ready", context: "public", purpose: "进入平台前确认", states: ["ready"] },
@@ -69,6 +74,12 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "me.resume.strengths", path: "/me/resume/strengths", context: "account", purpose: "个人优势", states: ["edit", "saving"] },
   { id: "me.resume.education", path: "/me/resume/education", context: "account", purpose: "教育经历", states: ["list", "edit", "saving"] },
   { id: "me.accounts", path: "/me/accounts", context: "account", purpose: "账号绑定", states: ["list", "binding", "success", "error"] },
+  { id: "me.email-reminder", path: "/me/email-reminder", context: "account", purpose: "未绑定邮箱提醒", states: ["missing", "bound"] },
+  { id: "me.teams", path: "/me/teams", context: "account", purpose: "我的比赛团队", states: ["ready", "empty", "permission"] },
+  { id: "me.team", path: "/me/teams/:competitionId", context: "account", purpose: "比赛团队详情", states: ["active", "ended", "revoked", "missing"] },
+  { id: "me.settings", path: "/me/settings", context: "account", purpose: "设置中心", states: ["ready", "saved"] },
+  { id: "me.authorization", path: "/me/authorization", context: "account", purpose: "授权管理", states: ["authorized", "revoked"] },
+  { id: "me.feedback", path: "/me/feedback", context: "account", purpose: "意见反馈", states: ["editing", "submitted"] },
   { id: "me.subjects", path: "/me/subjects", context: "account", purpose: "主体管理（语义待确认）", states: ["empty", "list", "adding", "scanning"] },
   { id: "me.notifications", path: "/me/notifications", context: "account", purpose: "通知中心", states: ["all", "unread", "empty", "loading"] },
   { id: "me.notification", path: "/me/notifications/:notificationId", context: "account", purpose: "通知详情", states: ["read", "unread"] },

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
 import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
+import { BasicDataConsole } from "./admin/BasicDataConsole";
 import { PC01OperationsConsole } from "./admin/PC01OperationsConsole";
 import { PC02HumanCompetitionConsole } from "./admin/PC02HumanCompetitionConsole";
 import { PC03HumanContentConsole } from "./admin/PC03HumanContentConsole";
@@ -128,6 +129,9 @@ export function App() {
             <Route path="/admin/pc04/certificates" element={<AdminRoute><PC04HumanCertificates /></AdminRoute>} />
             <Route path="/admin/pc04/certificates/:certificateId" element={<AdminRoute><PC04HumanCertificates /></AdminRoute>} />
             <Route path="/admin/pc04/*" element={<AdminRoute><PC04HumanConsole /></AdminRoute>} />
+            <Route path="/admin/basic-data" element={<AdminRoute><BasicDataConsole /></AdminRoute>} />
+            <Route path="/admin/basic-data/:sub" element={<AdminRoute><BasicDataConsole /></AdminRoute>} />
+            <Route path="/admin/basic-data/:sub/:id" element={<AdminRoute><BasicDataConsole /></AdminRoute>} />
             <Route path="/admin/resources/objects/:resourceId/edit" element={<LegacyResourceRedirect edit />} />
             <Route path="/admin/resources/objects/:resourceId" element={<LegacyResourceRedirect />} />
             <Route path="/admin/assets/objects/certificate-sanchuang-15" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />

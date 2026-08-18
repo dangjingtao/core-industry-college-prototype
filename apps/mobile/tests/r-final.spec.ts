@@ -68,10 +68,11 @@ test("R-Final home notification control reaches the account notification center"
   await expect(page).toHaveURL(/\/me\/notifications$/);
   await expect(page.getByRole("heading", { name: "通知中心", exact: true })).toBeVisible();
 
-  await page.goto("/home?guest=1");
-  await page.getByRole("button", { name: "消息通知" }).click();
+  await page.goto("/auth/login?returnTo=%2Fme%2Fnotifications");
   await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "使用原型账号登录" }).click();
+  await page.getByLabel("手机号或邮箱").fill("13800138000");
+  await page.getByRole("textbox", { name: /^密码/ }).fill("prototype123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page).toHaveURL(/\/me\/notifications$/);
 });
 

@@ -31,6 +31,9 @@ type PublicPlatformState = {
   listScroll: Record<ListKey, number>;
   setIdentityMode: (mode: "multi" | "none") => void;
   login: () => void;
+  registerAccount: () => void;
+  completeProfile: () => void;
+  logout: () => void;
   continueAsGuest: () => void;
   setCompetitionIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
   upsertRegistrationPending: (competitionId: string) => void;
@@ -80,6 +83,15 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
     setIdentities(mode === "multi" ? multiIdentitySeed() : []);
   }, []);
   const login = useCallback(() => setSession({ loggedIn: true, profileComplete: true }), []);
+  const registerAccount = useCallback(() => {
+    setSession({ loggedIn: true, profileComplete: false });
+    setApplications([]);
+    setFollowedCompanies([]);
+    setIdentities([]);
+    setIdentityModeValue("runtime");
+  }, []);
+  const completeProfile = useCallback(() => setSession(current => current.loggedIn ? { ...current, profileComplete: true } : current), []);
+  const logout = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
   const continueAsGuest = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
   const setCompetitionIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => {
     setIdentities(current => {
@@ -111,7 +123,7 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PublicPlatformState>(() => ({
     session, applications, followedCompanies, identities, identityMode, listView, listScroll,
-    setIdentityMode, login, continueAsGuest,
+    setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest,
     setCompetitionIdentityScenario: guardedIdentityScenario,
     upsertRegistrationPending,
     submitApplication: guardedSubmitApplication,

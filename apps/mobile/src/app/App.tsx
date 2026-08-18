@@ -6,11 +6,11 @@ import {
   CompaniesPage,
   CompetitionsPage,
   HomePage,
-  LoginBoundaryPage,
   OpportunitiesPage,
   OpportunityDetailPage,
   PublicPlatformProvider,
 } from "../features/public-platform/PublicPlatform";
+import { ForgotPasswordPage, LoginPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
 import {
   CompetitionLifecycleDetailPage,
   CompetitionResourceDetailPage,
@@ -56,10 +56,13 @@ import {
 } from "../features/trust/TrustPages";
 import {
   AboutPage,
+  AuthorizationPage,
   AccountsPage,
   AlumniListPage,
   GrowthScorePage,
   LegalPage,
+  EmailReminderPage,
+  FeedbackPage,
   NewsDetailPage,
   NewsPage,
   NotificationDetailPage,
@@ -69,6 +72,9 @@ import {
   StoryDetailPage,
   StorySubmitPage,
   SubjectDecisionPage,
+  SettingsPage,
+  TeamDetailPage,
+  TeamsPage,
   SupportChatPage,
   SupportHomePage,
   SupportProvider,
@@ -83,9 +89,14 @@ export function App() {
         <LongTermAssetsProvider>
           <SupportProvider>
             <Routes>
-              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/" element={<Navigate to="/welcome" replace />} />
               <Route path="/dev/routes" element={<RouteLab />} />
-              <Route path="/auth/login" element={<LoginBoundaryPage />} />
+              <Route path="/welcome" element={<WelcomePage />} />
+              <Route path="/auth/login" element={<LoginPage />} />
+              <Route path="/auth/register" element={<RegisterPage />} />
+              <Route path="/auth/wechat/authorize" element={<WechatAuthorizePage />} />
+              <Route path="/auth/wechat/phone" element={<WechatPhonePage />} />
+              <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/onboarding/profile" element={<OnboardingProfilePage />} />
               <Route path="/onboarding/survey" element={<OnboardingSurveyPage />} />
               <Route path="/onboarding/ready" element={<OnboardingReadyPage />} />
@@ -146,6 +157,12 @@ export function App() {
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />
               <Route path="/me/resume/education" element={account(<ResumeEducationPage />)} />
               <Route path="/me/accounts" element={account(<AccountsPage />)} />
+              <Route path="/me/email-reminder" element={account(<EmailReminderPage />)} />
+              <Route path="/me/teams" element={account(<TeamsPage />)} />
+              <Route path="/me/teams/:competitionId" element={account(<TeamDetailPage />)} />
+              <Route path="/me/settings" element={account(<SettingsPage />)} />
+              <Route path="/me/authorization" element={account(<AuthorizationPage />)} />
+              <Route path="/me/feedback" element={account(<FeedbackPage />)} />
               <Route path="/me/subjects" element={account(<SubjectDecisionPage />)} />
               <Route path="/me/notifications" element={account(<NotificationsPage />)} />
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />

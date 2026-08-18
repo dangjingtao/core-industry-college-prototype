@@ -1,5 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+export { Dialog } from "@core/shared";
+export type { DialogProps } from "@core/shared";
+
 export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button className={`min-h-touch rounded-control bg-primary px-4 text-sm font-medium text-on-primary transition active:bg-primary-pressed disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }

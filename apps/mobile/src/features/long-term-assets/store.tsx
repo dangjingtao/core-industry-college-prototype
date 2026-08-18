@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
+  emptyStudentProfile,
   initialProfileSources,
   seedStudentProfile,
   type ProfileSource,
@@ -62,6 +63,7 @@ type LongTermAssetsContextValue = {
   updateEducation: (value: string) => void;
   updateEducationDetails: (patch: Partial<ResumeEducationDetails>) => void;
   updateProfile: (patch: Partial<StudentProfile>, source?: ProfileSource) => void;
+  initializeNewAccount: (contact: string) => void;
   mergeProfileFromSource: (patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode?: "fill-empty" | "replace") => void;
 };
 
@@ -83,6 +85,20 @@ const seedResume: ResumePresentation = {
     campusExperience: "参与校级创新创业项目与赛事团队，负责内容运营、用户调研和阶段复盘。",
   },
   updatedAt: "2026-08-17",
+};
+
+const emptyResume: ResumePresentation = {
+  selectedFactKeys: [],
+  strengths: "",
+  education: "",
+  educationDetails: {
+    graduationTime: "",
+    startDate: "",
+    endDate: "",
+    majorCourses: "",
+    campusExperience: "",
+  },
+  updatedAt: "2026-08-18",
 };
 
 const LongTermAssetsContext = createContext<LongTermAssetsContextValue | null>(null);
@@ -135,6 +151,22 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     setProfile(current => ({ ...current, ...patch }));
     setProfileSources(current => ({ ...current, ...sourcePatch(patch, source) }));
   }, [session.loggedIn]);
+
+  const initializeNewAccount = useCallback((contact: string) => {
+    const isPhone = /^1\d{10}$/.test(contact);
+    const nextProfile: StudentProfile = {
+      ...emptyStudentProfile,
+      phone: isPhone ? contact : "",
+      phoneVerified: isPhone ? "verified" : "unverified",
+      email: isPhone ? "" : contact,
+    };
+    setLearning([]);
+    setBenefitStatuses(Object.fromEntries(benefits.map(item => [item.id, item.initialStatus])));
+    setCertificates([]);
+    setResume(emptyResume);
+    setProfile(nextProfile);
+    setProfileSources(initialProfileSources(nextProfile));
+  }, []);
 
   const mergeProfileFromSource = useCallback((patch: Partial<StudentProfile>, source: Exclude<ProfileSource, "seed" | "profile">, mode: "fill-empty" | "replace" = "fill-empty") => {
     if (!session.loggedIn) return;
@@ -239,6 +271,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       setResume(current => ({ ...current, educationDetails: { ...current.educationDetails, ...patch }, updatedAt: "2026-08-17" }));
     },
     updateProfile,
+    initializeNewAccount,
     mergeProfileFromSource,
   }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
 

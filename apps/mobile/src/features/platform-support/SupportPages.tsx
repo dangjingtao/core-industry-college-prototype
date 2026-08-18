@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bookmark, BriefcaseBusiness, ChevronRight, Heart, ImagePlus, MessageCircle, PenLine, Plus, Share2, Trophy, Users, Zap } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Heart, ImagePlus, Info, MessageCircle, PenLine, Plus, Settings, Share2, ShieldCheck, Trophy, Users, Zap } from "lucide-react";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
+import { competitionById } from "../public-platform/data";
+import { workspaceData } from "../competition-workspace/data";
 
 type Notice = { id: string; title: string; body: string; read: boolean; time: string };
 type AwardLevel = "金奖" | "银奖" | "铜奖" | "专项奖";
@@ -696,7 +698,7 @@ export function AlumniListPage() {
 
 export function SupportHomePage() {
   const questions = ["报名后为什么还不能进入赛事工作区？", "比赛结束后证书和成绩在哪里？", "投递使用的是哪一份简历？"];
-  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><Link to="/support/chat" className="mt-4 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link></Card></div></PublicShell>;
+  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><div className="mt-4 grid grid-cols-2 gap-3"><Link to="/support/chat" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link><Link to="/me/feedback" className="block min-h-touch rounded-control border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-text-primary">提交反馈</Link></div></Card></div></PublicShell>;
 }
 
 export function SupportChatPage() {
@@ -711,6 +713,49 @@ export function AccountsPage() {
   const { bindings, toggleBinding } = useSupport();
   const accounts = [["email","邮箱"],["wecom","企业微信"],["wechat","微信"]] as const;
   return <PublicShell showNavigation={false}><PageHeader title="账号绑定" backTo="/me" /><div className="space-y-4 px-4 py-5">{accounts.map(([id,label]) => { const bound = bindings.includes(id); return <Card key={id}><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{label}</h2><p className="mt-1 text-xs text-text-secondary">{bound ? "已绑定到当前长期账号" : "尚未绑定"}</p></div><StatusTag tone={bound ? "success" : "neutral"}>{bound ? "已绑定" : "未绑定"}</StatusTag></div><SecondaryButton className="mt-4 w-full" onClick={() => toggleBinding(id)}>{bound ? "解除绑定（原型）" : "绑定账号（原型）"}</SecondaryButton></Card>; })}</div></PublicShell>;
+}
+
+export function EmailReminderPage() {
+  const navigate = useNavigate();
+  const { profile } = useLongTermAssets();
+  const hasEmail = Boolean(profile.email.trim());
+  return <PublicShell showNavigation={false}><PageHeader title="邮箱提醒" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card className={hasEmail ? "border border-success bg-success-bg" : "border border-warning bg-warning-bg"}><StatusTag tone={hasEmail ? "success" : "warning"}>{hasEmail ? "邮箱已绑定" : "建议绑定邮箱"}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{hasEmail ? "账号已有可用邮箱" : "补充邮箱，方便接收重要通知"}</h1><p className="mt-2 text-sm leading-6 text-text-secondary">赛事审核、课程成果和权益提醒会优先展示在通知中心；邮箱用于补充联系，不改变当前账号与赛事身份。</p></Card><Button className="w-full" onClick={() => navigate("/me/profile")}>{hasEmail ? "查看个人资料" : "去绑定邮箱"}</Button></div></PublicShell>;
+}
+
+export function TeamsPage() {
+  const { identities, session } = usePublicPlatform();
+  if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="比赛团队" backTo="/me" /><StateBlock state="empty" /></PublicShell>;
+  const teams = identities.map(identity => ({ identity, competition: competitionById(identity.competitionId), workspace: workspaceData[identity.competitionId] })).filter(item => item.competition && item.workspace);
+  return <PublicShell showNavigation={false}><PageHeader title="比赛团队" backTo="/me" /><div className="space-y-4 px-4 py-5">{teams.length ? teams.map(({ identity, competition, workspace }) => <Link key={identity.competitionId} to={`/me/teams/${identity.competitionId}`} className="block"><Card interactive><div className="flex items-start justify-between gap-3"><div><StatusTag tone={identity.identityStatus === "active" ? "success" : identity.identityStatus === "pending" ? "warning" : "neutral"}>{identity.identityStatus === "active" ? "参赛中" : identity.identityStatus === "pending" ? "审核中" : identity.identityStatus === "revoked" ? "权限已回收" : "赛事已结束"}</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{workspace!.team.name}</h2><p className="mt-1 text-sm text-text-secondary">{competition!.name} · {workspace!.team.role}</p></div><ChevronRight size={18} className="mt-1 text-text-tertiary" aria-hidden="true" /></div></Card></Link>) : <Card><p className="text-sm text-text-secondary">当前还没有加入比赛团队。</p></Card>}</div></PublicShell>;
+}
+
+export function TeamDetailPage() {
+  const { competitionId } = useParams();
+  const { identities } = usePublicPlatform();
+  const identity = identities.find(item => item.competitionId === competitionId);
+  const competition = competitionId ? competitionById(competitionId) : undefined;
+  const workspace = competitionId ? workspaceData[competitionId] : undefined;
+  if (!identity || !competition || !workspace) return <Missing title="团队不存在" backTo="/me/teams" />;
+  const editable = identity.identityStatus === "active" && Boolean(workspace);
+  return <PublicShell showNavigation={false}><PageHeader title="团队详情" backTo="/me/teams" /><div className="space-y-5 px-4 py-5"><Card><StatusTag tone={editable ? "success" : "neutral"}>{editable ? "赛事期可维护" : identity.identityStatus === "revoked" ? "权限已回收" : "历史团队"}</StatusTag><h1 className="mt-3 text-xl font-semibold text-text-primary">{workspace.team.name}</h1><p className="mt-2 text-sm text-text-secondary">{competition.name} · {workspace.project.name}</p></Card><Section title="团队成员"><div className="space-y-2">{workspace.team.members.map(member => <Card key={`${member.name}-${member.role}`}><div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-full bg-primary-container text-sm font-semibold text-text-brand">{member.name.slice(0, 1)}</span><div><p className="font-medium text-text-primary">{member.name}</p><p className="text-xs text-text-secondary">{member.role} · {member.school}</p></div></div></Card>)}</div></Section>{editable ? <Link to={`/competitions/${competitionId}/workspace/team`} className="block min-h-touch rounded-control border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-text-primary">进入赛事工作区维护团队</Link> : <Card className="border border-border-subtle"><p className="text-sm leading-6 text-text-secondary">赛事已结束或当前权限已回收，此处保留历史团队信息，不重新打开赛事工作区。</p></Card>}</div></PublicShell>;
+}
+
+export function SettingsPage() {
+  const [saved, setSaved] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(true);
+  const [cacheCleared, setCacheCleared] = useState(false);
+  return <PublicShell showNavigation={false}><PageHeader title="设置中心" backTo="/me" /><div className="space-y-5 px-4 py-5"><Section title="账号安全"><Link to="/me/profile" className="flex min-h-touch items-center gap-3 border-b border-border-subtle py-3"><ShieldCheck size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">个人资料与联系方式</span><ChevronRight size={18} className="text-text-tertiary" aria-hidden="true" /></Link><Link to="/me/accounts" className="flex min-h-touch items-center gap-3 py-3"><Users size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">第三方账号绑定</span><ChevronRight size={18} className="text-text-tertiary" aria-hidden="true" /></Link></Section><Section title="通知与授权"><button type="button" onClick={() => { setPushEnabled(value => !value); setSaved(false); }} className="flex min-h-touch w-full items-center gap-3 border-b border-border-subtle py-3 text-left"><Bell size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">消息通知</span><StatusTag tone={pushEnabled ? "success" : "neutral"}>{pushEnabled ? "已开启" : "已关闭"}</StatusTag></button><Link to="/me/authorization" className="flex min-h-touch items-center gap-3 py-3"><ShieldCheck size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">授权管理</span><ChevronRight size={18} className="text-text-tertiary" aria-hidden="true" /></Link></Section><Section title="应用"><button type="button" onClick={() => { setCacheCleared(true); setSaved(false); }} className="flex min-h-touch w-full items-center gap-3 border-b border-border-subtle py-3 text-left"><Settings size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">清除缓存</span><span className="text-xs text-text-tertiary">{cacheCleared ? "已完成" : "原型操作"}</span></button><Link to="/about" className="flex min-h-touch items-center gap-3 py-3"><Info size={18} className="text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm text-text-primary">关于我们</span><ChevronRight size={18} className="text-text-tertiary" aria-hidden="true" /></Link></Section><Button className="w-full" onClick={() => setSaved(true)}>{saved ? "设置已保存" : "保存设置"}</Button>{saved && <Card className="border border-success bg-success-bg"><p className="flex items-center gap-2 text-sm text-success-text"><Check size={16} aria-hidden="true" />原型设置已保存</p></Card>}</div></PublicShell>;
+}
+
+export function AuthorizationPage() {
+  const [consent, setConsent] = useState(true);
+  return <PublicShell showNavigation={false}><PageHeader title="授权管理" backTo="/me/settings" /><div className="space-y-5 px-4 py-5"><Card><StatusTag tone="info">原型状态</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">管理平台授权记录</h1><p className="mt-2 text-sm leading-6 text-text-secondary">这里展示账号对通知、赛事报名回流和第三方账号绑定的授权入口。正式授权文案由业务与法务确认。</p></Card><Card><div className="flex items-start gap-3"><ShieldCheck size={20} className="mt-0.5 text-text-brand" aria-hidden="true" /><div className="flex-1"><h2 className="font-semibold text-text-primary">平台服务授权</h2><p className="mt-1 text-xs leading-5 text-text-secondary">用于保存长期账号资料、赛事状态和课程成果。</p></div><button type="button" onClick={() => setConsent(value => !value)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${consent ? "bg-primary-container text-text-brand" : "bg-surface-subtle text-text-secondary"}`}>{consent ? "已授权" : "未授权"}</button></div></Card></div></PublicShell>;
+}
+
+export function FeedbackPage() {
+  const [draft, setDraft] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  return <PublicShell showNavigation={false}><PageHeader title="意见反馈" backTo="/support" /><div className="space-y-5 px-4 py-5"><Card><p className="text-sm leading-6 text-text-secondary">告诉我们你在报名、赛事、课程、权益或投递过程中遇到的问题。当前原型只演示提交结果，不发送真实工单。</p></Card><label className="block"><span className="text-sm font-medium text-text-primary">反馈内容</span><textarea rows={6} value={draft} onChange={event => { setDraft(event.target.value); setSubmitted(false); }} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary outline-none focus:border-primary" placeholder="请描述你的建议或遇到的问题" /></label><Button className="w-full" disabled={!draft.trim()} onClick={() => setSubmitted(true)}>提交反馈</Button>{submitted && <Card className="border border-success bg-success-bg"><p className="text-sm text-success-text">反馈已提交，感谢你的建议。</p></Card>}</div></PublicShell>;
 }
 
 export function SubjectDecisionPage() {

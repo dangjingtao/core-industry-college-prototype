@@ -41,7 +41,7 @@ export function MyCompetitionsLifecyclePage() {
   const navigate = useNavigate();
   const { session, identities } = usePublicPlatform();
   const { getRuntime } = useWorkshopRuntime();
-  if (!session.loggedIn) return <PublicShell><PageHeader title="我的赛事" backTo="/competitions" /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后查看我的赛事</p><p className="mt-2 text-sm text-text-secondary">游客仍可继续浏览公开赛事，不读取账号赛事身份。</p><Button className="mt-4" onClick={() => navigate("/auth/login?returnTo=/competitions/mine")}>登录</Button></Card></div></PublicShell>;
+  if (!session.loggedIn) return <PublicShell><PageHeader title="我的赛事" backTo="/competitions" /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后查看我的赛事</p><p className="mt-2 text-sm text-text-secondary">未登录时不读取账号赛事身份。</p><Button className="mt-4" onClick={() => navigate("/auth/login?returnTo=/competitions/mine")}>登录</Button></Card></div></PublicShell>;
   return <PublicShell><PageHeader title="我的赛事" subtitle="读取长期账号唯一赛事身份集合" backTo="/competitions" /><div className="space-y-3 px-4 py-5">
     {identities.length ? identities.map(identity => {
       const competition = competitionById(identity.competitionId);
@@ -70,7 +70,7 @@ export function RegistrationLifecyclePage() {
   const identity = competitionId ? identityFor(competitionId) : undefined;
   const [external, setExternal] = useState(false);
   if (!competitionId || !competition) return null;
-  if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后继续报名</p><p className="mt-2 text-sm text-text-secondary">报名与赛事身份属于长期账号状态，游客不会读取或创建赛事身份。</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=/competitions/${competitionId}/registration`)}>登录</Button></Card></div></PublicShell>;
+  if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="px-4 py-6"><Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后继续报名</p><p className="mt-2 text-sm text-text-secondary">报名与赛事身份属于长期账号状态，未登录时不会读取或创建赛事身份。</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=/competitions/${competitionId}/registration`)}>登录</Button></Card></div></PublicShell>;
   const runtime = getRuntime(competitionId);
   if (runtime.lifecycle === "ended") return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="space-y-4 px-4 py-6"><Card className="border border-border-subtle"><StatusTag tone="neutral">赛事已结束</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">报名与审核操作已关闭</h1><p className="mt-2 text-sm text-text-secondary">赛事详情、工作区和工坊共用同一赛事阶段状态。</p></Card><SecondaryButton className="w-full" onClick={() => navigate(`/competitions/${competitionId}`)}>返回赛事详情</SecondaryButton></div></PublicShell>;
 

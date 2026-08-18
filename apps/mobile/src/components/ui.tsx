@@ -2,6 +2,9 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { BriefcaseBusiness, ChevronLeft, Home, Trophy, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
+export { Dialog } from "@core/shared";
+export type { DialogProps } from "@core/shared";
+
 export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button className={`min-h-touch rounded-control bg-primary px-4 text-sm font-medium text-on-primary transition active:bg-primary-pressed disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }
@@ -18,10 +21,10 @@ export function Card({ children, className = "", interactive = false }: { childr
   return <div className={`rounded-container bg-surface p-3 ${interactive ? "border border-border-subtle transition hover:bg-surface-subtle" : ""} ${className}`}>{children}</div>;
 }
 
-export function Section({ title, action, children, className = "" }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+export function Section({ title, subtitle, action, children, className = "" }: { title?: string; subtitle?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section className={`space-y-3 ${className}`}>
-      {(title || action) && <div className="flex min-h-6 items-center justify-between gap-3"><h2 className="text-base font-semibold text-text-primary">{title}</h2>{action}</div>}
+      {(title || subtitle || action) && <div className="flex min-h-6 items-center justify-between gap-3"><div><h2 className="text-base font-semibold text-text-primary">{title}</h2>{subtitle && <p className="mt-0.5 text-xs text-text-tertiary">{subtitle}</p>}</div>{action}</div>}
       {children}
     </section>
   );

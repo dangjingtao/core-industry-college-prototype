@@ -1,14 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("A guest can browse public competition and login back into registration", async ({ page }) => {
-  await page.goto("/home?guest=1");
-  await expect(page.getByText("未登录", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "发现比赛" }).click();
-  await expect(page.getByRole("heading", { name: "赛事", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /第十六届全国大学生电子商务/ }).click();
-  await page.getByRole("button", { name: "登录后报名" }).click();
+test("A login returns to the requested registration", async ({ page }) => {
+  await page.goto("/auth/login?returnTo=%2Fcompetitions%2Fsanchuang-16%2Fregistration");
   await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "使用原型账号登录" }).click();
+  await page.getByLabel("手机号或邮箱").fill("13800138000");
+  await page.getByRole("textbox", { name: /^密码/ }).fill("prototype123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await expect(page.getByRole("heading", { name: "赛事报名", exact: true })).toBeVisible();
 });
 
