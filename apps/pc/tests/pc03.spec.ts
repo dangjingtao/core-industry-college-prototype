@@ -4,7 +4,7 @@ test.use({ viewport: { width: 1280, height: 900 } });
 
 async function showTechnical(page: Page) {
   const button = page.getByTestId("technical-mode-toggle");
-  if (await button.getByText("显示技术信息", { exact: true }).count()) await button.click();
+  if ((await button.textContent())?.includes("显示技术信息")) await button.click();
 }
 
 test("PC03 stays inside the shared admin shell while permission metadata is secondary", async ({ page }) => {
