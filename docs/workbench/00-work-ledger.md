@@ -60,7 +60,8 @@
 | PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | PASS | PC01 |
 | PC03 | Organization + 机会 + 内容运营 | 施工 | PASS | PC01 |
 | PC04 | 平台课程 + 权益 + 可信证书 | 施工 | PASS | PC01 |
-| PC05 | 学生 / 长期资产 + 权限治理 + PC 总回归 | 施工 / 收口 | 待最终执行验收 | PC02、PC03、PC04 |
+| PC-BD01 | 基础数据接入与旧后台能力归并 | 施工 / 归并 | CHANGES REQUIRED（修正已施工，待独立复审） | PC02、PC03、PC04 |
+| PC05 | 学生 / 长期资产 + 权限治理 + PC 总回归 | 施工 / 收口 | 待最终执行验收 | PC02、PC03、PC04、PC-BD01 |
 
 推荐主顺序：
 
@@ -90,10 +91,10 @@ PC 管理端：
 PC01 控制面底座
   → PC02 赛事控制台
   → PC03 Organization / 机会 / 内容 ┐
-  → PC04 课程 / 权益 / 证书         ├→ PC05 学生 / 资产 / 权限 / 跨端总回归
+  → PC04 课程 / 权益 / 证书         ├→ PC-BD01 基础数据归并与独立复审 → PC05 学生 / 资产 / 权限 / 跨端总回归
                                    ┘
 
-PC03 与 PC04 可在 PC01 完成后并行；PC05 必须在 PC02–PC04 合入后收口。
+PC03 与 PC04 可在 PC01 完成后并行；PC-BD01 在 PC02–PC04 稳定后完成归并并接受独立复审；PC05 必须把 PC-BD01 作为前置后再做最终收口。
 ```
 
 ---
@@ -553,7 +554,7 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 
 # PC 原型施工卡｜统一开工门槛
 
-以下规则适用于 PC01–PC05。任何 PC 施工线程未完成这些动作前，不得直接开始画后台页面或扩展业务对象。
+以下规则适用于 PC01–PC05 以及 PC-BD01。任何 PC 施工线程未完成这些动作前，不得直接开始画后台页面或扩展业务对象。
 
 ## 开工前必须完成
 
@@ -921,12 +922,38 @@ PC 至少表达：
 
 ---
 
+# PC-BD01｜基础数据接入与旧后台能力归并
+
+**类型：施工 / 归并卡**  
+**状态：CHANGES REQUIRED（修正已施工，待独立复审）**  
+**优先级：P0**  
+**前置：PC02、PC03、PC04**  
+**任务卡：`docs/workbench/PC-BD01-basic-data-integration.md`**  
+**独立复审：`docs/workbench/PC-BD01-review.md`，当前结论 `CHANGES REQUIRED`**
+
+## 收口职责
+
+PC-BD01 必须在 PC05 最终验收前完成独立复审。它负责把现有“基础数据管理”收敛为跨域维护工作台 / 聚合入口，而不是第 8 个业务真相域。
+
+至少保持：
+
+- 学生基础数据 → Account / StudentProfile；
+- 学校基础数据 → Organization(type=School)；
+- 赛事 / 赛道配置 → 具体 Competition / CompetitionTrack / CompetitionLifecycle；
+- 证书 / 协议 / Banner / 权益规则 → 各自所属业务域；
+- 导入与批处理 → 数据接入治理记录；
+- 默认视图讲业务，stable id / canonical object / DataSource / Scope 等放技术模式。
+
+施工线程不得自行把本卡标记为 `PASS`；独立复审通过后才能解除 PC05 前置阻断。
+
+---
+
 # PC05｜学生 / 长期资产 + 权限治理 + PC 总回归
 
 **类型：施工 / 收口卡**  
 **状态：待最终执行验收**  
 **优先级：P0**  
-**前置：PC02、PC03、PC04**
+**前置：PC02、PC03、PC04、PC-BD01**
 
 ## 必须理解的 App
 
@@ -1056,7 +1083,7 @@ PC 仍显示有效
 
 ## 验收
 
-PC05 不是只验 `/admin/students` 页面。它必须对 PC01–PC04 做一次跨域、跨端收口，并提供：
+PC05 不是只验 `/admin/students` 页面。它必须对 PC01–PC04 与 PC-BD01 做一次跨域、跨端收口，并提供：
 
 - TypeScript / Vite build；
 - PC 核心管理动线浏览器回归；
@@ -1082,7 +1109,7 @@ PC05 不是只验 `/admin/students` 页面。它必须对 PC01–PC04 做一次�
 6. Google Drive 140 页原始 Mockplus 的高风险页面 feature-level spot check；
 7. 本台账 F00–F03 每项为：完成 / 明确废弃 / 有替代方案；
 8. F04 每项为：已决策 / 继续冻结，并说明原因；
-9. PC01–PC04 已完成且 PC05 已进行 PC ↔ App 一致性独立复审；
+9. PC01–PC04 与 PC-BD01 均已完成独立复审，且 PC05 已进行 PC ↔ App 一致性独立复审；
 10. 无新的 duplicate session / identities / lifecycle / applications truth source；
 11. 页面合并后没有再次出现“路由在，但关键字段 / 按钮 / handoff 消失”；
 12. PC 管理端没有出现与 App 明显冲突的对象、状态、权限与长期资产语义。
