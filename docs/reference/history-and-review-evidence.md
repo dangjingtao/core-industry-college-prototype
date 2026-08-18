@@ -477,3 +477,37 @@ Running 14 tests
 新增任务中心回归覆盖：首页入口、赛事上下文、工坊下一任务、课程进度、权益资格、分类筛选，以及从任务卡片返回原业务详情页。
 
 视觉检查覆盖 `375x812` 与 `390x844`：页面无横向溢出，筛选栏、任务卡片和右侧操作均保持可读与可点击。
+
+---
+
+## 12. 2026-08-18｜手机端孤立入口接入
+
+### 接入边界
+
+- 首页消息通知按钮接入 `/me/notifications`，游客先登录并按 `returnTo` 返回通知中心；
+- “我的”接入消息通知、账号绑定、帮助与客服、用户协议、隐私政策和关于；
+- `/support` 与 `/support/chat` 不再形成只能手输 URL 进入的孤立页面组；
+- `/me/subjects` 按 D08 继续冻结且不暴露入口；
+- `/growth/score` 不新增入口，只按已确认 Guardrail 恢复“成长概览”语义，不恢复学力值积分经济。
+
+### 本地验证
+
+```text
+Registry routes: 66
+App route declarations: 69
+Missing registry routes: 0
+RouteProbe in App: no
+Explicit 404 route: yes
+Route audit PASS
+tsc -b PASS
+vite build PASS
+```
+
+Chromium `390x844` focused regression：
+
+```text
+tests/r-final.spec.ts
+8 passed
+```
+
+新增回归覆盖登录态 / 游客通知入口、“我的”六个可见入口，以及客服首页到客服会话的连续跳转。

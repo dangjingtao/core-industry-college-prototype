@@ -32,15 +32,14 @@ export function StatusTag({ tone = "info", children }: { tone?: "info" | "succes
   return <span className={`inline-flex min-h-6 items-center rounded-full px-2 text-xs font-medium ${toneClass}`}>{children}</span>;
 }
 
-export function PageHeader({ title, subtitle, backTo }: { title: string; subtitle?: string; backTo?: string }) {
+export function PageHeader({ title, backTo }: { title: string; backTo?: string; subtitle?: string }) {
   const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
-      <div className={`relative mx-auto flex w-full max-w-md items-center justify-center px-14 ${subtitle ? "min-h-14" : "min-h-11"}`}>
+      <div className="relative mx-auto flex min-h-11 w-full max-w-md items-center justify-center px-14">
         {backTo && <button type="button" aria-label="返回" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={() => navigate(backTo)}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>}
         <div className="min-w-0 text-center">
           <h1 className="truncate text-base font-semibold leading-5 text-text-primary">{title}</h1>
-          {subtitle && <p className="mt-0.5 truncate text-xs leading-4 text-text-secondary">{subtitle}</p>}
         </div>
       </div>
     </header>

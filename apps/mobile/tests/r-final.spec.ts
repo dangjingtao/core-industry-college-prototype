@@ -61,3 +61,37 @@ test("R-Final account bindings no longer masquerade as third-party business acco
     await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
   }
 });
+
+test("R-Final home notification control reaches the account notification center", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: "消息通知" }).click();
+  await expect(page).toHaveURL(/\/me\/notifications$/);
+  await expect(page.getByRole("heading", { name: "通知中心", exact: true })).toBeVisible();
+
+  await page.goto("/home?guest=1");
+  await page.getByRole("button", { name: "消息通知" }).click();
+  await expect(page.getByRole("heading", { name: "登录", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "使用原型账号登录" }).click();
+  await expect(page).toHaveURL(/\/me\/notifications$/);
+});
+
+test("R-Final account and support routes have visible entries from My", async ({ page }) => {
+  await page.goto("/me");
+  const entries = [
+    ["消息通知", "/me/notifications"],
+    ["账号绑定", "/me/accounts"],
+    ["帮助与客服", "/support"],
+    ["用户协议", "/legal/user-agreement"],
+    ["隐私政策", "/legal/privacy"],
+    ["关于", "/about"],
+  ] as const;
+
+  for (const [name, href] of entries) {
+    await expect(page.getByRole("link", { name: new RegExp(name) })).toHaveAttribute("href", href);
+  }
+
+  await page.getByRole("link", { name: /帮助与客服/ }).click();
+  await expect(page.getByRole("heading", { name: "帮助与客服", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "进入客服会话" }).click();
+  await expect(page.getByRole("heading", { name: "客服会话", exact: true })).toBeVisible();
+});

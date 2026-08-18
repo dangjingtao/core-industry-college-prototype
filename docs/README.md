@@ -22,7 +22,11 @@
    直接检查 Google Drive 原始 Mockplus 后得到的功能级缺口；解决“路由有了但功能缩水”的问题。
 6. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
    明确该补、待决策、继续冻结的 backlog。
-7. 与当前任务直接相关的 migration / reference 文档。
+7. [`product/05-pluggable-simulation-module-design.md`](./product/05-pluggable-simulation-module-design.md)
+   运营沙盒等模拟小游戏作为赛事、课程或活动可选模块时的边界、接入协议和首期验收标准。
+8. [`product/06-business-simulation-demo-confirmation.md`](./product/06-business-simulation-demo-confirmation.md)
+   面向负责人的“经营决策体验”首期产品定位、范围、风险和确认项。
+9. 与当前任务直接相关的 migration / reference 文档。
 
 不要只看当前页面代码就自行推导产品模型，也不要只因为旧页面已经映射到新路由就认为旧功能完整覆盖。
 
