@@ -32,6 +32,8 @@ export type Benefit = {
   expiresAt?: string;
   initialStatus: BenefitStatus;
   requiresCompetitionId?: string;
+  externalUrl?: string;
+  claimHint?: string;
 };
 
 export type CertificateRecord = {
@@ -104,6 +106,28 @@ export const courses: Course[] = [
 ];
 
 export const benefits: Benefit[] = [
+  {
+    id: "benefit-tencent-map-ride",
+    title: "腾讯地图出行打车券",
+    summary: "腾讯地图合作出行券，领取后可在腾讯地图 App 内使用。",
+    source: { type: "platform", label: "腾讯地图" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-30",
+    initialStatus: "eligible",
+    externalUrl: "https://map.qq.com/?_wv=1027&coupon=student-ride",
+    claimHint: "在 H5 页面输入手机号即可领取打车券。",
+  },
+  {
+    id: "benefit-taobao-flash-takeout",
+    title: "淘宝闪购无门槛外卖券",
+    summary: "淘宝闪购合作外卖券，无门槛抵扣，领取后可在淘宝闪购使用。",
+    source: { type: "platform", label: "淘宝闪购" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-15",
+    initialStatus: "eligible",
+    externalUrl: "https://s.click.taobao.com/t?e=m%3D2%26s%3Dflash-takeout-coupon",
+    claimHint: "在 H5 页面输入手机号即可领取外卖券。",
+  },
   {
     id: "benefit-campus-video",
     title: "校园视频会员月卡",
