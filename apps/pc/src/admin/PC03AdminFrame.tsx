@@ -13,17 +13,16 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { StatusTag } from "../components/ui";
 
 const topLevelItems = [
   { to: "/admin", label: "总览", icon: LayoutDashboard, end: true },
-  { to: "/admin/competitions", label: "赛事中心", icon: Trophy },
-  { to: "/admin/organizations", label: "主体与学校", icon: Building2 },
-  { to: "/admin/resources", label: "资源运营", icon: Boxes },
-  { to: "/admin/students", label: "学生与赛事身份", icon: UsersRound },
-  { to: "/admin/assets", label: "资产与可信凭证", icon: FileBadge },
-  { to: "/admin/content", label: "内容与活动", icon: Activity },
-  { to: "/admin/workshop", label: "创赛工坊", icon: Sparkles },
+  { to: "/admin/competitions", label: "赛事中心", icon: Trophy, end: false },
+  { to: "/admin/organizations", label: "主体与学校", icon: Building2, end: false },
+  { to: "/admin/resources", label: "资源运营", icon: Boxes, end: false },
+  { to: "/admin/students", label: "学生与赛事身份", icon: UsersRound, end: false },
+  { to: "/admin/assets", label: "资产与可信凭证", icon: FileBadge, end: false },
+  { to: "/admin/content", label: "内容与活动", icon: Activity, end: false },
+  { to: "/admin/workshop", label: "创赛工坊", icon: Sparkles, end: false },
 ] as const;
 
 function SidebarNavigation({ mobile = false }: { mobile?: boolean }) {
