@@ -10,6 +10,12 @@ function taskBasePath(competitionId: string, taskId: string) {
   return `/competitions/${competitionId}/workspace/workshop/tasks/${taskId}`;
 }
 
+function taskInstanceTitle(taskId: string, fallback: string) {
+  if (taskId === "s1-product-score") return "选品评分";
+  if (taskId === "s2-market-feasibility") return "市场可行性分析";
+  return fallback;
+}
+
 function QuestionField({ question, values, onToggle }: { question: WorkshopQuestion; values: string[]; onToggle: (option: string) => void }) {
   return <fieldset className="space-y-3">
     <legend className="text-sm font-medium leading-5 text-text-primary">{question.label}{question.required && <span className="ml-1 text-danger-text">*</span>}</legend>
@@ -37,24 +43,37 @@ export function TaskAnswerPage() {
   const runtime = competitionId ? getRuntime(competitionId) : undefined;
   const run = taskId && runtime ? runtime.taskRuns[taskId] : undefined;
   const questions = questionsForTask(taskId);
-  const [selections, setSelections] = useState<Record<string, string[]>>(run?.selections ?? {});
-  const [note, setNote] = useState(run?.note || run?.answer || "");
-  const [uploadName, setUploadName] = useState(run?.uploadName ?? "");
+  const progressive = task?.skillId === "s1" || task?.skillId === "s2";
+  const replayingCompletedResult = Boolean(task && runtime && run?.status === "ready" && runtime.acceptedResultIds.includes(task.resultId));
+  const [selections, setSelections] = useState<Record<string, string[]>>(replayingCompletedResult ? {} : run?.selections ?? {});
+  const [note, setNote] = useState(replayingCompletedResult ? "" : run?.note || run?.answer || "");
+  const [uploadName, setUploadName] = useState(replayingCompletedResult ? "" : run?.uploadName ?? "");
 
   useEffect(() => {
+    if (replayingCompletedResult) {
+      setSelections({});
+      setNote("");
+      setUploadName("");
+      return;
+    }
     setSelections(run?.selections ?? {});
     setNote(run?.note || run?.answer || "");
     setUploadName(run?.uploadName ?? "");
-  }, [run?.answer, run?.note, run?.selections, run?.uploadName, taskId]);
+  }, [replayingCompletedResult, run?.answer, run?.note, run?.selections, run?.uploadName, taskId]);
 
   const requiredQuestions = useMemo(() => questions.filter(question => question.required), [questions]);
   const answeredRequired = requiredQuestions.filter(question => (selections[question.id]?.length ?? 0) > 0).length;
   const completeness = requiredQuestions.length ? Math.round((answeredRequired / requiredQuestions.length) * 100) : 100;
-  const canContinue = completeness === 100 || Boolean(note.trim());
+  const canContinue = progressive ? completeness === 100 : completeness === 100 || Boolean(note.trim());
+  const firstUnansweredIndex = questions.findIndex(question => (selections[question.id]?.length ?? 0) === 0);
+  const visibleQuestions = progressive
+    ? questions.slice(0, firstUnansweredIndex === -1 ? questions.length : firstUnansweredIndex + 1)
+    : questions;
 
   if (!competitionId || !taskId || !task || !runtime) return null;
   const availability = taskAvailability(runtime, taskId);
   const missing = missingMaterials(runtime, taskId);
+  const instanceTitle = taskInstanceTitle(taskId, task.title);
 
   const toggle = (question: WorkshopQuestion, option: string) => {
     setSelections(current => {
@@ -72,19 +91,21 @@ export function TaskAnswerPage() {
     navigate(`${taskBasePath(competitionId, taskId)}/review`);
   };
 
-  if (availability === "completed") return <PublicShell showNavigation={false}><PageHeader title="任务已完成" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-6"><Card><StatusTag tone="success">已完成</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{task.title}</h2><p className="mt-2 text-sm text-text-secondary">该任务已经生成独立成果，可继续编辑、保存版本或由队长采纳。</p></Card><Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${task.resultId}`)}>查看正确成果</Button></div></RequireCompetitionAccess></PublicShell>;
+  if (availability === "completed") return <PublicShell showNavigation={false}><PageHeader title="任务已完成" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-6"><Card><StatusTag tone="success">已完成</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{instanceTitle}</h2><p className="mt-2 text-sm text-text-secondary">该任务已经生成独立成果，可继续编辑、保存版本或由队长采纳。</p></Card><Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${task.resultId}`)}>查看正确成果</Button></div></RequireCompetitionAccess></PublicShell>;
 
   if (availability === "queued" || availability === "running" || availability === "failed") {
-    return <PublicShell showNavigation={false}><PageHeader title="任务执行中" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-6"><Card><StatusTag tone={availability === "failed" ? "danger" : "info"}>{availability === "failed" ? "生成失败" : "异步运行"}</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{task.title}</h2></Card><Button className="w-full" onClick={() => navigate(`${taskBasePath(competitionId, taskId)}/progress`)}>继续查看运行状态</Button></div></RequireCompetitionAccess></PublicShell>;
+    return <PublicShell showNavigation={false}><PageHeader title="任务执行中" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-6"><Card><StatusTag tone={availability === "failed" ? "danger" : "info"}>{availability === "failed" ? "生成失败" : "异步运行"}</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{instanceTitle}</h2></Card><Button className="w-full" onClick={() => navigate(`${taskBasePath(competitionId, taskId)}/progress`)}>继续查看运行状态</Button></div></RequireCompetitionAccess></PublicShell>;
   }
 
   return <PublicShell showNavigation={false}><PageHeader title="动态答题" backTo={`/competitions/${competitionId}/workspace/workshop/skills/${task.skillId}`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
-    <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · AI 会根据结构化答案组织报告</p><h2 className="mt-2 text-lg font-semibold text-text-primary">{task.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{task.summary}</p></div><StatusTag tone={availability === "locked" ? "warning" : "info"}>{availability === "locked" ? "任务锁定" : `${completeness}%`}</StatusTag></div></Card>
+    <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · {progressive ? "AI 将根据你的回答动态准备后续问题" : "AI 会根据结构化答案组织报告"}</p><h1 className="mt-2 text-lg font-semibold text-text-primary">{instanceTitle}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">{task.summary}</p></div><StatusTag tone={availability === "locked" ? "warning" : "info"}>{availability === "locked" ? "任务锁定" : `${completeness}%`}</StatusTag></div></Card>
     {availability === "locked" ? <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">当前缺少任务材料</p><p className="mt-2 text-sm text-warning-text">{missing.length ? missing.map(item => item.label).join("、") : "该任务当前被原型状态锁定"}</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/project`)}>查看项目材料</SecondaryButton></Card> : <>
-      <Section title="结构化问答"><div className="space-y-6">{questions.map(question => <QuestionField key={question.id} question={question} values={selections[question.id] ?? []} onToggle={option => toggle(question, option)} />)}</div></Section>
-      <Section title="补充说明（选填）"><div><textarea value={note} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value)} rows={5} className="w-full rounded-control border border-border bg-surface p-3 text-base leading-6 text-text-primary outline-none focus:border-primary" placeholder="写下团队当前真实情况…" /><p className="mt-2 text-xs leading-5 text-text-secondary">{task.helper}</p></div></Section>
-      <Section title="上传其它数据（选填）"><label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface px-4 text-center"><span className="text-sm font-medium text-text-brand">{uploadName || "点击选择项目材料"}</span><span className="mt-1 text-xs text-text-secondary">支持 PDF、Excel、CSV 或图片；原型只记录文件状态</span><input className="sr-only" type="file" accept=".pdf,.xls,.xlsx,.csv,image/*" onChange={event => setUploadName(event.target.files?.[0]?.name ?? "")} /></label></Section>
+      <Section title="结构化问答"><div className="space-y-6">{visibleQuestions.map((question, index) => <div key={question.id} className="space-y-3">{progressive && index > 0 && <Card className="border border-info bg-info-bg" data-testid="dynamic-next-question"><p className="text-sm text-info-text">AI 正在分析您的回答，准备下一题……</p></Card>}<QuestionField question={question} values={selections[question.id] ?? []} onToggle={option => toggle(question, option)} /></div>)}</div></Section>
+      {(!progressive || completeness === 100) && <>
+        <Section title="补充说明（选填）"><div><textarea value={note} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value)} rows={5} className="w-full rounded-control border border-border bg-surface p-3 text-base leading-6 text-text-primary outline-none focus:border-primary" placeholder="写下团队当前真实情况…" /><p className="mt-2 text-xs leading-5 text-text-secondary">{task.helper}</p></div></Section>
+        <Section title="上传其它数据（选填）"><label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface px-4 text-center"><span className="text-sm font-medium text-text-brand">{uploadName || "点击选择项目材料"}</span><span className="mt-1 text-xs text-text-secondary">支持 PDF、Excel、CSV 或图片；原型只记录文件状态</span><input className="sr-only" type="file" accept=".pdf,.xls,.xlsx,.csv,image/*" onChange={event => setUploadName(event.target.files?.[0]?.name ?? "")} /></label></Section>
+      </>}
       <Card className="bg-surface-subtle"><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">作答完善度</span><strong className="text-text-primary">{completeness}%</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary" style={{ width: `${completeness}%` }} /></div></Card>
     </>}
     <Button disabled={availability === "locked" || !canContinue} className="w-full" onClick={submit}>回答完毕，进入下一步</Button>
@@ -101,12 +122,19 @@ export function TaskReviewPage() {
   const task = taskById(taskId);
   if (!task) return null;
   const run = runtime.taskRuns[taskId];
+  const questions = questionsForTask(taskId);
   const policy = computePolicyForTask(taskId);
   const missing = missingMaterials(runtime, taskId);
-  const selectedFacts = Object.values(run?.selections ?? {}).flat();
+  const questionAnswers = questions.map(question => ({ question, values: run?.selections[question.id] ?? [] })).filter(item => item.values.length > 0);
+  const selectedFacts = questionAnswers.flatMap(item => item.values);
+  const requiredQuestions = questions.filter(question => question.required);
+  const answeredRequired = requiredQuestions.filter(question => (run?.selections[question.id]?.length ?? 0) > 0).length;
+  const completeness = requiredQuestions.length ? Math.round((answeredRequired / requiredQuestions.length) * 100) : 100;
   const hasDraft = selectedFacts.length > 0 || Boolean(run?.note.trim());
   const enoughCompute = runtime.computeBalance >= policy.estimateMax;
   const ready = taskAvailability(runtime, taskId) !== "locked" && hasDraft && enoughCompute;
+  const progressive = task.skillId === "s1" || task.skillId === "s2";
+  const instanceTitle = taskInstanceTitle(taskId, task.title);
   const confirm = () => {
     if (!ready || !startTask(competitionId, taskId)) return;
     navigate(`${taskBasePath(competitionId, taskId)}/progress`);
@@ -114,13 +142,16 @@ export function TaskReviewPage() {
 
   return <PublicShell showNavigation={false}><PageHeader title="生成确认" backTo={`${taskBasePath(competitionId, taskId)}/answer`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
-    <Card><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · 为当前子技能生成独立报告</p><h2 className="mt-2 text-lg font-semibold text-text-primary">{task.title}</h2><p className="mt-3 text-sm leading-6 text-text-secondary">确认后按上限冻结算力，完成后按实际消耗结算。</p></Card>
-    <Section title="问答摘要"><Card><div className="flex flex-wrap gap-2">{selectedFacts.length ? selectedFacts.map(value => <StatusTag key={value} tone="neutral">{value}</StatusTag>) : <span className="text-sm text-text-secondary">未选择结构化答案</span>}</div>{run?.note && <div className="mt-4 border-t border-border-subtle pt-3"><p className="text-xs text-text-secondary">主观补充</p><p className="mt-1 text-sm leading-5 text-text-primary">{run.note}</p></div>}{run?.uploadName && <p className="mt-3 text-xs text-text-brand">已附材料：{run.uploadName}</p>}</Card></Section>
+    <Card><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · 为当前子技能生成独立报告</p><h1 className="mt-2 text-lg font-semibold text-text-primary">{instanceTitle}</h1><p className="mt-3 text-sm leading-6 text-text-secondary">确认后按上限冻结算力，完成后按实际消耗结算。</p></Card>
+    <Section title="问答摘要"><div className="space-y-2">{questionAnswers.length ? questionAnswers.map(({ question, values }) => <Card key={question.id}><p className="text-xs text-text-secondary">{question.label}</p><p className="mt-1 text-sm font-medium text-text-primary">{values.join("、")}</p></Card>) : <Card><span className="text-sm text-text-secondary">未选择结构化答案</span></Card>}</div></Section>
+    {progressive && <Section title="AI 已提取的核心信息"><Card><div className="flex flex-wrap gap-2">{selectedFacts.map(value => <StatusTag key={value} tone="neutral">{value}</StatusTag>)}</div></Card></Section>}
+    <Section title="主观补充"><Card><p className="text-sm leading-5 text-text-primary">{run?.note || "未填写补充说明"}</p>{run?.uploadName && <p className="mt-3 text-xs text-text-brand">已附材料：{run.uploadName}</p>}</Card></Section>
+    <Card className="bg-surface-subtle"><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">作答完善度</span><strong className="text-text-primary">{completeness}%</strong></div></Card>
     <Section title="算力与归属" subtitle="冻结 4 块独立结算说明"><div className="grid grid-cols-1 gap-3">
       <Card data-testid="review-card-estimate"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Battery aria-hidden="true" size={20} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">算力预估</p><p className="mt-1 text-sm leading-5 text-text-secondary">当前可用 <strong className="text-text-primary">{runtime.computeBalance}</strong> · 本次预计消耗</p><p className="mt-1 text-base font-semibold text-text-primary">{policy.estimateMin}–{policy.estimateMax} 算力</p></div></div></Card>
       <Card data-testid="review-card-freeze"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Snowflake aria-hidden="true" size={20} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">冻结上限</p><p className="mt-1 text-sm leading-5 text-text-secondary">确认后将立即按上限冻结，完成后按实际消耗释放差额。</p><p className="mt-1 text-base font-semibold text-text-primary">确认后冻结 {policy.estimateMax} 算力</p></div></div></Card>
       <Card data-testid="review-card-ownership"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><FileCheck2 aria-hidden="true" size={20} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">成果归属</p><p className="mt-1 text-sm leading-5 text-text-secondary">成果严格绑定当前 task，不复用其它技能的结果。</p><p className="mt-1 text-base font-semibold text-text-primary">当前赛事 / 当前项目 / 当前任务</p></div></div></Card>
-      <Card data-testid="review-card-team"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Users aria-hidden="true" size={20} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">团队可见</p><p className="mt-1 text-sm leading-5 text-text-secondary">结果对全队可见。队员可编辑并保存版本，队长可采纳或标记用于比赛。</p><p className="mt-1 text-base font-semibold text-text-primary">全队可访问 · 事实 / 建议分区</p></div></div></Card>
+      <Card data-testid="review-card-team"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Users aria-hidden="true" size={20} strokeWidth={2} /></div><div className="min-w-0 flex-1"><p className="text-xs font-medium text-text-brand">团队可见</p><p className="mt-1 text-sm leading-5 text-text-secondary">结果对全队可见。队员可编辑后提交确认，队长可采纳或标记用于比赛。</p><p className="mt-1 text-base font-semibold text-text-primary">全队可访问 · 事实 / 建议分区</p></div></div></Card>
     </div></Section>
     {!enoughCompute && <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">算力不足</p><p className="mt-2 text-sm text-warning-text">本次最多需要冻结 {policy.estimateMax}，当前可用 {runtime.computeBalance}。</p></Card>}
     {missing.length > 0 && <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">缺少任务材料</p><p className="mt-2 text-sm text-warning-text">{missing.map(item => item.label).join("、")}</p></Card>}
@@ -142,16 +173,18 @@ export function TaskProgressPage() {
   const result = resultById(task.resultId);
   const tone = status === "failed" ? "danger" : status === "completed" ? "success" : "info";
   const label = status === "queued" ? "排队中" : status === "running" ? "运行中" : status === "failed" ? "生成失败" : status === "completed" ? "已完成" : "尚未开始";
+  const instanceTitle = taskInstanceTitle(taskId, task.title);
   const steps = [
-    { label: "读取参赛档案", done: (run?.progress ?? 0) >= 16 },
-    { label: "检查问答与上传材料", done: (run?.progress ?? 0) >= 35 },
-    { label: "生成诊断建议", done: (run?.progress ?? 0) >= 68 },
-    { label: "质量检查并生成可编辑成果", done: (run?.progress ?? 0) >= 100 },
+    { label: "已冻结算力", done: Boolean(run?.reservedCompute) || status === "completed" },
+    { label: "已读取参赛档案", done: (run?.progress ?? 0) >= 16 },
+    { label: "已检查问答材料", done: (run?.progress ?? 0) >= 35 },
+    { label: "正在生成建议", done: (run?.progress ?? 0) >= 68 },
+    { label: "质量检查", done: (run?.progress ?? 0) >= 100 },
   ];
 
   return <PublicShell showNavigation={false}><PageHeader title="任务进度" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
-    <Card className={status === "failed" ? "border border-danger bg-danger-bg" : "border border-border-subtle"}><div className="flex items-center justify-between gap-3"><StatusTag tone={tone}>{label}</StatusTag><strong className="text-lg text-text-primary">{run?.progress ?? 0}%</strong></div><h2 className="mt-3 text-lg font-semibold text-text-primary">{task.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{status === "failed" ? "本次运行失败，原回答已保留，冻结算力应退回后再重试。" : status === "completed" ? `已生成：${result?.title ?? "任务成果"}` : "任务可离开页面，完成后会通过站内消息通知。"}</p>{Boolean(run?.reservedCompute) && <p className="mt-3 text-xs font-medium text-text-brand">已冻结 {run.reservedCompute} 算力</p>}<div className="mt-4 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary transition-all" style={{ width: `${run?.progress ?? 0}%` }} /></div></Card>
+    <Card className={status === "failed" ? "border border-danger bg-danger-bg" : "border border-border-subtle"}><div className="flex items-center justify-between gap-3"><StatusTag tone={tone}>{label}</StatusTag><strong className="text-lg text-text-primary">{run?.progress ?? 0}%</strong></div><h1 className="mt-3 text-lg font-semibold text-text-primary">{instanceTitle}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">{status === "failed" ? "本次运行失败，原回答已保留，冻结算力应退回后再重试。" : status === "completed" ? `已生成：${result?.title ?? "任务成果"}` : "任务可离开页面，完成后会通过站内消息通知。"}</p>{Boolean(run?.reservedCompute) && <p className="mt-3 text-xs font-medium text-text-brand">已冻结 {run.reservedCompute} 算力</p>}<div className="mt-4 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary transition-all" style={{ width: `${run?.progress ?? 0}%` }} /></div></Card>
     <Section title="处理步骤"><div className="space-y-2">{steps.map(step => <Card key={step.label}><div className="flex items-center justify-between gap-3"><span className="text-sm text-text-primary">{step.label}</span><StatusTag tone={step.done ? "success" : "neutral"}>{step.done ? "已完成" : "等待中"}</StatusTag></div></Card>)}</div></Section>
     <div className="space-y-2">{status === "queued" && <Button className="w-full" onClick={() => advanceTask(competitionId, taskId)}>模拟进入运行</Button>}{status === "running" && <Button className="w-full" onClick={() => advanceTask(competitionId, taskId)}>模拟生成完成</Button>}{status === "failed" && <Button className="w-full" onClick={() => retryTask(competitionId, taskId)}>重新排队</Button>}{status === "completed" && <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${task.resultId}`)}>查看本任务成果</Button>}{status === "ready" || status === "draft" ? <SecondaryButton className="w-full" onClick={() => navigate(`${taskBasePath(competitionId, taskId)}/answer`)}>返回任务答题</SecondaryButton> : null}<SecondaryButton className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop`)}>返回工作台</SecondaryButton></div>
     <TaskScenarioTools competitionId={competitionId} taskId={taskId} />
