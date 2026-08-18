@@ -70,6 +70,18 @@ function makeTaskRuns() {
 }
 
 function makeActiveRuntime(): CompetitionWorkshopRuntime {
+  const taskRuns = makeTaskRuns();
+  taskRuns["s1-product-score"] = {
+    status: "completed",
+    answer: "核心单品 60-99 元；优势为成分差异化、包装颜值与性价比；重点关注市场可行性与竞争分析。",
+    answers: {
+      price: ["60-99元"],
+      advantages: ["成分差异化", "包装颜值", "性价比"],
+    },
+    focus: ["市场可行性", "竞争分析"],
+    note: "希望重点验证头皮修护定位、竞品差异与供应链落地条件。",
+    files: [],
+  };
   return {
     lifecycle: "inProgress",
     permissionDenied: false,
@@ -80,10 +92,10 @@ function makeActiveRuntime(): CompetitionWorkshopRuntime {
       brandAssets: false,
       pitchDraft: false,
     },
-    taskRuns: makeTaskRuns(),
+    taskRuns,
     forcedLockedTaskIds: [],
-    acceptedResultIds: [],
-    submittedResultIds: [],
+    acceptedResultIds: ["result-s1-product-score"],
+    submittedResultIds: ["result-s1-product-score"],
     sharedResultIds: [],
     resultDrafts: {},
   };
