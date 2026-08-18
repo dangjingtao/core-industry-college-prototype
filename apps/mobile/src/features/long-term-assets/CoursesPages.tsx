@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Award, BookOpen, Check, Clock, Coins, Filter, GraduationCap, Lock, PlayCircle, Search, Star, Trophy } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
@@ -280,28 +280,101 @@ export function CourseCenterPage() {
   );
 }
 
+const courseDemoStates = [
+  { value: "notEnrolledFree", label: "未报名（免费）" },
+  { value: "notEnrolledCredit", label: "未报名（需学力值）" },
+  { value: "enrolled", label: "已报名" },
+  { value: "completed", label: "已学完" },
+  { value: "passed", label: "已通过考试" },
+] as const;
+
+type CourseDemoState = typeof courseDemoStates[number]["value"] | null;
+
+function CoursePrototypeTools() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const current = searchParams.get("courseState") as CourseDemoState;
+  const set = (value?: CourseDemoState) => {
+    const next = new URLSearchParams(searchParams);
+    value ? next.set("courseState", value) : next.delete("courseState");
+    setSearchParams(next, { replace: true });
+  };
+  return (
+    <details className="mx-4 mt-4 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
+      <summary className="cursor-pointer font-medium text-text-secondary">原型状态</summary>
+      <div className="mt-2 grid grid-cols-2 gap-1">
+        {[undefined, ...courseDemoStates.map(s => s.value)].map(value => (
+          <button
+            key={value ?? "ready"}
+            className={`min-h-8 rounded-control px-2 text-text-brand active:bg-surface-pressed ${current === value ? "bg-primary-container font-semibold" : ""}`}
+            onClick={() => set(value)}
+          >
+            {value ? courseDemoStates.find(s => s.value === value)?.label : "真实状态"}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function CourseDetailPage() {
   const navigate = useNavigate();
   const loggedIn = useAccountLoggedIn();
   const accountAction = useAccountAction();
   const { courseId } = useParams();
   const course = courseById(courseId);
-  const { learningFor, enrolledFor, enrollCourse, benefitStatusFor, startCourse, certificates, claimCertificate } = useLongTermAssets();
+  const { learningFor, enrolledFor, enrollCourse, benefitStatusFor, startCourse, certificates, claimCertificate, submitAssessment, completeCourse } = useLongTermAssets();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const demoState = searchParams.get("courseState") as CourseDemoState;
   const [activeTab, setActiveTab] = useState<"intro" | "catalog" | "achievement">("intro");
   const [enrollError, setEnrollError] = useState("");
   const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [showClaimSuccessDialog, setShowClaimSuccessDialog] = useState(false);
 
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
-  const record = learningFor(course.id);
-  const enrolled = enrolledFor(course.id);
+  const baseRecord = learningFor(course.id);
+  const baseEnrolled = enrolledFor(course.id);
+
+  const record = useMemo(() => {
+    if (!demoState) return baseRecord;
+    switch (demoState) {
+      case "notEnrolledFree":
+      case "notEnrolledCredit":
+        return { ...baseRecord, progress: 0, status: "notStarted" as const, assessment: "idle" as const };
+      case "enrolled":
+        return { ...baseRecord, progress: 0, status: "notStarted" as const, assessment: "idle" as const };
+      case "completed":
+        return { ...baseRecord, progress: 100, status: "inProgress" as const, assessment: "idle" as const };
+      case "passed":
+        return { ...baseRecord, progress: 100, status: "completed" as const, assessment: "passed" as const };
+    }
+  }, [demoState, baseRecord]);
+
+  const enrolled = demoState ? demoState !== "notEnrolledFree" && demoState !== "notEnrolledCredit" : baseEnrolled;
   const locked = course.entitlement === "benefitRequired" && (!course.unlockBenefitId || !["claimed", "used"].includes(benefitStatusFor(course.unlockBenefitId)));
   const certificate = certificates.find(item => item.courseId === course.id);
 
+  useEffect(() => {
+    if (demoState === "enrolled" || demoState === "completed" || demoState === "passed") {
+      setActiveTab("catalog");
+    }
+  }, [demoState]);
+
+  const enrollInDemo = (next: typeof courseDemoStates[number]["value"]) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("courseState", next);
+    setSearchParams(nextParams, { replace: true });
+    setActiveTab("catalog");
+  };
+
   const handleEnroll = () => {
     if (!loggedIn) { accountAction(() => undefined); return; }
-    if (course.entitlement === "creditRequired") {
+    if (demoState === "notEnrolledCredit" || course.entitlement === "creditRequired") {
       setShowCreditDialog(true);
+      return;
+    }
+    if (demoState) {
+      enrollInDemo("enrolled");
       return;
     }
     const result = enrollCourse(course.id);
@@ -311,8 +384,12 @@ export function CourseDetailPage() {
   };
 
   const confirmCreditEnroll = () => {
-    const result = enrollCourse(course.id);
     setShowCreditDialog(false);
+    if (demoState) {
+      enrollInDemo("enrolled");
+      return;
+    }
+    const result = enrollCourse(course.id);
     if (!result.success) { setEnrollError(result.reason); return; }
     setEnrollError("");
     setActiveTab("catalog");
@@ -330,11 +407,37 @@ export function CourseDetailPage() {
     beginLearning();
   };
 
-  const actionText = !loggedIn ? "登录后学习" : !enrolled ? (course.entitlement === "free" ? "免费报名" : course.entitlement === "creditRequired" ? `${course.cost} 学力值兑换` : "权益解锁学习") : record.status === "completed" ? "查看学习成果" : record.status === "inProgress" ? "继续学习" : "开始学习";
+  const actionText = !loggedIn
+    ? "登录后学习"
+    : !enrolled
+      ? (demoState === "notEnrolledCredit" || course.entitlement === "creditRequired")
+        ? `需${course.cost ?? 200}学力值兑换`
+        : demoState === "notEnrolledFree" || course.entitlement === "free"
+          ? "点击报名学习"
+          : "权益解锁学习"
+      : record.status === "completed"
+        ? "查看学习成果"
+        : record.status === "inProgress"
+          ? "继续学习"
+          : "开始学习";
+
+  const claimCertificateAndShowDialog = () => {
+    if (course.certificateId) {
+      if (!certificates.some(item => item.id === course.certificateId)) {
+        submitAssessment(course.id, true);
+        completeCourse(course.id);
+      }
+      if (course.certificateId) claimCertificate(course.certificateId);
+    }
+    setShowClaimSuccessDialog(true);
+  };
+
+  const certificateDetailUrl = certificate?.id ? `/assets/certificates/${certificate.id}` : (course.certificateId ? `/assets/certificates/${course.certificateId}` : "/assets/certificates");
 
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="课程详情" backTo="/courses" />
+      <CoursePrototypeTools />
       <div className="space-y-5 px-4 py-5">
         <div className="relative aspect-video w-full overflow-hidden rounded-container">
           <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
@@ -395,7 +498,7 @@ export function CourseDetailPage() {
             {locked && course.unlockBenefitId && (
               <SecondaryButton className="w-full" onClick={() => navigate(`/benefits/${course.unlockBenefitId}`)}>查看解锁权益</SecondaryButton>
             )}
-            <Button className="w-full" disabled={locked} onClick={primaryAction}>{actionText}</Button>
+            {!enrolled && <Button className="w-full" disabled={locked} onClick={primaryAction}>{actionText}</Button>}
           </div>
         )}
 
@@ -415,13 +518,12 @@ export function CourseDetailPage() {
                 })}
               </Card>
             </Section>
-            {enrolled ? (
-              <Button className="w-full" onClick={() => record.status === "completed" ? navigate(`/courses/${course.id}/achievement`) : beginLearning()}>
-                {record.status === "completed" ? "查看学习成果" : record.status === "inProgress" ? "继续学习" : "开始学习"}
+            {enrolled && record.status !== "completed" && (
+              <Button className="w-full" onClick={() => record.status === "inProgress" ? beginLearning() : beginLearning()}>
+                {record.status === "inProgress" ? "继续学习" : "开始学习"}
               </Button>
-            ) : (
-              <Button className="w-full" disabled={locked} onClick={primaryAction}>{actionText}</Button>
             )}
+            {!enrolled && <Button className="w-full" disabled={locked} onClick={primaryAction}>{actionText}</Button>}
           </div>
         )}
 
@@ -438,33 +540,27 @@ export function CourseDetailPage() {
               </p>
             </Card>
 
-            {record.progress === 100 && (
-              <Card className={record.assessment === "passed" ? "border border-success bg-success-bg" : "border border-info bg-info-bg"}>
+            {record.progress === 100 && record.assessment !== "passed" && (
+              <Card className="border border-info bg-info-bg">
                 <div className="flex items-center gap-2">
-                  <Trophy size={20} className={record.assessment === "passed" ? "text-success-text" : "text-info-text"} aria-hidden="true" />
+                  <Trophy size={20} className="text-info-text" aria-hidden="true" />
                   <h2 className="font-semibold text-text-primary">课程考试</h2>
                 </div>
                 <p className="mt-2 text-sm leading-5 text-text-secondary">
-                  {record.assessment === "passed" ? "你已通过课程考试，可以领取电子证书。" : record.assessment === "failed" ? "本次考试未通过，可重新作答。" : "学完所有内容后，可参加线上考试，通过即可领取电子证书。"}
+                  {record.assessment === "failed" ? "本次考试未通过，可重新作答。" : "学完所有内容后，可参加线上考试，通过即可领取电子证书。"}
                 </p>
-                <Button className="mt-4 w-full" onClick={() => navigate(`/courses/${course.id}/assessment`)}>
-                  {record.assessment === "passed" ? "回顾考试" : "进入考试"}
-                </Button>
+                <Button className="mt-4 w-full" onClick={() => navigate(`/courses/${course.id}/assessment`)}>可参加考试</Button>
               </Card>
             )}
 
-            {certificate && (
-              <Card className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Award size={20} className="text-text-brand" aria-hidden="true" />
-                    <h2 className="font-semibold text-text-primary">电子证书</h2>
-                  </div>
-                  <StatusTag tone={certificate.status === "claimed" ? "success" : "info"}>{certificate.status === "claimed" ? "已领取" : "可领取"}</StatusTag>
+            {record.assessment === "passed" && (
+              <Card className="border border-success bg-success-bg">
+                <div className="flex items-center gap-2">
+                  <Award size={20} className="text-success-text" aria-hidden="true" />
+                  <h2 className="font-semibold text-text-primary">电子证书</h2>
                 </div>
-                <p className="text-sm text-text-secondary">{certificate.title}</p>
-                {certificate.status === "claimable" && <Button className="w-full" onClick={() => claimCertificate(certificate.id)}>领取证书</Button>}
-                {certificate.status === "claimed" && <GhostButton className="w-full" onClick={() => navigate(`/assets/certificates/${certificate.id}`)}>查看长期证书记录</GhostButton>}
+                <p className="text-sm leading-5 text-text-secondary">你已通过课程考试，可以领取可信教育认证电子证书。</p>
+                <Button className="w-full" onClick={claimCertificateAndShowDialog}>可领取可信教育认证电子证书</Button>
               </Card>
             )}
 
@@ -477,12 +573,26 @@ export function CourseDetailPage() {
         open={showCreditDialog}
         onOpenChange={setShowCreditDialog}
         title="确认兑换课程"
-        description={`使用 ${course.cost} 学力值兑换「${course.title}」，兑换后即可开始学习。`}
+        description={`使用 ${course.cost ?? 200} 学力值兑换「${course.title}」，兑换后即可开始学习。`}
         size="sm"
         footer={
           <div className="flex w-full gap-3">
             <SecondaryButton className="flex-1" onClick={() => setShowCreditDialog(false)}>取消</SecondaryButton>
             <Button className="flex-1" onClick={confirmCreditEnroll}>确认兑换</Button>
+          </div>
+        }
+      />
+
+      <Dialog
+        open={showClaimSuccessDialog}
+        onOpenChange={setShowClaimSuccessDialog}
+        title="领取成功"
+        description="恭喜你领取成功，电子证书已加入你的可信成果。"
+        size="sm"
+        footer={
+          <div className="flex w-full flex-col gap-3">
+            <Button className="w-full" onClick={() => { setShowClaimSuccessDialog(false); navigate(certificateDetailUrl); }}>点击查看</Button>
+            <SecondaryButton className="w-full" onClick={() => setShowClaimSuccessDialog(false)}>关闭</SecondaryButton>
           </div>
         }
       />
