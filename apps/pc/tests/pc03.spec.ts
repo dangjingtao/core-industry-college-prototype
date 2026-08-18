@@ -2,6 +2,24 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
+test("PC03 work routes stay inside the existing admin sidebar IA", async ({ page }) => {
+  await page.goto("/admin/content");
+  const adminNav = page.getByRole("navigation", { name: "管理端主导航" });
+  await expect(adminNav.getByRole("link", { name: "内容与活动", exact: true })).toBeVisible();
+  const contentOperations = adminNav.getByRole("link", { name: "内容运营", exact: true });
+  await expect(contentOperations).toHaveAttribute("href", "/admin/content/operations");
+
+  await contentOperations.click();
+  await expect(page).toHaveURL(/\/admin\/content\/operations$/);
+  await expect(page.getByRole("heading", { name: "首页 Banner / 资讯 / 赛友内容 / 活动" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "管理端主导航" })).toBeVisible();
+
+  await page.goto("/admin/opportunities/intern-1");
+  await expect(adminNav.getByRole("link", { name: "机会与投递", exact: true })).toBeVisible();
+  await page.goto("/admin/organizations");
+  await expect(adminNav.getByRole("link", { name: "Organization 主数据", exact: true })).toBeVisible();
+});
+
 test("PC03 unifies Organization while preserving Mobile company stable values", async ({ page }) => {
   await page.goto("/admin/organizations");
   await expect(page.getByRole("heading", { name: "统一 Organization 主体主数据" })).toBeVisible();
