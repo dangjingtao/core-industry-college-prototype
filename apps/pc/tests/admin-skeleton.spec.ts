@@ -59,6 +59,9 @@ test("admin domains expose existing truth ownership instead of copied mobile sto
   await expect(page.getByText("CompetitionIdentity", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Account ↔ CompetitionIdentity[]", { exact: true })).toBeVisible();
   await expect(page.getByText("accountId 未接入 × sanchuang-16", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: /当前账号 × 第十六届三创赛/ }).click();
+  await expect(page).toHaveURL(/\/admin\/students\/objects\/identity-sanchuang-16$/);
   await expect(page.getByText(/PC01 不复制这份数组/)).toBeVisible();
 });
 
