@@ -61,6 +61,8 @@ test("technical identifiers are secondary across specialized admin pages", async
   await expect(page.getByRole("heading", { name: "北辰美妆" })).toBeVisible();
   await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
   await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
+  await page.getByText("数据来源与关联标识", { exact: true }).click();
   await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).toBeVisible();
 
   await page.goto("/admin/pc04/courses/brand-ecommerce");
