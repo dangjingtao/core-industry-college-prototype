@@ -8,6 +8,7 @@ export type PermissionRole = {
   label: string;
   modulePermissions: string[];
   dataScope: string;
+  scopeDetail: string;
   canManageAdmins: boolean;
   canExecuteHighRisk: boolean;
 };
@@ -39,16 +40,18 @@ export const permissionRoles: PermissionRole[] = [
   {
     key: "superAdmin",
     label: "超级管理员",
-    modulePermissions: ["后台管理员", "全模块", "权限提升", "高风险治理执行"],
+    modulePermissions: ["后台管理员", "全部业务模块", "权限提升", "高风险治理执行"],
     dataScope: "全平台",
+    scopeDetail: "global",
     canManageAdmins: true,
     canExecuteHighRisk: true,
   },
   {
     key: "operator",
     label: "普通运营",
-    modulePermissions: ["学生治理", "赛事", "Organization", "课程 / 权益 / 证书", "机会 / 内容"],
-    dataScope: "示例：competitionId=sanchuang-16 + organizationId=northstar-beauty",
+    modulePermissions: ["学生治理", "赛事", "合作主体", "课程 / 权益 / 证书", "机会 / 内容"],
+    dataScope: "第十六届三创赛 + 北辰美妆合作范围",
+    scopeDetail: "competitionId=sanchuang-16 · organizationId=northstar-beauty",
     canManageAdmins: false,
     canExecuteHighRisk: false,
   },
@@ -69,7 +72,6 @@ export const studentAccountSeed = {
       competitionStatus: "registrationOpen",
       identityStatus: "active",
       registrationStatus: "approved",
-      officialQualification: "external-confirmation-required",
       source: "Mobile shared identities[]",
     },
     {
@@ -77,7 +79,6 @@ export const studentAccountSeed = {
       competitionStatus: "upcoming",
       identityStatus: "pending",
       registrationStatus: "pending",
-      officialQualification: "not-applicable / pending",
       source: "Mobile shared identities[]",
     },
     {
@@ -85,7 +86,6 @@ export const studentAccountSeed = {
       competitionStatus: "ended",
       identityStatus: "revoked",
       registrationStatus: "approved",
-      officialQualification: "historical",
       source: "Mobile shared identities[]",
     },
   ],
@@ -104,7 +104,7 @@ export const studentAccountSeed = {
   application: {
     opportunityId: "intern-1",
     organizationId: "northstar-beauty",
-    status: "submitted / statusUnknown（Runtime）",
+    status: "statusUnknown",
     source: "App Application；不创建 CandidateRecord",
   },
 } as const;
@@ -118,7 +118,7 @@ export const longTermAssetsSeed = [
     source: "Competition sanchuang-15",
     relation: "competitionId=sanchuang-15 · teamRole 来自赛事 Workspace",
     appConsumer: "/assets/experiences · /me/resume",
-    retention: "赛事 ended / identity revoked 后继续长期存在",
+    retention: "赛事结束后仍作为历史经历长期保留",
   },
   {
     id: "competition-result-sanchuang-15",
@@ -153,7 +153,7 @@ export const longTermAssetsSeed = [
   {
     id: "verificationCode=SC15-TOMZ-24001",
     kind: "VerificationRecord",
-    title: "SC15-TOMZ-24001 验真记录",
+    title: "证书验真记录 · SC15-TOMZ-24001",
     state: "valid",
     source: "Verification Runtime",
     relation: "certificateId=cert-sanchuang-15",
@@ -172,51 +172,51 @@ export const highRiskCategories = [
 
 export const consistencyAuditRows = [
   {
-    object: "CompetitionIdentity",
+    object: "学生赛事身份",
     app: "identityStatus=active",
-    pc: "identityStatus=active；官方资格作为独立外部事实展示",
+    pc: "identityStatus=active；官方资格沿用 PC02 独立事实",
     mapping: "registrationStatus=approved 仅代表平台报名流程；不得把它等同 active / 官方资格",
   },
   {
-    object: "Application",
+    object: "投递记录",
     app: "statusUnknown",
     pc: "statusUnknown",
     mapping: "继续使用同一 Application；不创建 CandidateRecord",
   },
   {
-    object: "CourseAchievement",
+    object: "课程成果",
     app: "completed = progress 100 + assessment passed",
-    pc: "completed（Runtime 只读）",
+    pc: "completed（运行事实只读）",
     mapping: "不建立“培训通过”第二状态",
   },
   {
-    object: "Certificate",
+    object: "证书",
     app: "claimable / claimed / pending / revoked",
     pc: "claimable / claimed / pending / revoked",
     mapping: "revoked 保留历史对象与验真记录",
   },
   {
-    object: "赛事结束 / 身份 revoked",
+    object: "赛事结束 / 身份撤销",
     app: "Workspace 权限关闭；长期资产仍可读",
-    pc: "CompetitionIdentity 历史保留；Experience / Result / Certificate 继续存在",
+    pc: "赛事身份历史保留；经历 / 成绩 / 证书继续存在",
     mapping: "赛事期能力与长期资产明确分层",
   },
 ] as const;
 
 export const crossDomainChain = [
-  { label: "赛事", id: "sanchuang-16", to: "/admin/competitions/objects/sanchuang-16" },
-  { label: "Organization", id: "northstar-beauty", to: "/admin/organizations/northstar-beauty" },
-  { label: "课程", id: "brand-ecommerce", to: "/admin/pc04/courses/brand-ecommerce" },
-  { label: "权益", id: "benefit-beauty-sample", to: "/admin/pc04/benefits/benefit-beauty-sample" },
-  { label: "机会", id: "intern-1", to: "/admin/opportunities/intern-1" },
-  { label: "学生", id: "accountId 待账号层接入", to: "/admin/students" },
-  { label: "长期资产", id: "cert-sanchuang-15", to: "/admin/assets" },
+  { label: "赛事", name: "第十六届三创赛", id: "sanchuang-16", to: "/admin/competitions/objects/sanchuang-16" },
+  { label: "合作主体", name: "北辰美妆", id: "northstar-beauty", to: "/admin/organizations/northstar-beauty" },
+  { label: "课程", name: "品牌电商实战课", id: "brand-ecommerce", to: "/admin/pc04/courses/brand-ecommerce" },
+  { label: "权益", name: "北辰美妆校园体验权益", id: "benefit-beauty-sample", to: "/admin/pc04/benefits/benefit-beauty-sample" },
+  { label: "机会", name: "北辰美妆实习机会", id: "intern-1", to: "/admin/opportunities/intern-1" },
+  { label: "学生", name: "林晓", id: "accountId 待账号层接入", to: "/admin/students" },
+  { label: "长期资产", name: "第十五届三创赛证书", id: "cert-sanchuang-15", to: "/admin/assets" },
 ] as const;
 
 export const pcRegressionMatrix = [
-  { card: "PC01", scope: "控制面壳 / 数据来源 / stable id", state: "PASS" },
-  { card: "PC02", scope: "赛事控制台 / 报名资格 / 学校审核 / Workshop", state: "PASS" },
-  { card: "PC03", scope: "Organization / 机会 / 内容运营", state: "PASS" },
-  { card: "PC04", scope: "课程 / 权益 / 可信证书", state: "PASS" },
-  { card: "PC05", scope: "学生 / 长期资产 / 权限 / 审计 / 高风险审批 / 跨端一致性", state: "待独立评审" },
+  { card: "PC01", scope: "统一后台壳、数据来源与对象关系", state: "PASS" },
+  { card: "PC02", scope: "赛事、报名资格、学校审核、创赛工坊", state: "PASS" },
+  { card: "PC03", scope: "合作主体、机会、内容运营", state: "PASS" },
+  { card: "PC04", scope: "课程、权益、可信证书", state: "PASS" },
+  { card: "PC05", scope: "学生、长期资产、权限、审计、高风险审批、跨端一致性", state: "待独立评审" },
 ] as const;
