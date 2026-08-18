@@ -82,7 +82,7 @@ export function App() {
     <PC03StateProvider>
       <PC04StateProvider>
         <Routes>
-          <Route path="/admin/competitions/objects/:competitionId" element={<CompetitionConsole />} />
+          <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><CompetitionConsole /></AdminRoute>} />
           <Route path="/admin/organizations" element={<AdminRoute><PC03Console /></AdminRoute>} />
           <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03Console /></AdminRoute>} />
           <Route path="/admin/opportunities/*" element={<AdminRoute><PC03OpportunityRoute /></AdminRoute>} />
