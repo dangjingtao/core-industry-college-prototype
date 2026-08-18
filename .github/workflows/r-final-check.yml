@@ -11,6 +11,9 @@ on:
       - "packages/shared/**"
       - "package.json"
       - "package-lock.json"
+  pull_request:
+    branches:
+      - dev
 
 jobs:
   r-final:
@@ -33,6 +36,12 @@ jobs:
 
       - name: Verify mobile routes, types and build
         run: npm run verify --workspace @core/mobile
+
+      - name: Run T013A focused browser flows
+        run: npm run e2e --workspace @core/mobile -- tests/t013a-workshop.spec.ts
+
+      - name: Run existing T013 workshop regressions
+        run: npm run e2e --workspace @core/mobile -- tests/t013-workshop.spec.ts
 
       - name: Run mobile mother flows and feature regressions
         run: >-
