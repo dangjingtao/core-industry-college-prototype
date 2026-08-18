@@ -297,7 +297,7 @@ export function HomePage() {
   ];
   const growthResources = [
     { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
-    { label: "权益", description: "查看可领取的支持", to: "/benefits", icon: Gift },
+    { label: "创赛福利", description: "学力值、权益与兑换", to: "/benefits", icon: Gift },
     { label: "可信成果", description: "沉淀证书与成绩", to: "/assets", icon: Award },
     { label: "合作企业", description: "发现品牌与机会", to: "/companies", icon: Building2 },
   ];

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, StatusTag } from "../../components/ui";
-import { benefitById, benefits, type BenefitStatus } from "./data";
+import { ChevronRight, Coins, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
+import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
+import { benefitById, benefits, exchangeItemById, exchangeItems, learningCreditRecords, type BenefitStatus } from "./data";
 import { SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
 import { useLongTermAssets } from "./store";
 
@@ -22,18 +23,99 @@ function useBenefitSourceContext() {
   return { competitionId, query, backTo: competitionId ? `/competitions/${competitionId}/workspace` : undefined };
 }
 
+const currentCredits = 1280;
+
+function CreditCard() {
+  return <Card className="relative overflow-hidden bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary">
+    <div className="relative z-10">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 text-sm font-medium opacity-90"><Coins size={18} aria-hidden="true" />我的学力值</span>
+        <Link to="/benefits/credits" className="flex items-center gap-1 text-xs font-medium opacity-90">查看明细<ChevronRight size={14} aria-hidden="true" /></Link>
+      </div>
+      <p className="mt-3 text-4xl font-bold tracking-tight">{currentCredits}</p>
+      <p className="mt-1 text-xs opacity-75">数据为原型占位，学力值经济模型待 F04 决策</p>
+      <div className="mt-4 flex gap-2">
+        <Link to="/benefits/free" className="min-h-touch flex-1 rounded-control bg-white/15 px-3 py-2 text-center text-sm font-medium">免费福利</Link>
+        <Link to="/benefits/exchange" className="min-h-touch flex-1 rounded-control bg-white px-3 py-2 text-center text-sm font-semibold text-text-brand">兑换中心</Link>
+      </div>
+    </div>
+    <Sparkles className="absolute bottom-3 right-3 opacity-10" size={80} aria-hidden="true" />
+  </Card>;
+}
+
+function BenefitListItem({ item, status }: { item: typeof benefits[number]; status?: BenefitStatus }) {
+  return <Link to={`/benefits/${item.id}`} className="block"><Card interactive className="space-y-3"><SourceLine source={item.source} /><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{item.summary}</p></div>{status ? <StatusTag tone={benefitTone(status)}>{benefitLabel[status]}</StatusTag> : <StatusTag tone="neutral">登录查看资格</StatusTag>}</div>{item.expiresAt && <p className="text-xs text-text-tertiary">有效期至 {item.expiresAt}</p>}</Card></Link>;
+}
+
 export function BenefitsPage() {
   const loggedIn = useAccountLoggedIn();
   const { benefitStatusFor } = useLongTermAssets();
   const { competitionId, query, backTo } = useBenefitSourceContext();
-  const [filter, setFilter] = useState<"all" | "available" | "history">("all");
+  const eligibleBenefits = useMemo(() => benefits.filter(item => {
+    if (competitionId && (item.source.type !== "competition" || item.source.competitionId !== competitionId)) return false;
+    return loggedIn ? ["eligible", "claimed"].includes(benefitStatusFor(item.id)) : true;
+  }).slice(0, 2), [benefitStatusFor, competitionId, loggedIn]);
+  const recommendedExchange = exchangeItems.filter(item => item.status !== "outOfStock").slice(0, 2);
+  return <PublicShell><PageHeader title={competitionId ? "赛事福利" : "创赛福利"} subtitle="学力值、免费福利与兑换中心" backTo={backTo} /><div className="space-y-6 px-4 py-5"><CreditCard />
+    <Section title="推荐免费福利" action={<Link to="/benefits/free" className="text-sm font-medium text-text-brand">查看全部</Link>}><div className="space-y-3">{eligibleBenefits.length ? eligibleBenefits.map(item => <BenefitListItem key={item.id} item={item} status={loggedIn ? benefitStatusFor(item.id) : undefined} />) : <Card><p className="text-sm text-text-secondary">当前没有可领取的免费福利。</p></Card>}</div></Section>
+    <Section title="推荐兑换" action={<Link to="/benefits/exchange" className="text-sm font-medium text-text-brand">兑换中心</Link>}><div className="grid grid-cols-2 gap-3">{recommendedExchange.map(item => <Link key={item.id} to={`/benefits/exchange/${item.id}`} className="block"><Card interactive className="flex h-full flex-col"><div className="flex size-9 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShoppingBag size={18} aria-hidden="true" /></div><h3 className="mt-3 line-clamp-2 text-sm font-semibold text-text-primary">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs text-text-secondary">{item.summary}</p><div className="mt-auto flex items-center gap-1 pt-3 text-sm font-semibold text-text-brand"><Coins size={14} aria-hidden="true" />{item.cost}</div></Card></Link>)}</div></Section>
+    <Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">福利板块展示平台、赛事、企业与活动来源的权益与兑换内容。学力值数额与经济规则为原型占位，正式规则由 F04 产品决策后替换。</p></Card>
+  </div></PublicShell>;
+}
+
+export function FreeBenefitsPage() {
+  const loggedIn = useAccountLoggedIn();
+  const { benefitStatusFor } = useLongTermAssets();
+  const { competitionId, query } = useBenefitSourceContext();
+  const [filter, setFilter] = useState<"all" | "available" | "history">("available");
   const visible = useMemo(() => benefits.filter(item => {
     if (competitionId && (item.source.type !== "competition" || item.source.competitionId !== competitionId)) return false;
     if (!loggedIn) return filter === "all";
     const status = benefitStatusFor(item.id);
-    return filter === "all" || (filter === "available" ? ["eligible","claimed"].includes(status) : ["used","expired"].includes(status));
+    return filter === "all" || (filter === "available" ? ["eligible", "claimed"].includes(status) : ["used", "expired"].includes(status));
   }), [benefitStatusFor, competitionId, filter, loggedIn]);
-  return <PublicShell><PageHeader title={competitionId ? "赛事权益" : "权益"} subtitle={competitionId ? "只展示当前赛事来源" : "统一表达平台、赛事、企业与活动来源"} backTo={backTo} /><div className="space-y-5 px-4 py-5"><Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">权益是成长与活动的支撑能力，不是商城。每一项都说明来源与资格依据；账号状态登录后读取。</p></Card>{loggedIn && <div className="flex gap-2">{(["all","available","history"] as const).map(value => <button key={value} onClick={() => setFilter(value)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${filter === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{value === "all" ? "全部" : value === "available" ? "可用" : "历史"}</button>)}</div>}<div className="space-y-3">{visible.length ? visible.map(item => { const status = loggedIn ? benefitStatusFor(item.id) : undefined; return <Link to={`/benefits/${item.id}${query}`} key={item.id} className="block"><Card interactive className="space-y-3"><SourceLine source={item.source} /><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{item.summary}</p></div>{status ? <StatusTag tone={benefitTone(status)}>{benefitLabel[status]}</StatusTag> : <StatusTag tone="neutral">登录查看资格</StatusTag>}</div>{item.expiresAt && <p className="text-xs text-text-tertiary">有效期至 {item.expiresAt}</p>}</Card></Link>; }) : <Card><p className="text-sm text-text-secondary">当前条件下没有可展示的权益。</p></Card>}</div>{loggedIn ? <Link to="/benefits/wallet" className="block min-h-touch rounded-control bg-primary-container px-4 py-3 text-center text-sm font-medium text-text-brand">查看我的权益记录</Link> : <Card><p className="text-sm text-text-secondary">登录后可查看领取、使用与历史权益记录。</p></Card>}</div></PublicShell>;
+  return <PublicShell><PageHeader title="全部免费福利" subtitle="平台、赛事、企业与活动来源的权益" backTo="/benefits" /><div className="space-y-5 px-4 py-5">{loggedIn && <div className="flex gap-2">{(["all","available","history"] as const).map(value => <button key={value} onClick={() => setFilter(value)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${filter === value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{value === "all" ? "全部" : value === "available" ? "可领取 / 待使用" : "历史"}</button>)}</div>}<div className="space-y-3">{visible.length ? visible.map(item => <BenefitListItem key={item.id} item={item} status={loggedIn ? benefitStatusFor(item.id) : undefined} />) : <Card><p className="text-sm text-text-secondary">当前条件下没有可展示的免费福利。</p></Card>}</div></div></PublicShell>;
+}
+
+const sortOptions = [
+  { value: "default", label: "默认" },
+  { value: "costAsc", label: "学力值从低到高" },
+  { value: "costDesc", label: "学力值从高到低" },
+  { value: "claimed", label: "兑换人数" },
+] as const;
+
+export function ExchangeCenterPage() {
+  const [sort, setSort] = useState<typeof sortOptions[number]["value"]>("default");
+  const sorted = useMemo(() => {
+    const list = [...exchangeItems];
+    if (sort === "costAsc") list.sort((a, b) => a.cost - b.cost);
+    if (sort === "costDesc") list.sort((a, b) => b.cost - a.cost);
+    if (sort === "claimed") list.sort((a, b) => b.claimedCount - a.claimedCount);
+    return list;
+  }, [sort]);
+  return <PublicShell><PageHeader title="兑换中心" subtitle="使用学力值兑换课程与权益" backTo="/benefits" /><div className="space-y-5 px-4 py-5"><Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">当前展示为原型兑换内容，正式商品、库存与学力值消耗规则由运营配置并接入 F04 决策后的经济模型。</p></Card><div className="flex gap-2 overflow-x-auto pb-1">{sortOptions.map(option => <button key={option.value} onClick={() => setSort(option.value)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${sort === option.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{option.label}</button>)}</div><div className="grid grid-cols-2 gap-3">{sorted.map(item => <Link key={item.id} to={`/benefits/exchange/${item.id}`} className="block"><Card interactive className="flex h-full flex-col"><div className="flex items-start justify-between"><span className="flex size-9 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShoppingBag size={18} aria-hidden="true" /></span>{item.status === "outOfStock" && <StatusTag tone="neutral">已兑完</StatusTag>}</div><h3 className="mt-3 line-clamp-2 text-sm font-semibold text-text-primary">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs text-text-secondary">{item.summary}</p><div className="mt-auto flex items-center justify-between pt-3"><span className="flex items-center gap-1 text-sm font-semibold text-text-brand"><Coins size={14} aria-hidden="true" />{item.cost}</span><span className="text-xs text-text-tertiary">{item.claimedCount} 人已兑</span></div></Card></Link>)}</div></div></PublicShell>;
+}
+
+export function ExchangeDetailPage() {
+  const navigate = useNavigate();
+  const { exchangeId } = useParams();
+  const item = exchangeItemById(exchangeId);
+  const [exchanged, setExchanged] = useState(false);
+  if (!item) return <PublicShell showNavigation={false}><PageHeader title="兑换项不存在" backTo="/benefits/exchange" /></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="兑换详情" backTo="/benefits/exchange" /><div className="space-y-6 px-4 py-5"><Card className="flex flex-col items-center p-6 text-center"><span className="flex size-16 items-center justify-center rounded-[20px] bg-primary-container text-text-brand"><ShoppingBag size={32} aria-hidden="true" /></span><h1 className="mt-4 text-xl font-semibold text-text-primary">{item.title}</h1><p className="mt-2 text-sm text-text-secondary">{item.summary}</p><div className="mt-4 flex items-center gap-1 text-2xl font-bold text-text-brand"><Coins size={24} aria-hidden="true" />{item.cost}</div></Card>
+    <Card className="space-y-3"><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">已兑换人数</span><span className="font-medium text-text-primary">{item.claimedCount}</span></div><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">当前库存</span><span className="font-medium text-text-primary">{item.status === "outOfStock" ? "已兑完" : "充足"}</span></div><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">我的学力值</span><span className="font-medium text-text-primary">{currentCredits}</span></div></Card>
+    {exchanged ? <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">兑换申请已提交</p><p className="mt-2 text-sm text-success-text">正式环境需由权益服务确认库存并发放；本原型仅验证交互流程。</p></Card> : item.status === "outOfStock" ? <Button className="w-full" disabled>已兑完</Button> : <Button className="w-full" onClick={() => setExchanged(true)}>确认兑换</Button>}
+    <SecondaryButton className="w-full" onClick={() => navigate("/benefits/exchange")}>返回兑换中心</SecondaryButton>
+  </div></PublicShell>;
+}
+
+export function CreditDetailsPage() {
+  const totalIncome = learningCreditRecords.filter(r => r.type === "income").reduce((sum, r) => sum + r.amount, 0);
+  const totalExpense = Math.abs(learningCreditRecords.filter(r => r.type === "expense").reduce((sum, r) => sum + r.amount, 0));
+  return <PublicShell showNavigation={false}><PageHeader title="学力值明细" backTo="/benefits" /><div className="space-y-5 px-4 py-5"><Card className="bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary"><p className="text-sm opacity-90">当前学力值余额</p><p className="mt-2 text-4xl font-bold">{currentCredits}</p><div className="mt-4 flex gap-4 text-sm"><span className="flex items-center gap-1"><TrendingUp size={16} aria-hidden="true" />收入 {totalIncome}</span><span className="flex items-center gap-1"><Wallet size={16} aria-hidden="true" />支出 {totalExpense}</span></div></Card>
+    <Section title="收支明细"><div className="space-y-3">{learningCreditRecords.map(record => <Card key={record.id} className="flex items-center justify-between gap-3"><div><p className="font-medium text-text-primary">{record.title}</p><p className="mt-1 text-xs text-text-tertiary">{record.time}</p></div><span className={`shrink-0 text-sm font-semibold ${record.type === "income" ? "text-success-text" : "text-danger-text"}`}>{record.type === "income" ? "+" : ""}{record.amount}</span></Card>)}</div></Section>
+    <Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">本明细为原型占位数据。学力值到底是积分、成长分还是其他形态，以及收入/消耗规则，均待 F04 产品决策。</p></Card>
+  </div></PublicShell>;
 }
 
 export function BenefitDetailPage() {

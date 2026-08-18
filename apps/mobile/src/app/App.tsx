@@ -34,7 +34,7 @@ import { WorkshopRuntimeProvider } from "../features/competition-workspace/runti
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
 import { AccountRequired } from "../features/long-term-assets/shared";
 import { CourseAchievementPage, CourseAssessmentPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
-import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage } from "../features/long-term-assets/BenefitsPages";
+import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, ExchangeCenterPage, ExchangeDetailPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
 import {
   AssetsHomePage,
   CertificatesPage,
@@ -121,6 +121,10 @@ export function App() {
               <Route path="/courses/:courseId/assessment" element={account(<CourseAssessmentPage />)} />
               <Route path="/courses/:courseId/achievement" element={account(<CourseAchievementPage />)} />
               <Route path="/benefits" element={<BenefitsPage />} />
+              <Route path="/benefits/free" element={<FreeBenefitsPage />} />
+              <Route path="/benefits/exchange" element={<ExchangeCenterPage />} />
+              <Route path="/benefits/exchange/:exchangeId" element={<ExchangeDetailPage />} />
+              <Route path="/benefits/credits" element={<CreditDetailsPage />} />
               <Route path="/benefits/wallet" element={account(<BenefitsWalletPage />)} />
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
               <Route path="/growth/score" element={account(<GrowthScorePage />)} />

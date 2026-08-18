@@ -215,5 +215,39 @@ export const initialEducationIdentity: EducationIdentityRecord = {
   status: "claimable",
 };
 
+export type ExchangeItem = {
+  id: string;
+  title: string;
+  summary: string;
+  cost: number;
+  claimedCount: number;
+  status: "available" | "outOfStock" | "exchanged";
+};
+
+export const exchangeItems: ExchangeItem[] = [
+  { id: "exchange-course-data", title: "商业数据分析基础课", summary: "平台公共课程兑换资格", cost: 200, claimedCount: 342, status: "available" },
+  { id: "exchange-course-brand", title: "品牌电商实战课", summary: "三创赛美妆电商赛道课程", cost: 300, claimedCount: 189, status: "available" },
+  { id: "exchange-lab-cloud", title: "云栖零售项目课", summary: "企业共建项目课学习资格", cost: 400, claimedCount: 76, status: "available" },
+  { id: "exchange-ride", title: "青年创新日出行券", summary: "线下活动现场出行权益", cost: 50, claimedCount: 512, status: "outOfStock" },
+  { id: "exchange-video", title: "校园视频会员月卡", summary: "平台合作视频会员权益", cost: 150, claimedCount: 1205, status: "available" },
+];
+
+export type LearningCreditRecord = {
+  id: string;
+  title: string;
+  amount: number;
+  type: "income" | "expense";
+  time: string;
+};
+
+export const learningCreditRecords: LearningCreditRecord[] = [
+  { id: "credit-1", title: "完善学生资料", amount: 100, type: "income", time: "2026-08-01 10:23" },
+  { id: "credit-2", title: "报名第十五届三创赛", amount: 200, type: "income", time: "2026-08-03 14:05" },
+  { id: "credit-3", title: "完成商业数据分析基础课", amount: 150, type: "income", time: "2026-08-08 16:40" },
+  { id: "credit-4", title: "兑换品牌电商实战课", amount: -300, type: "expense", time: "2026-08-10 09:12" },
+  { id: "credit-5", title: "参与创赛工坊任务", amount: 80, type: "income", time: "2026-08-12 11:30" },
+];
+
 export const courseById = (id?: string) => courses.find(item => item.id === id);
 export const benefitById = (id?: string) => benefits.find(item => item.id === id);
+export const exchangeItemById = (id?: string) => exchangeItems.find(item => item.id === id);
