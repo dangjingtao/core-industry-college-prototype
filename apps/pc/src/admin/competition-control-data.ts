@@ -5,7 +5,6 @@ export type RegistrationMode = "platformPortal" | "externalUrl" | "thirdPartyApi
 export type PlatformReviewStatus = "pending" | "approved" | "rejected";
 export type OfficialQualificationStatus = "pending" | "confirmed" | "rejected" | "notRequired";
 type CompetitionStatus = "upcoming" | "registrationOpen" | "inProgress" | "ended";
-
 type Relation = { label: string; stableId: string; to?: string };
 
 type CompetitionControlExtension = {
@@ -34,7 +33,9 @@ type CompetitionControlExtension = {
   additionalRelations: Relation[];
 };
 
-export type CompetitionControlRecord = CompetitionControlExtension & {
+type CompetitionControlCore = Omit<CompetitionControlExtension, "additionalAppConsumers" | "additionalRelations">;
+
+export type CompetitionControlRecord = CompetitionControlCore & {
   id: string;
   name: string;
   status: CompetitionStatus;
