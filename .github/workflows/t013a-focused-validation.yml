@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - feat/t013a-s1-s2-current
+    paths:
+      - ".github/workflows/t013a-focused-validation.yml"
+      - "apps/mobile/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: write
 
 jobs:
   focused:
@@ -11,6 +19,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: feat/t013a-s1-s2-current
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -25,10 +36,42 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Verify mobile routes, types and build
+        id: verify
+        continue-on-error: true
         run: npm run verify --workspace @core/mobile
 
       - name: Run T013A focused browser flows
+        id: focused
+        continue-on-error: true
         run: npm run e2e --workspace @core/mobile -- tests/t013a-workshop.spec.ts
 
       - name: Run existing T013 workshop regressions
+        id: regression
+        continue-on-error: true
         run: npm run e2e --workspace @core/mobile -- tests/t013-workshop.spec.ts
+
+      - name: Record focused validation result
+        if: always()
+        env:
+          VERIFY: ${{ steps.verify.outcome }}
+          FOCUSED: ${{ steps.focused.outcome }}
+          REGRESSION: ${{ steps.regression.outcome }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          printf 'head=%s\nmobile-verify=%s\nt013a-focused=%s\nt013-regression=%s\n' "$HEAD_SHA" "$VERIFY" "$FOCUSED" "$REGRESSION" > docs/workbench/.t013a-focused-validation.txt
+          git config user.name "Mira T013A Validation"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/workbench/.t013a-focused-validation.txt
+          git commit -m "test(mobile): record T013A focused validation" || true
+          git push origin HEAD:feat/t013a-s1-s2-current
+
+      - name: Enforce focused validation result
+        if: always()
+        env:
+          VERIFY: ${{ steps.verify.outcome }}
+          FOCUSED: ${{ steps.focused.outcome }}
+          REGRESSION: ${{ steps.regression.outcome }}
+        run: |
+          test "$VERIFY" = "success"
+          test "$FOCUSED" = "success"
+          test "$REGRESSION" = "success"
