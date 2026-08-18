@@ -40,7 +40,9 @@ test("学校详情直接复用 Organization(type=School)，保留 organizationId
   await expect(page.locator("body")).not.toContainText("已认证");
   await expect(page.locator("body")).not.toContainText("待认证");
 
-  await page.getByRole("link", { name: /去“主体与学校”继续维护/ }).click();
+  const maintainSchool = page.getByRole("link", { name: /编辑学校主体/ });
+  await expect(maintainSchool).toHaveAttribute("href", "/admin/organizations/org-lingnan-tech-college");
+  await maintainSchool.click();
   await expect(page).toHaveURL(/\/admin\/organizations\/org-lingnan-tech-college$/);
 });
 
