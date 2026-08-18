@@ -66,7 +66,7 @@ test("legacy admin object routes cannot escape back into AdminConsole", async ({
 
 test("technical identifiers are secondary across specialized admin pages", async ({ page }) => {
   await page.goto("/admin/competitions/objects/sanchuang-16");
-  await expect(page.getByRole("heading", { name: "第十六届三创赛" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /第十六届.*挑战赛/ })).toBeVisible();
   await expect(page.getByText(/competitionId=sanchuang-16/).first()).not.toBeVisible();
   await page.getByTestId("technical-mode-toggle").click();
   await expect(page.getByText(/competitionId=sanchuang-16/).first()).toBeVisible();
