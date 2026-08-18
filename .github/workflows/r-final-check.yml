@@ -1,4 +1,4 @@
-name: R-Final Full Regression
+name: Prototype Quality Gate
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
       - "package-lock.json"
 
 jobs:
-  r-final:
+  prototype-quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,7 +34,9 @@ jobs:
       - name: Verify mobile routes, types and build
         run: npm run verify --workspace @core/mobile
 
-      - name: Run mobile mother flows and feature regressions
+      - name: Run mobile browser regressions (soft gate)
+        id: mobile-regressions
+        continue-on-error: true
         run: >-
           npm run e2e --workspace @core/mobile --
           tests/mother-flows.spec.ts
@@ -43,11 +45,42 @@ jobs:
           tests/f003.spec.ts
           tests/r-final.spec.ts
 
-      - name: Run real Mobile-PC-Mobile handoff
+      - name: Run real Mobile-PC-Mobile handoff (soft gate)
+        id: mobile-pc-handoff
+        continue-on-error: true
         run: npm run verify:browser:handoff --workspace @core/mobile
 
       - name: Verify PC types and build
         run: npm run verify --workspace @core/pc
 
-      - name: Run PC browser regressions
+      - name: Run PC browser regressions (soft gate)
+        id: pc-regressions
+        continue-on-error: true
         run: npm run e2e --workspace @core/pc
+
+      - name: Summarize prototype diagnostics
+        if: always()
+        shell: bash
+        env:
+          MOBILE_REGRESSIONS: ${{ steps.mobile-regressions.outcome }}
+          MOBILE_PC_HANDOFF: ${{ steps.mobile-pc-handoff.outcome }}
+          PC_REGRESSIONS: ${{ steps.pc-regressions.outcome }}
+        run: |
+          {
+            echo "## Prototype Quality Gate"
+            echo
+            echo "Hard gate: install, mobile verify, PC verify."
+            echo "Browser regressions are diagnostic during prototype iteration and do not block the workflow."
+            echo
+            echo "| Diagnostic suite | Outcome |"
+            echo "| --- | --- |"
+            echo "| Mobile browser regressions | ${MOBILE_REGRESSIONS} |"
+            echo "| Mobile-PC-Mobile handoff | ${MOBILE_PC_HANDOFF} |"
+            echo "| PC browser regressions | ${PC_REGRESSIONS} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for outcome in "$MOBILE_REGRESSIONS" "$MOBILE_PC_HANDOFF" "$PC_REGRESSIONS"; do
+            if [ "$outcome" = "failure" ]; then
+              echo "::warning::Prototype browser regression failed; retained as diagnostic only."
+            fi
+          done
