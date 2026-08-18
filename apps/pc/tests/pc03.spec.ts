@@ -57,12 +57,12 @@ test("PC03 Opportunity edit persists to detail, includes skills and keeps Applic
 
   await page.getByRole("link", { name: "编辑机会" }).click();
   await expect(page).toHaveURL(/\/admin\/opportunities\/intern-1\/edit$/);
-  await expect(page.getByLabel("opportunityId · 只读")).toHaveValue("intern-1");
+  await expect(page.getByLabel("机会标识 · 只读")).toHaveValue("intern-1");
   await page.getByLabel("标题").fill("品牌增长实习生（校园）");
   await page.getByLabel("地区").fill("广州 / 深圳");
-  await page.getByLabel("技能标签 skills[]").fill("内容运营, 用户研究, 项目执行");
+  await page.getByLabel("技能标签", { exact: true }).fill("内容运营, 用户研究, 项目执行");
   await page.getByRole("button", { name: "保存编辑" }).click();
-  await expect(page.getByTestId("opportunity-edit-saved")).toContainText("共享 PC03 原型态");
+  await expect(page.getByTestId("opportunity-edit-saved")).toContainText("机会信息已保存");
   await page.getByRole("link", { name: "返回机会详情" }).click();
 
   await expect(page).toHaveURL(/\/admin\/opportunities\/intern-1$/);
