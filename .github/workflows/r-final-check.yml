@@ -13,10 +13,26 @@ on:
       - "package.json"
       - "package-lock.json"
 
+permissions:
+  contents: read
+  statuses: write
+
 jobs:
   r-final:
     runs-on: ubuntu-latest
     steps:
+      - name: Publish temporary pending status
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha: context.sha,
+              state: "pending",
+              context: "t013a-branch-r-final",
+              description: "T013A branch R-Final is running"
+            });
+
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -53,3 +69,29 @@ jobs:
 
       - name: Run PC browser regressions
         run: npm run e2e --workspace @core/pc
+
+      - name: Publish temporary success status
+        if: success()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha: context.sha,
+              state: "success",
+              context: "t013a-branch-r-final",
+              description: "T013A branch R-Final passed"
+            });
+
+      - name: Publish temporary failure status
+        if: failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha: context.sha,
+              state: "failure",
+              context: "t013a-branch-r-final",
+              description: "T013A branch R-Final failed"
+            });
