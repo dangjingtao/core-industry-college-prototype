@@ -1,8 +1,8 @@
-import { ArrowRight, BookOpenCheck, Boxes, FileBadge2, ShieldCheck, Sparkles, Target, Trophy } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Boxes, Database, FileBadge2, ShieldCheck, Sparkles, Target, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StatusTag } from "../components/ui";
 
-type Section = "competitions" | "resources" | "workshop";
+type Section = "competitions" | "resources" | "workshop" | "basicData";
 
 const competitionRows = [
   { name: "第十六届三创赛", status: "报名中", attention: "官方资格待回流", to: "/admin/competitions/objects/sanchuang-16", tone: "warning" as const },
@@ -58,6 +58,43 @@ export function PC01OperationsConsole({ section }: { section: Section }) {
           })}
         </section>
         <details className="rounded-container border border-border-subtle bg-surface p-5 text-sm text-text-secondary"><summary className="cursor-pointer font-semibold text-text-primary">资源真相源说明</summary><p className="mt-3 leading-6">平台配置负责课程、权益、机会和证书规则；个人学习、投递、领取、核销等结果继续由对应 Runtime 产生，不另建重复状态。</p></details>
+      </div>
+    );
+  }
+
+  if (section === "basicData") {
+    const items = [
+      { title: "报名学生基础数据", detail: "学生长期 Profile：学校、专业、年级、联系方式、可信状态与来源归属。", to: "/admin/basic-data/students", tone: "info" as const, tag: "运营录入" },
+      { title: "参赛学校基础数据", detail: "学校主数据：院校名称、省份、地区代码、参赛范围与负责人。", to: "/admin/basic-data/schools", tone: "success" as const, tag: "主数据" },
+      { title: "赛事 / 赛道字典", detail: "赛事分类、赛道、阶段、学段，作为长期字段引用基线。", to: "/admin/basic-data/dictionaries", tone: "warning" as const, tag: "字典" },
+      { title: "证书 / 协议模板", detail: "证书类型、协议模板、Banner 与权益规则模板，统一从这里发布。", to: "/admin/basic-data/templates", tone: "info" as const, tag: "模板" },
+      { title: "管理员与角色", detail: "后台账号、角色、模块权限与数据范围；普通运营不能自建。", to: "/admin/governance", tone: "danger" as const, tag: "高风险" },
+      { title: "导入与批处理", detail: "Excel / CSV 兜底导入、批次管理和来源审计。", to: "/admin/basic-data/imports", tone: "neutral" as const, tag: "兜底" },
+    ];
+    return (
+      <div className="space-y-6">
+        <section className="rounded-container border border-border-subtle bg-surface p-6 lg:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">基础数据</p>
+          <h1 className="mt-2 text-2xl font-semibold">基础数据管理</h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-text-secondary">维护报名学生、参赛学校、赛事、证书、权益、机会、字典、模板等长期复用的主数据；这一层只负责定义、归一、版本和归属，不复制 Runtime 状态。</p>
+        </section>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {items.map(item => (
+            <Link key={item.title} to={item.to} className="group rounded-container border border-border-subtle bg-surface p-5 transition hover:-translate-y-0.5 hover:shadow-floating">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex size-10 items-center justify-center rounded-control bg-surface-subtle text-text-brand"><Database size={20} /></div>
+                <StatusTag tone={item.tone}>{item.tag}</StatusTag>
+              </div>
+              <h2 className="mt-4 font-semibold">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
+              <p className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-text-brand">进入模块 <ArrowRight size={15} /></p>
+            </Link>
+          ))}
+        </section>
+        <section className="rounded-container border border-info bg-info-bg p-5 text-sm text-info-text">
+          <h3 className="font-semibold">基础数据管理 · 范围说明</h3>
+          <p className="mt-2 leading-6">这里只放“长期复用的主数据 + 字典 + 模板 + 权限 + 导入批处理”。业务状态、Runtime 状态、长期资产、审计和高风险审批继续在各自域里管理，不在这一层复制第二份真相源。</p>
+        </section>
       </div>
     );
   }

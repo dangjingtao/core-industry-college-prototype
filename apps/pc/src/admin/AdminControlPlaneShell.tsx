@@ -28,6 +28,7 @@ const domainIcons: Record<string, LucideIcon> = {
   assets: FileBadge,
   content: Activity,
   workshop: Sparkles,
+  basicData: Database,
 };
 
 function routeLabel(pathname: string) {
@@ -43,6 +44,7 @@ function routeLabel(pathname: string) {
   if (pathname.startsWith("/admin/governance")) return "权限与审计";
   if (pathname.startsWith("/admin/content")) return "内容运营";
   if (pathname.startsWith("/admin/workshop")) return "创赛工坊";
+  if (pathname.startsWith("/admin/basic-data")) return "基础数据管理";
   return "运营后台";
 }
 
@@ -57,7 +59,7 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
     <NavLink to="/admin" end className={({ isActive }) => itemClass(isActive)}><LayoutDashboard size={18} aria-hidden="true" />总览</NavLink>
     {adminDomains.map(domain => {
       const Icon = domainIcons[domain.id] ?? Database;
-      const basePath = `/admin/${domain.id}`;
+      const basePath = domain.id === "basicData" ? "/admin/basic-data" : `/admin/${domain.id}`;
       const pc04Resource = location.pathname.startsWith("/admin/pc04/courses") || location.pathname.startsWith("/admin/pc04/benefits");
       const pc04Assets = location.pathname.startsWith("/admin/pc04/certificates");
       const active = domain.id === "resources" ? location.pathname.startsWith(basePath) || location.pathname.startsWith("/admin/opportunities") || pc04Resource : domain.id === "assets" ? location.pathname.startsWith(basePath) || pc04Assets : location.pathname.startsWith(basePath);
@@ -68,6 +70,7 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
         {!mobile && domain.id === "students" && <NavLink to="/admin/students" end className={({ isActive }) => subItemClass(isActive)}><ChevronRight size={13} />学生控制台</NavLink>}
         {!mobile && domain.id === "assets" && <NavLink to="/admin/pc04/certificates" className={() => subItemClass(location.pathname.startsWith("/admin/pc04/certificates"))}><FileBadge size={13} />可信证书</NavLink>}
         {!mobile && domain.id === "content" && <NavLink to="/admin/content/operations" className={({ isActive }) => subItemClass(isActive)}><ChevronRight size={13} />内容运营</NavLink>}
+        {!mobile && domain.id === "basicData" && <><NavLink to="/admin/basic-data/students" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/students"))}><ChevronRight size={13} />报名学生基础数据</NavLink><NavLink to="/admin/basic-data/schools" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/schools"))}><Building2 size={13} />参赛学校基础数据</NavLink><NavLink to="/admin/basic-data/dictionaries" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/dictionaries"))}><ChevronRight size={13} />赛事 / 赛道字典</NavLink><NavLink to="/admin/basic-data/templates" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/templates"))}><FileBadge size={13} />证书 / 协议模板</NavLink><NavLink to="/admin/basic-data/imports" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/imports"))}><ChevronRight size={13} />导入与批处理</NavLink></>}
       </div>;
     })}
     <NavLink to="/admin/governance" className={({ isActive }) => itemClass(isActive)}><ShieldCheck size={18} aria-hidden="true" />权限与审计</NavLink>
