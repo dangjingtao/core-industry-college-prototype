@@ -41,6 +41,7 @@ export type CompetitionWorkshopRuntime = {
   taskRuns: Record<string, WorkshopTaskRun>;
   forcedLockedTaskIds: string[];
   acceptedResultIds: string[];
+  resultConfirmationStatus: Record<string, "pending">;
   computeBalance: number;
   computeUsed: number;
   frozenCompute: number;
@@ -79,6 +80,7 @@ type WorkshopRuntimeContextValue = {
   retryTask: (competitionId: string, taskId: string) => void;
   updateResultDraft: (competitionId: string, resultId: string, draft: WorkshopResultDraft) => void;
   saveResultVersion: (competitionId: string, resultId: string) => void;
+  submitResultForConfirmation: (competitionId: string, resultId: string) => void;
   acceptResult: (competitionId: string, resultId: string) => void;
   resetCompetition: (competitionId: string) => void;
 };
@@ -127,6 +129,7 @@ function makeActiveRuntime(): CompetitionWorkshopRuntime {
     taskRuns,
     forcedLockedTaskIds: [],
     acceptedResultIds: ["result-s1-product-score"],
+    resultConfirmationStatus: {},
     computeBalance: 8240,
     computeUsed: 1760,
     frozenCompute: 0,
@@ -149,6 +152,7 @@ function makeEndedRuntime(): CompetitionWorkshopRuntime {
     taskRuns,
     forcedLockedTaskIds: [],
     acceptedResultIds: workshopTasks.map(task => task.resultId),
+    resultConfirmationStatus: {},
     computeBalance: 0,
     computeUsed: 10000,
     frozenCompute: 0,
@@ -254,7 +258,19 @@ export function WorkshopRuntimeProvider({ children }: { children: ReactNode }) {
       const version: WorkshopResultVersion = { ...draft, id: `${resultId}-v${(runtime.resultVersions[resultId]?.length ?? 0) + 1}`, createdAt: "刚刚" };
       return { ...runtime, resultVersions: { ...runtime.resultVersions, [resultId]: [...(runtime.resultVersions[resultId] ?? []), version] } };
     })),
-    acceptResult: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => ({ ...runtime, acceptedResultIds: runtime.acceptedResultIds.includes(resultId) ? runtime.acceptedResultIds : [...runtime.acceptedResultIds, resultId] }))),
+    submitResultForConfirmation: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => ({
+      ...runtime,
+      resultConfirmationStatus: { ...runtime.resultConfirmationStatus, [resultId]: "pending" },
+    }))),
+    acceptResult: (competitionId, resultId) => setStore(current => updateRuntime(current, competitionId, runtime => {
+      const nextConfirmationStatus = { ...runtime.resultConfirmationStatus };
+      delete nextConfirmationStatus[resultId];
+      return {
+        ...runtime,
+        acceptedResultIds: runtime.acceptedResultIds.includes(resultId) ? runtime.acceptedResultIds : [...runtime.acceptedResultIds, resultId],
+        resultConfirmationStatus: nextConfirmationStatus,
+      };
+    })),
     resetCompetition: competitionId => {
       setStore(current => ({ ...current, [competitionId]: initialRuntime(competitionId) }));
       setTeamChangeRequests(current => { if (!current[competitionId]) return current; const next = { ...current }; delete next[competitionId]; return next; });
