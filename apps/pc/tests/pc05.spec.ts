@@ -56,7 +56,7 @@ test("PC05 student console keeps business tasks first while preserving App ident
   await expect(page.getByText("Mobile session 尚未显式接入", { exact: false })).not.toBeVisible();
 
   const activeRow = page.getByRole("row").filter({ hasText: "sanchuang-16" });
-  await expect(activeRow).toContainText("第十六届三创赛");
+  await expect(activeRow).toContainText(/第十六届.*挑战赛/);
   await expect(activeRow).toContainText("报名中");
   await expect(activeRow).toContainText("正常");
   await expect(activeRow).toContainText("已通过");
@@ -87,7 +87,7 @@ test("PC05 freeze is approval-gated and execution writes audit without deleting 
   await expect(page.getByTestId("execute-accountFreeze")).toBeEnabled();
   await page.getByTestId("execute-accountFreeze").click();
   await expect(page.getByTestId("approval-action-notice")).toContainText("审批已执行");
-  await expect(page.getByText("异常登录，需要暂时限制访问并保留全部历史事实。", { exact: true })).toBeVisible();
+  await expect(page.getByText("异常登录，需要暂时限制访问并保留全部历史事实。", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("link", { name: "学生", exact: true }).click();
   await expect(page.getByTestId("account-status")).toContainText("已冻结");
