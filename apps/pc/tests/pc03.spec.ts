@@ -30,11 +30,14 @@ test("PC03 stays inside the shared admin shell while permission metadata is seco
   await expect(contentOperations).toHaveAttribute("href", "/admin/content/operations");
 });
 
-test("PC03 Organization preserves stable ids but hides them from the default business view", async ({ page }) => {
+test("PC03 Organization keeps business relations first and stable ids in explicit trace details", async ({ page }) => {
   await page.goto("/admin/organizations/northstar-beauty");
   await expect(page.getByRole("heading", { name: "北辰美妆" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "当前合作资源" })).toBeVisible();
   await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
   await showTechnical(page);
+  await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).not.toBeVisible();
+  await page.getByText("数据来源与关联标识", { exact: true }).click();
   await expect(page.getByText("organizationId · northstar-beauty", { exact: true })).toBeVisible();
   await expect(page.getByText(/Mobile Company 使用同一 stable value/)).toBeVisible();
   await expect(page.getByText("平台配置", { exact: true })).toBeVisible();
