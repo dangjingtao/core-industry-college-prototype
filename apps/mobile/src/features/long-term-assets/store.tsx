@@ -176,11 +176,11 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     },
     submitAssessment: (courseId, passed) => {
       if (!session.loggedIn) return;
-      setLearning(records => updateLearning(records, courseId, record => {
-        const assessment = passed ? "passed" as const : "failed" as const;
-        return normalizedLearningRecord(record, record.progress, assessment);
-      }));
-      if (passed) {
+      const currentRecord = learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
+      const assessment = passed ? "passed" as const : "failed" as const;
+      const updatedRecord = normalizedLearningRecord(currentRecord, currentRecord.progress, assessment);
+      setLearning(records => updateLearning(records, courseId, () => updatedRecord));
+      if (isCourseCompleted(updatedRecord)) {
         const course = courses.find(item => item.id === courseId);
         const certificateId = course?.certificateId;
         if (course && certificateId) {

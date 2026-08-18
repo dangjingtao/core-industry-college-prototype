@@ -85,6 +85,33 @@ export const pc03Organizations: OrganizationRecord[] = [
     relations: [{ kind: "赛事", label: "第十六届三创赛", stableId: "sanchuang-16", to: "/admin/competitions/objects/sanchuang-16" }],
   },
   {
+    id: "org-youth-brand-alliance",
+    name: "青年品牌创新联盟",
+    type: "赛事组织方",
+    summary: "普通合作赛事的组织主体，和三创赛组委会一样使用统一 Organization 主数据。",
+    trust: "平台配置赛事的组织关系由 stable organizationId 维护，不使用展示名作为关系键。",
+    sources: ["平台配置"],
+    relations: [{ kind: "赛事", label: "2026 青年品牌创新挑战赛", stableId: "innovation-cup-2026", to: "/admin/competitions/objects/innovation-cup-2026" }],
+  },
+  {
+    id: "org-huanan-commerce-college",
+    name: "华南商贸学院",
+    type: "学校",
+    summary: "赛事传播、报名真实性审核与跨校团队队长学校责任主体。",
+    trust: "学校审核责任通过 organizationId + competitionId 表达，不依赖中文校名匹配。",
+    sources: ["平台配置"],
+    relations: [{ kind: "赛事 Scope", label: "第十六届三创赛 · 队长学校审核范围", stableId: "org-huanan-commerce-college+sanchuang-16" }],
+  },
+  {
+    id: "org-lingnan-tech-college",
+    name: "岭南科技学院",
+    type: "学校",
+    summary: "作为跨校成员学校和合作赛事授权学校进入统一 Organization 主数据。",
+    trust: "成员学校关系通过 schoolOrganizationId 表达；不会因此获得跨校团队第二审批责任。",
+    sources: ["平台配置"],
+    relations: [{ kind: "赛事 Scope", label: "青年品牌创新挑战赛 · 学校范围", stableId: "org-lingnan-tech-college+innovation-cup-2026" }],
+  },
+  {
     id: "school-demo-gz",
     name: "广州示范高校",
     type: "学校",
@@ -94,6 +121,10 @@ export const pc03Organizations: OrganizationRecord[] = [
     relations: [{ kind: "赛事 Scope", label: "第十六届三创赛 · 本校审核范围", stableId: "school-demo-gz+sanchuang-16" }],
   },
 ];
+
+export function pc03OrganizationById(organizationId: string) {
+  return pc03Organizations.find(organization => organization.id === organizationId);
+}
 
 const initialOpportunities: OpportunityRecord[] = [
   { id: "intern-1", title: "品牌增长实习生", organizationId: "northstar-beauty", city: "广州", mode: "实习", summary: "参与校园品牌项目、内容投放与活动复盘，适合有赛事 / 项目实践经历的学生。", skills: ["内容运营", "数据复盘", "项目执行"], status: "open" },

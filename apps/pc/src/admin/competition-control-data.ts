@@ -8,7 +8,7 @@ type CompetitionStatus = "upcoming" | "registrationOpen" | "inProgress" | "ended
 type Relation = { label: string; stableId: string; to?: string };
 
 type CompetitionControlExtension = {
-  organizer: string;
+  organizerOrganizationId: string;
   authorityMode: "externalAuthority" | "platformConfigured";
   tracks: { id: string; name: string; group: string }[];
   registration: { mode: RegistrationMode; label: string; detail: string; portalPath?: string };
@@ -16,10 +16,15 @@ type CompetitionControlExtension = {
   qualification: { platformReview: PlatformReviewStatus; officialQualification: OfficialQualificationStatus; workspaceRule: string };
   windows: {
     official: { label: string; value: string; owner: string }[];
-    local: { id: string; label: string; value: string; owner: string; scope: string }[];
+    local: { id: string; label: string; value: string; owner: string; scopeOrganizationId?: string }[];
   };
-  schoolScope: { reviewOwnerRule: string; authorizedSchools: string[]; note: string };
-  team: { id: string; name: string; captainSchool: string; members: { id: string; name: string; role: string; school: string }[] };
+  schoolScope: { reviewOwnerRule: string; authorizedSchoolOrganizationIds: string[]; note: string };
+  team: {
+    id: string;
+    name: string;
+    leaderSchoolId: string;
+    members: { id: string; name: string; role: string; schoolOrganizationId: string }[];
+  };
   project: { id: string; name: string; track: string; summary: string; stage: string };
   resources: { id: string; title: string; category: string; source: CompetitionControlSource; updatedAt: string }[];
   services: {
@@ -54,7 +59,7 @@ export const registrationModeLabels: Record<RegistrationMode, string> = {
 
 const competitionExtensions: Record<string, CompetitionControlExtension> = {
   "sanchuang-16": {
-    organizer: "全国大学生电子商务“创新、创意及创业”挑战赛竞赛组织委员会",
+    organizerOrganizationId: "org-sanchuang-committee",
     authorityMode: "externalAuthority",
     tracks: [
       { id: "track-ecommerce", name: "常规赛", group: "电子商务" },
@@ -84,22 +89,22 @@ const competitionExtensions: Record<string, CompetitionControlExtension> = {
         { label: "官方赛事阶段", value: "报名阶段", owner: "外部权威赛事源" },
       ],
       local: [
-        { id: "node-south-campus", label: "华南商贸学院校赛材料截止", value: "2026-09-18 18:00", owner: "平台运营代录", scope: "华南商贸学院" },
+        { id: "node-south-campus", label: "华南商贸学院校赛材料截止", value: "2026-09-18 18:00", owner: "平台运营代录", scopeOrganizationId: "org-huanan-commerce-college" },
       ],
     },
     schoolScope: {
       reviewOwnerRule: "跨校团队由队长所在学校统一审核整个团队",
-      authorizedSchools: ["华南商贸学院"],
+      authorizedSchoolOrganizationIds: ["org-huanan-commerce-college"],
       note: "学校老师只获得当前赛事 + 当前授权学校的数据 Scope；不因队员跨校而扩张到其它学校长期数据。",
     },
     team: {
       id: "team-1",
       name: "山城新零售队",
-      captainSchool: "华南商贸学院",
+      leaderSchoolId: "org-huanan-commerce-college",
       members: [
-        { id: "member-linxiao", name: "林晓", role: "队长 / 项目统筹", school: "华南商贸学院" },
-        { id: "member-chenyu", name: "陈语", role: "内容运营", school: "岭南科技学院" },
-        { id: "member-zhouyue", name: "周越", role: "数据分析", school: "华南商贸学院" },
+        { id: "member-linxiao", name: "林晓", role: "队长 / 项目统筹", schoolOrganizationId: "org-huanan-commerce-college" },
+        { id: "member-chenyu", name: "陈语", role: "内容运营", schoolOrganizationId: "org-lingnan-tech-college" },
+        { id: "member-zhouyue", name: "周越", role: "数据分析", schoolOrganizationId: "org-huanan-commerce-college" },
       ],
     },
     project: {
@@ -137,10 +142,13 @@ const competitionExtensions: Record<string, CompetitionControlExtension> = {
       "/competitions/sanchuang-16/workspace/resources",
       "/competitions/sanchuang-16/workshop",
     ],
-    additionalRelations: [{ label: "校赛路演训练营", stableId: "activity-roadshow" }],
+    additionalRelations: [
+      { label: "三创赛组委会", stableId: "org-sanchuang-committee", to: "/admin/organizations/org-sanchuang-committee" },
+      { label: "校赛路演训练营", stableId: "activity-roadshow" },
+    ],
   },
   "innovation-cup-2026": {
-    organizer: "青年品牌创新联盟",
+    organizerOrganizationId: "org-youth-brand-alliance",
     authorityMode: "platformConfigured",
     tracks: [{ id: "track-brand", name: "品牌创新赛道", group: "综合组" }],
     registration: {
@@ -166,16 +174,16 @@ const competitionExtensions: Record<string, CompetitionControlExtension> = {
     },
     schoolScope: {
       reviewOwnerRule: "按赛事配置学校 Scope；如出现跨校团队，仍由队长学校统一审核",
-      authorizedSchools: ["华南商贸学院", "岭南科技学院"],
+      authorizedSchoolOrganizationIds: ["org-huanan-commerce-college", "org-lingnan-tech-college"],
       note: "同一 SchoolScope 模型适用于普通合作赛事，不建立三创赛专属学校权限表。",
     },
     team: {
       id: "team-brand-lab",
       name: "校园品牌实验室",
-      captainSchool: "岭南科技学院",
+      leaderSchoolId: "org-lingnan-tech-college",
       members: [
-        { id: "member-yiran", name: "易然", role: "队长", school: "岭南科技学院" },
-        { id: "member-xiaoyu", name: "肖宇", role: "产品", school: "岭南科技学院" },
+        { id: "member-yiran", name: "易然", role: "队长", schoolOrganizationId: "org-lingnan-tech-college" },
+        { id: "member-xiaoyu", name: "肖宇", role: "产品", schoolOrganizationId: "org-lingnan-tech-college" },
       ],
     },
     project: {
@@ -204,6 +212,7 @@ const competitionExtensions: Record<string, CompetitionControlExtension> = {
     },
     additionalAppConsumers: ["/registration", "/competitions/innovation-cup-2026/workspace", "/competitions/innovation-cup-2026/workshop"],
     additionalRelations: [
+      { label: "青年品牌创新联盟", stableId: "org-youth-brand-alliance", to: "/admin/organizations/org-youth-brand-alliance" },
       { label: "品牌验证基础课", stableId: "course-brand-basics" },
       { label: "品牌诊断开放日", stableId: "activity-brand-clinic" },
     ],
