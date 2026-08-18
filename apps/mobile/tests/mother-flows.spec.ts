@@ -65,20 +65,20 @@ test("B registration handoff carries context and callbacks share one competition
       window.history.pushState({}, "", `${url.pathname}${url.search}`);
       window.dispatchEvent(new PopStateEvent("popstate"));
     }, { status });
+    // RegistrationHandoffPage consumes callback params asynchronously and then removes them.
+    // Wait for that consumption before injecting the next prototype callback to avoid a race.
+    await expect.poll(() => new URL(page.url()).searchParams.has("registrationStatus")).toBe(false);
   };
 
   await callback("pending");
   await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
-
-  // Prototype regression: verify state transitions through the visible scenario controls
-  // instead of requiring repeated URL callback mutations to repaint exact legacy copy.
-  await page.getByRole("button", { name: /模拟审核未通过/ }).click();
+  await callback("rejected");
   await expect(page.getByText(/审核未通过/).first()).toBeVisible();
-  await page.getByRole("button", { name: /恢复未报名状态/ }).click();
-  await page.getByRole("button", { name: /进入响应式报名/ }).click();
-  await page.getByRole("button", { name: /模拟提交并回流 App/ }).click();
+  await callback("pending");
   await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
-  await page.getByRole("button", { name: /模拟审核通过/ }).click();
+  await callback("approved");
+  await expect(page.getByText(/审核通过.*赛事身份/).first()).toBeVisible();
+  await page.getByRole("button", { name: "进入赛事工作区" }).click();
 
   await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
   await expect(page.getByText("身份：active · 团队：山城新零售队", { exact: true })).toBeVisible();
