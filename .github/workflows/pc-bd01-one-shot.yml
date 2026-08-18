@@ -1,0 +1,95 @@
+name: PC-BD01 one-shot data semantic patch
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - ".github/workflows/pc-bd01-one-shot.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Replace only the basicData domain metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("apps/pc/src/admin/data.ts")
+          text = path.read_text()
+          start = text.index('  {\n    id: "basicData",')
+          end = text.index('  {\n    id: "workshop",', start)
+          replacement = '''  {
+            id: "basicData",
+            label: "基础数据管理",
+            eyebrow: "Cross-domain Maintenance Workbench",
+            description: "跨域维护工作台：聚合查看 Account / StudentProfile、Organization、Competition、Certificate、Content 等既有真相源，并承接数据接入治理记录；自身不拥有第二份学生、学校、赛道或模板真相。",
+            responsibility: "basic-data 只负责快速发现、归属提示、维护跳转与导入批次治理。对象 stable id、业务状态、版本和发布状态均继续由所属业务域负责。",
+            entities: [
+              { name: "Account / StudentProfile 聚合视图", kind: "关系", description: "读取学生与赛事身份域的长期账号锚点和 StudentProfile；当前 Mobile 未显式接入 accountId 时只暴露缺口，不生成替代主键。", writeBy: "账号系统 / 学生本人；授权运营仅补充允许字段", mobileConsumers: ["/onboarding/profile", "/me/profile", "/me/resume", "/registration"], status: "partial", idField: "accountId（当前 Mobile 未显式接入）", sources: ["Runtime", "人工修正", "API 同步", "文件导入"], states: [], retention: "StudentProfile 长期保留；账号冻结属于 Account / Governance，不产生 Profile 状态机" },
+              { name: "Organization(type=School) 聚合视图", kind: "关系", description: "直接引用主体与学校域的 Organization(type=School)，并聚合赛事 Scope / 审核责任关系。", writeBy: "主体与学校域 / 授权运营", mobileConsumers: ["/registration", "/competitions/:competitionId/workspace"], status: "partial", idField: "organizationId", sources: ["平台配置", "API 同步", "文件导入", "人工修正"], states: [], retention: "Organization 可归档；赛事授权与审核责任历史按所属域保留" },
+              { name: "跨域基础配置索引", kind: "关系", description: "赛道、阶段等仅索引到具体 CompetitionTrack / CompetitionLifecycle；证书类型等索引到所属业务域，不形成万能 Dictionary。", writeBy: "各所属业务域", mobileConsumers: ["/competitions", "/registration", "/assets/certificates"], status: "partial", idField: "沿用所属域 stable id", sources: ["平台配置", "API 同步", "文件导入"], states: [], retention: "跟随所属对象归档与版本规则，历史引用保留" },
+              { name: "模板与规则索引", kind: "关系", description: "证书模板归 Certificate，赛事协议归 Competition / Registration，Banner 归 Content Placement，权益规则归 Benefit / EligibilityRule。", writeBy: "证书 / 赛事 / 内容 / 权益等所属运营域", mobileConsumers: ["/assets/certificates", "/registration", "/home", "/benefits"], status: "partial", idField: "沿用所属域 stable id / version", sources: ["平台配置"], states: [], retention: "版本和发布状态由所属域保存；basic-data 不保留第二份" },
+              { name: "数据接入批次", kind: "运营配置", description: "文件导入、API 同步和人工修正的接入治理记录，记录批次、校验、冲突、原因与最终写回对象。", writeBy: "授权运营 / 数据接入流程", mobileConsumers: ["—"], status: "partial", idField: "batchId", sources: ["文件导入", "API 同步", "人工修正"], states: ["pending", "validated", "rejected", "applied"], retention: "批次与冲突记录可追溯；批次状态只描述接入流程，不替代业务对象状态" },
+            ],
+            relations: ["学生聚合视图 → Account / StudentProfile", "学校聚合视图 → Organization(type=School)", "赛道 / 阶段索引 → Competition / CompetitionTrack / CompetitionLifecycle", "证书 / 协议 / Banner / 权益规则索引 → Certificate / Competition / Content / Benefit", "导入批次 → 所属域对象 + 来源文件 / 接口 / 人工修正记录"],
+            minimumActions: ["查询跨域主数据归属", "跳转所属业务域维护", "执行文件导入 / API 同步 / 人工修正并留痕", "查看批次校验、失败原因与来源冲突"],
+            sampleObjects: [
+              {
+                key: "student-profile-current",
+                entity: "Account / StudentProfile 聚合视图",
+                name: "当前登录学生主档",
+                stableIdField: "accountId",
+                stableId: "—（账号 ID 待真实账号层接入）",
+                businessState: "—（StudentProfile 无独立业务状态）",
+                source: "Runtime",
+                sourceDetail: "直接读取学生与赛事身份域；当前 Mobile session 尚未显式提供 accountId，PC 不伪造 studentId 作为长期主键。",
+                owner: "学生本人 / 账号系统",
+                editor: "学生本人优先；授权运营仅补充允许字段",
+                mobileConsumers: ["/onboarding/profile", "/me/profile", "/me/resume"],
+                relations: [],
+                retention: "长期保留；账号冻结不删除主档、赛事历史、证书或投递事实。",
+              },
+              {
+                key: "school-lingnan-tech-college",
+                entity: "Organization(type=School) 聚合视图",
+                name: "岭南科技学院",
+                stableIdField: "organizationId",
+                stableId: "org-lingnan-tech-college",
+                businessState: "—（不新增学校认证状态机）",
+                source: "平台配置",
+                sourceDetail: "直接引用 PC03 Organization(type=School)；赛事授权通过 organizationId + competitionId 的关系表达，不在 basic-data 复制学校主档。",
+                owner: "主体与学校域",
+                editor: "授权运营",
+                mobileConsumers: ["/registration", "/competitions"],
+                relations: [
+                  { label: "青年品牌创新挑战赛 · 学校范围", stableId: "org-lingnan-tech-college+innovation-cup-2026", to: "/admin/competitions/objects/innovation-cup-2026" },
+                ],
+                retention: "主体可归档；历史赛事 Scope 与审核责任关系继续可追溯。",
+              },
+            ],
+          },
+'''
+          path.write_text(text[:start] + replacement + text[end:])
+          PY
+
+      - name: Commit semantic patch and remove this one-shot workflow
+        shell: bash
+        run: |
+          rm .github/workflows/pc-bd01-one-shot.yml
+          git config user.name "Mira PC-BD01"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(pc): merge basic-data semantics into existing truth sources"
+          git push origin HEAD:dev
