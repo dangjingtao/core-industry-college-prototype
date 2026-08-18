@@ -7,7 +7,7 @@ test("PC03 stays inside the full PC01 control-plane navigation and operator cont
     await page.goto(route);
     const adminNav = page.getByRole("navigation", { name: "管理端主导航" });
     await expect(adminNav).toBeVisible();
-    for (const label of ["赛事中心", "主体与学校", "资源运营", "学生与赛事身份", "资产与可信凭证", "内容与活动", "创赛工坊"]) {
+    for (const label of ["赛事中心", "主体与学校", "资源运营", "学生与赛事身份", "资产与可信凭证", "内容与活动", "创赛工坊配置"]) {
       await expect(adminNav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
     const operator = page.getByLabel("当前管理角色与数据范围");
