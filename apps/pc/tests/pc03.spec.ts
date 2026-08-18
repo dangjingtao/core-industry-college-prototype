@@ -57,6 +57,8 @@ test("PC03 opportunity edit persists while technical identifiers stay secondary"
 
   await page.getByRole("link", { name: "编辑机会" }).click();
   await expect(page).toHaveURL(/\/admin\/opportunities\/intern-1\/edit$/);
+  await expect(page.getByLabel("机会标识 · 只读")).not.toBeVisible();
+  await showTechnical(page);
   await expect(page.getByLabel("机会标识 · 只读")).toHaveValue("intern-1");
   await page.getByLabel("标题").fill("品牌增长实习生（校园）");
   await page.getByLabel("地区").fill("广州 / 深圳");
