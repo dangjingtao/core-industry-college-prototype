@@ -91,17 +91,28 @@ function PermissionDetails() {
   );
 }
 
+function adminViewClass(pathname: string) {
+  if (pathname.startsWith("/admin/pc04/")) return "pc05-pc04-view";
+  if (pathname.startsWith("/admin/competitions/objects/")) return "pc05-pc02-view";
+  if (pathname.startsWith("/admin/opportunities")) return "pc05-opportunity-view";
+  if (pathname.startsWith("/admin/content")) return "pc05-content-view";
+  return "";
+}
+
 export function AdminControlPlaneShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [showTechnical, setShowTechnical] = useState(false);
   const label = routeLabel(location.pathname);
-  const viewClass = location.pathname.startsWith("/admin/pc04/") ? "pc05-pc04-view" : location.pathname.startsWith("/admin/competitions/objects/") ? "pc05-pc02-view" : "";
+  const viewClass = adminViewClass(location.pathname);
   return <div className="min-h-screen bg-background text-text-primary">
     <style>{`
       .pc05-tech-hidden .font-mono,.pc05-tech-hidden code{display:none!important}
       .pc05-tech-hidden [aria-label="PC02 三层事实边界"]{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>div:first-child>p{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>span{display:none!important}
+      .pc05-tech-hidden.pc05-pc04-view section.border-info.bg-info-bg{display:none!important}
+      .pc05-tech-hidden.pc05-opportunity-view>div>section:first-child p,
+      .pc05-tech-hidden.pc05-content-view>div>section:first-child p{display:none!important}
     `}</style>
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-subtle bg-surface lg:flex lg:flex-col">
       <div className="border-b border-border-subtle px-5 py-5"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-control bg-primary text-on-primary"><Database size={20} aria-hidden="true" /></div><div><p className="text-sm font-semibold text-text-primary">核心产业学院</p><p className="mt-0.5 text-xs text-text-tertiary">运营后台</p></div></div></div>
