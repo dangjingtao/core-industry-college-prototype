@@ -34,11 +34,18 @@ export function MyPage() {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const experiences = useExperienceFacts();
   const completedLearning = learning.filter(item => item.status === "completed");
+  const inProgressLearning = learning.filter(item => item.status === "inProgress").length;
+  const activeCertificates = certificates.filter(item => item.status !== "revoked").length;
   const logout = () => {
     continueAsGuest();
     navigate("/home", { replace: true });
   };
   if (!session.loggedIn) return <PublicShell><PageHeader title="我的" /><div className="space-y-4 px-4 py-6"><Card><h2 className="font-semibold text-text-primary">登录后查看长期账号资产</h2><p className="mt-2 text-sm text-text-secondary">赛事经历、课程成果、证书、投递和简历都归长期账号保存。</p></Card><Button className="w-full" onClick={() => navigate("/auth/login?returnTo=/me")}>登录</Button></div></PublicShell>;
+  const assetEntries = [
+    { label: "赛事 / 项目经历", meta: `${experiences.length} 段`, to: "/assets/experiences" },
+    { label: "学习成果", meta: `${completedLearning.length} 已完成 · ${inProgressLearning} 进行中`, to: "/assets/learning" },
+    { label: "证书记录", meta: `${activeCertificates} 张`, to: "/assets/certificates" },
+  ];
   const continuedEntries = [
     { label: "长期简历", meta: `已选择 ${resume.selectedFactKeys.length} 项可信事实`, to: "/me/resume" },
     { label: "投递记录", meta: applications.length ? `${applications.length} 份共享投递状态` : "还没有投递记录", to: "/applications" },
@@ -58,7 +65,7 @@ export function MyPage() {
     { label: "关于", to: "/about", icon: Info },
   ];
   return <PublicShell><PageHeader title="我的" subtitle="长期账号资产，不随单场赛事结束" /><div className="space-y-7 px-4 py-5"><Card className="space-y-3"><div><p className="text-xs text-text-secondary">{profile.school} · {profile.major}</p><h1 className="mt-1 text-xl font-semibold text-text-primary">{profile.name}</h1><p className="mt-2 text-sm text-text-secondary">{profile.city} · {profile.email}</p></div><GhostButton className="w-full" onClick={() => navigate("/me/profile")}>编辑基础资料</GhostButton></Card>
-    <Section title="这个账号已经沉淀了什么"><div className="space-y-3"><Link to="/assets/experiences" className="block"><FactCard title={`${experiences.length} 段赛事 / 项目经历`} meta="包含进行中与历史赛事，赛后仍可读" /></Link><Link to="/assets/learning" className="block"><FactCard title={`${completedLearning.length} 项已完成学习成果`} meta={`${learning.filter(item => item.status === "inProgress").length} 门课程学习中`} /></Link><Link to="/assets/certificates" className="block"><FactCard title={`${certificates.filter(item => item.status !== "revoked").length} 张证书记录`} meta="系统事实，可验真" /></Link></div></Section>
+    <Section title="这个账号已经沉淀了什么"><div className="overflow-hidden rounded-container bg-surface">{assetEntries.map(({ label, meta, to }, index) => <Link key={to} to={to} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><div className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong><span className="mt-0.5 block text-xs leading-5 text-text-secondary">{meta}</span></div><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
     <Section title="继续使用"><div className="overflow-hidden rounded-container bg-surface">{continuedEntries.map(({ label, meta, to }, index) => <Link key={to} to={to} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><div className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong><span className="mt-0.5 block text-xs leading-5 text-text-secondary">{meta}</span></div><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
     <Section title="长期关系"><div className="overflow-hidden rounded-container bg-surface">{relationEntries.map(({ label, meta, to }, index) => <Link key={to} to={to} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><div className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong><span className="mt-0.5 block text-xs leading-5 text-text-secondary">{meta}</span></div><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
     <Section title="账号与服务"><div className="overflow-hidden rounded-container bg-surface">{accountEntries.map(({ label, to, icon: Icon }, index) => <Link key={to} to={to} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Icon size={18} aria-hidden="true" /></span><span className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong></span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>
