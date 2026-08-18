@@ -5,6 +5,7 @@ import { AdminConsole } from "./admin/AdminConsole";
 import { CompetitionConsole } from "./admin/CompetitionConsole";
 import { PC03Console } from "./admin/PC03Console";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
+import { PC04Console } from "./admin/PC04Console";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 
@@ -77,6 +78,13 @@ export function App() {
       <Route path="/admin/organizations/:organizationId" element={<PC03Console />} />
       <Route path="/admin/opportunities/*" element={<PC03OpportunityRoute />} />
       <Route path="/admin/content" element={<PC03Console />} />
+      <Route path="/admin/pc04/*" element={<PC04Console />} />
+      <Route path="/admin/resources/objects/course-brand-ecommerce" element={<Navigate to="/admin/pc04/courses/brand-ecommerce" replace />} />
+      <Route path="/admin/resources/objects/course-brand-ecommerce/edit" element={<Navigate to="/admin/pc04/courses/brand-ecommerce/edit" replace />} />
+      <Route path="/admin/resources/objects/benefit-beauty-sample" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample" replace />} />
+      <Route path="/admin/resources/objects/benefit-beauty-sample/edit" element={<Navigate to="/admin/pc04/benefits/benefit-beauty-sample/edit" replace />} />
+      <Route path="/admin/assets/objects/certificate-sanchuang-15" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
+      <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
       <Route path="/admin/*" element={<AdminConsole />} />
       <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
       <Route path="/" element={<Navigate to="/admin" replace />} />
