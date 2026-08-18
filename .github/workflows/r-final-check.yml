@@ -12,6 +12,9 @@ on:
       - "packages/shared/**"
       - "package.json"
       - "package-lock.json"
+  pull_request:
+    branches:
+      - dev
 
 permissions:
   contents: read
