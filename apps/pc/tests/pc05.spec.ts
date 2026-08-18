@@ -11,9 +11,12 @@ test("PC05 human gate covers the whole admin surface, not only PC05 pages", asyn
 
   for (const [route, businessText, technicalText] of [
     ["/admin/competitions", "赛事中心", "统一对象列表 Pattern"],
+    ["/admin/competitions/objects/sanchuang-16", "第十六届三创赛", "外部权威赛事事实"],
     ["/admin/resources", "资源与服务", "ResourceRelation"],
     ["/admin/organizations/northstar-beauty", "北辰美妆", "organizationId · northstar-beauty"],
-    ["/admin/pc04/courses/brand-ecommerce", "品牌电商实战课", "courseId"],
+    ["/admin/opportunities/intern-1", "机会与投递", "opportunityId · intern-1"],
+    ["/admin/content/operations", "内容与活动", "contentId=content-home-sanchuang-2026"],
+    ["/admin/pc04/courses/brand-ecommerce", "品牌电商实战课", "真相源边界"],
     ["/admin/students", "学生长期服务与平台治理", "Mobile session 尚未显式接入"],
   ] as const) {
     await page.goto(route);
@@ -22,7 +25,9 @@ test("PC05 human gate covers the whole admin surface, not only PC05 pages", asyn
   }
 
   await page.goto("/admin/pc04/courses/brand-ecommerce");
+  await expect(page.getByText("真相源边界", { exact: true })).not.toBeVisible();
   await page.getByTestId("technical-mode-toggle").click();
+  await expect(page.getByText("真相源边界", { exact: true })).toBeVisible();
   await expect(page.getByText("courseId", { exact: true }).first()).toBeVisible();
 });
 
