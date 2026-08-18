@@ -22,6 +22,8 @@ test("basic-data 保留现有入口与 5 个子页面，默认先讲业务", asy
   await expect(page.getByText("学生资料列表", { exact: true })).toBeVisible();
   await expect(page.getByText(/当前原型复用学生控制台的林晓样例/)).toBeVisible();
   await expect(page.getByText("林晓", { exact: true })).toBeVisible();
+  await expect(page.getByText("系统记录", { exact: true })).toBeVisible();
+  await expect(page.getByText("Runtime", { exact: true })).not.toBeVisible();
   await expect(page.getByText("账号 ID 待真实账号层接入", { exact: true })).not.toBeVisible();
   await expect(page.locator("body")).not.toContainText("studentId");
 });
@@ -37,25 +39,29 @@ test("学生详情与 PC05 复用同一林晓样例，不再出现无提示切�
   await showTechnical(page);
   await expect(page.getByTestId("student-account-anchor")).toHaveText("账号 ID 待真实账号层接入");
   await expect(page.getByText(/Truth source: Account \/ StudentProfile/)).toBeVisible();
+  await expect(page.getByText("Runtime", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "进入学生与赛事身份控制台", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/students$/);
   await expect(page.getByText("林晓", { exact: true })).toBeVisible();
 });
 
-test("学校默认讲业务，技术模式再展示 organizationId 与 canonical type", async ({ page }) => {
+test("学校默认讲业务，技术模式再展示 organizationId、canonical type 与技术关系", async ({ page }) => {
   await page.goto("/admin/basic-data/schools/org-lingnan-tech-college");
 
   await expect(page.getByRole("heading", { name: "岭南科技学院", exact: true })).toBeVisible();
   await expect(page.getByText("学校", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/作为成员学校参与赛事/)).toBeVisible();
   await expect(page.getByText("organizationId · org-lingnan-tech-college", { exact: true })).not.toBeVisible();
   await expect(page.getByText("Organization(type=学校)", { exact: true })).not.toBeVisible();
+  await expect(page.getByText(/schoolOrganizationId/)).not.toBeVisible();
   await expect(page.locator("body")).not.toContainText("已认证");
   await expect(page.locator("body")).not.toContainText("待认证");
 
   await showTechnical(page);
   await expect(page.getByText("organizationId · org-lingnan-tech-college", { exact: true })).toBeVisible();
   await expect(page.getByText("Organization(type=学校)", { exact: true })).toBeVisible();
+  await expect(page.getByText(/schoolOrganizationId/)).toBeVisible();
 
   const maintainSchool = page.getByRole("link", { name: /编辑学校主体/ });
   await expect(maintainSchool).toHaveAttribute("href", "/admin/organizations/org-lingnan-tech-college");
@@ -106,6 +112,8 @@ test("导入页默认展示批次治理，五类 canonical DataSource 与真实�
   await expect(page.getByText("→ 学生资料", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("→ 学校主体资料", { exact: true })).toBeVisible();
   await expect(page.getByText("→ 证书与成绩记录", { exact: true })).toBeVisible();
+  await expect(page.getByText("接口同步", { exact: true })).toBeVisible();
+  await expect(page.getByText("API 同步", { exact: true })).not.toBeVisible();
   await expect(page.getByText("缺少学校列；批次已退回", { exact: true })).toBeVisible();
   await expect(page.getByText(/不会静默覆盖权威事实/)).toBeVisible();
   await expect(page.getByTestId("canonical-data-sources")).not.toBeVisible();
