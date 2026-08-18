@@ -47,6 +47,22 @@ PC02 把 PC01 的 `Competition` 对象详情提升为真正的赛事详情型控
 - Workshop 配置与赛事 scope；
 - App consumer 与 stable relation。
 
+### 不重复 Competition 主数据
+
+PC01 已在 `apps/pc/src/admin/data.ts` 定义 Competition 样例对象。PC02 不再维护第二份 name / status / source / sourceDetail / stable relation：
+
+```text
+PC01 Competition sampleObjects
+        ↓
+competitionControlById()
+        +
+PC02 event-control extension
+        ↓
+CompetitionConsole
+```
+
+PC02 扩展层只补赛道、报名接入、官方同步、资格、学校 Scope、团队 / CompetitionProject、赛事资源、Workshop 等赛事控制字段。基础 Competition 状态和 stable relation 继续来自 PC01 对象记录。
+
 ### 报名资格双层状态 + Workspace Gate
 
 三创赛控制台明确拆开：
@@ -172,7 +188,22 @@ status=upcoming
 10. 原 PC01 Competition stable id / relation 断言继续经过同一路由；
 11. 现有 `/registration-portal/*` 继续作为独立业务入口。
 
-## 6. 并行施工处理
+## 6. 必读基线复核
+
+施工收口已复核：
+
+- `AGENTS.md`；
+- `docs/README.md`；
+- `docs/product/00-product-master-context.md`；
+- `docs/product/01-legacy-mockplus-audit.md`；
+- `docs/product/02-open-decisions-and-backlog.md`；
+- `docs/product/03-pc-admin-data-skeleton.md`；
+- `docs/product/05-pc-admin-product-decisions.md`；
+- `docs/workbench/00-work-ledger.md`。
+
+复核结论：PC02 当前边界与长期账号 / 多赛事身份 / 赛事期 CompetitionProject / 学校授权 Scope / Workshop 私有运行内容等既有原则一致。Legacy P1 的“团队减员 / 变更”仍属于需要确认的缺口，本卡不擅自把它扩成新的审核流程。
+
+## 7. 并行施工处理
 
 施工过程中 PC03 已并行修改 `apps/pc/src/App.tsx`。PC02 写路由前重新读取最新 `dev`，只新增：
 
@@ -183,20 +214,22 @@ status=upcoming
 
 没有覆盖 PC03 的 Organization / Opportunity / Content 路由。最终收口时再次读取 `dev`，PC04 路由也已并行存在，PC02 路由与 PC03 / PC04 均同时保留。
 
-## 7. 实现提交
+## 8. 实现提交
 
 - Competition 控制面模型：`738f41cad4159d6b88a9e712e5d09c2cb94e48b8`
 - Competition 详情控制台：`c3ae7f05b4901c5b4866a4d4b37aeb0377cd984f`
 - 路由接入：`1a3ebf1a8efb3480e56f1e6e95e47467c3eaa717`
 - 初版 PC02 browser assertions：`dc3f2a08c26f798a30fd3246bc6dd9e91cabde84`
-- Workspace lifecycle + qualification 双门禁修正：`373410687558dc53f60f109f0a86ef5ac9780c55`
+- Workspace lifecycle + qualification 双门禁：`373410687558dc53f60f109f0a86ef5ac9780c55`
 - lifecycle / CompetitionIdentity browser assertions：`d9b1709d2848d88b52ef8aadd95fdb2888e9e33d`
+- 复用 PC01 Competition 主数据：`64c6a3242cc8755d07ae80a2c60bbff657ced455`
+- 收紧扩展组装类型：`f52a4fe393fbce7bdffedf1053003277c2aa4b6d`
 
-## 8. 验证与独立评审要求
+## 9. 验证与独立评审要求
 
 施工线程只声明“实现完成，待独立评审”，不自行标记 PASS。
 
-本轮已经完成代码级语义自检，并在收口时确认最新 `dev` 仍同时保留 PC02、PC03、PC04 路由。GitHub connector 对本次直接 push 的 `fetch_commit_workflow_runs` 与 combined status 未返回可用 run / status，因此不伪造 CI PASS。
+本轮完成了代码级语义自检，并确认最新 `dev` 同时保留 PC02、PC03、PC04 路由。GitHub connector 对本次直接 push 的 `fetch_commit_workflow_runs` 与 combined status 未返回可用 run / status，因此不伪造 CI PASS。
 
 独立评审仍至少需要：
 
