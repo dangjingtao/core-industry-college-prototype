@@ -2,32 +2,21 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 1280, height: 900 } });
 
-test("PC root is an operations dashboard instead of a construction dashboard", async ({ page }) => {
+test("PC root is a public Core Industry College landing with registration and admin entries", async ({ page }) => {
   await page.goto("/");
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "核心产业学院" })).toBeVisible();
+  await expect(page.getByText("连接真实产业，沉淀真实成长", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("landing-registration")).toHaveAttribute("href", "/registration-portal/start");
+  await expect(page.getByTestId("landing-admin")).toHaveAttribute("href", "/admin");
+  await expect(page.getByText("赛事服务", { exact: true })).toBeVisible();
+  await expect(page.getByText("产业课程", { exact: true })).toBeVisible();
+  await expect(page.getByText("校企资源", { exact: true })).toBeVisible();
+  await expect(page.getByText("学生成长", { exact: true })).toBeVisible();
+
+  await page.getByTestId("landing-admin").click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: "今天先处理这些业务" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "当前运营任务" })).toBeVisible();
-  await expect(page.getByText("第十六届三创赛资格待回流", { exact: true })).toBeVisible();
-  await expect(page.getByText("账号治理与高风险审批", { exact: true })).toBeVisible();
-
-  await expect(page.getByText("Truth boundary", { exact: false })).not.toBeVisible();
-  await expect(page.getByText("Stable ID 统一展示", { exact: true })).not.toBeVisible();
-  await expect(page.getByText("APP → PC 数据接入地图", { exact: true })).not.toBeVisible();
-
-  const permission = page.getByLabel("当前管理角色与数据范围");
-  await expect(permission).toBeVisible();
-  await expect(page.getByText("Role", { exact: true })).not.toBeVisible();
-  await permission.locator("summary").click();
-  await expect(page.getByText("Role", { exact: true })).toBeVisible();
-  await expect(page.getByText("Module", { exact: true })).toBeVisible();
-  await expect(page.getByText("Data Scope", { exact: true })).toBeVisible();
-
-  const technical = page.getByTestId("admin-technical-details");
-  await expect(technical).toBeVisible();
-  await expect(technical).not.toHaveAttribute("open", "");
-  await technical.locator("summary").click();
-  await expect(technical).toContainText("competitionId");
-  await expect(technical).toContainText("organizationId");
 });
 
 test("PC01 top-level domains lead with business work, not entity contracts", async ({ page }) => {
