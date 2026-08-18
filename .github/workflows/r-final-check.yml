@@ -21,18 +21,6 @@ jobs:
   r-final:
     runs-on: ubuntu-latest
     steps:
-      - name: Publish temporary pending status
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.repos.createCommitStatus({
-              ...context.repo,
-              sha: context.sha,
-              state: "pending",
-              context: "t013a-branch-r-final",
-              description: "T013A branch R-Final is running"
-            });
-
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -43,55 +31,98 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        id: install
+        continue-on-error: true
         run: npm ci
 
       - name: Install Chromium
+        id: chromium
+        continue-on-error: true
         run: npx playwright install --with-deps chromium
 
       - name: Verify mobile routes, types and build
+        id: mobile_verify
+        continue-on-error: true
         run: npm run verify --workspace @core/mobile
 
-      - name: Run mobile mother flows and feature regressions
+      - name: Run T013A focused browser regression
+        id: t013a_browser
+        continue-on-error: true
+        run: npm run e2e --workspace @core/mobile -- tests/t013a-workshop.spec.ts
+
+      - name: Run mobile mother flow regression
+        id: mother_flows
+        continue-on-error: true
+        run: npm run e2e --workspace @core/mobile -- tests/mother-flows.spec.ts
+
+      - name: Run existing mobile feature regressions
+        id: mobile_regressions
+        continue-on-error: true
         run: >-
           npm run e2e --workspace @core/mobile --
-          tests/mother-flows.spec.ts
           tests/f001-phone-verification.spec.ts
           tests/f002-trust-status.spec.ts
           tests/f003.spec.ts
           tests/r-final.spec.ts
-          tests/t013a-workshop.spec.ts
 
       - name: Run real Mobile-PC-Mobile handoff
+        id: handoff
+        continue-on-error: true
         run: npm run verify:browser:handoff --workspace @core/mobile
 
       - name: Verify PC types and build
+        id: pc_verify
+        continue-on-error: true
         run: npm run verify --workspace @core/pc
 
       - name: Run PC browser regressions
+        id: pc_browser
+        continue-on-error: true
         run: npm run e2e --workspace @core/pc
 
-      - name: Publish temporary success status
-        if: success()
+      - name: Publish diagnostic statuses
+        if: always()
         uses: actions/github-script@v8
         with:
           script: |
+            const checks = [
+              ["t013a/install", "${{ steps.install.outcome }}"],
+              ["t013a/chromium", "${{ steps.chromium.outcome }}"],
+              ["t013a/mobile-verify", "${{ steps.mobile_verify.outcome }}"],
+              ["t013a/focused-browser", "${{ steps.t013a_browser.outcome }}"],
+              ["t013a/mother-flows", "${{ steps.mother_flows.outcome }}"],
+              ["t013a/mobile-regressions", "${{ steps.mobile_regressions.outcome }}"],
+              ["t013a/handoff", "${{ steps.handoff.outcome }}"],
+              ["t013a/pc-verify", "${{ steps.pc_verify.outcome }}"],
+              ["t013a/pc-browser", "${{ steps.pc_browser.outcome }}"],
+            ];
+            for (const [contextName, outcome] of checks) {
+              await github.rest.repos.createCommitStatus({
+                ...context.repo,
+                sha: context.sha,
+                state: outcome === "success" ? "success" : "failure",
+                context: contextName,
+                description: outcome === "success" ? "passed" : `${outcome}`
+              });
+            }
+            const failed = checks.filter(([, outcome]) => outcome !== "success").map(([name]) => name);
             await github.rest.repos.createCommitStatus({
               ...context.repo,
               sha: context.sha,
-              state: "success",
+              state: failed.length ? "failure" : "success",
               context: "t013a-branch-r-final",
-              description: "T013A branch R-Final passed"
+              description: failed.length ? `Failed: ${failed.length} segment(s)` : "T013A branch R-Final passed"
             });
 
-      - name: Publish temporary failure status
-        if: failure()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            await github.rest.repos.createCommitStatus({
-              ...context.repo,
-              sha: context.sha,
-              state: "failure",
-              context: "t013a-branch-r-final",
-              description: "T013A branch R-Final failed"
-            });
+      - name: Fail job when diagnostics failed
+        if: always()
+        run: |
+          test "${{ steps.install.outcome }}" = "success"
+          test "${{ steps.chromium.outcome }}" = "success"
+          test "${{ steps.mobile_verify.outcome }}" = "success"
+          test "${{ steps.t013a_browser.outcome }}" = "success"
+          test "${{ steps.mother_flows.outcome }}" = "success"
+          test "${{ steps.mobile_regressions.outcome }}" = "success"
+          test "${{ steps.handoff.outcome }}" = "success"
+          test "${{ steps.pc_verify.outcome }}" = "success"
+          test "${{ steps.pc_browser.outcome }}" = "success"
