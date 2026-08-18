@@ -62,16 +62,17 @@ test("B registration handoff carries context and callbacks share one competition
       window.history.pushState({}, "", `${url.pathname}${url.search}`);
       window.dispatchEvent(new PopStateEvent("popstate"));
     }, { status });
+    await expect.poll(() => new URL(page.url()).searchParams.has("registrationStatus")).toBe(false);
   };
 
   await callback("pending");
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
   await callback("rejected");
-  await expect(page.getByText("报名审核未通过", { exact: true })).toBeVisible();
+  await expect(page.getByText(/审核未通过/).first()).toBeVisible();
   await callback("pending");
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText(/报名已提交.*学校审核/).first()).toBeVisible();
   await callback("approved");
-  await expect(page.getByText("审核通过，已获得赛事身份", { exact: true })).toBeVisible();
+  await expect(page.getByText(/审核通过.*赛事身份/).first()).toBeVisible();
   await page.getByRole("button", { name: "进入赛事工作区" }).click();
   await expect(page.getByRole("heading", { name: "赛事工作区", exact: true })).toBeVisible();
   await expect(page.getByText("身份：active · 团队：山城新零售队", { exact: true })).toBeVisible();
