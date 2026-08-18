@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowRight, Award, BookOpen, Check, Clock, Coins, GraduationCap, LayoutGrid, Lock, PlayCircle, Search, Star, Trophy } from "lucide-react";
+import { Award, BookOpen, Check, Clock, Coins, Filter, GraduationCap, Lock, PlayCircle, Search, Star, Trophy } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
@@ -26,10 +26,7 @@ const valueTabs = [
   { value: "credit" as const, label: "需学力值" },
 ] as const;
 
-const sortTabs = [
-  { value: "default" as const, label: "默认" },
-  { value: "hot" as const, label: "最热" },
-] as const;
+
 
 function CourseCover({ course, className = "" }: { course: Course; className?: string }) {
   return (
@@ -100,18 +97,10 @@ export function CoursesPage() {
       <div className="space-y-5 px-4 py-5">
         <Carousel items={carouselItems} autoPlay interval={5000} size="lg" />
 
-        <Card interactive onClick={() => navigate("/courses/center")} className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-[14px] bg-primary-container text-text-brand">
-              <LayoutGrid size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="font-semibold text-text-primary">课程中心</h2>
-              <p className="text-xs text-text-secondary">按专业方向与价值维度浏览全部课程</p>
-            </div>
-          </div>
-          <ArrowRight size={18} className="text-text-tertiary" aria-hidden="true" />
-        </Card>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-text-primary">课程中心</h2>
+          <Link to="/courses/center" className="text-sm font-medium text-text-brand">查看全部</Link>
+        </div>
 
         {loggedIn ? (
           <>
@@ -177,99 +166,114 @@ export function CourseCenterPage() {
   const { enrolledFor, learningFor, benefitStatusFor } = useLongTermAssets();
   const [category, setCategory] = useState<typeof categoryTabs[number]["value"]>("all");
   const [valueFilter, setValueFilter] = useState<typeof valueTabs[number]["value"]>("all");
-  const [sort, setSort] = useState<typeof sortTabs[number]["value"]>("default");
   const [query, setQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(true);
 
   const filtered = useMemo(() => {
     let list = courses.filter(course => category === "all" || course.category === category);
     if (valueFilter === "free") list = list.filter(course => course.entitlement === "free");
     if (valueFilter === "credit") list = list.filter(course => course.entitlement === "creditRequired");
     if (query.trim()) list = list.filter(course => course.title.includes(query.trim()) || course.summary.includes(query.trim()));
-    if (sort === "hot") list = [...list].sort((a, b) => b.chapterCount - a.chapterCount);
     return list;
-  }, [category, valueFilter, sort, query]);
+  }, [category, valueFilter, query]);
+
+  const activeFilterCount = (category !== "all" ? 1 : 0) + (valueFilter !== "all" ? 1 : 0);
+  const resetFilters = () => { setCategory("all"); setValueFilter("all"); setQuery(""); };
 
   return (
     <PublicShell>
-      <PageHeader title="课程中心" subtitle="按方向与价值维度浏览全部课程" backTo="/courses" />
+      <PageHeader title="全部课程" subtitle="按专业方向与价值维度浏览" backTo="/courses" />
       <div className="flex h-[calc(100dvh-104px)] flex-col">
         <div className="shrink-0 border-b border-border-subtle bg-surface px-4 py-3">
-          <div className="flex items-center gap-2 rounded-control bg-surface px-3 py-2">
-            <Search size={18} className="text-text-tertiary" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={event => setQuery(event.target.value)}
-              placeholder="搜索课程名称或简介"
-              className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
-            />
+          <div className="flex items-center gap-3">
+            <div className="flex flex-1 items-center gap-2 rounded-control bg-background px-3 py-2">
+              <Search size={18} className="text-text-tertiary" aria-hidden="true" />
+              <input
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+                placeholder="搜索课程名称或简介"
+                className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(value => !value)}
+              className={`flex shrink-0 items-center gap-1 rounded-control px-3 py-2 text-sm font-medium ${activeFilterCount ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}
+            >
+              <Filter size={16} aria-hidden="true" />
+              筛选{activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
+            </button>
           </div>
         </div>
-        <div className="flex min-h-0 flex-1">
-          <nav className="w-[72px] shrink-0 overflow-y-auto border-r border-border-subtle bg-surface py-2">
-            {categoryTabs.map(tab => (
-              <button
-                key={tab.value}
-                onClick={() => setCategory(tab.value)}
-                className={`block w-full px-2 py-3 text-center text-xs font-medium transition ${category === tab.value ? "bg-primary-container text-text-brand" : "text-text-secondary"}`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-          <div className="min-w-0 flex-1 overflow-y-auto bg-background p-3">
-            <div className="flex flex-wrap gap-2 pb-2">
-              {valueTabs.map(tab => (
-                <button
-                  key={tab.value}
-                  onClick={() => setValueFilter(tab.value)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${valueFilter === tab.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              <div className="mx-1 h-5 w-px bg-border-subtle" />
-              {sortTabs.map(tab => (
-                <button
-                  key={tab.value}
-                  onClick={() => setSort(tab.value)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${sort === tab.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+        {showFilters && (
+          <div className="shrink-0 space-y-3 border-b border-border-subtle bg-surface px-4 py-4">
+            <div>
+              <p className="mb-2 text-xs font-medium text-text-tertiary">专业方向</p>
+              <div className="flex flex-wrap gap-2">
+                {categoryTabs.map(tab => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setCategory(tab.value)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${category === tab.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              {filtered.map(course => {
-                const enrolled = loggedIn && enrolledFor(course.id);
-                const record = learningFor(course.id);
-                const locked = course.entitlement === "benefitRequired" && (!course.unlockBenefitId || !["claimed", "used"].includes(benefitStatusFor(course.unlockBenefitId)));
-                return (
-                  <Link key={course.id} to={`/courses/${course.id}`} className="block">
-                    <Card interactive className="flex h-full flex-col">
-                      <CourseCover course={course} className="h-[92px] w-full" />
-                      <div className="mt-3 flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-text-primary">{course.title}</h3>
-                        {locked && <Lock size={14} className="mt-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />}
+            <div>
+              <p className="mb-2 text-xs font-medium text-text-tertiary">价值维度</p>
+              <div className="flex flex-wrap gap-2">
+                {valueTabs.map(tab => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setValueFilter(tab.value)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${valueFilter === tab.value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="min-w-0 flex-1 overflow-y-auto bg-background px-4 py-4">
+          <div className="space-y-4">
+            {filtered.map(course => {
+              const enrolled = loggedIn && enrolledFor(course.id);
+              const record = learningFor(course.id);
+              const locked = course.entitlement === "benefitRequired" && (!course.unlockBenefitId || !["claimed", "used"].includes(benefitStatusFor(course.unlockBenefitId)));
+              return (
+                <Link key={course.id} to={`/courses/${course.id}`} className="block">
+                  <Card interactive className="flex gap-4 p-3">
+                    <CourseCover course={course} className="h-[104px] w-[104px] shrink-0" />
+                    <div className="min-w-0 flex-1 py-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="line-clamp-2 text-base font-semibold leading-6 text-text-primary">{course.title}</h3>
+                        {locked && <Lock size={14} className="mt-1 shrink-0 text-text-tertiary" aria-hidden="true" />}
                       </div>
-                      <p className="mt-1 line-clamp-2 text-xs text-text-secondary">{course.summary}</p>
-                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{course.summary}</p>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-text-tertiary">
+                        <span className="flex items-center gap-1"><BookOpen size={12} aria-hidden="true" />{course.chapterCount} 节</span>
+                        <span className="flex items-center gap-1"><Clock size={12} aria-hidden="true" />{course.duration}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         <CourseValueTag course={course} compact />
                         <CategoryTag category={course.category} />
                         {enrolled && record.status !== "notStarted" && <StatusTag tone={record.status === "completed" ? "success" : "info"}>{statusLabel(record.status)}</StatusTag>}
                       </div>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-            {filtered.length === 0 && (
-              <Card>
-                <p className="py-4 text-center text-sm text-text-secondary">当前筛选条件下没有课程</p>
-                <Button className="mt-3 w-full" onClick={() => { setCategory("all"); setValueFilter("all"); setQuery(""); }}>重置筛选</Button>
-              </Card>
-            )}
-            <p className="mt-4 text-center text-xs text-text-tertiary">课程兑换与学力值消耗规则为原型占位，待 F04 产品决策。</p>
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
+          {filtered.length === 0 && (
+            <Card>
+              <p className="py-4 text-center text-sm text-text-secondary">当前筛选条件下没有课程</p>
+              <Button className="mt-3 w-full" onClick={resetFilters}>重置筛选</Button>
+            </Card>
+          )}
+          <p className="mt-5 text-center text-xs text-text-tertiary">课程兑换与学力值消耗规则为原型占位，待 F04 产品决策。</p>
         </div>
       </div>
     </PublicShell>
