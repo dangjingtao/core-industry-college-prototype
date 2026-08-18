@@ -33,7 +33,7 @@ import { TaskAnswerPage, TaskProgressPage, TaskReviewPage } from "../features/co
 import { WorkshopRuntimeProvider } from "../features/competition-workspace/runtime";
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
 import { AccountRequired } from "../features/long-term-assets/shared";
-import { CourseAchievementPage, CourseAssessmentPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
+import { CourseAchievementPage, CourseAssessmentPage, CourseCenterPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
 import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, ExchangeCenterPage, ExchangeDetailPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
 import {
   AssetsHomePage,
@@ -127,6 +127,7 @@ export function App() {
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:contentId" element={<NewsDetailPage />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/center" element={<CourseCenterPage />} />
               <Route path="/courses/:courseId" element={<CourseDetailPage />} />
               <Route path="/courses/:courseId/learn" element={account(<CourseLearnPage />)} />
               <Route path="/courses/:courseId/assessment" element={account(<CourseAssessmentPage />)} />

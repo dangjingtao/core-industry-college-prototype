@@ -3,16 +3,32 @@ export type CourseSource =
   | { type: "competition"; label: string; competitionId: string }
   | { type: "company"; label: string; companyId: string };
 
+export type CourseCategory =
+  | "all"
+  | "opc"
+  | "beauty-retail"
+  | "rural-revitalization"
+  | "ai-ecommerce"
+  | "data-analytics"
+  | "business-project";
+
+export type CourseEntitlement = "free" | "creditRequired" | "benefitRequired";
+
 export type Course = {
   id: string;
   title: string;
   summary: string;
+  description: string;
   source: CourseSource;
   duration: string;
+  chapterCount: number;
   lessons: string[];
-  entitlement: "free" | "benefitRequired";
+  entitlement: CourseEntitlement;
+  cost: number;
   unlockBenefitId?: string;
   certificateId?: string;
+  category: Exclude<CourseCategory, "all">;
+  cover: string;
 };
 
 export type BenefitSource =
@@ -77,31 +93,91 @@ export const courses: Course[] = [
     id: "data-analytics",
     title: "商业数据分析基础",
     summary: "用真实业务指标完成从问题拆解、数据整理到复盘表达的基础训练。",
+    description: "本课程围绕电商业务场景，教授如何提出正确的问题、整理多源数据、使用漏斗与留存模型定位关键节点，并用简洁的表达完成复盘。适合希望用数据驱动决策的参赛学生与职场新人。",
     source: { type: "platform", label: "平台公共课程" },
     duration: "6 课时",
+    chapterCount: 6,
     lessons: ["指标与问题", "数据整理", "漏斗分析", "复盘表达", "练习与考试", "成果确认"],
     entitlement: "free",
+    cost: 0,
     certificateId: "cert-course-data-analytics",
+    category: "data-analytics",
+    cover: "from-[#6366f1] to-[#a855f7]",
   },
   {
     id: "brand-ecommerce",
     title: "品牌电商实战课",
     summary: "围绕三创赛美妆电商赛道，把用户洞察、内容运营和经营复盘串成一条实践链。",
+    description: "以三创赛美妆电商赛道为背景，系统讲解用户洞察、商品表达、内容运营、直播转化与数据复盘。课程结束后可掌握一套可复用的品牌电商实践方法。",
     source: { type: "competition", label: "三创赛 · 美妆电商赛道", competitionId: "sanchuang-16" },
     duration: "8 课时",
+    chapterCount: 8,
     lessons: ["赛道导入", "用户洞察", "商品表达", "内容运营", "直播与转化", "数据复盘", "项目复盘", "课程考试"],
     entitlement: "free",
+    cost: 0,
     certificateId: "cert-course-brand-ecommerce",
+    category: "beauty-retail",
+    cover: "from-[#ec4899] to-[#f97316]",
   },
   {
     id: "retail-project-lab",
     title: "零售项目协作课",
     summary: "企业案例驱动的轻量项目课，训练需求澄清、协作与阶段汇报。",
+    description: "云栖零售实验室联合打造的项目课，以真实零售场景为案例，训练需求澄清、协作记录、阶段汇报与成果复盘能力。完成课程可获得企业认证的项目经历证明。",
     source: { type: "company", label: "云栖零售实验室", companyId: "cloud-retail" },
     duration: "4 课时",
+    chapterCount: 4,
     lessons: ["项目拆解", "协作记录", "阶段汇报", "成果复盘"],
     entitlement: "benefitRequired",
+    cost: 0,
     unlockBenefitId: "benefit-cloud-lab",
+    category: "business-project",
+    cover: "from-[#0ea5e9] to-[#14b8a6]",
+  },
+  {
+    id: "opc-methodology",
+    title: "OPC 创新创业方法论",
+    summary: "OPC 赛事通用能力课：从机会识别、产品构想到商业模式验证。",
+    description: "OPC 赛事官方方法论课程，系统讲授机会识别、需求验证、产品原型、商业模式与路演表达。适用于准备参加 O'Campus、三创赛等创新创业赛事的学生。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "5 课时",
+    chapterCount: 5,
+    lessons: ["机会识别", "需求验证", "产品原型", "商业模式", "路演表达"],
+    entitlement: "creditRequired",
+    cost: 150,
+    certificateId: "cert-course-opc-methodology",
+    category: "opc",
+    cover: "from-[#8b5cf6] to-[#6366f1]",
+  },
+  {
+    id: "rural-ecommerce",
+    title: "乡村振兴电商运营",
+    summary: "农产品上行与乡村品牌打造的实战运营课程。",
+    description: "聚焦农产品上行、乡村品牌打造与直播助农运营，讲解供应链组织、内容策划、社群运营与平台投放。帮助学生在乡村振兴赛道做出可落地的项目成果。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "6 课时",
+    chapterCount: 6,
+    lessons: ["农产品上行逻辑", "乡村品牌定位", "内容策划", "直播助农", "社群运营", "项目复盘"],
+    entitlement: "creditRequired",
+    cost: 120,
+    certificateId: "cert-course-rural-ecommerce",
+    category: "rural-revitalization",
+    cover: "from-[#22c55e] to-[#16a34a]",
+  },
+  {
+    id: "ai-ecommerce-agent",
+    title: "AI 电商智能体实战",
+    summary: "用大模型与智能体工具提升电商内容生产、客服与投放效率。",
+    description: "系统讲解如何把 AI 大模型与智能体工具应用到电商场景，包括商品文案生成、智能客服、投放素材自动化与数据洞察助手。适合希望用 AI 提效的电商从业者。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "7 课时",
+    chapterCount: 7,
+    lessons: ["AI 电商概览", "内容生成", "智能客服", "投放助手", "数据洞察", "工作流搭建", "综合实战"],
+    entitlement: "creditRequired",
+    cost: 250,
+    certificateId: "cert-course-ai-ecommerce-agent",
+    category: "ai-ecommerce",
+    cover: "from-[#06b6d4] to-[#3b82f6]",
   },
 ];
 

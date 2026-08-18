@@ -38,6 +38,8 @@ export type ResumePresentation = {
 /** @deprecated Use StudentProfile. Kept as a compatibility alias for existing prototype code. */
 export type ProfileState = StudentProfile;
 
+export type EnrollmentResult = { success: true } | { success: false; reason: string };
+
 type LongTermAssetsContextValue = {
   learning: LearningRecord[];
   benefitStatuses: Record<string, BenefitStatus>;
@@ -48,12 +50,16 @@ type LongTermAssetsContextValue = {
   resume: ResumePresentation;
   profile: StudentProfile;
   profileSources: StudentProfileSources;
+  creditBalance: number;
+  enrolledCourseIds: string[];
   learningFor: (courseId: string) => LearningRecord;
   courseCompletedFor: (courseId: string) => boolean;
+  enrolledFor: (courseId: string) => boolean;
   startCourse: (courseId: string) => void;
   advanceCourse: (courseId: string) => void;
   completeCourse: (courseId: string) => void;
   submitAssessment: (courseId: string, passed: boolean) => void;
+  enrollCourse: (courseId: string) => EnrollmentResult;
   claimBenefit: (benefitId: string) => void;
   useBenefit: (benefitId: string) => void;
   claimCertificate: (certificateId: string) => void;
@@ -72,6 +78,9 @@ const seedLearning: LearningRecord[] = [
   { courseId: "brand-ecommerce", status: "inProgress", progress: 38, assessment: "idle" },
   { courseId: "retail-project-lab", status: "notStarted", progress: 0, assessment: "idle" },
 ];
+
+const seedEnrolledCourseIds = ["data-analytics", "brand-ecommerce", "retail-project-lab"];
+const seedCreditBalance = 1280;
 
 const seedResume: ResumePresentation = {
   selectedFactKeys: ["experience:sanchuang-15", "certificate:cert-sanchuang-15", "learning:data-analytics"],
@@ -135,6 +144,8 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [resume, setResume] = useState<ResumePresentation>(seedResume);
   const [profile, setProfile] = useState<StudentProfile>(seedStudentProfile);
   const [profileSources, setProfileSources] = useState<StudentProfileSources>(() => initialProfileSources(seedStudentProfile));
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>(seedEnrolledCourseIds);
+  const [creditBalance, setCreditBalance] = useState<number>(seedCreditBalance);
 
   const benefitStatusFor = useCallback((benefitId: string): BenefitStatus => {
     const benefit = benefitById(benefitId);
@@ -163,6 +174,8 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     setLearning([]);
     setBenefitStatuses(Object.fromEntries(benefits.map(item => [item.id, item.initialStatus])));
     setCertificates([]);
+    setEnrolledCourseIds([]);
+    setCreditBalance(seedCreditBalance);
     setResume(emptyResume);
     setProfile(nextProfile);
     setProfileSources(initialProfileSources(nextProfile));
@@ -190,28 +203,31 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     resume,
     profile,
     profileSources,
+    creditBalance,
+    enrolledCourseIds,
     learningFor: courseId => learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted", progress: 0, assessment: "idle" },
     courseCompletedFor: courseId => {
       const record = learning.find(item => item.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
       return isCourseCompleted(record);
     },
+    enrolledFor: courseId => enrolledCourseIds.includes(courseId),
     startCourse: courseId => {
-      if (!session.loggedIn) return;
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
       setLearning(records => updateLearning(records, courseId, record => record.status === "notStarted" ? normalizedLearningRecord(record, 8, record.assessment) : record));
     },
     advanceCourse: courseId => {
-      if (!session.loggedIn) return;
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
       setLearning(records => updateLearning(records, courseId, record => {
         const nextProgress = Math.min(100, Math.max(record.progress, 8) + 22);
         return normalizedLearningRecord(record, nextProgress, record.assessment);
       }));
     },
     completeCourse: courseId => {
-      if (!session.loggedIn) return;
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
       setLearning(records => updateLearning(records, courseId, record => normalizedLearningRecord(record, 100, record.assessment)));
     },
     submitAssessment: (courseId, passed) => {
-      if (!session.loggedIn) return;
+      if (!session.loggedIn || !enrolledCourseIds.includes(courseId)) return;
       const currentRecord = learning.find(record => record.courseId === courseId) ?? { courseId, status: "notStarted" as LearningStatus, progress: 0, assessment: "idle" as const };
       const assessment = passed ? "passed" as const : "failed" as const;
       const updatedRecord = normalizedLearningRecord(currentRecord, currentRecord.progress, assessment);
@@ -233,6 +249,27 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
             }]);
         }
       }
+    },
+    enrollCourse: courseId => {
+      if (!session.loggedIn) return { success: false, reason: "请先登录" };
+      if (enrolledCourseIds.includes(courseId)) return { success: true };
+      const course = courses.find(item => item.id === courseId);
+      if (!course) return { success: false, reason: "课程不存在" };
+      if (course.entitlement === "benefitRequired") {
+        if (!course.unlockBenefitId) return { success: false, reason: "课程配置缺少解锁权益" };
+        const status = benefitStatusFor(course.unlockBenefitId);
+        if (!["claimed", "used"].includes(status)) {
+          return { success: false, reason: `需要先领取「${benefitById(course.unlockBenefitId)?.title ?? "对应权益"}」` };
+        }
+      }
+      if (course.entitlement === "creditRequired") {
+        if (creditBalance < course.cost) {
+          return { success: false, reason: `学力值不足，当前余额 ${creditBalance}，需要 ${course.cost}` };
+        }
+        setCreditBalance(current => current - course.cost);
+      }
+      setEnrolledCourseIds(current => [...current, courseId]);
+      return { success: true };
     },
     claimBenefit: benefitId => {
       if (!session.loggedIn || benefitStatusFor(benefitId) !== "eligible") return;
@@ -273,7 +310,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     updateProfile,
     initializeNewAccount,
     mergeProfileFromSource,
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, session.loggedIn, updateProfile, mergeProfileFromSource]);
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }
