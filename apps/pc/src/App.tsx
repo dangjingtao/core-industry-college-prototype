@@ -17,6 +17,8 @@ import { PC05StateProvider } from "./admin/PC05State";
 import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
 import { PC08CompetitionDetail, PC08CompetitionInfrastructureConsole } from "./admin/PC08CompetitionInfrastructure";
+import { PC09SanChuangOperations } from "./admin/PC09SanChuangOperations";
+import { currentSanChuangCompetitionId } from "./admin/pc09-data";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
@@ -124,6 +126,9 @@ export function App() {
             <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
             <Route path="/admin/competitions/categories" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="categories" /></AdminRoute>} />
             <Route path="/admin/competitions/registrations" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="registrations" /></AdminRoute>} />
+            <Route path="/admin/sanchuang" element={<Navigate to={`/admin/sanchuang/${currentSanChuangCompetitionId}`} replace />} />
+            <Route path="/admin/sanchuang/:competitionId" element={<AdminRoute><PC09SanChuangOperations view="overview" /></AdminRoute>} />
+            <Route path="/admin/sanchuang/:competitionId/performance" element={<AdminRoute><PC09SanChuangOperations view="performance" /></AdminRoute>} />
             <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
             <Route path="/admin/workshop" element={<AdminRoute><PC01OperationsConsole section="workshop" /></AdminRoute>} />
             <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><PC08CompetitionDetail /></AdminRoute>} />

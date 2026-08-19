@@ -36,6 +36,7 @@ const domainIcons: Record<string, LucideIcon> = {
 function routeLabel(pathname: string) {
   if (pathname === "/admin") return "运营总览";
   if (pathname.startsWith("/admin/competitions")) return "赛事运营";
+  if (pathname.startsWith("/admin/sanchuang")) return "三创赛运营";
   if (pathname.startsWith("/admin/organizations")) return "主体与学校";
   if (pathname.startsWith("/admin/opportunities")) return "机会与投递";
   if (pathname.startsWith("/admin/pc04/courses")) return "平台课程";
@@ -78,6 +79,7 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
         {!mobile && domain.id === "basicData" && <><NavLink to="/admin/basic-data/students" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/students"))}><ChevronRight size={13} />报名学生基础数据</NavLink><NavLink to="/admin/basic-data/schools" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/schools"))}><Building2 size={13} />参赛学校基础数据</NavLink><NavLink to="/admin/basic-data/dictionaries" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/dictionaries"))}><ChevronRight size={13} />赛事 / 赛道字典</NavLink><NavLink to="/admin/basic-data/templates" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/templates"))}><FileBadge size={13} />证书 / 协议模板</NavLink><NavLink to="/admin/basic-data/imports" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/imports"))}><ChevronRight size={13} />导入与批处理</NavLink></>}
       </div>;
     })}
+    <NavLink data-testid="pc09-primary-nav" to="/admin/sanchuang" className={() => itemClass(location.pathname.startsWith("/admin/sanchuang"))}><Trophy size={18} aria-hidden="true" />三创赛运营</NavLink>
     <NavLink to="/admin/observability" className={({ isActive }) => itemClass(isActive)}><Gauge size={18} aria-hidden="true" />环境与日志</NavLink>
     <div>
       <NavLink to="/admin/settings" className={() => itemClass(location.pathname.startsWith("/admin/settings"))}><Settings size={18} aria-hidden="true" />系统设置</NavLink>
