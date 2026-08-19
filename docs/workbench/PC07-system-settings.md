@@ -1,7 +1,7 @@
 # PC07｜系统设置：短信能力 + 内容模板
 
 > 类型：施工卡 / 平台基建  
-> 状态：待执行  
+> 状态：已施工（待复审）  
 > 优先级：P1  
 > 分支：`dev`  
 > 前置：PC01 控制面底座  
@@ -185,3 +185,34 @@
 - 不建设短信队列调度器；
 - 不为富文本模板扩展复杂 CMS；
 - 不修改 PC01–PC06 已确认业务语义。
+
+---
+
+## 9. 施工记录（2026-08-19）
+
+已落地：
+
+- 新增 `/admin/settings`、`/admin/settings/sms`、`/admin/settings/content-templates` 路由；
+- 后台主导航新增“系统设置”，桌面端同时提供“短信管理 / 内容模板”二级入口；
+- 短信配置提供启停、测试模式、服务商、默认签名、masked Access Key / Secret Key、业务短信模板映射和模拟发送测试；
+- 短信发送记录提供日期、手机号关键字、状态、业务类型筛选，并保留成功 / 失败 / 发送中 mock 证据、失败原因和稳定 trace id；
+- 内容模板提供用户协议、隐私政策、用户消息、系统通知、报名 / 审核结果通知样例，保留稳定 template key；
+- 内容模板编辑态提供轻量富文本工具栏、正文编辑、保存草稿和发布原型状态；
+- 第三方短信模板 ID 与平台自有内容模板继续保持两个对象；
+- 与基础数据中的“赛事协议 / 承诺材料”边界不冲突：后者继续跟随具体 Competition，不迁移到全平台内容模板；
+- 新增 `apps/pc/tests/pc07.spec.ts` focused browser assertion，覆盖系统设置入口、Secret 掩码、短信记录多维筛选、测试短信反馈和内容模板编辑 / 发布入口。
+
+实现文件：
+
+```text
+apps/pc/src/admin/PC07SettingsConsole.tsx
+apps/pc/src/admin/AdminControlPlaneShell.tsx
+apps/pc/src/App.tsx
+apps/pc/tests/pc07.spec.ts
+```
+
+验证说明：
+
+- `dev` 的 PC 部署工作流会在 `apps/pc/**` push 时执行 TypeScript + Vite development build；
+- 当前 GitHub 连接器只返回 pull-request 关联的 workflow run，未能读取本次 `dev` push 对应的 run，因此本施工卡不伪造 CI PASS 结论；
+- 代码与 focused browser assertion 已落地，最终流水线状态仍应以 GitHub Actions 实际 run 为准。
