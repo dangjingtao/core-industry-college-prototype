@@ -1,7 +1,7 @@
 # PC06｜开发环境观察台 + 日志与告警
 
 > 类型：施工卡  
-> 状态：待执行  
+> 状态：已施工，待独立复审  
 > 优先级：P0  
 > 分支：`dev`  
 > 前置：PC01 控制面底座；可与 PC05 并行  
@@ -382,13 +382,77 @@ CPU / Memory / Disk / Connections
 
 ## 14. 施工记录
 
-施工线程开始时补充：
+### 14.1 分支与并行施工
 
-- branch HEAD；
-- 实际修改范围；
-- 实现提交 SHA；
-- build / browser / CI 证据；
-- 采用的 mock 数据边界；
-- 新发现的环境 / 日志产品问题。
+- 开工时 `dev` HEAD：`c652588b04ad7ba9eb080f2dce74961d6ead0aeb`。
+- PC06 实现提交链：
+  - `c5d945b000b8eb2a6526fd7994324ca8aff63a08`：确定性 observability mock 数据模型；
+  - `cd8432334c2aa2eae51192be3648fc01efa779a8`：环境观察台主体页面；
+  - `9e4ef91adb919edaf2639099cb0ace274bc2d6cb`：focused Playwright；
+  - `af78709ed86cc38c35db47219f1425d00ffe0326`：`/admin/observability` 路由；
+  - `65b69fea3de682965f4f258438606ffcdd69b6af`：后台“环境与日志”导航与标题。
+- PC06 完成后 `dev` 有其他线程继续提交手机端 / 文档变更；已重新读取当前 `dev`，确认 PC06 页面、路由和导航仍在，没有被并行提交覆盖。
 
-施工线程不得自行把本卡标记为 `PASS`；完成后进入独立评审。
+### 14.2 实际修改范围
+
+- `apps/pc/src/admin/pc06-data.ts`
+- `apps/pc/src/admin/PC06ObservabilityConsole.tsx`
+- `apps/pc/src/App.tsx`
+- `apps/pc/src/admin/AdminControlPlaneShell.tsx`
+- `apps/pc/tests/pc06.spec.ts`
+- 本施工卡状态与施工记录
+
+没有改老板业务大屏，没有改 PC01–PC05 的业务对象 / 状态，也没有引入新的 Audit Log。
+
+### 14.3 已落实现
+
+- 新增 `/admin/observability` 与“环境与日志”导航；
+- 默认开发环境正常，测试环境存在可复现异常；
+- 环境总览：健康状态、build、最近部署、健康检测、运行时长、1h / 24h 异常数、未恢复告警；
+- 服务健康：Web、API、数据库、对象存储、关键第三方数据源；
+- 请求指标：请求速率、成功率、4xx、5xx、平均响应、P95；
+- 资源指标：CPU、内存、磁盘、连接占用；
+- 任务 / 数据同步：最近同步、成功 / 失败、积压、当前失败、外部数据源异常；
+- 告警同时表达严重级别、服务、首次 / 最近发生时间、已恢复 / 未恢复；
+- 告警可直接下钻到对应系统 / 同步日志证据；
+- 日志分为系统日志、同步 / 导入日志、告警日志；raw technical detail 继续服从后台“显示技术信息”开关；
+- 最近部署 / 变更可与异常发生时间对照；
+- 操作审计只提供 `/admin/governance` 关联出口，Audit Log 仍是唯一操作审计真相源。
+
+### 14.4 Mock 数据边界
+
+- mock 是确定性的结构化 snapshot，刷新不随机改变状态；
+- 只存在 `development` / `test`，没有自行增加生产环境；
+- 开发环境与测试环境是两套独立数据；
+- 字段按未来 health check / metrics / logs / deployment 可替换接口设计；
+- mock 只服务观察与诊断，不写回业务对象，不成为新的业务事实源。
+
+### 14.5 Browser / CI 证据边界
+
+已新增 `apps/pc/tests/pc06.spec.ts`，focused assertion 覆盖：
+
+```text
+开发环境正常
+→ 切换测试环境
+→ 看见 API 警告和未恢复同步告警
+→ 查看关联日志
+→ 自动切到同步日志并定位 source log
+```
+
+另有断言确认 PC06 的“操作审计”出口仍进入既有 `/admin/governance`。
+
+仓库现有 `.github/workflows/r-final-check.yml` 对 `apps/pc/**` push 会执行：
+
+- `npm run verify --workspace @core/pc`（TypeScript + Vite，硬门）；
+- `npm run e2e --workspace @core/pc`（Playwright，全量 PC browser regression，当前为 soft diagnostic gate）。
+
+`.github/workflows/deploy-pc.yml` 对 `dev` 的 PC 变更也会执行 `npm run build:development --workspace @core/pc` 后再部署预览环境。
+
+本施工线程当前可用的 GitHub 连接器不能枚举 **push 触发**的 Actions run 列表，只能读取配置和 PR 型 run，因此这里不伪造“CI 已绿”或“browser 已跑绿”的结论。进入独立复审时应直接以 GitHub Actions 对 `65b69fea3de682965f4f258438606ffcdd69b6af` 及其后续 `dev` 集成提交的实际 run 为最终证据。
+
+### 14.6 新发现问题
+
+- 当前原型的环境 / 日志数据是静态结构化 mock；后续接真实接口时应保持当前字段分层，避免将 raw log 直接替换掉人类可读告警摘要。
+- 当前“显示技术信息”是整个后台共享的技术信息开关；PC06 直接复用该机制，没有另造第二个开发者模式。
+
+施工线程不自行标记 `PASS`；实现已完成，下一步进入独立复审。
