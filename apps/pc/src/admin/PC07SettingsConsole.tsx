@@ -205,6 +205,8 @@ function SmsSettings() {
   const [provider, setProvider] = useState("阿里云短信（Mock）");
   const [signature, setSignature] = useState("核心产业学院");
   const [templates, setTemplates] = useState(initialSmsTemplates);
+  const [accessKeyReplacement, setAccessKeyReplacement] = useState("");
+  const [secretKeyReplacement, setSecretKeyReplacement] = useState("");
   const [configFeedback, setConfigFeedback] = useState("");
   const [testPhone, setTestPhone] = useState("13800138000");
   const [testFeedback, setTestFeedback] = useState("");
@@ -221,9 +223,19 @@ function SmsSettings() {
       && (businessFilter === "all" || record.businessType === businessFilter);
   }), [businessFilter, dateFilter, phoneFilter, statusFilter]);
 
+  const beginEditing = () => {
+    setEditing(true);
+    setAccessKeyReplacement("");
+    setSecretKeyReplacement("");
+    setConfigFeedback("");
+  };
+
   const saveConfig = () => {
+    const replacedCredentials = [accessKeyReplacement ? "Access Key" : "", secretKeyReplacement ? "Secret Key" : ""].filter(Boolean).join(" / ");
     setEditing(false);
-    setConfigFeedback("配置已保存到原型状态 · 2026-08-19 12:08");
+    setAccessKeyReplacement("");
+    setSecretKeyReplacement("");
+    setConfigFeedback(replacedCredentials ? `配置已保存到原型状态 · ${replacedCredentials} 已替换并重新掩码` : "配置已保存到原型状态");
   };
 
   const sendTestSms = () => {
@@ -236,15 +248,15 @@ function SmsSettings() {
       <section className="rounded-container border border-border-subtle bg-surface">
         <div className="flex flex-col gap-3 border-b border-border-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
           <div><div className="flex items-center gap-2"><KeyRound size={18} className="text-text-brand" /><h2 className="font-semibold">短信配置</h2></div><p className="mt-1 text-xs text-text-tertiary">第三方 provider 配置与业务模板映射。真实 Secret 不在浏览器长期裸显。</p></div>
-          <button type="button" onClick={() => editing ? saveConfig() : (setEditing(true), setConfigFeedback(""))} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary">{editing ? <Save size={15} /> : <Pencil size={15} />}{editing ? "保存配置" : "编辑配置"}</button>
+          <button type="button" onClick={editing ? saveConfig : beginEditing} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary">{editing ? <Save size={15} /> : <Pencil size={15} />}{editing ? "保存配置" : "编辑配置"}</button>
         </div>
         <div className="grid gap-5 p-5 lg:grid-cols-2">
           <label className="flex items-center justify-between gap-4 rounded-control border border-border-subtle p-3"><span><span className="block text-sm font-semibold">启用短信能力</span><span className="mt-1 block text-xs text-text-tertiary">平台级能力开关</span></span><input aria-label="启用短信能力" type="checkbox" checked={enabled} disabled={!editing} onChange={event => setEnabled(event.target.checked)} className="size-4" /></label>
           <label className="flex items-center justify-between gap-4 rounded-control border border-border-subtle p-3"><span><span className="block text-sm font-semibold">测试模式</span><span className="mt-1 block text-xs text-text-tertiary">测试环境不触发真实第三方发送</span></span><input aria-label="测试模式" type="checkbox" checked={testMode} disabled={!editing} onChange={event => setTestMode(event.target.checked)} className="size-4" /></label>
           <label className="text-sm"><span className="mb-2 block font-semibold">短信服务商</span><select value={provider} disabled={!editing} onChange={event => setProvider(event.target.value)} className="min-h-11 w-full rounded-control border border-border-subtle bg-surface px-3"><option>阿里云短信（Mock）</option><option>腾讯云短信（Mock）</option></select></label>
           <label className="text-sm"><span className="mb-2 block font-semibold">默认短信签名</span><input value={signature} disabled={!editing} onChange={event => setSignature(event.target.value)} className="min-h-11 w-full rounded-control border border-border-subtle bg-surface px-3" /></label>
-          <label className="text-sm"><span className="mb-2 block font-semibold">Access Key</span><input data-testid="sms-access-key" value="LTAI••••••••MOCK" readOnly className="min-h-11 w-full rounded-control border border-border-subtle bg-surface-subtle px-3 font-mono text-text-secondary" /><span className="mt-1 block text-[11px] text-text-tertiary">仅展示 masked mock value</span></label>
-          <label className="text-sm"><span className="mb-2 block font-semibold">Secret Key</span><input data-testid="sms-secret-key" value="••••••••••••••••" readOnly className="min-h-11 w-full rounded-control border border-border-subtle bg-surface-subtle px-3 font-mono text-text-secondary" /><span className="mt-1 block text-[11px] text-text-tertiary">真实 Secret 不下发到页面；原型不包含真实凭据</span></label>
+          <label className="text-sm"><span className="mb-2 block font-semibold">Access Key</span>{editing ? <input data-testid="sms-access-key-replacement" type="password" value={accessKeyReplacement} onChange={event => setAccessKeyReplacement(event.target.value)} placeholder="留空则保留当前 Access Key" autoComplete="off" className="min-h-11 w-full rounded-control border border-border-subtle bg-surface px-3" /> : <input data-testid="sms-access-key" value="LTAI••••••••MOCK" readOnly className="min-h-11 w-full rounded-control border border-border-subtle bg-surface-subtle px-3 text-text-secondary" />}<span className="mt-1 block text-[11px] text-text-tertiary">{editing ? "旧值不回填；保存后只恢复掩码展示" : "仅展示 masked mock value"}</span></label>
+          <label className="text-sm"><span className="mb-2 block font-semibold">Secret Key</span>{editing ? <input data-testid="sms-secret-key-replacement" type="password" value={secretKeyReplacement} onChange={event => setSecretKeyReplacement(event.target.value)} placeholder="留空则保留当前 Secret Key" autoComplete="new-password" className="min-h-11 w-full rounded-control border border-border-subtle bg-surface px-3" /> : <input data-testid="sms-secret-key" value="••••••••••••••••" readOnly className="min-h-11 w-full rounded-control border border-border-subtle bg-surface-subtle px-3 text-text-secondary" />}<span className="mt-1 block text-[11px] text-text-tertiary">{editing ? "真实旧 Secret 不下发；新值保存后立即清空并重新掩码" : "真实 Secret 不下发到页面；原型不包含真实凭据"}</span></label>
         </div>
         <div className="border-t border-border-subtle p-5">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"><div><h3 className="text-sm font-semibold">业务短信模板映射</h3><p className="mt-1 text-xs text-text-tertiary">这里是受第三方服务商审核约束的模板 ID，不等于平台“内容模板”。</p></div><span className="text-xs text-text-tertiary">最近修改：2026-08-19 10:42</span></div>
@@ -300,7 +312,7 @@ function ContentTemplates() {
 
   const persistTemplate = (publish: boolean) => {
     if (!selectedId) return;
-    setTemplates(current => current.map(template => template.id === selectedId ? { ...template, body: editorBody, status: publish ? "published" : template.status, updatedAt: "2026-08-19 12:08" } : template));
+    setTemplates(current => current.map(template => template.id === selectedId ? { ...template, body: editorBody, status: publish ? "published" : "draft", updatedAt: "2026-08-19 12:34" } : template));
     setFeedback(publish ? "模板已发布到原型状态" : "模板草稿已保存到原型状态");
   };
 
