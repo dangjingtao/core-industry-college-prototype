@@ -848,15 +848,17 @@ export function SubjectDecisionPage() {
 
 export function NotificationsPage() {
   const { notifications, markAllRead } = useSupport();
+  const location = useLocation();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const backTo = (location.state as { from?: string } | null)?.from ?? new URLSearchParams(location.search).get("from") ?? "/home";
   const visible = unreadOnly ? notifications.filter(item => !item.read) : notifications;
   const unreadCount = notifications.filter(item => !item.read).length;
   const handleConfirm = () => {
     markAllRead();
     setShowConfirm(false);
   };
-  return <PublicShell showNavigation={false}><PageHeader title="通知中心" backTo="/home" /><div className="space-y-5 px-4 py-5"><div className="flex gap-2"><button onClick={() => setUnreadOnly(false)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${!unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>全部</button><button onClick={() => setUnreadOnly(true)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>未读</button><GhostButton className="ml-auto" onClick={() => setShowConfirm(true)} disabled={unreadCount === 0}>全部已读</GhostButton></div>{visible.length ? visible.map(item => <Link key={item.id} to={`/me/notifications/${item.id}`} className="block"><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.body}</p><p className="mt-3 text-xs text-text-tertiary">{item.time}</p></div>{!item.read && <StatusTag tone="info">未读</StatusTag>}</div></Card></Link>) : <StateBlock state="empty" />}<ConfirmDialog open={showConfirm} title="一键已读" description="是否将所有未读消息标记为已读？" cancelText="关闭" confirmText="确认" onCancel={() => setShowConfirm(false)} onConfirm={handleConfirm} /></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="通知中心" backTo={backTo} /><div className="space-y-5 px-4 py-5"><div className="flex gap-2"><button onClick={() => setUnreadOnly(false)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${!unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>全部</button><button onClick={() => setUnreadOnly(true)} className={`min-h-touch rounded-control px-3 text-sm font-medium ${unreadOnly ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>未读</button><GhostButton className="ml-auto" onClick={() => setShowConfirm(true)} disabled={unreadCount === 0}>全部已读</GhostButton></div>{visible.length ? visible.map(item => <Link key={item.id} to={`/me/notifications/${item.id}`} className="block"><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.body}</p><p className="mt-3 text-xs text-text-tertiary">{item.time}</p></div>{!item.read && <StatusTag tone="info">未读</StatusTag>}</div></Card></Link>) : <StateBlock state="empty" />}<ConfirmDialog open={showConfirm} title="一键已读" description="是否将所有未读消息标记为已读？" cancelText="关闭" confirmText="确认" onCancel={() => setShowConfirm(false)} onConfirm={handleConfirm} /></div></PublicShell>;
 }
 
 export function NotificationDetailPage() {
