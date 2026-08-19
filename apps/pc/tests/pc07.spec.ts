@@ -5,7 +5,7 @@ test.use({ viewport: { width: 1360, height: 940 } });
 test("PC07 exposes system settings, masks credentials and filters SMS delivery evidence", async ({ page }) => {
   await page.goto("/admin/settings/sms");
 
-  await expect(page.getByRole("heading", { name: "短信管理" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "短信管理", level: 1 })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "管理端主导航" }).getByRole("link", { name: "系统设置" })).toBeVisible();
   await expect(page.getByTestId("sms-access-key")).toHaveValue("LTAI••••••••MOCK");
   await expect(page.getByTestId("sms-secret-key")).toHaveValue("••••••••••••••••");
@@ -30,7 +30,7 @@ test("PC07 exposes system settings, masks credentials and filters SMS delivery e
 test("PC07 keeps provider SMS templates separate from editable platform content templates", async ({ page }) => {
   await page.goto("/admin/settings/content-templates");
 
-  await expect(page.getByRole("heading", { name: "内容模板" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "内容模板", level: 1 })).toBeVisible();
   await expect(page.getByTestId("content-template-user-agreement")).toContainText("legal.user-agreement");
   await expect(page.getByTestId("content-template-privacy-policy")).toContainText("隐私政策");
   await expect(page.getByTestId("content-template-user-message")).toContainText("用户消息模板");
@@ -39,7 +39,7 @@ test("PC07 keeps provider SMS templates separate from editable platform content 
 
   await page.getByRole("button", { name: "编辑用户协议" }).click();
   await expect(page.getByTestId("content-template-editor")).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "模板正文编辑器" })).toContainText("核心产业学院用户协议");
+  await expect(page.getByRole("textbox", { name: "模板正文编辑器" })).toHaveValue(/核心产业学院用户协议/);
 
   await page.getByRole("button", { name: "发布模板" }).click();
   await expect(page.getByTestId("content-template-feedback")).toContainText("模板已发布到原型状态");
