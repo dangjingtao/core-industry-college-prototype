@@ -41,7 +41,18 @@ test("PC08 registration projection drills into the existing Competition detail",
   await expect(row).toContainText("山城新零售队");
   await expect(row).toContainText("源报名事实未记录时间");
   await expect(row).toContainText("Team / qualification 既有事实投影");
+  await expect(row.getByRole("link", { name: "现有报名门户" })).toHaveAttribute("href", "/registration-portal/start");
   await row.getByRole("link", { name: "赛事详情" }).click();
   await expect(page).toHaveURL(/\/admin\/competitions\/objects\/sanchuang-16$/);
   await expect(page.getByTestId("pc08-stage-list")).toBeVisible();
+});
+
+test("PC08 ordinary competition without portalPath never falls back to the Sanchuang portal", async ({ page }) => {
+  await page.goto("/admin/competitions/registrations");
+
+  const row = page.getByTestId("pc08-registration-innovation-cup-2026");
+  await expect(row).toContainText("2026 青年品牌创新挑战赛");
+  await expect(row.getByText("当前赛事尚未配置报名门户", { exact: true })).toBeVisible();
+  await expect(row.getByRole("link", { name: "现有报名门户" })).toHaveCount(0);
+  await expect(row.locator('a[href="/registration-portal/start"]')).toHaveCount(0);
 });

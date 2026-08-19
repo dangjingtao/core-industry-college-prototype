@@ -46,7 +46,7 @@ export type CompetitionRegistrationProjection = {
   officialQualification: OfficialQualificationStatus;
   registeredAt: string;
   dataSource: string;
-  registrationPath: string;
+  registrationPath?: string;
 };
 
 export const competitionCategories: CompetitionCategory[] = [
@@ -122,7 +122,7 @@ export function competitionRegistrationProjections(): CompetitionRegistrationPro
       officialQualification: record.qualification.officialQualification,
       registeredAt: "源报名事实未记录时间",
       dataSource: `${record.registration.label} · Team / qualification 既有事实投影`,
-      registrationPath: record.registration.portalPath ?? "/registration-portal/start",
+      registrationPath: record.registration.portalPath,
     }];
   });
 }
