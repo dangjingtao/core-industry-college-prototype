@@ -17,7 +17,7 @@ test("PC08 reuses the same stage model for an ordinary partner competition", asy
 
   await expect(page.getByTestId("pc08-stage-list")).toBeVisible();
   await expect(page.locator('[data-testid^="pc08-stage-stage-brand-"]')).toHaveCount(3);
-  await expect(page.getByText("合作赛事", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("pc08-competition-infrastructure").getByText("合作赛事", { exact: true })).toBeVisible();
   await expect(page.getByText("平台配置赛事：由平台赛事运营维护", { exact: false })).toBeVisible();
 });
 
@@ -27,7 +27,7 @@ test("PC08 category dictionary can reorder and enable or disable first-level cat
   const innovation = page.getByTestId("pc08-category-row-category-innovation");
   await expect(innovation).toContainText("创新创业");
   await innovation.getByRole("button", { name: "下移 创新创业" }).click();
-  await expect(page.getByTestId("pc08-category-list").locator('> div').nth(1)).toContainText("创新创业");
+  await expect(page.getByTestId("pc08-category-list").locator(":scope > div").nth(1)).toContainText("创新创业");
 
   const industry = page.getByTestId("pc08-category-row-category-industry");
   await industry.getByRole("button", { name: "停用" }).click();
