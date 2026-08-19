@@ -22,7 +22,7 @@ const t013bQuestions: Record<string, DynamicQuestion[]> = {
   ],
   "s4-weekly-review": [
     { id: "metric", label: "这周最关注哪组经营指标？", type: "single", options: ["GMV / 销售额", "订单量与客单价", "流量与转化率"] },
-    { id: "focus", label: "周报最希望优先回答什么问题？", type: "multiple", options: ["同比 / 环比趋势", "异常波动预警", "渠道对比", "转化漏斗变化"] },
+    { id: "focus", label: "周报最希望优先回答什么问题？", type: "multiple", options: ["同比 / 环比趋势", "异常波动预警", "渠道对比", "下阶段目标", "复购与留存"] },
   ],
 };
 
