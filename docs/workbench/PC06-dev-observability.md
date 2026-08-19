@@ -1,7 +1,7 @@
 # PC06｜开发环境观察台 + 日志与告警
 
 > 类型：施工卡  
-> 状态：已施工，待独立复审  
+> 状态：PASS（2026-08-19 独立复审）  
 > 优先级：P0  
 > 分支：`dev`  
 > 前置：PC01 控制面底座；可与 PC05 并行  
@@ -448,11 +448,28 @@ CPU / Memory / Disk / Connections
 
 `.github/workflows/deploy-pc.yml` 对 `dev` 的 PC 变更也会执行 `npm run build:development --workspace @core/pc` 后再部署预览环境。
 
-本施工线程当前可用的 GitHub 连接器不能枚举 **push 触发**的 Actions run 列表，只能读取配置和 PR 型 run，因此这里不伪造“CI 已绿”或“browser 已跑绿”的结论。进入独立复审时应直接以 GitHub Actions 对 `65b69fea3de682965f4f258438606ffcdd69b6af` 及其后续 `dev` 集成提交的实际 run 为最终证据。
+本施工线程当前可用的 GitHub 连接器不能枚举 **push 触发**的 Actions run 列表，只能读取配置和 PR 型 run，因此这里不伪造“CI 已绿”或“browser 已跑绿”的结论。独立复审同样未能读取该执行证据，因此 PASS 仅代表代码 / 产品边界复审通过，不把未读取的 CI / browser run 冒充为通过。
 
 ### 14.6 新发现问题
 
 - 当前原型的环境 / 日志数据是静态结构化 mock；后续接真实接口时应保持当前字段分层，避免将 raw log 直接替换掉人类可读告警摘要。
 - 当前“显示技术信息”是整个后台共享的技术信息开关；PC06 直接复用该机制，没有另造第二个开发者模式。
 
-施工线程不自行标记 `PASS`；实现已完成，下一步进入独立复审。
+---
+
+## 15. 独立复审结论
+
+**结论：PASS**  
+**复审基线：`dev` HEAD `65dea6775ecf15c39d954d11184e4162e09a0798`**
+
+独立复审确认：
+
+- `/admin/observability` 路由、后台导航和页面实现均存在；
+- 开发 / 测试环境使用独立、确定性的 mock snapshot；
+- 服务健康、请求、资源、同步、异常、部署等核心观察指标完整；
+- 告警可下钻到对应日志，人类可读摘要与 raw technical detail 分层明确；
+- Audit Log 未复制，操作审计继续归属 `/admin/governance`；
+- focused Playwright 已覆盖环境切换、告警 → 日志与 Audit Log 边界；
+- 从 PC06 主实现提交 `65b69fea3de682965f4f258438606ffcdd69b6af` 到复审 HEAD 的后续提交未覆盖 PC06 实现。
+
+CI / browser 的实际 Actions run 当前无法从连接器读取，因此不将该部分伪造为“已绿”；这不构成代码返工项。
