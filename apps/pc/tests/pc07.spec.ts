@@ -27,6 +27,27 @@ test("PC07 exposes system settings, masks credentials and filters SMS delivery e
   await expect(page.getByTestId("sms-test-feedback")).toContainText("测试短信已进入模拟发送");
 });
 
+test("PC07 replaces SMS credentials without exposing old or newly saved values", async ({ page }) => {
+  await page.goto("/admin/settings/sms");
+
+  await page.getByRole("button", { name: "编辑配置" }).click();
+  await expect(page.getByTestId("sms-access-key")).toHaveCount(0);
+  await expect(page.getByTestId("sms-secret-key")).toHaveCount(0);
+  await expect(page.getByTestId("sms-access-key-replacement")).toHaveValue("");
+  await expect(page.getByTestId("sms-secret-key-replacement")).toHaveValue("");
+
+  await page.getByTestId("sms-access-key-replacement").fill("LTAI_REPLACEMENT_MOCK");
+  await page.getByTestId("sms-secret-key-replacement").fill("SECRET_REPLACEMENT_MOCK");
+  await page.getByRole("button", { name: "保存配置" }).click();
+
+  await expect(page.getByTestId("sms-access-key-replacement")).toHaveCount(0);
+  await expect(page.getByTestId("sms-secret-key-replacement")).toHaveCount(0);
+  await expect(page.getByTestId("sms-access-key")).toHaveValue("LTAI••••••••MOCK");
+  await expect(page.getByTestId("sms-secret-key")).toHaveValue("••••••••••••••••");
+  await expect(page.getByTestId("sms-config-feedback")).toContainText("Access Key / Secret Key 已替换并重新掩码");
+  await expect(page.getByText("SECRET_REPLACEMENT_MOCK", { exact: false })).toHaveCount(0);
+});
+
 test("PC07 keeps provider SMS templates separate from editable platform content templates", async ({ page }) => {
   await page.goto("/admin/settings/content-templates");
 
@@ -43,4 +64,18 @@ test("PC07 keeps provider SMS templates separate from editable platform content 
 
   await page.getByRole("button", { name: "发布模板" }).click();
   await expect(page.getByTestId("content-template-feedback")).toContainText("模板已发布到原型状态");
+});
+
+test("PC07 saving a published content template as draft changes its status to draft", async ({ page }) => {
+  await page.goto("/admin/settings/content-templates");
+
+  const userAgreement = page.getByTestId("content-template-user-agreement");
+  await expect(userAgreement).toContainText("已发布");
+  await page.getByRole("button", { name: "编辑用户协议" }).click();
+  await page.getByRole("textbox", { name: "模板正文编辑器" }).fill("## 核心产业学院用户协议\n\n这是一次草稿修订。");
+  await page.getByRole("button", { name: "保存草稿" }).click();
+
+  await expect(page.getByTestId("content-template-feedback")).toContainText("模板草稿已保存到原型状态");
+  await expect(userAgreement).toContainText("草稿");
+  await expect(userAgreement).not.toContainText("已发布");
 });
