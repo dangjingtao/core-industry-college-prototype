@@ -28,8 +28,8 @@ import {
   WorkshopSkillPage,
   WorkshopSkillsPage,
 } from "../features/competition-workspace/WorkshopPages";
-import { T013BTaskAnswerPage, T013BTaskProgressPage, T013BTaskReviewPage } from "../features/competition-workspace/T013BTaskPages";
-import { T013BResultDetailPage } from "../features/competition-workspace/T013BResultPage";
+import { T013CTaskAnswerPage, T013CTaskProgressPage, T013CTaskReviewPage } from "../features/competition-workspace/T013CTaskPages";
+import { T013CResultDetailPage } from "../features/competition-workspace/T013CResultPage";
 import { WorkshopRuntimeProvider } from "../features/competition-workspace/runtime";
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
 import { AccountRequired } from "../features/long-term-assets/shared";
@@ -113,11 +113,11 @@ export function App() {
               <Route path="/competitions/:competitionId/workspace/workshop/compute" element={<WorkshopComputePage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/skills" element={<WorkshopSkillsPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/skills/:skillId" element={<WorkshopSkillPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/answer" element={<T013BTaskAnswerPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/review" element={<T013BTaskReviewPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/progress" element={<T013BTaskProgressPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/answer" element={<T013CTaskAnswerPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/review" element={<T013CTaskReviewPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/tasks/:taskId/progress" element={<T013CTaskProgressPage />} />
               <Route path="/competitions/:competitionId/workspace/workshop/results" element={<WorkshopResultsPage />} />
-              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<T013BResultDetailPage />} />
+              <Route path="/competitions/:competitionId/workspace/workshop/results/:resultId" element={<T013CResultDetailPage />} />
               <Route path="/opportunities" element={<OpportunitiesPage />} />
               <Route path="/opportunities/:opportunityId" element={<OpportunityDetailPage />} />
               <Route path="/applications" element={<ApplicationsPage />} />
