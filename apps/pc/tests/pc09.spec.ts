@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { defaultPerformancePeriodIdFor, performancePeriodsForCompetition, sanChuangProfileByCompetitionId } from "../src/admin/pc09-data";
 
 test.use({ viewport: { width: 1440, height: 1000 } });
 
@@ -12,6 +13,22 @@ test("PC09 exposes an independent Sanchuang operations entry and explicit editio
   await expect(page.getByTestId("pc09-hero").getByRole("heading", { name: "第十六届三创赛" })).toBeVisible();
   await expect(page.getByTestId("pc09-overview")).toContainText("山城新零售队");
   await expect(page.getByTestId("pc09-overview")).toContainText("未接评分规则");
+});
+
+test("PC09 performance workspace consumes its edition profile default period and scoped periods", async ({ page }) => {
+  const competitionId = "sanchuang-16";
+  const profile = sanChuangProfileByCompetitionId(competitionId);
+  expect(profile).toBeDefined();
+  expect(defaultPerformancePeriodIdFor(competitionId)).toBe(profile?.defaultPerformancePeriodId);
+
+  await page.goto(`/admin/sanchuang/${competitionId}/performance`);
+
+  const workspace = page.getByTestId("pc09-performance");
+  await expect(workspace).toHaveAttribute("data-competition-id", competitionId);
+  await expect(workspace).toHaveAttribute("data-default-period-id", profile?.defaultPerformancePeriodId ?? "");
+  await expect(page.getByTestId("pc09-period-filter")).toHaveValue(defaultPerformancePeriodIdFor(competitionId));
+  const periodValues = await page.getByTestId("pc09-period-filter").locator("option").evaluateAll(options => options.map(option => (option as HTMLOptionElement).value));
+  expect(periodValues).toEqual(performancePeriodsForCompetition(competitionId).map(period => period.id));
 });
 
 test("PC09 aggregates order, live and video performance from Douyin and Sanchuang Goods on one page", async ({ page }) => {

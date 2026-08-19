@@ -6,6 +6,7 @@ export type SanChuangProfile = {
   shortLabel: string;
   heroKicker: string;
   performanceEnabled: boolean;
+  defaultPerformancePeriodId: string;
 };
 
 export type PerformanceSource = "douyin" | "sanchuangGoods";
@@ -14,6 +15,7 @@ export type PerformanceBatchStatus = "success" | "partial" | "failed";
 
 export type PerformancePeriod = {
   id: string;
+  competitionId: string;
   label: string;
   startAt: string;
   endAt: string;
@@ -93,6 +95,7 @@ export const sanChuangProfiles: SanChuangProfile[] = [
     shortLabel: "第十六届三创赛",
     heroKicker: "旗舰赛事 · 三创赛运营",
     performanceEnabled: true,
+    defaultPerformancePeriodId: "2026-08-mid",
   },
 ];
 
@@ -109,9 +112,20 @@ export function sanChuangCompetitionOptions() {
 }
 
 export const performancePeriods: PerformancePeriod[] = [
-  { id: "2026-08", label: "2026-08-01 → 2026-08-31", startAt: "2026-08-01T00:00:00+08:00", endAt: "2026-08-31T23:59:59+08:00" },
-  { id: "2026-08-mid", label: "2026-08-12 → 2026-08-18", startAt: "2026-08-12T00:00:00+08:00", endAt: "2026-08-18T23:59:59+08:00" },
+  { id: "2026-08", competitionId: "sanchuang-16", label: "2026-08-01 → 2026-08-31", startAt: "2026-08-01T00:00:00+08:00", endAt: "2026-08-31T23:59:59+08:00" },
+  { id: "2026-08-mid", competitionId: "sanchuang-16", label: "2026-08-12 → 2026-08-18", startAt: "2026-08-12T00:00:00+08:00", endAt: "2026-08-18T23:59:59+08:00" },
 ];
+
+export function performancePeriodsForCompetition(competitionId: string) {
+  return performancePeriods.filter(period => period.competitionId === competitionId);
+}
+
+export function defaultPerformancePeriodIdFor(competitionId: string) {
+  const periods = performancePeriodsForCompetition(competitionId);
+  const configured = sanChuangProfileByCompetitionId(competitionId)?.defaultPerformancePeriodId;
+  if (configured && periods.some(period => period.id === configured)) return configured;
+  return periods[0]?.id ?? "";
+}
 
 export const performanceSourceLabels: Record<PerformanceSource, string> = {
   douyin: "抖音",
@@ -174,11 +188,22 @@ export const videoEvidence: VideoEvidence[] = [
   { id: "sc-video-6001", competitionId: "sanchuang-16", teamId: "team-1", source: "sanchuangGoods", batchId: "batch-scgoods-20260818-a", publishedAt: "2026-08-17 16:45", views: 12800, interactions: 960 },
 ];
 
-function inPeriod(value: string, periodId: string) {
-  const period = performancePeriods.find(item => item.id === periodId) ?? performancePeriods[0];
-  if (!period) return true;
+function periodFor(competitionId: string, periodId: string) {
+  return performancePeriods.find(period => period.competitionId === competitionId && period.id === periodId);
+}
+
+function inPeriod(value: string, competitionId: string, periodId: string) {
+  const period = periodFor(competitionId, periodId);
+  if (!period) return false;
   const timestamp = Date.parse(value.includes("T") ? value : value.replace(" ", "T") + "+08:00");
   return timestamp >= Date.parse(period.startAt) && timestamp <= Date.parse(period.endAt);
+}
+
+function periodContainsPeriod(competitionId: string, containerPeriodId: string, childPeriodId: string) {
+  const container = periodFor(competitionId, containerPeriodId);
+  const child = periodFor(competitionId, childPeriodId);
+  if (!container || !child) return containerPeriodId === childPeriodId;
+  return Date.parse(child.startAt) >= Date.parse(container.startAt) && Date.parse(child.endAt) <= Date.parse(container.endAt);
 }
 
 function matchesSource(source: PerformanceSource, filter: PerformanceSource | "all") {
@@ -186,14 +211,14 @@ function matchesSource(source: PerformanceSource, filter: PerformanceSource | "a
 }
 
 export function performanceEvidenceFor(filter: PerformanceFilter) {
-  const orders = orderEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.occurredAt, filter.periodId));
-  const live = liveEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.startedAt, filter.periodId));
-  const videos = videoEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.publishedAt, filter.periodId));
+  const orders = orderEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.occurredAt, filter.competitionId, filter.periodId));
+  const live = liveEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.startedAt, filter.competitionId, filter.periodId));
+  const videos = videoEvidence.filter(item => item.competitionId === filter.competitionId && item.teamId === filter.teamId && matchesSource(item.source, filter.source) && inPeriod(item.publishedAt, filter.competitionId, filter.periodId));
   return { orders, live, videos };
 }
 
 export function performanceBatchesFor(filter: Pick<PerformanceFilter, "competitionId" | "source" | "periodId">) {
-  return performanceBatches.filter(batch => batch.competitionId === filter.competitionId && matchesSource(batch.source, filter.source) && (filter.periodId === "2026-08" || batch.periodId === filter.periodId));
+  return performanceBatches.filter(batch => batch.competitionId === filter.competitionId && matchesSource(batch.source, filter.source) && periodContainsPeriod(filter.competitionId, filter.periodId, batch.periodId));
 }
 
 export function performanceSummaryFor(filter: PerformanceFilter): PerformanceSummary {

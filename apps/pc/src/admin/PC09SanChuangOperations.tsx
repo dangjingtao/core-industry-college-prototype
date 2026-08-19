@@ -19,9 +19,10 @@ import { competitionControlById } from "./competition-control-data";
 import { competitionInfrastructureById, deriveCompetitionStageStatus } from "./pc08-data";
 import {
   currentSanChuangCompetitionId,
+  defaultPerformancePeriodIdFor,
   performanceBatchesFor,
   performanceEvidenceFor,
-  performancePeriods,
+  performancePeriodsForCompetition,
   performanceSourceLabels,
   performanceSummaryFor,
   sanChuangCompetitionOptions,
@@ -124,7 +125,8 @@ function SanChuangOverview({ competitionId }: { competitionId: string }) {
   const currentStage = stages.find(stage => deriveCompetitionStageStatus(stage) === "inProgress")
     ?? stages.find(stage => deriveCompetitionStageStatus(stage) === "notStarted")
     ?? stages.at(-1);
-  const summary = performanceSummaryFor({ competitionId, teamId: record.team.id, source: "all", periodId: "2026-08-mid" });
+  const defaultPeriodId = defaultPerformancePeriodIdFor(competitionId);
+  const summary = performanceSummaryFor({ competitionId, teamId: record.team.id, source: "all", periodId: defaultPeriodId });
 
   return (
     <div className="space-y-6" data-testid="pc09-overview">
@@ -184,9 +186,10 @@ function EvidenceTabs({ kind, setKind }: { kind: PerformanceEvidenceKind; setKin
 function SanChuangPerformance({ competitionId }: { competitionId: string }) {
   const record = competitionControlById(competitionId);
   const infrastructure = competitionInfrastructureById(competitionId);
+  const availablePeriods = performancePeriodsForCompetition(competitionId);
   const [teamId, setTeamId] = useState(() => record?.team.id ?? "");
   const [source, setSource] = useState<PerformanceSource | "all">("all");
-  const [periodId, setPeriodId] = useState("2026-08-mid");
+  const [periodId, setPeriodId] = useState(() => defaultPerformancePeriodIdFor(competitionId));
   const [evidenceKind, setEvidenceKind] = useState<PerformanceEvidenceKind>("orders");
   const [exportMessage, setExportMessage] = useState("");
   if (!record || !infrastructure) return null;
@@ -221,7 +224,7 @@ function SanChuangPerformance({ competitionId }: { competitionId: string }) {
   };
 
   return (
-    <div className="space-y-6" data-testid="pc09-performance">
+    <div className="space-y-6" data-testid="pc09-performance" data-competition-id={competitionId} data-default-period-id={defaultPerformancePeriodIdFor(competitionId)}>
       <section className="rounded-container border border-border-subtle bg-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div><p className="text-xs font-semibold text-text-tertiary">营销实绩 · 统计上下文</p><h2 className="mt-1 text-xl font-semibold">第三方营销数据归集</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">先锁定赛事 / 团队 / 赛道 / 阶段 / 数据周期 / 来源，再看聚合指标和原始明细证据。当前数据仅归集，不自动计入比赛评分。</p></div>
@@ -232,7 +235,7 @@ function SanChuangPerformance({ competitionId }: { competitionId: string }) {
           <label className="rounded-control bg-surface-subtle p-3 text-xs font-semibold text-text-tertiary">团队<select data-testid="pc09-team-filter" aria-label="团队筛选" value={teamId} onChange={event => setTeamId(event.target.value)} className="mt-2 block min-h-10 w-full rounded-control border border-border-subtle bg-surface px-2 text-sm font-normal text-text-primary"><option value={record.team.id}>{record.team.name}</option></select></label>
           <div className="rounded-control bg-surface-subtle p-3"><p className="text-xs text-text-tertiary">赛项 / 赛道</p><p className="mt-2 text-sm font-semibold">{record.project.track}</p></div>
           <div className="rounded-control bg-surface-subtle p-3"><p className="text-xs text-text-tertiary">当前阶段</p><p className="mt-2 text-sm font-semibold">{currentStage?.name ?? "无进行中阶段"}</p></div>
-          <label className="rounded-control bg-surface-subtle p-3 text-xs font-semibold text-text-tertiary">数据周期<select data-testid="pc09-period-filter" aria-label="数据周期筛选" value={periodId} onChange={event => setPeriodId(event.target.value)} className="mt-2 block min-h-10 w-full rounded-control border border-border-subtle bg-surface px-2 text-sm font-normal text-text-primary">{performancePeriods.map(period => <option key={period.id} value={period.id}>{period.label}</option>)}</select></label>
+          <label className="rounded-control bg-surface-subtle p-3 text-xs font-semibold text-text-tertiary">数据周期<select data-testid="pc09-period-filter" aria-label="数据周期筛选" value={periodId} onChange={event => setPeriodId(event.target.value)} className="mt-2 block min-h-10 w-full rounded-control border border-border-subtle bg-surface px-2 text-sm font-normal text-text-primary">{availablePeriods.map(period => <option key={period.id} value={period.id}>{period.label}</option>)}</select></label>
           <label className="rounded-control bg-surface-subtle p-3 text-xs font-semibold text-text-tertiary">来源平台<select data-testid="pc09-source-filter" aria-label="来源平台筛选" value={source} onChange={event => setSource(event.target.value as PerformanceSource | "all")} className="mt-2 block min-h-10 w-full rounded-control border border-border-subtle bg-surface px-2 text-sm font-normal text-text-primary"><option value="all">全部来源</option><option value="douyin">抖音</option><option value="sanchuangGoods">三创好物</option></select></label>
         </div>
         {exportMessage && <p data-testid="pc09-export-message" className="mt-3 text-xs font-semibold text-success-text">{exportMessage}</p>}
@@ -283,5 +286,5 @@ export function PC09SanChuangOperations({ view }: { view: "overview" | "performa
     return <section className="rounded-container border border-border-subtle bg-surface p-8 text-center"><h1 className="text-xl font-semibold">这个 Competition 没有三创赛运营 Profile</h1><p className="mt-2 text-sm text-text-secondary">三创赛垂直能力由集中 capability mapping 决定，不对普通赛事做组件内硬编码特判。</p><Link to={`/admin/sanchuang/${currentSanChuangCompetitionId}`} className="mt-5 inline-flex min-h-11 items-center rounded-control bg-primary px-4 text-sm font-semibold text-on-primary">返回当前三创赛</Link></section>;
   }
 
-  return <div className="space-y-6"><SanChuangHero competitionId={competitionId} view={view} />{view === "performance" ? <SanChuangPerformance competitionId={competitionId} /> : <SanChuangOverview competitionId={competitionId} />}</div>;
+  return <div className="space-y-6"><SanChuangHero competitionId={competitionId} view={view} />{view === "performance" ? <SanChuangPerformance key={competitionId} competitionId={competitionId} /> : <SanChuangOverview competitionId={competitionId} />}</div>;
 }
