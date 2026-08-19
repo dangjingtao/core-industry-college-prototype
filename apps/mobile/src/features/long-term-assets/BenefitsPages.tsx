@@ -36,8 +36,8 @@ function CreditCard() {
       <p className="mt-3 text-4xl font-bold tracking-tight">{currentCredits}</p>
       <p className="mt-1 text-xs opacity-75">数据为原型占位，学力值经济模型待 F04 决策</p>
       <div className="mt-4 flex gap-2">
-        <Link to="/benefits/free" className="min-h-touch flex-1 rounded-control bg-white/15 px-3 py-2 text-center text-sm font-medium">免费福利</Link>
-        <Link to="/benefits/exchange" className="min-h-touch flex-1 rounded-control bg-white px-3 py-2 text-center text-sm font-semibold text-text-brand">兑换中心</Link>
+        <Link to="/benefits/free" className="min-h-touch flex flex-1 items-center justify-center rounded-control bg-white/15 px-3 py-2 text-center text-sm font-medium">免费福利</Link>
+        <Link to="/benefits/exchange" className="min-h-touch flex flex-1 items-center justify-center rounded-control bg-white px-3 py-2 text-center text-sm font-semibold text-text-brand">兑换中心</Link>
       </div>
     </div>
     <Sparkles className="absolute bottom-3 right-3 opacity-10" size={80} aria-hidden="true" />

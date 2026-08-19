@@ -417,7 +417,7 @@ export function CourseDetailPage() {
             </span>
           </div>
           <div className="absolute bottom-3 right-3">
-            <span className="rounded-full bg-black/40 px-2 py-1 text-xs text-white backdrop-blur-sm">{course.duration}</span>
+            <span className="whitespace-nowrap rounded-full bg-black/40 px-2 py-1 text-xs text-white backdrop-blur-sm">{course.duration}</span>
           </div>
         </div>
 
