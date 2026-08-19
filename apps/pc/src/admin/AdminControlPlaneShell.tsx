@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Database,
   FileBadge,
+  Gauge,
   GraduationCap,
   Gift,
   LayoutDashboard,
@@ -41,6 +42,7 @@ function routeLabel(pathname: string) {
   if (pathname.startsWith("/admin/pc04/certificates")) return "可信证书";
   if (pathname.startsWith("/admin/students")) return "学生";
   if (pathname.startsWith("/admin/assets")) return "长期资产";
+  if (pathname.startsWith("/admin/observability")) return "环境与日志";
   if (pathname.startsWith("/admin/governance")) return "权限与审计";
   if (pathname.startsWith("/admin/content")) return "内容运营";
   if (pathname.startsWith("/admin/workshop")) return "创赛工坊";
@@ -73,6 +75,7 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
         {!mobile && domain.id === "basicData" && <><NavLink to="/admin/basic-data/students" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/students"))}><ChevronRight size={13} />报名学生基础数据</NavLink><NavLink to="/admin/basic-data/schools" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/schools"))}><Building2 size={13} />参赛学校基础数据</NavLink><NavLink to="/admin/basic-data/dictionaries" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/dictionaries"))}><ChevronRight size={13} />赛事 / 赛道字典</NavLink><NavLink to="/admin/basic-data/templates" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/templates"))}><FileBadge size={13} />证书 / 协议模板</NavLink><NavLink to="/admin/basic-data/imports" className={() => subItemClass(location.pathname.startsWith("/admin/basic-data/imports"))}><ChevronRight size={13} />导入与批处理</NavLink></>}
       </div>;
     })}
+    <NavLink to="/admin/observability" className={({ isActive }) => itemClass(isActive)}><Gauge size={18} aria-hidden="true" />环境与日志</NavLink>
     <NavLink to="/admin/governance" className={({ isActive }) => itemClass(isActive)}><ShieldCheck size={18} aria-hidden="true" />权限与审计</NavLink>
   </>;
 }
