@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Award, BookOpen, Check, Clock, Coins, Filter, GraduationCap, Lock, PlayCircle, Search, Star, Trophy } from "lucide-react";
+import { Award, BookOpen, Check, Clock, Coins, GraduationCap, Lock, PlayCircle, Star, Trophy } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
+import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { courseById, courses, type Course, type CourseCategory } from "./data";
 import { ProgressBar, SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
@@ -160,82 +161,49 @@ export function CoursesPage() {
   );
 }
 
+const matchesKeywords = (haystack: string, keywords: readonly string[]) => keywords.every(term => haystack.includes(term));
+
 export function CourseCenterPage() {
   const navigate = useNavigate();
   const loggedIn = useAccountLoggedIn();
   const { enrolledFor, learningFor, benefitStatusFor } = useLongTermAssets();
   const [category, setCategory] = useState<typeof categoryTabs[number]["value"]>("all");
   const [valueFilter, setValueFilter] = useState<typeof valueTabs[number]["value"]>("all");
-  const [query, setQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(true);
+  const [keywords, setKeywords] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     let list = courses.filter(course => category === "all" || course.category === category);
     if (valueFilter === "free") list = list.filter(course => course.entitlement === "free");
     if (valueFilter === "credit") list = list.filter(course => course.entitlement === "creditRequired");
-    if (query.trim()) list = list.filter(course => course.title.includes(query.trim()) || course.summary.includes(query.trim()));
+    if (keywords.length) {
+      list = list.filter(course => {
+        const haystack = `${course.title}${course.summary}`.toLowerCase();
+        return matchesKeywords(haystack, keywords.map(k => k.toLowerCase()));
+      });
+    }
     return list;
-  }, [category, valueFilter, query]);
+  }, [category, valueFilter, keywords]);
 
-  const activeFilterCount = (category !== "all" ? 1 : 0) + (valueFilter !== "all" ? 1 : 0);
-  const resetFilters = () => { setCategory("all"); setValueFilter("all"); setQuery(""); };
+  const resetFilters = () => { setCategory("all"); setValueFilter("all"); setKeywords([]); };
 
   return (
     <PublicShell>
       <PageHeader title="全部课程" subtitle="按专业方向与价值维度浏览" backTo="/courses" />
       <div className="flex h-[calc(100dvh-104px)] flex-col">
         <div className="shrink-0 border-b border-border-subtle bg-surface px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-1 items-center gap-2 rounded-control bg-background px-3 py-2">
-              <Search size={18} className="text-text-tertiary" aria-hidden="true" />
-              <input
-                value={query}
-                onChange={event => setQuery(event.target.value)}
-                placeholder="搜索课程名称或简介"
-                className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(value => !value)}
-              className={`flex shrink-0 items-center gap-1 rounded-control px-3 py-2 text-sm font-medium ${activeFilterCount ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}
-            >
-              <Filter size={16} aria-hidden="true" />
-              筛选{activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
-            </button>
-          </div>
+          <MobileFilter
+            keywords={keywords}
+            onKeywordsChange={next => setKeywords([...next])}
+            inputPlaceholder="搜索课程名称或简介"
+            filterAriaLabel="课程筛选"
+            groups={[
+              { key: "category", label: "专业方向", options: categoryTabs.map(tab => ({ value: tab.value, label: tab.label })), value: category, onChange: value => setCategory(value as typeof category) },
+              { key: "value", label: "价值维度", options: valueTabs.map(tab => ({ value: tab.value, label: tab.label })), value: valueFilter, onChange: value => setValueFilter(value as typeof valueFilter) },
+            ]}
+            resultCount={filtered.length}
+            resultLabel="门课程"
+          />
         </div>
-        {showFilters && (
-          <div className="shrink-0 space-y-3 border-b border-border-subtle bg-surface px-4 py-4">
-            <div>
-              <p className="mb-2 text-xs font-medium text-text-tertiary">专业方向</p>
-              <div className="flex flex-wrap gap-2">
-                {categoryTabs.map(tab => (
-                  <button
-                    key={tab.value}
-                    onClick={() => setCategory(tab.value)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${category === tab.value ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-medium text-text-tertiary">价值维度</p>
-              <div className="flex flex-wrap gap-2">
-                {valueTabs.map(tab => (
-                  <button
-                    key={tab.value}
-                    onClick={() => setValueFilter(tab.value)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${valueFilter === tab.value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
         <div className="min-w-0 flex-1 overflow-y-auto bg-background px-4 py-4">
           <div className="space-y-4">
             {filtered.map(course => {
