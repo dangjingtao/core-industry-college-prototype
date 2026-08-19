@@ -148,6 +148,8 @@ F003 最终接受以下能力：
 - 系统可信事实继续只读，resume presentation 可编辑；
 - `returnTo` 保持机会投递回跳；
 - 赛事进行期团队变更 / 减员申请进入 pending review；
+
+> 2026-08-19 后续决策覆盖：赛事期团队维护已收敛为只保留「减员申请」，取消「成员变更」选项与材料上传；见 `02-open-decisions-and-backlog.md` GAP-05 与 `00-work-ledger.md` F03 施工记录。
 - pending request 跨 route revisit 保留；
 - 审核前不修改 team member truth；
 - 赛事资料真实本地下载；

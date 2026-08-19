@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("F003 logout requires confirmation and returns to login", async ({ page }) => {
   await page.goto("/me");
   await page.getByRole("button", { name: "退出登录" }).click();
-  await expect(page.getByText("确定退出登录吗？", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "退出登录", exact: true })).toBeVisible();
   await expect(page.getByText(/长期账号资产不会被删除/)).toBeVisible();
   await page.getByRole("button", { name: "确认退出" }).click();
   await expect(page).toHaveURL(/\/auth\/login$/);
@@ -23,16 +23,11 @@ test("F003 resume keeps structured education and opportunity returnTo", async ({
   await expect(page.getByRole("button", { name: "返回机会继续投递" })).toBeVisible();
 });
 
-test("F003 competition-period team change persists pending without mutating members", async ({ page }) => {
+test("F003 competition-period team reduction persists pending without mutating members", async ({ page }) => {
   await page.goto("/competitions/sanchuang-16/workspace/team");
   await page.getByLabel("涉及成员").selectOption({ label: "陈语 · 内容运营" });
   await page.getByLabel("申请原因").fill("成员实习时间冲突，申请按赛事规则办理减员。");
-  await page.getByLabel("上传申请 / 证明材料").setInputFiles({
-    name: "team-change.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("prototype material"),
-  });
-  await page.getByRole("button", { name: "提交团队变更申请" }).click();
+  await page.getByRole("button", { name: "提交减员申请" }).click();
   await expect(page.getByText("待老师 / 运营审核", { exact: true })).toBeVisible();
   await expect(page.getByText(/审核通过前不会直接改动团队成员/)).toBeVisible();
   await expect(page.getByText("陈语", { exact: true }).first()).toBeVisible();

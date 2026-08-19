@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <title>直播间运营体验</title>
+    <link rel="stylesheet" href="../_shared/sim-game.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script>
+      window.SIM_GAME_CONFIG = {
+        id: "live-commerce",
+        title: "直播间运营体验",
+        kicker: "校园直播带货 · demo",
+        logo: "播",
+        roundUnit: "轮",
+        intro: "一场 2 小时直播的三个关键决策后，你的直播间交出了这样一份答卷。",
+        rounds: [
+          {
+            id: "product",
+            title: "第 1 轮 · 选品排品",
+            scenario: "直播马上开始，先决定今晚的选品顺序。",
+            options: [
+              { id: "lead", label: "引流款在前", hint: "先用低客单拉人气", effect: "场观提升，GMV 承压", metrics: { viewers: 40, stay: 2, gmv: 10, rep: 1 } },
+              { id: "profit", label: "利润款混排", hint: "穿插高毛利款", effect: "GMV 与毛利提升", metrics: { viewers: 15, stay: 3, gmv: 30, rep: 0 } },
+              { id: "flash", label: "福利秒杀开场", hint: "先涨人气再卖货", effect: "停留提升，转化后段", metrics: { viewers: 30, stay: 6, gmv: 8, rep: -2 } }
+            ]
+          },
+          {
+            id: "budget",
+            title: "第 2 轮 · 投流预算",
+            scenario: "有少量推广预算，投给哪里？",
+            options: [
+              { id: "natural", label: "自然流", hint: "不花钱，靠内容", effect: "成本低，曝光有限", metrics: { viewers: 10, stay: 2, gmv: 5, rep: 3 } },
+              { id: "paid", label: "付费投流", hint: "花钱买曝光", effect: "场观提升，成本上升", metrics: { viewers: 50, stay: 1, gmv: 20, rep: -2 } },
+              { id: "short", label: "短视频引流", hint: "预热内容引流", effect: "曝光与停留兼顾", metrics: { viewers: 30, stay: 4, gmv: 12, rep: 2 } }
+            ]
+          },
+          {
+            id: "conversion",
+            title: "第 3 轮 · 转化节奏",
+            scenario: "直播中后段，怎么把流量转成成交？",
+            options: [
+              { id: "hold", label: "憋单促单", hint: "制造紧迫感", effect: "GMV 提升，退货略增", metrics: { viewers: 5, stay: 2, gmv: 35, rep: -5 } },
+              { id: "steady", label: "正常讲解", hint: "节奏稳，信任足", effect: "口碑好，转化平稳", metrics: { viewers: 10, stay: 4, gmv: 10, rep: 6 } },
+              { id: "fan", label: "粉丝团锁客", hint: "圈粉促复购", effect: "复购与停留提升", metrics: { viewers: 15, stay: 5, gmv: 8, rep: 4 } }
+            ]
+          }
+        ],
+        base: { viewers: 500, stay: 8, gmv: 60, rep: 80 },
+        metrics: [
+          { key: "viewers", label: "场观", format: function (v) { return (v * 20).toLocaleString("zh-CN") + " 人次"; } },
+          { key: "stay", label: "平均停留", format: function (v) { return v.toFixed(1) + " 分钟"; }, clamp: [4, 15] },
+          { key: "gmv", label: "GMV", format: function (v) { return v.toFixed(0) + " 千元"; }, clamp: [40, 160] },
+          { key: "rep", label: "履约口碑", format: function (v) { return v.toFixed(0); }, clamp: [50, 100] }
+        ],
+        virtualPlayers: [
+          { name: "模拟经营者·周", viewers: 560, stay: 9, gmv: 80, rep: 82 },
+          { name: "模拟经营者·陈", viewers: 620, stay: 10, gmv: 90, rep: 76 },
+          { name: "模拟经营者·刘", viewers: 500, stay: 8, gmv: 70, rep: 88 },
+          { name: "模拟经营者·王", viewers: 600, stay: 9.5, gmv: 85, rep: 74 },
+          { name: "模拟经营者·许", viewers: 540, stay: 9, gmv: 75, rep: 84 }
+        ],
+        summarize: function (choices) {
+          var d = { viewers: 0, stay: 0, gmv: 0, rep: 0 };
+          choices.forEach(function (c) {
+            d.viewers += c.metrics.viewers;
+            d.stay += c.metrics.stay;
+            d.gmv += c.metrics.gmv;
+            d.rep += c.metrics.rep;
+          });
+          var key = Object.keys(d).sort(function (a, b) { return d[b] - d[a]; })[0];
+          var messages = {
+            viewers: "你的打法偏流量，场观起得快。流量进来后，要把停留和转化接住，不然只热闹不赚钱。",
+            stay: "你的内容节奏留得住人，停留时长突出。下一步把高停留转成高成交。",
+            gmv: "你更看重成交，GMV 表现亮眼。要留意退货和服务口碑，别透支信任。",
+            rep: "你的讲解和售后稳，口碑好，复购基础扎实，是可以长期做的底子。"
+          };
+          return messages[key];
+        }
+      };
+    </script>
+    <script src="../_shared/sim-game.js"></script>
+  </body>
+</html>

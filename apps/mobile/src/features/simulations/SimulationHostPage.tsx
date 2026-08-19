@@ -91,7 +91,7 @@ export function SimulationHostPage() {
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
         <div className="relative mx-auto flex min-h-11 w-full max-w-md items-center justify-center px-14">
           <button type="button" aria-label="返回活动" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={handleExit}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>
-          <div className="min-w-0 text-center"><h1 className="truncate text-base font-semibold leading-5 text-text-primary">经营决策体验</h1></div>
+          <div className="min-w-0 text-center"><h1 className="truncate text-base font-semibold leading-5 text-text-primary">{manifest?.title ?? "模拟体验"}</h1></div>
           {state === "running" && <div className="absolute right-1 top-1/2 -translate-y-1/2"><SecondaryButton className="min-h-8 px-3 text-xs" onClick={handleExit}>退出体验</SecondaryButton></div>}
         </div>
       </header>
@@ -109,8 +109,8 @@ export function SimulationHostPage() {
           <Card className="m-4">
             <div className="flex flex-col items-center py-6 text-center">
               <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#e9f6f1] text-[#247456]"><Store size={24} aria-hidden="true" /></span>
-              <h2 className="mt-4 text-lg font-semibold text-text-primary">经营决策体验</h2>
-              <p className="mt-2 text-sm leading-5 text-text-secondary">如果你来经营一家社区团购店，会怎么做选择？用几分钟完成一次模拟经营，看看不同决定会带来什么结果。</p>
+              <h2 className="mt-4 text-lg font-semibold text-text-primary">{manifest?.title ?? "模拟体验"}</h2>
+              <p className="mt-2 text-sm leading-5 text-text-secondary">{manifest?.description}</p>
               <p className="mt-4 rounded-container bg-surface-subtle px-3 py-2 text-xs leading-5 text-text-tertiary">这是一个轻量互动体验，不记录成绩，也不影响你的赛事、课程或个人档案。</p>
               <Button className="mt-5 w-full" onClick={handleStart}>开始体验</Button>
             </div>

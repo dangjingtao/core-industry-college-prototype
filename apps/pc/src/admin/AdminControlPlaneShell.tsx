@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  SquareTerminal,
   Target,
   Trophy,
   UsersRound,
@@ -44,6 +45,7 @@ function routeLabel(pathname: string) {
   if (pathname.startsWith("/admin/pc04/certificates")) return "可信证书";
   if (pathname.startsWith("/admin/students")) return "学生";
   if (pathname.startsWith("/admin/assets")) return "长期资产";
+  if (pathname.startsWith("/admin/dev")) return "开发";
   if (pathname.startsWith("/admin/observability")) return "环境与日志";
   if (pathname.startsWith("/admin/settings")) return "系统设置";
   if (pathname.startsWith("/admin/governance")) return "权限与审计";
@@ -80,12 +82,14 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
       </div>;
     })}
     <NavLink data-testid="pc09-primary-nav" to="/admin/sanchuang" className={() => itemClass(location.pathname.startsWith("/admin/sanchuang"))}><Trophy size={18} aria-hidden="true" />三创赛运营</NavLink>
-    <NavLink to="/admin/observability" className={({ isActive }) => itemClass(isActive)}><Gauge size={18} aria-hidden="true" />环境与日志</NavLink>
+    <div>
+      <NavLink to="/admin/dev" className={() => itemClass(location.pathname.startsWith("/admin/dev") || location.pathname.startsWith("/admin/observability") || location.pathname.startsWith("/admin/governance"))}><SquareTerminal size={18} aria-hidden="true" />开发</NavLink>
+      {!mobile && <><NavLink to="/admin/observability" className={() => subItemClass(location.pathname.startsWith("/admin/observability"))}><Gauge size={13} />环境与日志</NavLink><NavLink to="/admin/governance" className={() => subItemClass(location.pathname.startsWith("/admin/governance"))}><ShieldCheck size={13} />权限与审计</NavLink></>}
+    </div>
     <div>
       <NavLink to="/admin/settings" className={() => itemClass(location.pathname.startsWith("/admin/settings"))}><Settings size={18} aria-hidden="true" />系统设置</NavLink>
       {!mobile && <><NavLink to="/admin/settings/sms" className={() => subItemClass(location.pathname.startsWith("/admin/settings/sms"))}><ChevronRight size={13} />短信管理</NavLink><NavLink to="/admin/settings/content-templates" className={() => subItemClass(location.pathname.startsWith("/admin/settings/content-templates"))}><ChevronRight size={13} />内容模板</NavLink></>}
     </div>
-    <NavLink to="/admin/governance" className={({ isActive }) => itemClass(isActive)}><ShieldCheck size={18} aria-hidden="true" />权限与审计</NavLink>
   </>;
 }
 

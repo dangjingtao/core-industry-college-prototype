@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <title>跨境小铺选品体验</title>
+    <link rel="stylesheet" href="../_shared/sim-game.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script>
+      window.SIM_GAME_CONFIG = {
+        id: "cross-border-selection",
+        title: "跨境小铺选品体验",
+        kicker: "跨境电商选品 · demo",
+        logo: "跨",
+        roundUnit: "轮",
+        intro: "从选品到供应链再到营销定价，你的跨境小铺交出了这样一份答卷。",
+        rounds: [
+          {
+            id: "category",
+            title: "第 1 轮 · 市场品类",
+            scenario: "决定出海，先选一个品类切入。",
+            options: [
+              { id: "low", label: "低价走量", hint: "需求大，竞争激烈", effect: "曝光提升，毛利承压", metrics: { exposure: 50, conversion: -3, margin: -4, stock: 1 } },
+              { id: "niche", label: "差异化小品类", hint: "竞争小，需求细分", effect: "转化与毛利提升", metrics: { exposure: 15, conversion: 5, margin: 7, stock: -1 } },
+              { id: "high", label: "高客单新品", hint: "利润厚，教育成本高", effect: "毛利高，转化待培养", metrics: { exposure: 10, conversion: 1, margin: 9, stock: -3 } }
+            ]
+          },
+          {
+            id: "supply",
+            title: "第 2 轮 · 供应链物流",
+            scenario: "产品定了，供应链和物流怎么搭？",
+            options: [
+              { id: "direct", label: "现货直发", hint: "轻资产，时效一般", effect: "成本低，库存压力小", metrics: { exposure: 8, conversion: 2, margin: 2, stock: 6 } },
+              { id: "overseas", label: "海外仓", hint: "时效好，费用高", effect: "转化提升，成本上升", metrics: { exposure: 15, conversion: 6, margin: -3, stock: -2 } },
+              { id: "custom", label: "轻定制", hint: "差异化，交付慢", effect: "毛利提升，周转放缓", metrics: { exposure: 5, conversion: -1, margin: 6, stock: -6 } }
+            ]
+          },
+          {
+            id: "marketing",
+            title: "第 3 轮 · 营销定价",
+            scenario: "上架后，营销和定价怎么打？",
+            options: [
+              { id: "price", label: "低价冲量", hint: "先抢排名", effect: "曝光与转化提升，利润薄", metrics: { exposure: 40, conversion: 4, margin: -6, stock: 3 } },
+              { id: "ad", label: "广告拉新", hint: "付费买精准流量", effect: "转化提升，成本上升", metrics: { exposure: 25, conversion: 5, margin: -2, stock: -1 } },
+              { id: "content", label: "内容种草", hint: "图文/短视频种草", effect: "口碑提升，见效较慢", metrics: { exposure: 10, conversion: 2, margin: 3, stock: 2 } }
+            ]
+          }
+        ],
+        base: { exposure: 300, conversion: 8, margin: 12, stock: 70 },
+        metrics: [
+          { key: "exposure", label: "周曝光", format: function (v) { return (v * 40).toLocaleString("zh-CN"); } },
+          { key: "conversion", label: "转化率", format: function (v) { return v.toFixed(1) + "%"; }, clamp: [3, 20] },
+          { key: "margin", label: "净利润率", format: function (v) { return v.toFixed(1) + "%"; }, clamp: [2, 30] },
+          { key: "stock", label: "库存周转", format: function (v) { return v.toFixed(0); }, clamp: [40, 100] }
+        ],
+        virtualPlayers: [
+          { name: "模拟经营者·周", exposure: 340, conversion: 10, margin: 15, stock: 76 },
+          { name: "模拟经营者·陈", exposure: 380, conversion: 11, margin: 13, stock: 68 },
+          { name: "模拟经营者·刘", exposure: 300, conversion: 9, margin: 18, stock: 82 },
+          { name: "模拟经营者·王", exposure: 360, conversion: 12, margin: 11, stock: 72 },
+          { name: "模拟经营者·许", exposure: 320, conversion: 10, margin: 16, stock: 78 }
+        ],
+        summarize: function (choices) {
+          var d = { exposure: 0, conversion: 0, margin: 0, stock: 0 };
+          choices.forEach(function (c) {
+            d.exposure += c.metrics.exposure;
+            d.conversion += c.metrics.conversion;
+            d.margin += c.metrics.margin;
+            d.stock += c.metrics.stock;
+          });
+          var key = Object.keys(d).sort(function (a, b) { return d[b] - d[a]; })[0];
+          var messages = {
+            exposure: "你的打法偏抢曝光，店铺被更多人看到。流量进来后，要把转化和利润接住。",
+            conversion: "你的选品和承接转化率突出，来的流量更值钱。可以再放大曝光让盘子更大。",
+            margin: "你更看重利润，定价和供应链守得比较稳。盈利是长期生意的根本。",
+            stock: "你的库存周转顺畅，现金流健康，抗风险能力强，后续可以更从容地推新品。"
+          };
+          return messages[key];
+        }
+      };
+    </script>
+    <script src="../_shared/sim-game.js"></script>
+  </body>
+</html>

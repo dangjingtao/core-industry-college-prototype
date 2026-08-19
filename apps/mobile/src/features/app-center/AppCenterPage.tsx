@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, Flag, Gift, Headphones, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { simulationAssignments } from "../simulations/registry";
+import { simulationAssignments, simulationModuleManifests } from "../simulations/registry";
 
 type AppEntry = {
   label: string;
@@ -12,6 +12,7 @@ type AppEntry = {
   icon: LucideIcon;
   description: string;
   accent?: string;
+  badge?: string;
 };
 
 type AppGroup = {
@@ -67,10 +68,18 @@ const groups: AppGroup[] = [
   },
 ];
 
+const simulationIcons: Record<string, LucideIcon> = {
+  "community-commerce": Store,
+  "local-life-coupon": Ticket,
+  "campus-drinks": CupSoda,
+  "live-commerce": Clapperboard,
+  "cross-border-selection": Globe,
+};
+
 function AppGrid({ group }: { group: AppGroup }) {
   return <div className="grid grid-cols-3 gap-3">{group.entries.map(entry => {
     const Icon = entry.icon;
-    return <Link key={entry.to} to={entry.to} className="block" aria-label={`${entry.label}：${entry.description}`}><Card interactive className="flex min-h-[96px] flex-col items-center justify-center gap-2 p-2 text-center"><span className={`flex size-10 shrink-0 items-center justify-center rounded-[14px] ${entry.accent ?? group.accent}`}><Icon size={20} aria-hidden="true" /></span><span className="text-xs font-medium text-text-primary">{entry.label}</span></Card></Link>;
+    return <Link key={entry.to} to={entry.to} className="block" aria-label={`${entry.label}：${entry.description}`}><Card interactive className="flex min-h-[96px] flex-col items-center justify-center gap-2 p-2 text-center"><span className={`relative flex size-10 shrink-0 items-center justify-center rounded-[14px] ${entry.accent ?? group.accent}`}><Icon size={20} aria-hidden="true" />{entry.badge && <span className="absolute -right-2 -top-2 -skew-x-12 rounded-[4px] bg-[#f04438] px-1 py-px text-[8px] font-medium leading-3 text-white shadow-sm" aria-hidden="true">{entry.badge}</span>}</span><span className="text-xs font-medium text-text-primary">{entry.label}</span></Card></Link>;
   })}</div>;
 }
 
@@ -86,19 +95,23 @@ export function AppCenterPage() {
     icon: Sparkles,
     description: activeCompetition ? `赛事陪跑 · ${activeCompetition.name}` : "赛事 AI 陪跑 · 需先获得赛事身份",
     accent: "bg-[#e9f6f1] text-[#247456]",
+    badge: "三创赛专属",
   };
   const activeSimulationAssignments = useMemo(() => Object.values(simulationAssignments).filter(assignment => assignment.enabled), []);
   const simulationGroup: AppGroup | null = activeSimulationAssignments.length ? {
     title: "互动体验",
     subtitle: "活动启用的轻量经营模拟",
     accent: "bg-[#e9f6f1] text-[#247456]",
-    entries: activeSimulationAssignments.map(assignment => ({
-      label: "经营决策体验",
-      to: `/modules/simulations/${assignment.assignmentId}`,
-      icon: Store,
-      description: "社区团购经营 · 轻量互动 Demo",
-      accent: "bg-[#e9f6f1] text-[#247456]",
-    })),
+    entries: activeSimulationAssignments.map(assignment => {
+      const manifest = simulationModuleManifests[assignment.moduleId];
+      return {
+        label: manifest?.title ?? "模拟体验",
+        to: `/modules/simulations/${assignment.assignmentId}`,
+        icon: simulationIcons[assignment.moduleId] ?? Store,
+        description: manifest?.description ?? "轻量互动体验",
+        accent: "bg-[#e9f6f1] text-[#247456]",
+      };
+    }),
   } : null;
   const renderGroups = groups.map(group => group.title === "工具与服务" ? { ...group, entries: [workshopEntry, ...group.entries] } : group);
   const orderedGroups = simulationGroup ? [...renderGroups.slice(0, 2), simulationGroup, ...renderGroups.slice(2)] : renderGroups;

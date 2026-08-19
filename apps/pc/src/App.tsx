@@ -14,6 +14,7 @@ import { PC04StateProvider } from "./admin/PC04State";
 import { PC05AdminOverview } from "./admin/PC05AdminOverview";
 import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
+import { DevModuleConsole } from "./admin/DevModuleConsole";
 import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
 import { PC08CompetitionDetail, PC08CompetitionInfrastructureConsole } from "./admin/PC08CompetitionInfrastructure";
@@ -152,6 +153,7 @@ export function App() {
             <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
             <Route path="/admin/students/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/assets/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
+            <Route path="/admin/dev" element={<AdminRoute><DevModuleConsole /></AdminRoute>} />
             <Route path="/admin/observability" element={<AdminRoute><PC06ObservabilityConsole /></AdminRoute>} />
             <Route path="/admin/settings/*" element={<AdminRoute><PC07SettingsConsole /></AdminRoute>} />
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />

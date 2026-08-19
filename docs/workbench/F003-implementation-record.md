@@ -52,15 +52,14 @@
 实现：
 
 - 报名期成员录入继续由响应式报名系统负责；
-- 赛事 `inProgress` 时，团队页提供：
-  - 减员申请；
-  - 成员变更；
+- 赛事 `inProgress` 时，团队页提供减员申请：
   - 选择涉及成员；
   - 填写原因；
-  - 上传 PDF / DOC / DOCX / JPG / PNG 材料；
   - 提交后进入“待老师 / 运营审核”；
 - 申请提交不会直接修改 `workspaceData.team.members`，避免把申请状态伪装成已审核系统事实；
 - 赛事未开始时只说明何时可提交，不把报名期复杂表单搬回 App。
+
+> 2026-08-19 后续决策覆盖：赛事期团队维护只保留「减员申请」，取消「成员变更」选项与「上传申请 / 证明材料」。状态模型同步简化为 `TeamReductionRequest`（competitionId / memberName / reason / status / submittedAt）。
 
 ### D. 外部 handoff / 工具能力
 

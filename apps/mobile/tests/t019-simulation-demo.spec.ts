@@ -26,6 +26,9 @@ test("T019 完整体验：三周决策、结果展示、完成与返回活动", 
   await frame.getByRole("button", { name: /集中自提/ }).click();
   await expect(frame.getByText("本次经营结果", { exact: true })).toBeVisible();
   await expect(frame.getByText("周订单量", { exact: true })).toBeVisible();
+  await expect(frame.getByText("本场排名", { exact: true })).toBeVisible();
+  await expect(frame.locator(".rank-item")).toHaveCount(6);
+  await expect(frame.locator(".rank-item.is-me")).toContainText("你（本场）");
   await expect(page.getByText("体验完成", { exact: true })).toBeVisible();
   await expect(page.getByText("结果仅供互动参考，不代表正式能力评价。", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "返回活动", exact: true }).last().click();
@@ -46,6 +49,7 @@ test("T019 再试一次重新开始，H5 结束体验可返回", async ({ page }
   await frame.getByRole("button", { name: /会员专享价/ }).click();
   await frame.getByRole("button", { name: /混合模式/ }).click();
   await expect(frame.getByText("本次经营结果", { exact: true })).toBeVisible();
+  await expect(frame.getByText("本场排名", { exact: true })).toBeVisible();
   await frame.getByRole("button", { name: "结束体验并返回" }).click();
   await expect(page).toHaveURL(/\/apps$/);
 });

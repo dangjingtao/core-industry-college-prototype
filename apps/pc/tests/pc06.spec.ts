@@ -33,3 +33,23 @@ test("PC06 keeps operation audit in the existing governance surface", async ({ p
   await expect(page).toHaveURL(/\/admin\/governance$/);
   await expect(page.getByText("操作审计", { exact: true })).toBeVisible();
 });
+
+test("environment logs and permission audit are grouped under the 开发 module", async ({ page }) => {
+  await page.goto("/admin/dev");
+  await expect(page.getByRole("heading", { name: "开发" })).toBeVisible();
+  await expect(page.getByTestId("pc-dev-module").getByRole("link", { name: "环境与日志" })).toBeVisible();
+  await expect(page.getByTestId("pc-dev-module").getByRole("link", { name: "权限与审计" })).toBeVisible();
+
+  const nav = page.getByRole("navigation", { name: "管理端主导航" });
+  await expect(nav.getByRole("link", { name: "开发" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "环境与日志" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "权限与审计" })).toBeVisible();
+
+  await nav.getByRole("link", { name: "环境与日志" }).click();
+  await expect(page).toHaveURL(/\/admin\/observability$/);
+  await expect(page.getByRole("heading", { name: "环境与日志" })).toBeVisible();
+
+  await nav.getByRole("link", { name: "权限与审计" }).click();
+  await expect(page).toHaveURL(/\/admin\/governance$/);
+  await expect(page.getByText("操作审计", { exact: true })).toBeVisible();
+});

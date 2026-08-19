@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Award, BookOpen, Check, Clock, Coins, GraduationCap, Lock, PlayCircle, Star, Trophy } from "lucide-react";
+import { Award, BookOpen, Check, Clock, Coins, GraduationCap, Lock, PlayCircle, Share2, Star, Trophy } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -299,6 +299,7 @@ export function CourseDetailPage() {
   const [enrollError, setEnrollError] = useState("");
   const [showCreditDialog, setShowCreditDialog] = useState(false);
   const [showClaimSuccessDialog, setShowClaimSuccessDialog] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
 
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
@@ -377,6 +378,19 @@ export function CourseDetailPage() {
     beginLearning();
   };
 
+  const shareCourse = async () => {
+    try {
+      if (!navigator.share) {
+        setShareStatus("当前浏览器不支持系统分享，请复制地址栏链接发送到微信。");
+        return;
+      }
+      await navigator.share({ title: course.title, text: course.summary, url: window.location.href });
+      setShareStatus("已调起系统分享，可选择微信或其它应用。");
+    } catch {
+      setShareStatus("分享未完成，可复制当前页面链接发送到微信。");
+    }
+  };
+
   const actionText = !loggedIn
     ? "登录后学习"
     : !enrolled
@@ -406,7 +420,7 @@ export function CourseDetailPage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="课程详情" backTo="/courses" />
+      <PageHeader title="课程详情" backTo="/courses" right={<button aria-label="分享" onClick={shareCourse} className="flex size-9 items-center justify-center rounded-control text-text-brand active:bg-surface-pressed"><Share2 size={19} aria-hidden="true" /></button>} />
       <div className="relative space-y-5 px-4 py-5 pb-20">
         <div className="relative aspect-video w-full overflow-hidden rounded-container">
           <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
@@ -437,6 +451,7 @@ export function CourseDetailPage() {
         </div>
 
         {enrollError && <Card className="border border-danger bg-danger-bg"><p className="text-sm text-danger-text">{enrollError}</p></Card>}
+        {shareStatus && <Card className="border border-info bg-info-bg"><p className="text-sm text-info-text">{shareStatus}</p></Card>}
 
         <div className="flex border-b border-border-subtle">
           {(["intro", "catalog", "achievement"] as const).map(tab => (

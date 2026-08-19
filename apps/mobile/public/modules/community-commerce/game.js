@@ -43,6 +43,14 @@
     choices: []
   };
 
+  var VIRTUAL_PLAYERS = [
+    { name: "模拟经营者·周", orders: 3800, margin: 21, repurchase: 30, newCustomer: 16 },
+    { name: "模拟经营者·陈", orders: 3400, margin: 16, repurchase: 26, newCustomer: 22 },
+    { name: "模拟经营者·刘", orders: 4200, margin: 12, repurchase: 20, newCustomer: 28 },
+    { name: "模拟经营者·王", orders: 3000, margin: 24, repurchase: 34, newCustomer: 14 },
+    { name: "模拟经营者·许", orders: 3600, margin: 18, repurchase: 22, newCustomer: 19 }
+  ];
+
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -115,6 +123,41 @@
     return messages[key];
   }
 
+  function compositeScore(p) {
+    return Math.round(p.orders / 24 * 0.35 + p.margin * 1.8 + p.repurchase * 1.4 + p.newCustomer * 1.0);
+  }
+
+  function buildRanking(user) {
+    var rows = VIRTUAL_PLAYERS.map(function (p) {
+      return { name: p.name, virtual: true, composite: compositeScore(p), orders: p.orders, margin: p.margin, repurchase: p.repurchase, newCustomer: p.newCustomer };
+    });
+    rows.push({ name: "你", virtual: false, composite: compositeScore(user), orders: user.orders, margin: user.margin, repurchase: user.repurchase, newCustomer: user.newCustomer });
+    rows.sort(function (a, b) {
+      return b.composite - a.composite;
+    });
+    rows.forEach(function (row, index) {
+      row.rank = index + 1;
+    });
+    return rows;
+  }
+
+  function rankingHtml(rows) {
+    var html = '<div class="card"><div class="round-meta"><span class="round-badge">本场排名</span></div>';
+    html += '<p class="rank-note">与几位虚拟经营者同场对比，综合表现由订单量、毛利、复购率、新客占比加权得出。</p>';
+    html += '<ol class="rank-list">';
+    rows.forEach(function (row) {
+      var cls = row.virtual ? "" : " is-me";
+      html += '<li class="rank-item' + cls + '"><span class="rank-pos">' + row.rank + "</span>" +
+        '<span class="rank-name">' + row.name + (row.virtual ? "" : "（本场）") + "</span>" +
+        '<span class="rank-orders">' + row.orders.toLocaleString("zh-CN") + " 单</span>" +
+        '<span class="rank-value">' + row.composite + "</span></li>";
+    });
+    html += "</ol>";
+    html += '<p class="disclaimer">排名仅在本次模拟的虚拟参与者之间比较，不代表真实能力评价。</p>';
+    html += "</div>";
+    return html;
+  }
+
   function headerHtml() {
     return (
       '<div class="app-header">' +
@@ -172,6 +215,7 @@
     html += "</ul>";
     html += '<div class="summary">' + dominantStrategy() + "</div>";
     html += "</div>";
+    html += rankingHtml(buildRanking(totals));
     html += '<p class="disclaimer">结果仅供互动参考，不代表正式能力评价。本次体验不记录成绩，也不影响你的赛事、课程或个人档案。</p>';
     html += '<button type="button" class="end-link" id="end-link">结束体验并返回</button>';
     app.innerHTML = html;

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <title>本地生活券运营体验</title>
+    <link rel="stylesheet" href="../_shared/sim-game.css" />
+  </head>
+  <body>
+    <div id="app" class="app"></div>
+    <script>
+      window.SIM_GAME_CONFIG = {
+        id: "local-life-coupon",
+        title: "本地生活券运营体验",
+        kicker: "本地生活到店 · demo",
+        logo: "券",
+        roundUnit: "轮",
+        intro: "三轮回购券运营决策后，你的商家在本期模拟中交出了这样一份答卷。",
+        rounds: [
+          {
+            id: "coupon",
+            title: "第 1 轮 · 券面设计",
+            scenario: "新店上线，平台给了一笔推广预算，先决定团购券的面额设计。",
+            options: [
+              { id: "full_reduction", label: "满 50 减 8", hint: "抬升客单，引导凑单", effect: "核销率提升，毛利空间变薄", metrics: { redeem: 12, visit: 4, margin: -3, rep: -2 } },
+              { id: "discount", label: "8 折券", hint: "简单直接，转化更顺", effect: "核销率提升，毛利承压", metrics: { redeem: 16, visit: 2, margin: -5, rep: 2 } },
+              { id: "flat", label: "立减 3 元", hint: "门槛低，拉新更快", effect: "到店转化提升，毛利下降", metrics: { redeem: 4, visit: 10, margin: -4, rep: -1 } }
+            ]
+          },
+          {
+            id: "audience",
+            title: "第 2 轮 · 投放人群",
+            scenario: "券面定好了，接下来把这笔预算投给谁？",
+            options: [
+              { id: "broad", label: "泛人群曝光", hint: "量大但购买意图弱", effect: "到店转化提升，投放成本高", metrics: { redeem: -4, visit: 10, margin: -3, rep: -1 } },
+              { id: "intent", label: "高意向人群", hint: "收藏/常点用户更精准", effect: "核销与毛利更稳", metrics: { redeem: 8, visit: 4, margin: 3, rep: 1 } },
+              { id: "recall", label: "老客召回", hint: "唤醒存量客", effect: "口碑提升，新客补充少", metrics: { redeem: 6, visit: -2, margin: 2, rep: 6 } }
+            ]
+          },
+          {
+            id: "redeem",
+            title: "第 3 轮 · 核销与承接",
+            scenario: "用户到店后，怎么核销和承接最稳？",
+            options: [
+              { id: "instore", label: "到店核销体验", hint: "核销顺畅，体验加分", effect: "核销率与口碑提升", metrics: { redeem: 10, visit: 3, margin: 1, rep: 5 } },
+              { id: "prepay", label: "预付锁客", hint: "先付后用，现金回笼快", effect: "到店锁定提升，部分用户犹豫", metrics: { redeem: -6, visit: 6, margin: 4, rep: -2 } },
+              { id: "refund", label: "灵活退款", hint: "售后更宽松", effect: "口碑提升，毛利小幅下降", metrics: { redeem: 2, visit: 1, margin: -2, rep: 6 } }
+            ]
+          }
+        ],
+        base: { redeem: 45, visit: 20, margin: 14, rep: 80 },
+        metrics: [
+          { key: "redeem", label: "核销率", format: function (v) { return v.toFixed(0) + "%"; }, clamp: [30, 85] },
+          { key: "visit", label: "到店转化", format: function (v) { return v.toFixed(0) + "%"; }, clamp: [10, 60] },
+          { key: "margin", label: "综合毛利", format: function (v) { return v.toFixed(1) + "%"; }, clamp: [5, 30] },
+          { key: "rep", label: "口碑分", format: function (v) { return v.toFixed(0); }, clamp: [50, 100] }
+        ],
+        virtualPlayers: [
+          { name: "模拟经营者·周", redeem: 58, visit: 30, margin: 15, rep: 82 },
+          { name: "模拟经营者·陈", redeem: 66, visit: 26, margin: 18, rep: 76 },
+          { name: "模拟经营者·刘", redeem: 50, visit: 34, margin: 12, rep: 88 },
+          { name: "模拟经营者·王", redeem: 62, visit: 22, margin: 20, rep: 74 },
+          { name: "模拟经营者·许", redeem: 54, visit: 28, margin: 16, rep: 84 }
+        ],
+        summarize: function (choices) {
+          var d = { redeem: 0, visit: 0, margin: 0, rep: 0 };
+          choices.forEach(function (c) {
+            d.redeem += c.metrics.redeem;
+            d.visit += c.metrics.visit;
+            d.margin += c.metrics.margin;
+            d.rep += c.metrics.rep;
+          });
+          var key = Object.keys(d).sort(function (a, b) { return d[b] - d[a]; })[0];
+          var messages = {
+            redeem: "你更看重核销转化，券的吸引力在线，到店履约也顺。后续注意别让让利把毛利空间吃掉。",
+            visit: "你的打法偏拉新，到店转化提升明显。新客进来后，要尽快把复购和口碑做起来。",
+            margin: "你更看重毛利结构，让利幅度克制，经营更稳。可以再适当补充拉新动作。",
+            rep: "你把重点放在口碑和服务上，差评少、复购稳，经营更有韧性。"
+          };
+          return messages[key];
+        }
+      };
+    </script>
+    <script src="../_shared/sim-game.js"></script>
+  </body>
+</html>
