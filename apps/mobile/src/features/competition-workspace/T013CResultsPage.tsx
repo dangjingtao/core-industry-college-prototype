@@ -61,7 +61,7 @@ export function T013CResultsPage() {
     <div role="tablist" aria-label="团队成果分组" className="inline-flex w-full rounded-control bg-surface p-1" data-testid="results-tablist">
       {tabs.map(tab => {
         const selected = activeTab === tab.id;
-        return <button key={tab.id} role="tab" type="button" aria-selected={selected} onClick={() => selectTab(tab.id)} className={`flex-1 rounded-control px-3 py-2 text-sm font-medium ${selected ? "bg-primary text-text-on-primary" : "text-text-secondary"}`}>{tab.label} <span className={selected ? "text-text-on-primary" : "text-text-tertiary"}>{tab.count}</span></button>;
+        return <button key={tab.id} role="tab" type="button" aria-selected={selected} data-testid={`results-tab-${tab.id}`} onClick={() => selectTab(tab.id)} className={`flex-1 rounded-control px-3 py-2 text-sm font-medium ${selected ? "bg-primary text-text-on-primary" : "text-text-secondary"}`}>{tab.label} <span className={selected ? "text-text-on-primary" : "text-text-tertiary"}>{tab.count}</span></button>;
       })}
     </div>
 
