@@ -267,7 +267,7 @@ function CoursePrototypeTools() {
     setSearchParams(next, { replace: true });
   };
   return (
-    <details className="fixed bottom-4 right-4 z-40 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
+    <details className="absolute bottom-4 right-4 z-40 rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
       <summary className="cursor-pointer list-none font-medium text-text-secondary">原型状态</summary>
       <div className="absolute bottom-full right-0 mb-2 w-48 rounded-control border border-border-subtle bg-surface p-2 shadow-floating">
         <div className="grid grid-cols-1 gap-1">
@@ -407,7 +407,7 @@ export function CourseDetailPage() {
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="课程详情" backTo="/courses" />
-      <div className="space-y-5 px-4 py-5">
+      <div className="relative space-y-5 px-4 py-5 pb-20">
         <div className="relative aspect-video w-full overflow-hidden rounded-container">
           <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
           <div className="absolute inset-0 bg-black/15" />
@@ -536,6 +536,8 @@ export function CourseDetailPage() {
             {!enrolled && <Button className="w-full" disabled={locked} onClick={primaryAction}>{actionText}</Button>}
           </div>
         )}
+
+        <CoursePrototypeTools />
       </div>
 
       <Dialog
@@ -565,7 +567,6 @@ export function CourseDetailPage() {
           </div>
         }
       />
-      <CoursePrototypeTools />
     </PublicShell>
   );
 }
