@@ -34,7 +34,7 @@ function CourseCover({ course, className = "" }: { course: Course; className?: s
     <div className={`relative overflow-hidden rounded-container bg-gradient-to-br ${course.cover} ${className}`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_50%)]" />
       <div className="absolute bottom-3 left-3 right-3">
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-text-primary backdrop-blur-sm">
+        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-text-primary backdrop-blur-sm">
           <PlayCircle size={12} aria-hidden="true" />
           {course.duration}
         </span>
