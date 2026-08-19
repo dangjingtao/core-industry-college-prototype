@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { BriefcaseBusiness, ChevronLeft, Home, Trophy, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ChevronLeft, Home, LayoutGrid, Trophy, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 export { Dialog } from "@core/shared";
@@ -57,6 +57,7 @@ const navItems = [
   { label: "首页", to: "/home", icon: Home },
   { label: "赛事", to: "/competitions", icon: Trophy },
   { label: "机会", to: "/opportunities", icon: BriefcaseBusiness },
+  { label: "应用中心", to: "/apps", icon: LayoutGrid },
   { label: "我的", to: "/me", icon: UserRound },
 ];
 

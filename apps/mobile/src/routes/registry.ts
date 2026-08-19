@@ -90,11 +90,13 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "legal.privacy", path: "/legal/privacy", context: "public", purpose: "隐私政策", states: ["ready"] },
   { id: "about", path: "/about", context: "public", purpose: "关于", states: ["ready"] },
   { id: "tasks.center", path: "/tasks", context: "public", purpose: "已有业务下一步聚合", states: ["guest", "activeCompetition", "noIdentity", "filtered", "empty"] },
+  { id: "appCenter.home", path: "/apps", context: "public", purpose: "应用中心：平台功能与工具全量出口", states: ["ready"] },
 ];
 
 export const candidatePrimaryNavigation = [
   { label: "首页", to: "/home" },
   { label: "赛事", to: "/competitions" },
   { label: "机会", to: "/opportunities" },
+  { label: "应用中心", to: "/apps" },
   { label: "我的", to: "/me" },
 ] as const;

@@ -248,6 +248,8 @@ Route audit PASS
 
 > 2026-08-19 决策更新：登录账号体系仅手机号，`/me/email-reminder` 语义路由随页面一并移除（见 backlog 已确认决策）。以 `audit-routes.mjs` 实测数量为准。
 
+> 2026-08-19 T018：新增 `/apps` 应用中心（tabbar 第 5 入口 + 分组宫格聚合页），registry 同步 +1，以 `audit-routes.mjs` 实测数量为准。
+
 ---
 
 ## 7. 必须重新跑的五条母动线

@@ -48,6 +48,7 @@ import {
 import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
+import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import {
   CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
@@ -173,6 +174,7 @@ export function App() {
               <Route path="/legal/privacy" element={<LegalPage kind="privacy" />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/tasks" element={<TaskCenterPage />} />
+              <Route path="/apps" element={<AppCenterPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </SupportProvider>
