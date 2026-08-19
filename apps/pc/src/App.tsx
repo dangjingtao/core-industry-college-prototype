@@ -4,7 +4,6 @@ import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-rou
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { BasicDataConsole } from "./admin/BasicDataConsole";
 import { PC01OperationsConsole } from "./admin/PC01OperationsConsole";
-import { PC02HumanCompetitionConsole } from "./admin/PC02HumanCompetitionConsole";
 import { PC03HumanContentConsole } from "./admin/PC03HumanContentConsole";
 import { PC03HumanOrganizationConsole } from "./admin/PC03HumanOrganizationConsole";
 import { PC03OpportunityRoute } from "./admin/PC03OpportunityRoute";
@@ -17,6 +16,7 @@ import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
 import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
+import { PC08CompetitionDetail, PC08CompetitionInfrastructureConsole } from "./admin/PC08CompetitionInfrastructure";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
@@ -122,9 +122,11 @@ export function App() {
             <Route path="/" element={<PCPublicLanding />} />
             <Route path="/admin" element={<AdminRoute><PC05AdminOverview /></AdminRoute>} />
             <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
+            <Route path="/admin/competitions/categories" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="categories" /></AdminRoute>} />
+            <Route path="/admin/competitions/registrations" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="registrations" /></AdminRoute>} />
             <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
             <Route path="/admin/workshop" element={<AdminRoute><PC01OperationsConsole section="workshop" /></AdminRoute>} />
-            <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><PC02HumanCompetitionConsole /></AdminRoute>} />
+            <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><PC08CompetitionDetail /></AdminRoute>} />
             <Route path="/admin/organizations" element={<AdminRoute><PC03HumanOrganizationConsole /></AdminRoute>} />
             <Route path="/admin/organizations/:organizationId" element={<AdminRoute><PC03HumanOrganizationConsole /></AdminRoute>} />
             <Route path="/admin/organizations/objects/:organizationId" element={<LegacyOrganizationRedirect />} />
