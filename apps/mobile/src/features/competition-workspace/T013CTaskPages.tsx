@@ -36,39 +36,27 @@ const questions: Record<string, Question[]> = {
       id: "duration",
       label: "本次路演预计时长？",
       type: "single",
-      options: ["5 分钟", "8 分钟", "10 分钟", "15 分钟"],
+      options: ["3 分钟", "5 分钟", "8 分钟", "10 分钟及以上"],
     },
     {
-      id: "focus",
-      label: "PPT 最需要强化哪些要点？",
-      type: "multiple",
-      options: ["开场问题", "市场证据", "经营数据", "商业模式", "团队优势", "结尾诉求"],
-    },
-    {
-      id: "more",
-      label: "是否还有要点需要补充？",
+      id: "style",
+      label: "希望 PPT 使用什么风格？",
       type: "single",
-      options: ["还有补充", "暂时没有"],
+      options: ["商务风", "极简风", "设计风", "轻奢风"],
     },
   ],
   "s6-company-match": [
     {
       id: "industry",
-      label: "更希望优先了解哪些行业？",
+      label: "期望行业",
       type: "multiple",
-      options: ["互联网 / 科技", "金融科技", "软件开发 SaaS", "品牌零售", "数据服务"],
+      options: ["互联网/科技", "金融科技", "软件开发 SaaS", "电子商务", "AI/大数据", "新媒体内容", "物联网", "物流/供应链", "不限"],
     },
     {
       id: "city",
-      label: "优先探索哪些城市？",
+      label: "希望工作城市",
       type: "multiple",
-      options: ["广州", "深圳", "杭州", "上海", "不限"],
-    },
-    {
-      id: "direction",
-      label: "更希望继续发挥哪类能力？",
-      type: "multiple",
-      options: ["内容运营", "品牌增长", "数据分析", "产品运营", "项目推进"],
+      options: ["北京", "广州", "杭州", "上海", "深圳", "成都", "南京", "武汉", "不限"],
     },
   ],
 };
@@ -156,6 +144,16 @@ function SpecializedAnswerPage() {
 
   const title = isS5Precheck ? "赛事评分预检" : isS5Ppt ? "路演 PPT" : "公司推荐";
   const nextLabel = isS5Precheck ? "完成预检，继续 PPT 问答" : "回答完毕，进入下一步";
+  const noteTitle = isS5Precheck ? "还有什么要点补充（选填）" : isS5Ppt ? "是否还有要点补充（选填）" : "补充说明（选填）";
+  const notePlaceholder = isS5Precheck
+    ? "补充评委可能关注的内容、项目限制或其它比赛信息…"
+    : isS5Ppt
+      ? "补充路演必须保留的事实、叙事重点或限制…"
+      : "补充希望避开的行业、工作方式或其它个人偏好…";
+  const uploadTitle = isS5Ppt ? "上传其它数据（选填）" : "补充材料（选填）";
+  const uploadHint = isS6
+    ? "可补充简历、项目材料或图片；原型只记录文件名，不上传真实文件。"
+    : "支持 PDF / Excel / CSV / 图片；原型只记录文件名，不上传真实文件。";
 
   return <PublicShell showNavigation={false}><PageHeader title="动态答题" backTo={`/competitions/${competitionId}/workspace/workshop/skills/${task.skillId}`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
@@ -164,7 +162,7 @@ function SpecializedAnswerPage() {
         <div>
           <p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · 动态问答</p>
           <h1 className="mt-2 text-lg font-semibold text-text-primary">{title}</h1>
-          <p className="mt-2 text-sm leading-5 text-text-secondary">{isS5Precheck ? "先按当前项目阶段和真实比赛材料做评分预检，再进入独立的 PPT 问答。" : isS5Ppt ? "这一段与评分预检分开，用于整理路演 PPT 所需信息。" : "根据你的行业、城市和能力偏好生成公司推荐小报告。"}</p>
+          <p className="mt-2 text-sm leading-5 text-text-secondary">{isS5Precheck ? "先按当前项目阶段和真实比赛材料做评分预检，再进入独立的 PPT 问答。" : isS5Ppt ? "这一段与评分预检分开，按路演时长和 PPT 风格整理生成输入。" : "根据你的期望行业和工作城市生成公司推荐小报告。"}</p>
         </div>
         <StatusTag tone="info">{step + 1}/{taskQuestions.length}</StatusTag>
       </div>
@@ -182,9 +180,9 @@ function SpecializedAnswerPage() {
         : <Button disabled={!allAnswered} onClick={submit}>{nextLabel}</Button>}
     </div>
 
-    {allAnswered && !isS5Precheck && <Section title="补充说明（选填）"><textarea value={note} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value)} rows={4} className="w-full rounded-control border border-border bg-surface p-3 text-base leading-6 text-text-primary outline-none focus:border-primary" placeholder={isS6 ? "补充希望避开的行业、工作方式或其它个人偏好…" : "补充路演必须保留的事实、叙事重点或限制…"} /></Section>}
+    {allAnswered && <Section title={noteTitle}><textarea value={note} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value)} rows={4} className="w-full rounded-control border border-border bg-surface p-3 text-base leading-6 text-text-primary outline-none focus:border-primary" placeholder={notePlaceholder} /></Section>}
 
-    {allAnswered && isS5Ppt && <Section title="上传其它数据（选填）"><label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface px-4 text-center"><span className="text-sm font-medium text-text-brand">{uploadName || "点击选择补充材料"}</span><span className="mt-1 text-xs leading-5 text-text-secondary">支持 PDF / Excel / CSV / 图片；原型只记录文件名，不上传真实文件。</span><input className="sr-only" type="file" accept=".pdf,.xls,.xlsx,.csv,image/*" onChange={event => setUploadName(event.target.files?.[0]?.name ?? "")} /></label></Section>}
+    {allAnswered && <Section title={uploadTitle}><label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface px-4 text-center"><span className="text-sm font-medium text-text-brand">{uploadName || "点击选择补充材料"}</span><span className="mt-1 text-xs leading-5 text-text-secondary">{uploadHint}</span><input className="sr-only" type="file" accept=".pdf,.xls,.xlsx,.csv,image/*" onChange={event => setUploadName(event.target.files?.[0]?.name ?? "")} /></label></Section>}
 
     <Card className="bg-surface-subtle" data-testid="t013c-completeness"><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">作答完善度</span><strong className="text-text-primary">{completeness}%</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary" style={{ width: `${completeness}%` }} /></div></Card>
 
@@ -211,6 +209,7 @@ function SpecializedReviewPage() {
   if (!task) return null;
   const runtime = getRuntime(competitionId);
   const run = runtime.taskRuns[taskId];
+  const precheckRun = runtime.taskRuns["s5-score-precheck"];
   const policy = computePolicyForTask(taskId);
   const rows = summaryRows(taskId, runtime);
   const allAnswered = rows.length > 0 && rows.every(row => row.value !== "未回答");
@@ -218,6 +217,12 @@ function SpecializedReviewPage() {
   const isS6 = taskId === "s6-company-match";
   const ready = allAnswered && enoughCompute;
   const coreFacts = rows.flatMap(row => row.value.split("、")).filter(Boolean).slice(0, 8);
+  const supplementalNotes = taskId === "s5-pitch-ppt"
+    ? [precheckRun?.note, run?.note].filter((value): value is string => Boolean(value))
+    : [run?.note].filter((value): value is string => Boolean(value));
+  const supplementalFiles = taskId === "s5-pitch-ppt"
+    ? [precheckRun?.uploadName, run?.uploadName].filter((value): value is string => Boolean(value))
+    : [run?.uploadName].filter((value): value is string => Boolean(value));
 
   const confirm = () => {
     if (!ready || !startTask(competitionId, taskId)) return;
@@ -234,7 +239,7 @@ function SpecializedReviewPage() {
 
     <Section title="问答摘要"><div className="space-y-2">{rows.map(row => <Card key={row.id}><p className="text-xs text-text-secondary">{row.label}</p><p className="mt-1 text-sm font-medium leading-5 text-text-primary">{row.value}</p></Card>)}</div></Section>
 
-    <Section title="AI 提取核心信息"><Card data-testid="t013c-core-facts"><div className="flex flex-wrap gap-2">{coreFacts.map((value, index) => <StatusTag key={`${value}-${index}`} tone="neutral">{value}</StatusTag>)}</div>{run?.note && <div className="mt-4 border-t border-border-subtle pt-3"><p className="text-xs text-text-secondary">主观补充</p><p className="mt-1 text-sm leading-5 text-text-primary">{run.note}</p></div>}{run?.uploadName && <p className="mt-3 text-xs text-text-brand">已附材料：{run.uploadName}</p>}</Card></Section>
+    <Section title="AI 提取核心信息"><Card data-testid="t013c-core-facts"><div className="flex flex-wrap gap-2">{coreFacts.map((value, index) => <StatusTag key={`${value}-${index}`} tone="neutral">{value}</StatusTag>)}</div>{supplementalNotes.length > 0 && <div className="mt-4 border-t border-border-subtle pt-3"><p className="text-xs text-text-secondary">主观补充</p>{supplementalNotes.map((note, index) => <p key={`${note}-${index}`} className="mt-1 text-sm leading-5 text-text-primary">{note}</p>)}</div>}{supplementalFiles.length > 0 && <div className="mt-3 border-t border-border-subtle pt-3"><p className="text-xs text-text-secondary">已附材料</p>{supplementalFiles.map((file, index) => <p key={`${file}-${index}`} className="mt-1 text-xs text-text-brand">{file}</p>)}</div>}</Card></Section>
 
     <div className="grid grid-cols-1 gap-3">
       <Card data-testid="t013c-review-estimate"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Battery size={20} aria-hidden="true" /></div><div><p className="text-xs font-medium text-text-brand">算力预估</p><p className="mt-1 text-sm text-text-secondary">当前可用 {runtime.computeBalance}</p><p className="mt-1 text-base font-semibold text-text-primary">预计 {policy.estimateMin}–{policy.estimateMax} 算力</p></div></div></Card>
