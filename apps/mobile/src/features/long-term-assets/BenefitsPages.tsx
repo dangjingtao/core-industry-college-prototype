@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Coins, Search, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
+import { ChevronRight, Coins, Info, Phone, Search, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { benefitById, benefits, exchangeItemById, exchangeItems, learningCreditRecords, type BenefitStatus } from "./data";
@@ -172,12 +172,50 @@ export function BenefitDetailPage() {
   const { query } = useBenefitSourceContext();
   const item = benefitById(benefitId);
   const [phone, setPhone] = useState("");
-  const { benefitStatusFor, claimBenefit, useBenefit } = useLongTermAssets();
+  const { benefitStatusFor, claimBenefit, useBenefit, profile } = useLongTermAssets();
   if (!item) return <PublicShell showNavigation={false}><PageHeader title="权益不存在" backTo={`/benefits${query}`} /></PublicShell>;
   const status = loggedIn ? benefitStatusFor(item.id) : undefined;
   const claim = () => accountAction(() => claimBenefit(item.id));
   const use = () => accountAction(() => useBenefit(item.id));
-  return <PublicShell showNavigation={false}><PageHeader title="权益详情" backTo={`/benefits${query}`} /><div className="space-y-6 px-4 py-5"><SourceLine source={item.source} /><div><div className="flex items-start justify-between gap-3"><h1 className="text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1>{status ? <StatusTag tone={benefitTone(status)}>{benefitLabel[status]}</StatusTag> : <StatusTag tone="neutral">登录查看资格</StatusTag>}</div><p className="mt-3 text-sm leading-6 text-text-secondary">{item.summary}</p></div><Card><h2 className="font-semibold text-text-primary">资格与来源</h2><p className="mt-2 text-sm leading-6 text-text-primary">{loggedIn ? item.reason : "登录后由长期账号状态与共享赛事身份判断当前资格。"}</p>{item.expiresAt && <p className="mt-3 text-xs text-text-secondary">有效期至 {item.expiresAt}</p>}</Card>{!loggedIn && <Button className="w-full" onClick={() => accountAction(() => undefined)}>登录后查看并领取</Button>}{status === "eligible" && (item.externalUrl ? <div className="space-y-3"><Card className="border border-info bg-info-bg"><p className="text-sm leading-5 text-info-text">{item.claimHint ?? "请在 H5 页面输入手机号领取。"}</p></Card><label className="block"><span className="text-sm font-medium text-text-primary">手机号</span><input type="tel" value={phone} onChange={event => setPhone(event.target.value)} placeholder="请输入领取手机号" className="mt-1 w-full rounded-control border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" /></label><a href={item.externalUrl} target="_blank" rel="noreferrer" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去 H5 领取页</a><SecondaryButton className="w-full" onClick={claim}>我已领取，标记状态</SecondaryButton></div> : <Button className="w-full" onClick={claim}>领取权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}</div></PublicShell>;
+  const maskedPhone = profile.phone ? `${profile.phone.slice(0, 3)} **** ${profile.phone.slice(7)}` : "未绑定手机号";
+  return <PublicShell showNavigation={false}><PageHeader title="权益详情" backTo={`/benefits${query}`} /><div className="space-y-6 px-4 py-5"><SourceLine source={item.source} /><div><div className="flex items-start justify-between gap-3"><h1 className="text-2xl font-semibold leading-8 text-text-primary">{item.title}</h1>{status ? <StatusTag tone={benefitTone(status)}>{benefitLabel[status]}</StatusTag> : <StatusTag tone="neutral">登录查看资格</StatusTag>}</div><p className="mt-3 text-sm leading-6 text-text-secondary">{item.summary}</p></div><Card><h2 className="font-semibold text-text-primary">资格与来源</h2><p className="mt-2 text-sm leading-6 text-text-primary">{loggedIn ? item.reason : "登录后由长期账号状态与共享赛事身份判断当前资格。"}</p>{item.expiresAt && <p className="mt-3 text-xs text-text-secondary">有效期至 {item.expiresAt}</p>}</Card>{!loggedIn && <Button className="w-full" onClick={() => accountAction(() => undefined)}>登录后查看并领取</Button>}{status === "eligible" && (item.externalUrl ? (
+        <div className="space-y-4">
+          <Card className="border border-info bg-info-bg">
+            <p className="text-sm leading-5 text-info-text">{item.claimHint ?? "请在 H5 页面输入手机号领取。"}</p>
+          </Card>
+          {item.bindPhone ? (
+            <Card className="flex items-center gap-3 bg-surface">
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary-container text-text-brand">
+                <Phone size={18} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-text-primary">{maskedPhone}</p>
+                <p className="text-xs text-text-tertiary">后台已绑定手机号，领取时无需重复输入</p>
+              </div>
+            </Card>
+          ) : (
+            <label className="block">
+              <span className="text-sm font-medium text-text-primary">手机号</span>
+              <input type="tel" value={phone} onChange={event => setPhone(event.target.value)} placeholder="请输入领取手机号" className="mt-1 w-full rounded-control border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" />
+            </label>
+          )}
+          {!item.bindPhone && <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">去 H5 领取页</a>}
+          <SecondaryButton className="w-full" onClick={claim}>我已领取，标记状态</SecondaryButton>
+          {(item.couponValidityDays || item.dailyClaimLimit) && (
+            <Card className="border border-border-subtle">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-text-tertiary" aria-hidden="true" />
+                <span className="text-sm font-semibold text-text-primary">领取详情</span>
+              </div>
+              <ul className="mt-3 space-y-2 text-sm text-text-secondary">
+                {item.couponValidityDays && <li>券有效期：领取后 {item.couponValidityDays} 天内有效</li>}
+                {item.dailyClaimLimit && <li>领取限制：同一手机号每天限领 {item.dailyClaimLimit} 次</li>}
+                {item.bindPhone && <li>发放方式：后台自动绑定已验证手机号，无需重复输入</li>}
+              </ul>
+            </Card>
+          )}
+        </div>
+      ) : <Button className="w-full" onClick={claim}>领取权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}</div></PublicShell>;
 }
 
 export function BenefitsWalletPage() {
