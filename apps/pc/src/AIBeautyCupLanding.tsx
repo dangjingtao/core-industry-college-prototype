@@ -12,7 +12,7 @@ export function AIBeautyCupLanding() {
               <Sparkles size={19} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#38242F] sm:text-base">湾区 AI 美妆新零售核心杯</p>
+              <p className="truncate text-sm font-semibold text-[#38242F] sm:text-base">粤港澳大湾区AI美妆核心杯</p>
               <p className="mt-0.5 truncate text-xs font-medium tracking-[0.08em] text-[#A54A78]">AI BEAUTY · NEW RETAIL</p>
             </div>
           </Link>
@@ -42,7 +42,7 @@ export function AIBeautyCupLanding() {
         <section className="border-t border-[#EBDCE5] bg-[#431731] text-white">
           <div className="mx-auto flex max-w-[1480px] flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
             <div>
-              <p className="text-sm font-semibold">湾区 AI 美妆新零售核心杯</p>
+              <p className="text-sm font-semibold">粤港澳大湾区AI美妆核心杯</p>
               <p className="mt-1 text-xs text-white/60">AI 美妆 · 新零售实战 · 学生成长</p>
             </div>
             <Link to="/" className="inline-flex min-h-10 items-center gap-2 self-start rounded-xl bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15 sm:self-auto">
