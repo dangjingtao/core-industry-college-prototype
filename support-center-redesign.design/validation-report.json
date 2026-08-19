@@ -1,0 +1,102 @@
+{
+  "success": true,
+  "outcome": "passed",
+  "repairable": true,
+  "terminalViolations": [],
+  "terminalBlockingSummary": null,
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.06.8",
+    "version_source": "skill-release-manifest.json",
+    "runtime_skill_dir": null,
+    "recorded_at": null,
+    "expected_version": "2026.08.06.19.15.08",
+    "status": "mismatch",
+    "read_status": "ok"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 0,
+  "softWarningCount": 4,
+  "renderBlockingErrors": [],
+  "errorSignatures": [],
+  "softWarnings": [
+    "[mobile-navigation-consistency] sharedProjectShellContract.mobileNavigation declares home|competitions|opportunities|me, but only 1 page(s) expose a 3+ item data-nav-key nav cluster. Detail/reward/modal pages may omit it only when planned explicitly.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--text-secondary). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] support-chat.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] support-home.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "repairPlanHints": [],
+  "repairActionTable": [],
+  "errorCount": 0,
+  "warningCount": 4,
+  "errors": [],
+  "warnings": [
+    "[mobile-navigation-consistency] sharedProjectShellContract.mobileNavigation declares home|competitions|opportunities|me, but only 1 page(s) expose a 3+ item data-nav-key nav cluster. Detail/reward/modal pages may omit it only when planned explicitly.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--text-secondary). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] support-chat.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states.",
+    "[html-quality] support-home.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "validationRunDisciplineStatus": {
+    "declared": true,
+    "restoreMode": false,
+    "maxFullValidationRuns": 2,
+    "validationHistoryCount": 0,
+    "repairLedgerCount": 0,
+    "softWarningsTriggerRepair": false,
+    "terminalState": null,
+    "nextAction": null,
+    "violations": [],
+    "success": true
+  },
+  "terminalState": null,
+  "nextCheck": {
+    "type": "finish-readiness",
+    "command": "node '/Users/hin/.trae-cn/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs' '/Users/hin/Library/Application Support/TRAE SOLO CN/ModularData/ai-agent/work-mode-projects/6a82c274442de89d75418ef0/support-center-redesign.design' --check=all",
+    "fullValidationAllowed": false,
+    "reason": "workspace validation passed; run complete finish readiness before final delivery"
+  },
+  "repairBatch": [],
+  "repairContextPacket": {
+    "schema_version": "1.0",
+    "purpose": "small-context repair packet; read this before full validation-report.json",
+    "success": true,
+    "terminalState": null,
+    "skillProvenance": {
+      "name": "solo-design",
+      "version": "2026.07.06.8",
+      "version_source": "skill-release-manifest.json",
+      "runtime_skill_dir": null,
+      "recorded_at": null,
+      "expected_version": "2026.08.06.19.15.08",
+      "status": "mismatch",
+      "read_status": "ok"
+    },
+    "renderBlockingErrorCount": 0,
+    "softWarningCount": 4,
+    "renderBlockingErrors": [],
+    "repairActionTable": [],
+    "nextCheck": {
+      "type": "finish-readiness",
+      "command": "node '/Users/hin/.trae-cn/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs' '/Users/hin/Library/Application Support/TRAE SOLO CN/ModularData/ai-agent/work-mode-projects/6a82c274442de89d75418ef0/support-center-redesign.design' --check=all",
+      "fullValidationAllowed": false,
+      "reason": "workspace validation passed; run complete finish readiness before final delivery"
+    },
+    "forbidden": [
+      "do not read validator source",
+      "do not rerun full validation when nextCheck.fullValidationAllowed=false",
+      "do not start preview/browser unless user explicitly asks",
+      "do not hand-edit repair ledger fields"
+    ]
+  },
+  "projectFileHashes": {
+    ".design": "7b20f5cc55332e1ce6e2fe0aefb94a0e978cb7157fb87db25263fe10c61a45a0",
+    "colors_and_type.css": "cf91947b25a353fb88eba48c5d46f5a7a4ed2d8ae20ecf71a9a3a446a8ee045a",
+    "runtime-orchestration-summary.json": "261112b0eb923f9402312d2caa0c9d30e476331e0fee0a59323c8a2a50a90b31",
+    "pages/support-chat.html": "a0752cd78420f5143d5b187836b88a163904b14ba76173a33960c168b9db2e7a",
+    "pages/support-home.html": "ebebc28976819f72d34667be78244f24de7100d8a19e965478e45d5af3f0a07b"
+  },
+  "designDir": "/Users/hin/Library/Application Support/TRAE SOLO CN/ModularData/ai-agent/work-mode-projects/6a82c274442de89d75418ef0/support-center-redesign.design",
+  "expectedPages": 2,
+  "requireInteractions": null,
+  "checkedAt": "2026-08-19T03:52:42.667Z"
+}

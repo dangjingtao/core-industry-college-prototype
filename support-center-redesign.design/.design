@@ -1,0 +1,55 @@
+{
+  "data": [
+    {
+      "id": "page-support-home",
+      "title": "帮助中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1724035200000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 964,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-8182404c",
+          "measuredAt": 1787111596115
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/support-home.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-support-chat",
+      "title": "智能客服",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1724035200001,
+      "canvasData": {
+        "x": 169,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 900,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-a4971318",
+          "measuredAt": 1787111596115
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/support-chat.html",
+        "interactions": []
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "mobile",
+    "projectName": "客服中心优化方案"
+  }
+}

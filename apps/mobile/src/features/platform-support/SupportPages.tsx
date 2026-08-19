@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
@@ -696,9 +696,86 @@ export function AlumniListPage() {
   );
 }
 
+const supportFaqs = [
+  { q: "报名后为什么还不能进入赛事工作区？", a: "报名后需要学校审核，审核通过即可获得赛事身份并进入工作区。" },
+  { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信成果」→「我的证书」和「成绩查询」中。" },
+  { q: "投递使用的是哪一份简历？", a: "投递机会时会优先使用「长期简历」中的可信经历。" },
+  { q: "权益即将到期怎么办？", a: "可在「我的卡券」中查看有效期，或联系企业微信福利官咨询。" },
+];
+
 export function SupportHomePage() {
-  const questions = ["报名后为什么还不能进入赛事工作区？", "比赛结束后证书和成绩在哪里？", "投递使用的是哪一份简历？"];
-  return <PublicShell><PageHeader title="帮助与客服" subtitle="先自助定位，再进入客服会话" backTo="/home" /><div className="space-y-6 px-4 py-5"><Section title="常见问题"><div className="space-y-2">{questions.map(item => <Card key={item}><p className="text-sm font-medium text-text-primary">{item}</p></Card>)}</div></Section><Card><h2 className="text-base font-semibold text-text-primary">仍需要帮助</h2><p className="mt-2 text-sm leading-5 text-text-secondary">客服会话保留 AI 与人工客服边界。需要人工时，最终渠道明确为企业微信福利官；正式联系人和二维码由运营配置。</p><div className="mt-4 grid grid-cols-2 gap-3"><Link to="/support/chat" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入客服会话</Link><Link to="/me/feedback" className="block min-h-touch rounded-control border border-border bg-surface px-4 py-3 text-center text-sm font-medium text-text-primary">提交反馈</Link></div></Card></div></PublicShell>;
+  const [query, setQuery] = useState("");
+  const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set([0]));
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return supportFaqs;
+    return supportFaqs.filter(item => item.q.includes(query) || item.a.includes(query));
+  }, [query]);
+
+  const toggleIndex = (index: number) => {
+    setOpenIndexes(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setOpenIndexes(new Set(filtered.map((_, i) => i)));
+  };
+
+  return (
+    <PublicShell>
+      <PageHeader title="帮助中心" subtitle="先自助定位，再进入客服会话" backTo="/me" />
+      <div className="space-y-6 px-4 py-5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-tertiary" aria-hidden="true" />
+          <input
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="搜索问题，例如：报名后多久能进赛事工作区"
+            className="h-11 w-full rounded-control border border-border bg-surface pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary"
+          />
+        </div>
+
+        <Section title="常见问题" action={<button type="button" onClick={expandAll} className="text-xs font-medium text-text-brand">查看全部</button>}>
+          <div className="space-y-2">
+            {filtered.map((item, index) => {
+              const open = openIndexes.has(index);
+              return (
+                <Card key={item.q} className="overflow-hidden">
+                  <button type="button" onClick={() => toggleIndex(index)} className="flex w-full items-center justify-between gap-3 py-1 text-left">
+                    <span className="text-sm font-medium text-text-primary">{item.q}</span>
+                    <ChevronDown size={18} className={`shrink-0 text-text-tertiary transition-transform duration-200 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                  </button>
+                  {open && (
+                    <p className="mt-2 border-t border-border-subtle pt-2 text-sm leading-6 text-text-secondary">{item.a}</p>
+                  )}
+                </Card>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="py-6 text-center text-sm text-text-secondary">未找到相关问题，可尝试联系人工客服。</p>
+            )}
+          </div>
+        </Section>
+
+        <Card>
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand">
+              <Headphones size={20} aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-semibold text-text-primary">仍需要帮助？</h2>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">工作日 9:00-18:00，企业微信福利官在线。</p>
+              <Link to="/support/chat" className="mt-3 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">联系人工客服</Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </PublicShell>
+  );
 }
 
 function MockQRCode({ size = 160, label }: { size?: number; label: string }) {
@@ -752,28 +829,35 @@ export function SupportChatPage() {
     { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信成果和投递相关的问题。" },
   ]);
   const [showHumanModal, setShowHumanModal] = useState(false);
-  const send = useCallback((text: string) => {
+  const [hasManualInput, setHasManualInput] = useState(false);
+  const send = useCallback((text: string, isManual = false) => {
     const trimmed = text.trim();
     if (!trimmed) return;
     const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", text: trimmed };
     const assistantMsg: ChatMessage = { id: `a-${Date.now() + 1}`, role: "assistant", text: replyForQuestion(trimmed) };
     setMessages(current => [...current, userMsg, assistantMsg]);
     setDraft("");
+    if (isManual) setHasManualInput(true);
   }, []);
   const openHumanModal = () => setShowHumanModal(true);
   return <PublicShell showNavigation={false}>
-    <PageHeader title="智能客服" backTo="/home" right={<button aria-label="人工客服" onClick={openHumanModal} className="flex size-9 items-center justify-center rounded-full bg-surface text-text-primary"><Headphones size={20} aria-hidden="true" /></button>} />
+    <PageHeader title="智能客服" backTo="/support" right={<button aria-label="人工客服" onClick={openHumanModal} className="flex size-9 items-center justify-center rounded-full bg-surface text-text-primary"><Headphones size={20} aria-hidden="true" /></button>} />
     <div className="flex h-[calc(100dvh-120px)] flex-col px-4 pb-4">
       <div className="flex-1 space-y-4 overflow-y-auto py-4">
         {messages.map(item => <div key={item.id} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${item.role === "user" ? "rounded-br-md bg-primary text-on-primary" : "rounded-bl-md bg-surface text-text-primary"}`}>{item.text}</div></div>)}
-        {messages.length === 1 && <div className="space-y-2"><p className="text-xs text-text-tertiary">热门问题，点击直接提问：</p><div className="flex flex-wrap gap-2">{hotQuestions.map(q => <button key={q} onClick={() => send(q)} className="rounded-full border border-border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition active:bg-surface-pressed">{q}</button>)}</div></div>}
+        <div className={`overflow-hidden transition-all duration-300 ease-out ${hasManualInput ? "max-h-0 -translate-x-full opacity-0" : "max-h-60 translate-x-0 opacity-100"}`}>
+          <div className="space-y-2 pb-1">
+            <p className="text-xs text-text-tertiary">热门问题，点击直接提问：</p>
+            <div className="flex flex-wrap gap-2">{hotQuestions.map(q => <button key={q} onClick={() => send(q)} className="rounded-full border border-border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition active:bg-surface-pressed">{q}</button>)}</div>
+          </div>
+        </div>
       </div>
       <div className="shrink-0 space-y-3 border-t border-border-subtle pt-3">
-        <div className="flex items-end gap-2"><input value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(draft); } }} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm outline-none focus:border-primary" placeholder="输入你的问题" /><button aria-label="发送" disabled={!draft.trim()} onClick={() => send(draft)} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition active:scale-95 disabled:opacity-40"><Send size={18} aria-hidden="true" /></button></div>
+        <div className="flex items-end gap-2"><input value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(draft, true); } }} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary" placeholder="输入你的问题" /><button aria-label="发送" disabled={!draft.trim()} onClick={() => send(draft, true)} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition active:scale-95 disabled:opacity-40"><Send size={18} aria-hidden="true" /></button></div>
         <div className="flex items-center justify-between gap-3"><button onClick={openHumanModal} className="text-xs font-medium text-text-brand">请求人工客服</button><Link to="/support" className="text-xs text-text-tertiary">查看帮助中心</Link></div>
       </div>
     </div>
-    {showHumanModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={event => { if (event.target === event.currentTarget) setShowHumanModal(false); }}><div className="w-full max-w-[320px] rounded-container bg-surface p-5 text-center shadow-floating"><div className="flex items-center justify-between"><h2 className="text-base font-semibold text-text-primary">人工客服</h2><button aria-label="关闭" onClick={() => setShowHumanModal(false)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button></div><div className="mt-4 flex justify-center"><MockQRCode label="企业微信客服二维码" /></div><p className="mt-4 text-sm font-medium text-text-primary">扫码添加企业微信福利官</p><p className="mt-2 text-xs leading-5 text-text-secondary">正式二维码由运营配置；当前为原型占位，仅验证「获取二维码」的交互出口。</p><SecondaryButton className="mt-4 w-full" onClick={() => setShowHumanModal(false)}>知道了</SecondaryButton></div></div>}
+    {showHumanModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={event => { if (event.target === event.currentTarget) setShowHumanModal(false); }}><div className="w-full max-w-[320px] rounded-container bg-surface p-5 text-center shadow-floating"><div className="flex items-center justify-between"><h2 className="text-base font-semibold text-text-primary">人工客服</h2><button aria-label="关闭" onClick={() => setShowHumanModal(false)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button></div><div className="mt-4 flex justify-center"><MockQRCode label="企业微信客服二维码" /></div><p className="mt-4 text-sm font-medium text-text-primary">扫码添加企业微信福利官</p><p className="mt-2 text-xs leading-5 text-text-secondary">工作日 9:00-18:00 在线；正式二维码由运营配置。</p><SecondaryButton className="mt-4 w-full" onClick={() => setShowHumanModal(false)}>知道了</SecondaryButton></div></div>}
   </PublicShell>;
 }
 

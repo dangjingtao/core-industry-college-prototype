@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能客服</title>
+    <style id="theme-vars">
+:root {
+  /* Brand primary: 柔和紫蓝 */
+  --brand-50: #f5f3ff;
+  --brand-100: #ede9fe;
+  --brand-200: #ddd6fe;
+  --brand-300: #c4b5fd;
+  --brand-400: #a78bfa;
+  --brand-500: #8b5cf6;
+  --brand-600: #7c3aed;
+  --brand-700: #6d28d9;
+
+  /* Neutral */
+  --neutral-0: #ffffff;
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+
+  /* Semantic aliases */
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-900);
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-900);
+  --primary: var(--brand-600);
+  --primary-foreground: var(--neutral-0);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-500);
+  --border: var(--neutral-200);
+  --input: var(--neutral-200);
+  --ring: var(--brand-500);
+
+  /* Additional semantic tokens used in page */
+  --surface: var(--neutral-0);
+  --surface-subtle: var(--neutral-50);
+  --surface-pressed: var(--neutral-100);
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-tertiary: var(--neutral-500);
+  --text-brand: var(--brand-700);
+  --primary-container: var(--brand-50);
+  --danger: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+
+  /* Shadow */
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 1px rgba(15, 23, 42, 0.03);
+  --shadow-2: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+html {
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+  }
+  @layer base {
+    body { background: var(--background); color: var(--foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--background); }
+      .text-background { color: var(--background); }
+      .border-background { border-color: var(--background); }
+      .ring-background { --tw-ring-color: var(--background); }
+      .bg-foreground { background-color: var(--foreground); }
+      .text-foreground { color: var(--foreground); }
+      .border-foreground { border-color: var(--foreground); }
+      .ring-foreground { --tw-ring-color: var(--foreground); }
+      .bg-card { background-color: var(--card); }
+      .text-card { color: var(--card); }
+      .border-card { border-color: var(--card); }
+      .ring-card { --tw-ring-color: var(--card); }
+      .bg-card-foreground { background-color: var(--card-foreground); }
+      .text-card-foreground { color: var(--card-foreground); }
+      .border-card-foreground { border-color: var(--card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--card-foreground); }
+      .bg-popover { background-color: var(--popover); }
+      .text-popover { color: var(--popover); }
+      .border-popover { border-color: var(--popover); }
+      .ring-popover { --tw-ring-color: var(--popover); }
+      .bg-popover-foreground { background-color: var(--popover-foreground); }
+      .text-popover-foreground { color: var(--popover-foreground); }
+      .border-popover-foreground { border-color: var(--popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--popover-foreground); }
+      .bg-primary { background-color: var(--primary); }
+      .text-primary { color: var(--primary); }
+      .border-primary { border-color: var(--primary); }
+      .ring-primary { --tw-ring-color: var(--primary); }
+      .bg-primary-foreground { background-color: var(--primary-foreground); }
+      .text-primary-foreground { color: var(--primary-foreground); }
+      .border-primary-foreground { border-color: var(--primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--primary-foreground); }
+      .bg-muted { background-color: var(--muted); }
+      .text-muted { color: var(--muted); }
+      .border-muted { border-color: var(--muted); }
+      .ring-muted { --tw-ring-color: var(--muted); }
+      .bg-muted-foreground { background-color: var(--muted-foreground); }
+      .text-muted-foreground { color: var(--muted-foreground); }
+      .border-muted-foreground { border-color: var(--muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--muted-foreground); }
+      .bg-border { background-color: var(--border); }
+      .text-border { color: var(--border); }
+      .border-border { border-color: var(--border); }
+      .ring-border { --tw-ring-color: var(--border); }
+      .bg-input { background-color: var(--input); }
+      .text-input { color: var(--input); }
+      .border-input { border-color: var(--input); }
+      .ring-input { --tw-ring-color: var(--input); }
+      .bg-ring { background-color: var(--ring); }
+      .text-ring { color: var(--ring); }
+      .border-ring { border-color: var(--ring); }
+      .ring-ring { --tw-ring-color: var(--ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="h-dvh flex flex-col overflow-hidden bg-[var(--background)] text-[var(--foreground)] antialiased">
+  <main class="flex flex-col h-full">
+    <!-- Header -->
+    <header
+      class="sticky top-0 z-20 flex items-center justify-between px-4 h-12 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur-sm"
+      style="padding-top: env(safe-area-inset-top);"
+    >
+      <a
+        href="support-home.html"
+        class="flex items-center justify-center w-11 h-11 -ml-2 rounded-[var(--radius-md)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--muted)] active:bg-[var(--surface-pressed)]"
+        aria-label="返回"
+      >
+        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+      </a>
+      <h1 class="absolute left-1/2 -translate-x-1/2 text-base font-semibold text-[var(--text-primary)]">智能客服</h1>
+      <button
+        type="button"
+        class="flex items-center justify-center w-11 h-11 -mr-2 rounded-[var(--radius-md)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--muted)] active:bg-[var(--surface-pressed)]"
+        aria-label="人工客服"
+      >
+        <i data-lucide="headphones" class="w-5 h-5"></i>
+      </button>
+    </header>
+
+    <!-- Chat messages -->
+    <section
+      id="chat-messages"
+      class="flex-1 overflow-y-auto px-4 py-5 space-y-5 scroll-smooth"
+    >
+      <!-- Assistant welcome -->
+      <div class="flex items-start gap-3">
+        <div
+          class="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-[var(--primary-container)] text-[var(--text-brand)]"
+        >
+          <i data-lucide="bot" class="w-5 h-5"></i>
+        </div>
+        <div
+          class="max-w-[80%] px-4 py-3 rounded-2xl rounded-tl-md bg-[var(--card)] text-[var(--text-primary)] leading-[1.6] shadow-sm"
+          style="box-shadow: var(--shadow-1);"
+        >
+          <p>你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信成果和投递相关的问题。</p>
+        </div>
+      </div>
+
+      <!-- User message -->
+      <div class="flex items-start justify-end gap-3">
+        <div
+          class="max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-md bg-[var(--primary)] text-[var(--primary-foreground)] leading-[1.6]"
+        >
+          <p>报名后多久能进入赛事工作区？</p>
+        </div>
+      </div>
+
+      <!-- Assistant reply -->
+      <div class="flex items-start gap-3">
+        <div
+          class="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-[var(--primary-container)] text-[var(--text-brand)]"
+        >
+          <i data-lucide="bot" class="w-5 h-5"></i>
+        </div>
+        <div
+          class="max-w-[80%] px-4 py-3 rounded-2xl rounded-tl-md bg-[var(--card)] text-[var(--text-primary)] leading-[1.6] shadow-sm"
+          style="box-shadow: var(--shadow-1);"
+        >
+          <p>报名流程：进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hot questions -->
+    <section
+      id="hot-questions"
+      class="flex-none px-4 pt-3 pb-4 bg-[var(--background)]"
+    >
+      <p class="mb-3 text-sm font-medium text-[var(--text-secondary)]">热门问题</p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex items-center min-h-[44px] px-3 py-2 text-sm leading-snug rounded-full bg-[var(--muted)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--neutral-200)] active:bg-[var(--surface-pressed)] active:scale-95"
+        >
+          如何报名三创赛？
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center min-h-[44px] px-3 py-2 text-sm leading-snug rounded-full bg-[var(--muted)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--neutral-200)] active:bg-[var(--surface-pressed)] active:scale-95"
+        >
+          报名后多久能进入赛事工作区？
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center min-h-[44px] px-3 py-2 text-sm leading-snug rounded-full bg-[var(--muted)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--neutral-200)] active:bg-[var(--surface-pressed)] active:scale-95"
+        >
+          证书和成绩在哪里查看？
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center min-h-[44px] px-3 py-2 text-sm leading-snug rounded-full bg-[var(--muted)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--neutral-200)] active:bg-[var(--surface-pressed)] active:scale-95"
+        >
+          怎么修改已提交的简历？
+        </button>
+      </div>
+    </section>
+
+    <!-- Chat input -->
+    <section
+      id="chat-input"
+      class="flex-none px-4 pt-3 pb-4 border-t border-[var(--border)] bg-[var(--card)]"
+      style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));"
+    >
+      <form class="flex items-end gap-2" onsubmit="event.preventDefault();">
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            class="w-full min-h-[44px] pl-4 pr-4 py-2.5 rounded-full bg-[var(--background)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border border-[var(--input)] outline-none focus:border-[var(--ring)] focus:ring-2 focus:ring-[var(--ring)]/20 transition-all"
+            placeholder="输入你的问题…"
+            autocomplete="off"
+          />
+        </div>
+        <button
+          type="submit"
+          class="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] transition-transform hover:brightness-105 active:scale-95"
+          aria-label="发送"
+        >
+          <i data-lucide="send" class="w-5 h-5"></i>
+        </button>
+      </form>
+      <p class="mt-2 text-center text-xs text-[var(--text-tertiary)] leading-normal">
+        复杂问题可点击右上角联系人工客服
+      </p>
+    </section>
+  </main>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>
