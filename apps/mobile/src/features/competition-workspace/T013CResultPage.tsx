@@ -124,14 +124,15 @@ function S6CompanyResult({ competitionId, resultId }: { competitionId: string; r
   const runtime = getRuntime(competitionId);
   const run = runtime.taskRuns["s6-company-match"];
   const result = resultById(resultId);
-  const industry = run?.selections?.industry?.join("、") || "未填写";
+  const industries = run?.selections?.industry ?? [];
+  const industry = industries.join("、") || "未填写";
   const city = run?.selections?.city?.join("、") || "未填写";
-  const direction = run?.selections?.direction?.join("、") || "未填写";
-  const recommended = companies.filter(company => {
-    if (industry.includes("品牌零售")) return company.id === "northstar-beauty";
-    if (industry.includes("数据服务") || industry.includes("软件开发 SaaS") || industry.includes("互联网 / 科技")) return ["cloud-retail", "northstar-beauty"].includes(company.id);
-    return true;
-  }).slice(0, 3);
+  const preferredCompanyIds = new Set<string>();
+  if (industries.some(value => ["电子商务", "新媒体内容"].includes(value))) preferredCompanyIds.add("northstar-beauty");
+  if (industries.some(value => ["互联网/科技", "软件开发 SaaS", "AI/大数据", "电子商务"].includes(value))) preferredCompanyIds.add("cloud-retail");
+  if (industries.some(value => ["物联网", "物流/供应链"].includes(value))) preferredCompanyIds.add("green-chain");
+  const showAll = industries.includes("不限") || preferredCompanyIds.size === 0;
+  const recommended = companies.filter(company => showAll || preferredCompanyIds.has(company.id)).slice(0, 3);
 
   return <PublicShell showNavigation={false}><PageHeader title="公司推荐成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
@@ -144,7 +145,7 @@ function S6CompanyResult({ competitionId, resultId }: { competitionId: string; r
       <p className="mt-4 text-sm leading-6 text-text-secondary">{result?.summary ?? "结合本人偏好与赛事经历，整理可进一步了解的企业方向。"}</p>
     </Card>
 
-    <Section title="事实输入"><Card data-testid="s6-fact-input"><div className="space-y-3"><div><p className="text-xs text-text-secondary">本人填写 · 行业偏好</p><p className="mt-1 text-sm font-medium text-text-primary">{industry}</p></div><div><p className="text-xs text-text-secondary">本人填写 · 城市偏好</p><p className="mt-1 text-sm font-medium text-text-primary">{city}</p></div><div><p className="text-xs text-text-secondary">本人填写 · 希望发挥的能力</p><p className="mt-1 text-sm font-medium text-text-primary">{direction}</p></div></div></Card></Section>
+    <Section title="事实输入"><Card data-testid="s6-fact-input"><div className="space-y-3"><div><p className="text-xs text-text-secondary">本人填写 · 行业偏好</p><p className="mt-1 text-sm font-medium text-text-primary">{industry}</p></div><div><p className="text-xs text-text-secondary">本人填写 · 城市偏好</p><p className="mt-1 text-sm font-medium text-text-primary">{city}</p></div></div></Card></Section>
 
     <Section title="AI 推荐企业" subtitle="建议，不是人才评分"><div className="space-y-3">{recommended.map(company => <Link key={company.id} to={`/companies/${company.id}`} className="block" data-company-id={company.id}><Card interactive data-testid={`s6-company-${company.id}`}><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Building2 size={20} aria-hidden="true" /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><h2 className="font-semibold text-text-primary">{company.name}</h2><StatusTag tone="info">AI 建议</StatusTag></div><p className="mt-1 text-xs text-text-brand">{company.industry}</p><p className="mt-2 text-sm leading-5 text-text-secondary">{company.summary}</p><p className="mt-3 text-xs font-medium text-text-brand">查看现有企业详情 →</p></div></div></Card></Link>)}</div></Section>
 
