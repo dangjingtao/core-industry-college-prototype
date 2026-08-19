@@ -1,7 +1,7 @@
 # T013C 施工记录｜S5 / S6 与六阶段总收口
 
 **施工卡：** `T013C-S5S6与总收口.md`  
-**施工状态：** 首轮独立复审为 **REQUEST CHANGES**；3 个阻塞项已完成返修，待再次独立复审。**本记录不将 T013 总卡标记为 PASS**。  
+**施工状态：** 第三次独立复审已 **PASS（2026-08-19）**；T013C 子卡已完成收口。**本记录不替代 T013 总卡判定，总收口结论以 `docs/workbench/T013-review.md` 为准**。  
 **目标分支：** `dev`
 
 ## 1. 证据边界
@@ -103,6 +103,7 @@
 
 - 返修代码与 focused test 已提交到 `dev`。
 - 现有 `r-final-check.yml` 已包含 T013 / T013A / T013B / T013C browser suites，mobile `verify` 仍是硬门。
-- 当前 GitHub connector 对 push-triggered Actions 的 run / conclusion 读取能力有限，因此本记录不伪造“完整回归已绿”。最终 PASS 仍需以独立复审与可读取的机器证据为准。
+- 当前 GitHub connector 对 push-triggered Actions 的 run / conclusion 读取能力有限，因此本记录不伪造“完整回归已绿”。
+- **T013C 已由第三次独立复审判定 PASS（2026-08-19）**；详细复审证据与 T013 总收口边界见 `docs/workbench/T013-review.md`。
 
-施工线程只记录事实，不提前判定 T013 总卡 PASS。
+施工记录只同步已确认事实；T013 总卡状态以独立总复审结论为准。
