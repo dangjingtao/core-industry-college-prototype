@@ -1,7 +1,7 @@
 # PC09｜三创赛运营工作台：视觉独立 + 营销实绩聚合
 
 > 类型：施工卡 / 垂直赛事运营  
-> 状态：已施工（待复审）  
+> 状态：PASS（2026-08-19 独立终审）  
 > 优先级：P0  
 > 分支：`dev`  
 > 前置：PC02；建议与 PC08 数据骨架对齐后施工  
@@ -284,3 +284,16 @@ isSanChuang === true
 - 不把聚合值做成无法追溯来源的“魔法数字”；
 - 不为了视觉独立新建第二套设计系统；
 - 不要求首版真实接通所有第三方平台。
+
+---
+
+## 12. 独立终审记录
+
+- 终审结论：**PASS**；
+- 终审日期：2026-08-19；
+- P1 收口提交：`1555316dba32a3b1996fb97d389ded6f4c587438`；
+- 收口确认：`SanChuangProfile` 持有 `defaultPerformancePeriodId`，`PerformancePeriod` 按 `competitionId` 归属；Overview / Performance 不再硬编码第十六届默认周期；
+- `SanChuangPerformance` 按 `competitionId` remount，届次切换时 `teamId / source / period / evidence tab / export message` 不继承上一届状态；
+- batch 周期匹配改为通用周期包含关系，不再依赖 `2026-08` 特殊判断；
+- focused assertion 验证当前 profile 默认周期与当前 Competition scoped periods；未为测试伪造第二届赛事；
+- GitHub status connector 在终审时未返回 CI checks，因此本结论仅表示需求边界、实现与 focused assertions 独立终审通过，不冒充 CI 已绿。
