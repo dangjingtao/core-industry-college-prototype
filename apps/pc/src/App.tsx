@@ -15,6 +15,7 @@ import { PC04StateProvider } from "./admin/PC04State";
 import { PC05AdminOverview } from "./admin/PC05AdminOverview";
 import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
+import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
@@ -140,6 +141,7 @@ export function App() {
             <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
             <Route path="/admin/students/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/assets/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
+            <Route path="/admin/observability" element={<AdminRoute><PC06ObservabilityConsole /></AdminRoute>} />
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminNotFound /></AdminRoute>} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
