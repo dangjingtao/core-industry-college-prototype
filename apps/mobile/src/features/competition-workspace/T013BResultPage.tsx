@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Image as ImageIcon, ListChecks, Share2, Video } from "lucide-react";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
-import { resultById, resultDetailById, taskById } from "./data";
-import { WorkshopResultDetailPage } from "./WorkshopPages";
-import { useWorkshopRuntime } from "./runtime";
+import { resultById, resultDetailById, taskById, workspaceData } from "./data";
+import { T013AResultDetailPage } from "./T013AResultDetailPage";
+import { useWorkshopRuntime, type WorkshopResultDraft } from "./runtime";
 import { CompetitionContextLine, RequireCompetitionAccess } from "./shared";
 
 const specialResultIds = new Set(["result-s3-copy-kit", "result-s3-visual-kit", "result-s4-weekly-review"]);
@@ -18,49 +18,86 @@ const copyBlocks = [
 ];
 
 const mediaBlocks = [
-  { kind: "image" as const, label: "图片素材", title: "商品近景主图", body: "产品包装与真实质地为主体，保留品牌标识和商品颜色；示例占位，不代表真实 AI 生图结果。" },
-  { kind: "image" as const, label: "图片素材", title: "校园使用场景图", body: "宿舍 / 校园自然光场景，强调真实使用，不改变包装结构；示例占位。" },
-  { kind: "video" as const, label: "视频素材", title: "15 秒短视频分镜", body: "问题场景 → 产品近景 → 使用动作 → 利益点 → 行动提示；当前仅提供分镜和占位画面说明。" },
-  { kind: "video" as const, label: "视频素材", title: "直播间循环素材", body: "产品卖点、试用反馈和首购提示三段循环；当前不生成真实视频文件。" },
+  { kind: "image" as const, title: "商品近景主图", body: "产品包装与真实质地为主体，保留品牌标识和商品颜色；示例占位，不代表真实 AI 生图结果。" },
+  { kind: "image" as const, title: "校园使用场景图", body: "宿舍 / 校园自然光场景，强调真实使用，不改变包装结构；示例占位。" },
+  { kind: "video" as const, title: "15 秒短视频分镜", body: "问题场景 → 产品近景 → 使用动作 → 利益点 → 行动提示；当前仅提供分镜和占位画面说明。" },
+  { kind: "video" as const, title: "直播间循环素材", body: "产品卖点、试用反馈和首购提示三段循环；当前不生成真实视频文件。" },
 ];
 
-async function shareText(title: string, text: string) {
-  try {
-    if (navigator.share) {
-      await navigator.share({ title, text });
-      return "已打开系统分享";
-    }
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(`${title}\n${text}`);
-      return "分享内容已复制";
-    }
-  } catch {
-    return "已取消分享";
-  }
-  return "当前环境不支持系统分享";
+type ResultEditorProps = {
+  competitionId: string;
+  resultId: string;
+  accepted: boolean;
+  submitted: boolean;
+  isCaptain: boolean;
+  editing: boolean;
+  onEdit: () => void;
+  onSave: () => void;
+  onSaveAndSubmit: () => void;
+  onCancel: () => void;
+  onShare: () => void;
+  onSubmit: () => void;
+  onAccept: () => void;
+};
+
+function ResultStatus({ accepted, submitted }: { accepted: boolean; submitted: boolean }) {
+  return <StatusTag tone={accepted ? "success" : submitted ? "info" : "neutral"}>{accepted ? "队长已采纳" : submitted ? "已提交队长确认" : "待团队确认"}</StatusTag>;
 }
 
-function ResultActions({ competitionId, resultId, accepted, editing, onEdit, onSave, onCancel, onShare }: { competitionId: string; resultId: string; accepted: boolean; editing: boolean; onEdit: () => void; onSave: () => void; onCancel: () => void; onShare: () => void }) {
-  const { acceptResult } = useWorkshopRuntime();
-  return <div className="space-y-2">{editing ? <><Button className="w-full" onClick={onSave}>保存编辑并提交确认</Button><SecondaryButton className="w-full" onClick={onCancel}>取消编辑</SecondaryButton></> : <SecondaryButton className="w-full" onClick={onEdit}>编辑成果</SecondaryButton>}<SecondaryButton className="w-full" onClick={onShare}><Share2 size={16} aria-hidden="true" className="mr-2 inline-block" />分享成果</SecondaryButton>{!accepted && <Button className="w-full" onClick={() => acceptResult(competitionId, resultId)}>队长采纳并用于比赛</Button>}</div>;
+function PendingConfirmation({ isCaptain, submitted, accepted }: { isCaptain: boolean; submitted: boolean; accepted: boolean }) {
+  if (!isCaptain || !submitted || accepted) return null;
+  return <Card className="border border-info bg-info-bg" data-testid="result-confirmation-pending"><p className="font-medium text-info-text">队员已提交确认</p><p className="mt-2 text-sm leading-5 text-info-text">该成果已进入队长确认状态；队长采纳后 pending 状态会被清除。</p></Card>;
+}
+
+function ResultActions(props: ResultEditorProps) {
+  const { accepted, submitted, isCaptain, editing } = props;
+  return <div className="space-y-2">
+    {editing ? <>
+      <Button className="w-full" onClick={isCaptain ? props.onSave : props.onSaveAndSubmit}>{isCaptain ? "保存编辑" : "保存编辑并提交确认"}</Button>
+      <SecondaryButton className="w-full" onClick={props.onCancel}>取消编辑</SecondaryButton>
+    </> : <>
+      <div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={props.onEdit}>编辑成果</SecondaryButton><SecondaryButton onClick={props.onShare}><Share2 size={16} aria-hidden="true" className="mr-2 inline-block" />分享成果</SecondaryButton></div>
+      {!isCaptain && !accepted && <Button disabled={submitted} className="w-full" onClick={props.onSubmit}>{submitted ? "已提交队长确认" : "提交队长确认"}</Button>}
+      {isCaptain && !accepted && <Button className="w-full" onClick={props.onAccept}>队长采纳并用于比赛</Button>}
+    </>}
+  </div>;
+}
+
+function RolePreview({ rolePreview, setRolePreview }: { rolePreview: "default" | "member"; setRolePreview: (role: "default" | "member") => void }) {
+  return <details className="rounded-container border border-border-subtle bg-surface p-3 text-xs text-text-secondary"><summary className="cursor-pointer font-medium text-text-brand">成果角色原型</summary><div className="mt-2 flex gap-2"><button type="button" className="min-h-touch rounded-control bg-surface-subtle px-3" onClick={() => setRolePreview("member")}>模拟队员视角</button><button type="button" className="min-h-touch rounded-control bg-surface-subtle px-3" onClick={() => setRolePreview("default")}>恢复队长视角</button></div><p className="mt-2">当前：{rolePreview === "member" ? "队员" : "赛事团队默认角色"}</p></details>;
+}
+
+function useResultEditor(competitionId: string, resultId: string, defaultHighlights: string[]) {
+  const { getRuntime, updateResultDraft, submitResultForConfirmation, acceptResult } = useWorkshopRuntime();
+  const runtime = getRuntime(competitionId);
+  const result = resultById(resultId)!;
+  const stored = runtime.resultDrafts[resultId] ?? { summary: result.summary, highlights: defaultHighlights, nextSuggestion: result.nextSuggestion };
+  const [summary, setSummary] = useState(stored.summary);
+  const [highlights, setHighlights] = useState(stored.highlights.length === defaultHighlights.length ? stored.highlights : defaultHighlights);
+  const [editing, setEditing] = useState(false);
+  const [shared, setShared] = useState(false);
+  const [rolePreview, setRolePreview] = useState<"default" | "member">("default");
+  const accepted = runtime.acceptedResultIds.includes(resultId);
+  const submitted = runtime.resultConfirmationStatus[resultId] === "pending";
+  const isCaptain = rolePreview === "member" ? false : workspaceData[competitionId]?.team.role.includes("队长") ?? false;
+  const draft = (): WorkshopResultDraft => ({ summary, highlights, nextSuggestion: stored.nextSuggestion });
+  const save = () => { updateResultDraft(competitionId, resultId, draft()); setEditing(false); };
+  const saveAndSubmit = () => { updateResultDraft(competitionId, resultId, draft()); submitResultForConfirmation(competitionId, resultId); setEditing(false); };
+  const cancel = () => { setSummary(stored.summary); setHighlights(stored.highlights.length === defaultHighlights.length ? stored.highlights : defaultHighlights); setEditing(false); };
+  return { runtime, result, summary, setSummary, highlights, setHighlights, editing, setEditing, shared, setShared, rolePreview, setRolePreview, accepted, submitted, isCaptain, save, saveAndSubmit, cancel, submit: () => submitResultForConfirmation(competitionId, resultId), accept: () => acceptResult(competitionId, resultId) };
 }
 
 function S3CopyResult({ competitionId, resultId }: { competitionId: string; resultId: string }) {
-  const { getRuntime, updateResultDraft } = useWorkshopRuntime();
-  const runtime = getRuntime(competitionId);
-  const result = resultById(resultId)!;
-  const stored = runtime.resultDrafts[resultId] ?? { summary: result.summary, highlights: result.highlights, nextSuggestion: result.nextSuggestion };
-  const defaults = copyBlocks.map(item => item.body);
-  const [summary, setSummary] = useState(stored.summary);
-  const [bodies, setBodies] = useState<string[]>(stored.highlights.length === copyBlocks.length ? stored.highlights : defaults);
-  const [editing, setEditing] = useState(false);
-  const [shareNotice, setShareNotice] = useState("");
-  const accepted = runtime.acceptedResultIds.includes(resultId);
-  const save = () => { updateResultDraft(competitionId, resultId, { summary, highlights: bodies, nextSuggestion: stored.nextSuggestion }); setEditing(false); };
-  const cancel = () => { setSummary(stored.summary); setBodies(stored.highlights.length === copyBlocks.length ? stored.highlights : defaults); setEditing(false); };
-  const share = async () => setShareNotice(await shareText(result.title, `${summary}\n${bodies.join("\n")}`));
-
-  return <PublicShell showNavigation={false}><PageHeader title="文案成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S3 · 平台 / 内容运营</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{result.title}</h1></div><StatusTag tone={accepted ? "success" : "info"}>{accepted ? "队长已采纳" : "待团队确认"}</StatusTag></div>{editing ? <textarea aria-label="成果摘要" value={summary} onChange={event => setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{summary}</p>}</Card><Section title="内容素材卡" subtitle="标题、详情页、短视频、直播与客服话术都来自同一 S3 任务"><div className="space-y-3">{copyBlocks.map((block, index) => <Card key={block.label} data-testid={`s3-copy-block-${index}`}><StatusTag tone="neutral">{block.label}</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{block.title}</h2>{editing ? <textarea aria-label={block.label} value={bodies[index] ?? ""} onChange={event => setBodies(current => current.map((value, valueIndex) => valueIndex === index ? event.target.value : value))} rows={4} className="mt-3 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 text-text-primary" /> : <p className="mt-3 text-sm leading-6 text-text-secondary">{bodies[index]}</p>}</Card>)}</div></Section><Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">团队协作</p><p className="mt-2 text-sm leading-5 text-info-text">结果对全队可见；队员可编辑后提交确认，队长决定是否采纳并用于比赛。</p></Card>{shareNotice && <p className="text-center text-xs text-text-secondary">{shareNotice}</p>}<ResultActions competitionId={competitionId} resultId={resultId} accepted={accepted} editing={editing} onEdit={() => setEditing(true)} onSave={save} onCancel={cancel} onShare={share} /></div></RequireCompetitionAccess></PublicShell>;
+  const editor = useResultEditor(competitionId, resultId, copyBlocks.map(item => item.body));
+  return <PublicShell showNavigation={false}><PageHeader title="文案成果详情" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+    <CompetitionContextLine competitionId={competitionId} />
+    <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S3 · 平台 / 内容运营</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{editor.result.title}</h1></div><ResultStatus accepted={editor.accepted} submitted={editor.submitted} /></div>{editor.editing ? <textarea aria-label="成果摘要" value={editor.summary} onChange={event => editor.setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{editor.summary}</p>}</Card>
+    <PendingConfirmation isCaptain={editor.isCaptain} submitted={editor.submitted} accepted={editor.accepted} />
+    <Section title="内容素材卡"><div className="space-y-3">{copyBlocks.map((block, index) => <Card key={block.label} data-testid={`s3-copy-block-${index}`}><StatusTag tone="neutral">{block.label}</StatusTag><h2 className="mt-3 font-semibold text-text-primary">{block.title}</h2>{editor.editing ? <textarea aria-label={block.label} value={editor.highlights[index] ?? ""} onChange={event => editor.setHighlights(current => current.map((value, valueIndex) => valueIndex === index ? event.target.value : value))} rows={4} className="mt-3 w-full rounded-control border border-border bg-surface p-3 text-sm leading-6 text-text-primary" /> : <p className="mt-3 text-sm leading-6 text-text-secondary">{editor.highlights[index]}</p>}</Card>)}</div></Section>
+    {editor.shared && <p className="text-center text-xs text-text-secondary">分享内容已准备</p>}
+    <ResultActions competitionId={competitionId} resultId={resultId} accepted={editor.accepted} submitted={editor.submitted} isCaptain={editor.isCaptain} editing={editor.editing} onEdit={() => editor.setEditing(true)} onSave={editor.save} onSaveAndSubmit={editor.saveAndSubmit} onCancel={editor.cancel} onShare={() => editor.setShared(true)} onSubmit={editor.submit} onAccept={editor.accept} />
+    <RolePreview rolePreview={editor.rolePreview} setRolePreview={editor.setRolePreview} />
+  </div></RequireCompetitionAccess></PublicShell>;
 }
 
 function MediaPreview({ kind, title }: { kind: "image" | "video"; title: string }) {
@@ -68,48 +105,44 @@ function MediaPreview({ kind, title }: { kind: "image" | "video"; title: string 
 }
 
 function S3VisualResult({ competitionId, resultId }: { competitionId: string; resultId: string }) {
-  const { getRuntime, updateResultDraft } = useWorkshopRuntime();
-  const runtime = getRuntime(competitionId);
-  const result = resultById(resultId)!;
-  const stored = runtime.resultDrafts[resultId] ?? { summary: result.summary, highlights: result.highlights, nextSuggestion: result.nextSuggestion };
-  const defaults = mediaBlocks.map(item => item.body);
-  const [summary, setSummary] = useState(stored.summary);
-  const [bodies, setBodies] = useState<string[]>(stored.highlights.length === mediaBlocks.length ? stored.highlights : defaults);
-  const [editing, setEditing] = useState(false);
-  const [shareNotice, setShareNotice] = useState("");
-  const accepted = runtime.acceptedResultIds.includes(resultId);
-  const save = () => { updateResultDraft(competitionId, resultId, { summary, highlights: bodies, nextSuggestion: stored.nextSuggestion }); setEditing(false); };
-  const cancel = () => { setSummary(stored.summary); setBodies(stored.highlights.length === mediaBlocks.length ? stored.highlights : defaults); setEditing(false); };
-  const share = async () => setShareNotice(await shareText(result.title, `${summary}\n${bodies.join("\n")}`));
+  const editor = useResultEditor(competitionId, resultId, mediaBlocks.map(item => item.body));
   const images = mediaBlocks.map((item, index) => ({ ...item, index })).filter(item => item.kind === "image");
   const videos = mediaBlocks.map((item, index) => ({ ...item, index })).filter(item => item.kind === "video");
-
-  return <PublicShell showNavigation={false}><PageHeader title="图片 / 视频成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S3 · 图片 / 视频内容生成</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{result.title}</h1></div><StatusTag tone={accepted ? "success" : "info"}>{accepted ? "队长已采纳" : "待团队确认"}</StatusTag></div>{editing ? <textarea aria-label="成果摘要" value={summary} onChange={event => setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{summary}</p>}</Card><Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">原型示例成果</p><p className="mt-2 text-sm leading-5 text-info-text">以下图片 / 视频均为中保真占位和内容方案，没有调用真实生成服务，也不冒充实际生成文件。</p></Card><Section title="图片素材区域"><div className="space-y-3">{images.map(item => <Card key={item.title} data-testid={`s3-image-asset-${item.index}`}><MediaPreview kind="image" title={item.title} /><h2 className="mt-3 font-semibold text-text-primary">{item.title}</h2>{editing ? <textarea aria-label={item.title} value={bodies[item.index] ?? ""} onChange={event => setBodies(current => current.map((value, valueIndex) => valueIndex === item.index ? event.target.value : value))} rows={3} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-2 text-sm leading-5 text-text-secondary">{bodies[item.index]}</p>}</Card>)}</div></Section><Section title="视频素材区域"><div className="space-y-3">{videos.map(item => <Card key={item.title} data-testid={`s3-video-asset-${item.index}`}><MediaPreview kind="video" title={item.title} /><h2 className="mt-3 font-semibold text-text-primary">{item.title}</h2>{editing ? <textarea aria-label={item.title} value={bodies[item.index] ?? ""} onChange={event => setBodies(current => current.map((value, valueIndex) => valueIndex === item.index ? event.target.value : value))} rows={3} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-2 text-sm leading-5 text-text-secondary">{bodies[item.index]}</p>}</Card>)}</div></Section>{shareNotice && <p className="text-center text-xs text-text-secondary">{shareNotice}</p>}<ResultActions competitionId={competitionId} resultId={resultId} accepted={accepted} editing={editing} onEdit={() => setEditing(true)} onSave={save} onCancel={cancel} onShare={share} /></div></RequireCompetitionAccess></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="图片 / 视频成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+    <CompetitionContextLine competitionId={competitionId} />
+    <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S3 · 图片 / 视频内容生成</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">{editor.result.title}</h1></div><ResultStatus accepted={editor.accepted} submitted={editor.submitted} /></div>{editor.editing ? <textarea aria-label="成果摘要" value={editor.summary} onChange={event => editor.setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{editor.summary}</p>}</Card>
+    <PendingConfirmation isCaptain={editor.isCaptain} submitted={editor.submitted} accepted={editor.accepted} />
+    <Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">原型示例成果</p><p className="mt-2 text-sm leading-5 text-info-text">以下图片 / 视频均为中保真占位和内容方案，没有调用真实生成服务，也不冒充实际生成文件。</p></Card>
+    <Section title="图片素材区域"><div className="space-y-3">{images.map(item => <Card key={item.title} data-testid={`s3-image-asset-${item.index}`}><MediaPreview kind="image" title={item.title} /><h2 className="mt-3 font-semibold text-text-primary">{item.title}</h2>{editor.editing ? <textarea aria-label={item.title} value={editor.highlights[item.index] ?? ""} onChange={event => editor.setHighlights(current => current.map((value, valueIndex) => valueIndex === item.index ? event.target.value : value))} rows={3} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-2 text-sm leading-5 text-text-secondary">{editor.highlights[item.index]}</p>}</Card>)}</div></Section>
+    <Section title="视频素材区域"><div className="space-y-3">{videos.map(item => <Card key={item.title} data-testid={`s3-video-asset-${item.index}`}><MediaPreview kind="video" title={item.title} /><h2 className="mt-3 font-semibold text-text-primary">{item.title}</h2>{editor.editing ? <textarea aria-label={item.title} value={editor.highlights[item.index] ?? ""} onChange={event => editor.setHighlights(current => current.map((value, valueIndex) => valueIndex === item.index ? event.target.value : value))} rows={3} className="mt-2 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-2 text-sm leading-5 text-text-secondary">{editor.highlights[item.index]}</p>}</Card>)}</div></Section>
+    <ResultActions competitionId={competitionId} resultId={resultId} accepted={editor.accepted} submitted={editor.submitted} isCaptain={editor.isCaptain} editing={editor.editing} onEdit={() => editor.setEditing(true)} onSave={editor.save} onSaveAndSubmit={editor.saveAndSubmit} onCancel={editor.cancel} onShare={() => editor.setShared(true)} onSubmit={editor.submit} onAccept={editor.accept} />
+    <RolePreview rolePreview={editor.rolePreview} setRolePreview={editor.setRolePreview} />
+  </div></RequireCompetitionAccess></PublicShell>;
 }
 
 function S4Result({ competitionId, resultId }: { competitionId: string; resultId: string }) {
-  const { getRuntime, updateResultDraft } = useWorkshopRuntime();
-  const runtime = getRuntime(competitionId);
   const result = resultById(resultId)!;
+  const editor = useResultEditor(competitionId, resultId, result.highlights);
   const detail = resultDetailById(resultId);
-  const stored = runtime.resultDrafts[resultId] ?? { summary: result.summary, highlights: result.highlights, nextSuggestion: result.nextSuggestion };
-  const [summary, setSummary] = useState(stored.summary);
-  const [highlights, setHighlights] = useState(stored.highlights);
-  const [editing, setEditing] = useState(false);
-  const [shareNotice, setShareNotice] = useState("");
-  const accepted = runtime.acceptedResultIds.includes(resultId);
   const detailedAnalysis = useMemo(() => "本周曝光增长没有同步转化为成交，漏斗主要损耗集中在详情页到加购阶段。结合首购表现与复购样本，下一轮应先只调整一个关键变量，再观察一周趋势，避免同时扩大投放造成归因失真。", []);
-  const save = () => { updateResultDraft(competitionId, resultId, { summary, highlights, nextSuggestion: stored.nextSuggestion }); setEditing(false); };
-  const cancel = () => { setSummary(stored.summary); setHighlights(stored.highlights); setEditing(false); };
-  const share = async () => setShareNotice(await shareText(result.title, `${summary}\n${highlights.join("\n")}\n${detailedAnalysis}`));
-
-  return <PublicShell showNavigation={false}><PageHeader title="经营周报分析" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5"><CompetitionContextLine competitionId={competitionId} /><Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S4 · 数据复盘</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">经营周报分析小报告</h1></div><StatusTag tone={accepted ? "success" : "info"}>{accepted ? "队长已采纳" : "待团队确认"}</StatusTag></div>{editing ? <textarea aria-label="成果摘要" value={summary} onChange={event => setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{summary}</p>}</Card>{detail && <Card className="border border-info bg-info-bg" data-testid="s4-rating"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-2"><CheckCircle2 size={20} aria-hidden="true" className="text-info-text" /><p className="font-medium text-info-text">报告评级与多维评估</p></div><div className="text-right"><strong className="block text-2xl text-info-text">{detail.score}</strong><span className="text-xs text-info-text">/ 100 · {detail.rating}</span></div></div><div className="mt-4 grid grid-cols-3 gap-2">{detail.dimensions.map(item => <div key={item.label} className="rounded-control bg-surface px-2 py-3 text-center"><strong className="block text-lg text-text-primary">{item.score}</strong><span className="text-xs text-text-secondary">{item.label}</span></div>)}</div></Card>}<Section title="核心发现 / 关键结论"><Card>{editing ? <div className="space-y-2">{highlights.map((item, index) => <textarea key={index} aria-label={`关键结论 ${index + 1}`} value={item} onChange={event => setHighlights(current => current.map((value, valueIndex) => valueIndex === index ? event.target.value : value))} rows={2} className="w-full rounded-control border border-border bg-surface p-2 text-sm text-text-primary" />)}</div> : <ul className="space-y-2">{highlights.map(item => <li key={item} className="text-sm leading-5 text-text-primary">· {item}</li>)}</ul>}</Card></Section>{detail && <Section title="薄弱环节"><Card><div className="flex items-start gap-3"><AlertTriangle size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-warning-text" /><div><p className="text-sm font-medium text-text-primary">{detail.weakness}</p><ul className="mt-3 space-y-2">{detail.risks.map(item => <li key={item} className="text-sm text-warning-text">· {item}</li>)}</ul></div></div></Card></Section>}{detail && <Section title="优先行动清单"><Card><ul className="space-y-3">{detail.actions.map(item => <li key={item} className="flex items-start gap-2 text-sm leading-5 text-text-primary"><ListChecks size={15} aria-hidden="true" className="mt-0.5 shrink-0 text-success-text" />{item}</li>)}</ul></Card></Section>}<Section title="详细分析"><Card><p className="text-sm leading-6 text-text-secondary">{detailedAnalysis}</p></Card></Section>{shareNotice && <p className="text-center text-xs text-text-secondary">{shareNotice}</p>}<ResultActions competitionId={competitionId} resultId={resultId} accepted={accepted} editing={editing} onEdit={() => setEditing(true)} onSave={save} onCancel={cancel} onShare={share} /></div></RequireCompetitionAccess></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="经营周报分析" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+    <CompetitionContextLine competitionId={competitionId} />
+    <Card><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-text-brand">S4 · 数据复盘</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">经营周报分析小报告</h1></div><ResultStatus accepted={editor.accepted} submitted={editor.submitted} /></div>{editor.editing ? <textarea aria-label="成果摘要" value={editor.summary} onChange={event => editor.setSummary(event.target.value)} rows={3} className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary" /> : <p className="mt-4 text-sm leading-6 text-text-secondary">{editor.summary}</p>}</Card>
+    <PendingConfirmation isCaptain={editor.isCaptain} submitted={editor.submitted} accepted={editor.accepted} />
+    {detail && <Card className="border border-info bg-info-bg" data-testid="s4-rating"><div className="flex items-start justify-between gap-3"><div className="flex items-center gap-2"><CheckCircle2 size={20} aria-hidden="true" className="text-info-text" /><p className="font-medium text-info-text">报告评级与多维评估</p></div><div className="text-right"><strong className="block text-2xl text-info-text">{detail.score}</strong><span className="text-xs text-info-text">/ 100 · {detail.rating}</span></div></div><div className="mt-4 grid grid-cols-3 gap-2">{detail.dimensions.map(item => <div key={item.label} className="rounded-control bg-surface px-2 py-3 text-center"><strong className="block text-lg text-text-primary">{item.score}</strong><span className="text-xs text-text-secondary">{item.label}</span></div>)}</div></Card>}
+    <Section title="核心发现 / 关键结论"><Card>{editor.editing ? <div className="space-y-2">{editor.highlights.map((item, index) => <textarea key={index} aria-label={`关键结论 ${index + 1}`} value={item} onChange={event => editor.setHighlights(current => current.map((value, valueIndex) => valueIndex === index ? event.target.value : value))} rows={2} className="w-full rounded-control border border-border bg-surface p-2 text-sm text-text-primary" />)}</div> : <ul className="space-y-2">{editor.highlights.map(item => <li key={item} className="text-sm leading-5 text-text-primary">· {item}</li>)}</ul>}</Card></Section>
+    {detail && <Section title="薄弱环节"><Card><div className="flex items-start gap-3"><AlertTriangle size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-warning-text" /><div><p className="text-sm font-medium text-text-primary">{detail.weakness}</p><ul className="mt-3 space-y-2">{detail.risks.map(item => <li key={item} className="text-sm text-warning-text">· {item}</li>)}</ul></div></div></Card></Section>}
+    {detail && <Section title="优先行动清单"><Card><ul className="space-y-3">{detail.actions.map(item => <li key={item} className="flex items-start gap-2 text-sm leading-5 text-text-primary"><ListChecks size={15} aria-hidden="true" className="mt-0.5 shrink-0 text-success-text" />{item}</li>)}</ul></Card></Section>}
+    <Section title="详细分析"><Card><p className="text-sm leading-6 text-text-secondary">{detailedAnalysis}</p></Card></Section>
+    <ResultActions competitionId={competitionId} resultId={resultId} accepted={editor.accepted} submitted={editor.submitted} isCaptain={editor.isCaptain} editing={editor.editing} onEdit={() => editor.setEditing(true)} onSave={editor.save} onSaveAndSubmit={editor.saveAndSubmit} onCancel={editor.cancel} onShare={() => editor.setShared(true)} onSubmit={editor.submit} onAccept={editor.accept} />
+    <RolePreview rolePreview={editor.rolePreview} setRolePreview={editor.setRolePreview} />
+  </div></RequireCompetitionAccess></PublicShell>;
 }
 
 export function T013BResultDetailPage() {
   const { competitionId, resultId } = useParams();
   const { getRuntime } = useWorkshopRuntime();
-  if (!competitionId || !resultId || !specialResultIds.has(resultId)) return <WorkshopResultDetailPage />;
+  if (!competitionId || !resultId || !specialResultIds.has(resultId)) return <T013AResultDetailPage />;
   const result = resultById(resultId);
   const task = result ? taskById(result.taskId) : undefined;
   const completed = task ? getRuntime(competitionId).taskRuns[task.id]?.status === "completed" : false;
