@@ -134,6 +134,12 @@ function SpecializedReviewPage() {
   const ready = hasSourceContext && enoughCompute;
   const coreFacts = questions.flatMap(question => sourceRun?.selections?.[question.id] ?? []).slice(0, 5);
   const isVisual = taskId === "s3-visual-kit";
+  const sourceSkillLabel = taskId === "s4-weekly-review" ? "S4" : "S3";
+  const missingContextMessage = taskId === "s4-weekly-review"
+    ? "经营周报生成确认必须先完成本轮 S4 指标与周报重点问答。"
+    : isVisual
+      ? "图片 / 视频生成确认必须沿用同一轮 S3 平台与运营目标。"
+      : "平台运营文案生成确认必须先完成本轮 S3 平台与运营目标问答。";
   const confirm = () => {
     if (!ready || !startTask(competitionId, taskId)) return;
     navigate(`${taskBasePath(competitionId, taskId)}/progress`);
@@ -142,7 +148,7 @@ function SpecializedReviewPage() {
   return <PublicShell showNavigation={false}><PageHeader title={isVisual ? "图片 / 视频生成确认" : "生成确认"} backTo={isVisual ? `${taskBasePath(competitionId, "s3-copy-kit")}/answer` : `${taskBasePath(competitionId, taskId)}/answer`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
     <Card><p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · {outputName(taskId, sourceRun?.selections)}</p><h1 className="mt-2 text-lg font-semibold text-text-primary">{isVisual ? "图片 / 视频内容生成" : task.title}</h1><p className="mt-3 text-sm leading-6 text-text-secondary">{isVisual ? "直接复用同一轮 S3 的平台、运营目标、补充说明与上传素材，不新增第二套问卷。" : "确认后会按当前问答与项目上下文创建同一 Task Runtime 任务，并按上限冻结算力。"}</p></Card>
-    {!hasSourceContext && <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">请先完成 S3 动态答题</p><p className="mt-2 text-sm text-warning-text">图片 / 视频生成确认必须沿用同一轮 S3 平台与运营目标。</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate(`${taskBasePath(competitionId, "s3-copy-kit")}/answer`)}>先完成 S3 动态答题</SecondaryButton></Card>}
+    {!hasSourceContext && <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">请先完成 {sourceSkillLabel} 动态答题</p><p className="mt-2 text-sm text-warning-text">{missingContextMessage}</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate(`${taskBasePath(competitionId, sourceTaskId)}/answer`)}>先完成 {sourceSkillLabel} 动态答题</SecondaryButton></Card>}
     <Section title="问答摘要"><div className="space-y-2">{questions.map(question => <Card key={question.id}><p className="text-xs text-text-secondary">{question.label}</p><p className="mt-1 text-sm font-medium leading-5 text-text-primary">{sourceRun?.selections?.[question.id]?.join("、") || "未回答"}</p></Card>)}</div></Section>
     <Section title="AI 提取核心信息"><Card data-testid="t013b-core-facts"><div className="flex flex-wrap gap-2">{coreFacts.map(value => <StatusTag key={value} tone="neutral">{value}</StatusTag>)}</div><div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3 text-sm"><span className="text-text-secondary">作答完善度</span><strong className="text-text-primary">{completeness}%</strong></div>{sourceRun?.note && <div className="mt-3 border-t border-border-subtle pt-3"><p className="text-xs text-text-secondary">主观补充</p><p className="mt-1 text-sm leading-5 text-text-primary">{sourceRun.note}</p></div>}{sourceRun?.uploadName && <p className="mt-3 text-xs text-text-brand">已附材料：{sourceRun.uploadName}</p>}</Card></Section>
     {isVisual && <Card className="border border-info bg-info-bg" data-testid="t013b-prototype-media-note"><p className="font-medium text-info-text">原型生成说明</p><p className="mt-2 text-sm leading-5 text-info-text">本次只生成图片 / 视频内容方案和示例占位素材，不调用真实图片或视频生成服务。</p></Card>}
