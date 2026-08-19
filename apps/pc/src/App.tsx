@@ -16,6 +16,7 @@ import { PC05AdminOverview } from "./admin/PC05AdminOverview";
 import { PC05Console } from "./admin/PC05Console";
 import { PC05StateProvider } from "./admin/PC05State";
 import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
+import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
@@ -142,6 +143,7 @@ export function App() {
             <Route path="/admin/students/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/assets/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/observability" element={<AdminRoute><PC06ObservabilityConsole /></AdminRoute>} />
+            <Route path="/admin/settings/*" element={<AdminRoute><PC07SettingsConsole /></AdminRoute>} />
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminNotFound /></AdminRoute>} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
