@@ -18,8 +18,8 @@ import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
 import { PC08CompetitionDetail, PC08CompetitionInfrastructureConsole } from "./admin/PC08CompetitionInfrastructure";
 import { PC09SanChuangOperations } from "./admin/PC09SanChuangOperations";
-import { PC10AIBeautyCup } from "./admin/PC10AIBeautyCup";
 import { currentSanChuangCompetitionId } from "./admin/pc09-data";
+import { AIBeautyCupLanding } from "./AIBeautyCupLanding";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
@@ -123,11 +123,12 @@ export function App() {
         <PC05StateProvider>
           <Routes>
             <Route path="/" element={<PCPublicLanding />} />
+            <Route path="/ai-beauty-cup" element={<AIBeautyCupLanding />} />
             <Route path="/admin" element={<AdminRoute><PC05AdminOverview /></AdminRoute>} />
             <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
             <Route path="/admin/competitions/categories" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="categories" /></AdminRoute>} />
             <Route path="/admin/competitions/registrations" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="registrations" /></AdminRoute>} />
-            <Route path="/admin/ai-beauty-cup" element={<AdminRoute><PC10AIBeautyCup /></AdminRoute>} />
+            <Route path="/admin/ai-beauty-cup" element={<Navigate to="/ai-beauty-cup" replace />} />
             <Route path="/admin/sanchuang" element={<Navigate to={`/admin/sanchuang/${currentSanChuangCompetitionId}`} replace />} />
             <Route path="/admin/sanchuang/:competitionId" element={<AdminRoute><PC09SanChuangOperations view="overview" /></AdminRoute>} />
             <Route path="/admin/sanchuang/:competitionId/performance" element={<AdminRoute><PC09SanChuangOperations view="performance" /></AdminRoute>} />
