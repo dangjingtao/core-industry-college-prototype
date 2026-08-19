@@ -49,6 +49,7 @@ import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../feature
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
+import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import {
   CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
@@ -175,6 +176,7 @@ export function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/tasks" element={<TaskCenterPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
+              <Route path="/modules/simulations/:assignmentId" element={<SimulationHostPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </SupportProvider>

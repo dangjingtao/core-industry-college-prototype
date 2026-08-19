@@ -4,7 +4,7 @@ const groupTitles = ["学习成长", "福利权益", "工具与服务", "消息�
 
 const entries: [string, string][] = [
   ["课程学习", "/courses"],
-  ["成长概览", "/growth/score"],
+  ["学力值", "/growth/score"],
   ["可信成果", "/assets"],
   ["创赛福利", "/benefits"],
   ["我的卡券", "/benefits/wallet"],
@@ -30,6 +30,16 @@ test("T018 应用中心 shows 4 grouped sections and 15 real route entries", asy
   }
 });
 
+test("T018 创赛工坊 entry locates active competition workshop and navigates in", async ({ page }) => {
+  await page.goto("/apps");
+  const workshop = page.getByRole("link", { name: /^创赛工坊：/ });
+  await expect(workshop).toHaveAttribute("href", "/competitions/sanchuang-16/workspace/workshop");
+  await workshop.click();
+  await expect(page).toHaveURL(/\/competitions\/sanchuang-16\/workspace\/workshop$/);
+  await expect(page.getByRole("heading", { name: "创赛工坊", exact: true })).toBeVisible();
+  await expect(page.getByTestId("skill-matrix")).toBeVisible();
+});
+
 test("T018 tabbar exposes 应用中心 between 机会 and 我的", async ({ page }) => {
   await page.goto("/home");
   const nav = page.locator("nav");
@@ -53,6 +63,14 @@ test("T018 entry click navigates to real page and back works", async ({ page }) 
 
   await page.getByRole("link", { name: /^快速验真：/ }).click();
   await expect(page).toHaveURL(/\/assets\/verification$/);
+});
+
+test("T018 学力值 entry opens credit placeholder page", async ({ page }) => {
+  await page.goto("/apps");
+  await page.getByRole("link", { name: /^学力值：/ }).click();
+  await expect(page).toHaveURL(/\/growth\/score$/);
+  await expect(page.getByRole("heading", { name: "学力值", exact: true })).toBeVisible();
+  await expect(page.getByText("我的学力值", { exact: true })).toBeVisible();
 });
 
 test("T018 deep link /apps refresh does not 404", async ({ page }) => {

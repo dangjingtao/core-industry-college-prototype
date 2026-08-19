@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
@@ -379,12 +379,8 @@ export function NewsDetailPage() {
 }
 
 export function GrowthScorePage() {
-  const { learning } = useLongTermAssets();
-  const { applications } = usePublicPlatform();
-  const completed = learning.filter(item => item.status === "completed").length;
-  const rows: [string, number][] = [["基础账号", 60], ["已完成学习", completed * 20], ["真实投递", applications.length * 10]];
-  const score = rows.reduce((sum, [, value]) => sum + value, 0);
-  return <PublicShell showNavigation={false}><PageHeader title="成长概览" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card><p className="text-sm text-text-secondary">成长记录汇总</p><strong className="mt-2 block text-2xl font-semibold text-text-primary">{score}</strong><p className="mt-2 text-xs leading-5 text-text-secondary">仅表达平台内成长记录，不替代赛事成绩、证书或招聘评价。</p></Card><Section title="本期构成"><div className="space-y-2">{rows.map(([label,value]) => <Card key={label}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{label}</span><strong className="text-text-primary">+{value}</strong></div></Card>)}</div></Section></div></PublicShell>;
+  const navigate = useNavigate();
+  return <PublicShell showNavigation={false}><PageHeader title="学力值" backTo="/me" /><div className="space-y-6 px-4 py-5"><Card className="relative overflow-hidden bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary"><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium opacity-90"><Coins size={18} aria-hidden="true" />我的学力值</span><Link to="/benefits/credits" className="flex items-center gap-1 text-xs font-medium opacity-90">查看明细<ChevronRight size={14} aria-hidden="true" /></Link></div><strong className="mt-3 block text-4xl font-bold tracking-tight">1280</strong><p className="mt-2 text-xs leading-5 opacity-75">数据为原型占位，学力值经济模型待 F04 决策。</p></Card><Section title="本期构成"><Card><p className="text-sm leading-5 text-text-secondary">学力值的收入与消耗规则尚未确认；当前仅展示占位余额，正式构成由 F04 产品决策后替换。</p><SecondaryButton className="mt-4 w-full" onClick={() => navigate("/benefits/credits")}>查看学力值明细</SecondaryButton></Card></Section></div></PublicShell>;
 }
 
 export function StoriesPage() {

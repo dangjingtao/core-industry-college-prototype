@@ -56,7 +56,7 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "benefits.credits", path: "/benefits/credits", context: "public", purpose: "学力值明细", states: ["active", "empty"] },
   { id: "benefits.detail", path: "/benefits/:benefitId", context: "public", purpose: "权益详情", states: ["eligible", "ineligible", "claimed", "expired"] },
   { id: "benefits.wallet", path: "/benefits/wallet", context: "account", purpose: "我的权益/卡包", states: ["empty", "active", "used", "expired"] },
-  { id: "growth.score", path: "/growth/score", context: "account", purpose: "成长概览", states: ["ready", "empty"] },
+  { id: "growth.score", path: "/growth/score", context: "account", purpose: "学力值（原成长概览，占位口径）", states: ["ready", "empty"] },
   { id: "assets.home", path: "/assets", context: "account", purpose: "长期资产总览", states: ["empty", "ready", "loading"] },
   { id: "assets.experiences", path: "/assets/experiences", context: "account", purpose: "赛事经历与项目摘要", states: ["empty", "ready", "loading"] },
   { id: "assets.experience", path: "/assets/experiences/:experienceId", context: "account", purpose: "赛事经历详情", states: ["ready", "syncing", "error"] },
@@ -91,6 +91,7 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "about", path: "/about", context: "public", purpose: "关于", states: ["ready"] },
   { id: "tasks.center", path: "/tasks", context: "public", purpose: "已有业务下一步聚合", states: ["guest", "activeCompetition", "noIdentity", "filtered", "empty"] },
   { id: "appCenter.home", path: "/apps", context: "public", purpose: "应用中心：平台功能与工具全量出口", states: ["ready"] },
+  { id: "simulations.host", path: "/modules/simulations/:assignmentId", context: "public", purpose: "模拟模块宿主容器：加载独立 H5 小游戏并回传完成状态", states: ["unavailable", "ready", "running", "completed", "error"] },
 ];
 
 export const candidatePrimaryNavigation = [

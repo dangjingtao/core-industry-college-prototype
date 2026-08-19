@@ -38,7 +38,9 @@ export function StatusTag({ tone = "info", children }: { tone?: "info" | "succes
 export function PageHeader({ title, backTo, right }: { title: string; backTo?: string; subtitle?: string; right?: ReactNode }) {
   const navigate = useNavigate();
   const handleBack = () => {
-    if (backTo) navigate(backTo);
+    const canGoBack = (window.history.state?.idx ?? 0) > 0;
+    if (canGoBack) navigate(-1);
+    else if (backTo) navigate(backTo);
   };
   return (
     <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">

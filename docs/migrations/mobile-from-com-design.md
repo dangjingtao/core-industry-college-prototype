@@ -250,6 +250,8 @@ Route audit PASS
 
 > 2026-08-19 T018：新增 `/apps` 应用中心（tabbar 第 5 入口 + 分组宫格聚合页），registry 同步 +1，以 `audit-routes.mjs` 实测数量为准。
 
+> 2026-08-19 经营决策体验（可插拔模拟小游戏首期 Demo）：新增 `/modules/simulations/:assignmentId` 模拟模块宿主容器，应用中心「互动体验」分组入口加载 `public/modules/community-commerce` 独立 H5（demo 模式、postMessage 最小协议、不保存结果），registry 同步 +1，以 `audit-routes.mjs` 实测数量为准。
+
 ---
 
 ## 7. 必须重新跑的五条母动线
