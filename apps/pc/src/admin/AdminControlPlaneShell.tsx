@@ -106,6 +106,7 @@ function PermissionDetails() {
 function adminViewClass(pathname: string) {
   if (pathname.startsWith("/admin/pc04/")) return "pc05-pc04-view";
   if (pathname.startsWith("/admin/competitions/objects/")) return "pc05-pc02-view";
+  if (pathname.startsWith("/admin/settings")) return "pc07-settings-view";
   return "";
 }
 
@@ -117,6 +118,7 @@ export function AdminControlPlaneShell({ children }: { children: ReactNode }) {
   return <div className="min-h-screen bg-background text-text-primary">
     <style>{`
       .pc05-tech-hidden .font-mono,.pc05-tech-hidden code,.pc05-tech-hidden [data-pc05-technical]{display:none!important}
+      .pc05-tech-hidden.pc07-settings-view .font-mono{display:revert!important}
       .pc05-tech-hidden [aria-label="PC02 三层事实边界"]{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>div:first-child>p{display:none!important}
       .pc05-tech-hidden.pc05-pc04-view>div>section:first-child>div:first-child>span{display:none!important}
