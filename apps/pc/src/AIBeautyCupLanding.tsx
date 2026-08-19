@@ -18,8 +18,9 @@ export function AIBeautyCupLanding() {
           </Link>
 
           <nav className="flex items-center gap-1 sm:gap-2" aria-label="赛事首页导航">
-            <a href="#competition-overview" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-medium text-[#745D69] transition hover:bg-[#FFF1F6] sm:inline-flex">赛事概览</a>
-            <a href="#performance" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-medium text-[#745D69] transition hover:bg-[#FFF1F6] md:inline-flex">营销实绩</a>
+            <a href="#about" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-medium text-[#745D69] transition hover:bg-[#FFF1F6] sm:inline-flex">赛事介绍</a>
+            <a href="#schedule" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-medium text-[#745D69] transition hover:bg-[#FFF1F6] md:inline-flex">赛事进程</a>
+            <a href="#guide" className="hidden min-h-10 items-center rounded-xl px-3 text-sm font-medium text-[#745D69] transition hover:bg-[#FFF1F6] lg:inline-flex">赛事信息</a>
             <Link to="/" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E5CDD9] bg-white px-3 text-sm font-semibold text-[#674050] transition hover:bg-[#FFF5F9]">
               <Home size={15} aria-hidden="true" />核心产业学院
             </Link>
@@ -35,7 +36,7 @@ export function AIBeautyCupLanding() {
           </div>
         </div>
 
-        <div id="competition-overview" className="mx-auto max-w-[1480px] px-5 py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-[1480px] px-5 py-6 lg:px-8 lg:py-8">
           <PC10AIBeautyCup />
         </div>
 
@@ -43,7 +44,7 @@ export function AIBeautyCupLanding() {
           <div className="mx-auto flex max-w-[1480px] flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
             <div>
               <p className="text-sm font-semibold">粤港澳大湾区AI美妆核心杯</p>
-              <p className="mt-1 text-xs text-white/60">AI 美妆 · 新零售实战 · 学生成长</p>
+              <p className="mt-1 text-xs text-white/60">AI 美妆 · 新零售实践 · 学生成长</p>
             </div>
             <Link to="/" className="inline-flex min-h-10 items-center gap-2 self-start rounded-xl bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15 sm:self-auto">
               返回核心产业学院<ArrowRight size={15} />
