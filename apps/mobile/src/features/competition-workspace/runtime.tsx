@@ -63,7 +63,7 @@ export type TeamChangeRequest = {
 type RuntimeStore = Record<string, CompetitionWorkshopRuntime>;
 type TeamChangeRequestStore = Record<string, TeamChangeRequest>;
 
-const optionalMaterialTaskIds = new Set(["s3-visual-kit", "s4-weekly-review"]);
+const optionalMaterialTaskIds = new Set(["s3-visual-kit", "s4-weekly-review", "s5-pitch-ppt"]);
 
 type WorkshopRuntimeContextValue = {
   identityFor: (competitionId: string) => CompetitionIdentityState | undefined;
