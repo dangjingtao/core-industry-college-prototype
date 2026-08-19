@@ -80,6 +80,18 @@ test("T013B S3 visual uses the same S3 context and enters Mockplus 110 directly"
   await expect(page.getByText(/没有调用真实生成服务/)).toBeVisible();
 });
 
+test("T013B S4 direct review guard stays in S4 when question context is missing", async ({ page }) => {
+  await page.goto(`${workshop}/tasks/s4-weekly-review/review`);
+
+  await expect(page.getByRole("heading", { name: "生成确认", exact: true })).toBeVisible();
+  await expect(page.getByText("请先完成 S4 动态答题", { exact: true })).toBeVisible();
+  await expect(page.getByText(/经营周报生成确认必须先完成本轮 S4/)).toBeVisible();
+  await page.getByRole("button", { name: "先完成 S4 动态答题", exact: true }).click();
+
+  await expect(page).toHaveURL(new RegExp(`${workshop}/tasks/s4-weekly-review/answer$`));
+  await expect(page.getByTestId("t013b-dynamic-question")).toContainText("这周最关注哪组经营指标");
+});
+
 test("T013B S4 follows Mockplus 123 two questions and persists member pending confirmation", async ({ page }) => {
   await page.goto(`${workshop}/tasks/s4-weekly-review/answer`);
   await expect(page.getByRole("heading", { name: "动态答题", exact: true })).toBeVisible();
