@@ -806,13 +806,6 @@ export function AccountsPage() {
   </div></PublicShell>;
 }
 
-export function EmailReminderPage() {
-  const navigate = useNavigate();
-  const { profile } = useLongTermAssets();
-  const hasEmail = Boolean(profile.email.trim());
-  return <PublicShell showNavigation={false}><PageHeader title="邮箱提醒" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card className={hasEmail ? "border border-success bg-success-bg" : "border border-warning bg-warning-bg"}><StatusTag tone={hasEmail ? "success" : "warning"}>{hasEmail ? "邮箱已绑定" : "建议绑定邮箱"}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{hasEmail ? "账号已有可用邮箱" : "补充邮箱，方便接收重要通知"}</h1><p className="mt-2 text-sm leading-6 text-text-secondary">赛事审核、课程成果和权益提醒会优先展示在通知中心；邮箱用于补充联系，不改变当前账号与赛事身份。</p></Card><Button className="w-full" onClick={() => navigate("/me/profile")}>{hasEmail ? "查看个人资料" : "去绑定邮箱"}</Button></div></PublicShell>;
-}
-
 export function TeamsPage() {
   const { identities, session } = usePublicPlatform();
   if (!session.loggedIn) return <PublicShell showNavigation={false}><PageHeader title="比赛团队" backTo="/me" /><StateBlock state="empty" /></PublicShell>;

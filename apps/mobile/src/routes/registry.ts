@@ -78,7 +78,6 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "me.resume.strengths", path: "/me/resume/strengths", context: "account", purpose: "个人优势", states: ["edit", "saving"] },
   { id: "me.resume.education", path: "/me/resume/education", context: "account", purpose: "教育经历", states: ["list", "edit", "saving"] },
   { id: "me.accounts", path: "/me/accounts", context: "account", purpose: "账号绑定", states: ["list", "binding", "success", "error"] },
-  { id: "me.email-reminder", path: "/me/email-reminder", context: "account", purpose: "未绑定邮箱提醒", states: ["missing", "bound"] },
   { id: "me.teams", path: "/me/teams", context: "account", purpose: "我的比赛团队", states: ["ready", "empty", "permission"] },
   { id: "me.team", path: "/me/teams/:competitionId", context: "account", purpose: "比赛团队详情", states: ["active", "ended", "revoked", "missing"] },
   { id: "me.settings", path: "/me/settings", context: "account", purpose: "设置中心", states: ["ready", "saved"] },

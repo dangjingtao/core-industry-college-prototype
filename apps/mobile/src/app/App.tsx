@@ -61,7 +61,6 @@ import {
   AlumniListPage,
   GrowthScorePage,
   LegalPage,
-  EmailReminderPage,
   FeedbackPage,
   NewsDetailPage,
   NewsPage,
@@ -162,7 +161,6 @@ export function App() {
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />
               <Route path="/me/resume/education" element={account(<ResumeEducationPage />)} />
               <Route path="/me/accounts" element={account(<AccountsPage />)} />
-              <Route path="/me/email-reminder" element={account(<EmailReminderPage />)} />
               <Route path="/me/teams" element={account(<TeamsPage />)} />
               <Route path="/me/teams/:competitionId" element={account(<TeamDetailPage />)} />
               <Route path="/me/settings" element={account(<SettingsPage />)} />

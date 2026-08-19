@@ -7,18 +7,12 @@ import { usePublicPlatform } from "../public-platform/PublicPlatform";
 
 type AuthMethod = "password" | "code";
 
-const accountPattern = /^(1\d{10}|[^\s@]+@[^\s@]+\.[^\s@]+)$/;
+const phonePattern = /^1\d{10}$/;
 const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
 function safeReturnTo(search: string, fallback = "/home") {
   const value = new URLSearchParams(search).get("returnTo");
   return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
-}
-
-function accountKind(value: string) {
-  if (/^1\d{10}$/.test(value)) return "手机号";
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "邮箱";
-  return "手机号或邮箱";
 }
 
 function AuthField({ label, value, onChange, type = "text", placeholder, autoComplete, suffix }: {
@@ -57,8 +51,8 @@ function VerificationFields({ account, sent, code, onSent, onCode }: { account: 
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <button type="button" disabled={!accountPattern.test(account)} onClick={onSent} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary disabled:opacity-40">{sent ? "重新发送验证码" : "发送验证码"}</button>
-        <div className="flex min-h-touch flex-1 items-center justify-center rounded-control bg-surface-subtle px-3 text-center text-xs text-text-secondary">{sent ? "原型验证码：123456" : `发送至${accountKind(account)}`}</div>
+        <button type="button" disabled={!phonePattern.test(account)} onClick={onSent} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-primary disabled:opacity-40">{sent ? "重新发送验证码" : "发送验证码"}</button>
+        <div className="flex min-h-touch flex-1 items-center justify-center rounded-control bg-surface-subtle px-3 text-center text-xs text-text-secondary">{sent ? "原型验证码：123456" : "发送至手机号"}</div>
       </div>
       {sent && <AuthField label="验证码" value={code} onChange={value => onCode(value.replace(/\D/g, "").slice(0, 6))} placeholder="输入 6 位验证码" autoComplete="one-time-code" />}
     </div>
@@ -90,11 +84,11 @@ export function LoginPage() {
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const valid = accountPattern.test(account) && (method === "password" ? passwordPattern.test(password) : sent && code === "123456");
+  const valid = phonePattern.test(account) && (method === "password" ? passwordPattern.test(password) : sent && code === "123456");
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!valid) {
-      setError(method === "password" ? "请输入有效手机号或邮箱，并使用至少 8 位且包含字母和数字的密码。" : "请输入有效手机号或邮箱及原型验证码 123456。");
+      setError(method === "password" ? "请输入 11 位手机号，并使用至少 8 位且包含字母和数字的密码。" : "请输入 11 位手机号及原型验证码 123456。");
       return;
     }
     login();
@@ -102,7 +96,7 @@ export function LoginPage() {
   };
   const wechatExtra = location.search.includes("wechatAccount=existing") ? "&wechatAccount=existing" : "";
   const wechatTarget = `/auth/wechat/authorize?returnTo=${encodeURIComponent(returnTo)}${wechatExtra}`;
-  return <PublicShell showNavigation={false}><PageHeader title="登录" backTo="/welcome" /><form onSubmit={submit} className="space-y-5 px-4 py-6"><AuthIntro /><div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1">{(["password", "code"] as const).map(value => <button key={value} type="button" onClick={() => { setMethod(value); setError(""); }} className={`min-h-touch rounded-control text-sm font-medium ${method === value ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`}>{value === "password" ? "密码登录" : "验证码登录"}</button>)}</div><AuthField label="手机号或邮箱" value={account} onChange={value => { setAccount(value); setSent(false); setCode(""); setError(""); }} placeholder="13800138000 / name@example.com" autoComplete="username" />{method === "password" ? <PasswordField label="密码" value={password} onChange={value => { setPassword(value); setError(""); }} autoComplete="current-password" /> : <VerificationFields account={account} sent={sent} code={code} onSent={() => { setSent(true); setCode(""); setError(""); }} onCode={value => { setCode(value); setError(""); }} />}{error && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">{error}</p>}<Button type="submit" className="w-full" disabled={!valid}>登录</Button><div className="flex items-center justify-between text-sm"><Link className="min-h-touch py-3 font-medium text-text-brand" to={`/auth/register?returnTo=${encodeURIComponent(returnTo)}`}>注册新账号</Link><Link className="min-h-touch py-3 font-medium text-text-brand" to="/auth/forgot-password">忘记密码</Link></div><div className="space-y-3 border-t border-border-subtle pt-4"><Link to={wechatTarget} className="flex min-h-touch w-full items-center justify-center gap-2 rounded-control border border-border bg-surface text-sm font-medium text-text-primary active:bg-surface-pressed"><MessageCircle size={18} aria-hidden="true" />微信登录</Link><p className="text-center text-xs leading-5 text-text-tertiary">新用户通过微信授权后，需用绑定手机号完成注册。</p></div></form></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="登录" backTo="/welcome" /><form onSubmit={submit} className="space-y-5 px-4 py-6"><AuthIntro /><div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1">{(["password", "code"] as const).map(value => <button key={value} type="button" onClick={() => { setMethod(value); setError(""); }} className={`min-h-touch rounded-control text-sm font-medium ${method === value ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`}>{value === "password" ? "密码登录" : "验证码登录"}</button>)}</div><AuthField label="手机号" value={account} onChange={value => { setAccount(value.replace(/\D/g, "").slice(0, 11)); setSent(false); setCode(""); setError(""); }} placeholder="请输入 11 位手机号" autoComplete="tel" />{method === "password" ? <PasswordField label="密码" value={password} onChange={value => { setPassword(value); setError(""); }} autoComplete="current-password" /> : <VerificationFields account={account} sent={sent} code={code} onSent={() => { setSent(true); setCode(""); setError(""); }} onCode={value => { setCode(value); setError(""); }} />}{error && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">{error}</p>}<Button type="submit" className="w-full" disabled={!valid}>登录</Button><div className="flex items-center justify-between text-sm"><Link className="min-h-touch py-3 font-medium text-text-brand" to={`/auth/register?returnTo=${encodeURIComponent(returnTo)}`}>注册新账号</Link><Link className="min-h-touch py-3 font-medium text-text-brand" to="/auth/forgot-password">忘记密码</Link></div><div className="space-y-3 border-t border-border-subtle pt-4"><Link to={wechatTarget} className="flex min-h-touch w-full items-center justify-center gap-2 rounded-control border border-border bg-surface text-sm font-medium text-text-primary active:bg-surface-pressed"><MessageCircle size={18} aria-hidden="true" />微信登录</Link><p className="text-center text-xs leading-5 text-text-tertiary">新用户通过微信授权后，需用绑定手机号完成注册。</p></div></form></PublicShell>;
 }
 
 export function RegisterPage() {
@@ -169,8 +163,8 @@ export function ForgotPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [completed, setCompleted] = useState(false);
-  const valid = accountPattern.test(account) && sent && code === "123456" && passwordPattern.test(password) && password === confirmPassword;
+  const valid = phonePattern.test(account) && sent && code === "123456" && passwordPattern.test(password) && password === confirmPassword;
   const submit = (event: FormEvent) => { event.preventDefault(); if (valid) setCompleted(true); };
   if (completed) return <PublicShell showNavigation={false}><PageHeader title="重置密码" /><div className="space-y-5 px-4 py-8"><Card className="border border-success bg-success-bg text-center"><span className="mx-auto flex size-12 items-center justify-center rounded-full bg-surface text-success-text"><KeyRound size={22} aria-hidden="true" /></span><h1 className="mt-4 text-lg font-semibold text-success-text">密码已重置</h1><p className="mt-2 text-sm text-success-text">原型不会向真实账号写入密码；当前流程只验证完整交互状态。</p></Card><Button className="w-full" onClick={() => navigate("/auth/login", { replace: true })}>返回登录</Button></div></PublicShell>;
-  return <PublicShell showNavigation={false}><PageHeader title="找回密码" backTo="/auth/login" /><form onSubmit={submit} className="space-y-5 px-4 py-6"><AuthIntro /><AuthField label="手机号或邮箱" value={account} onChange={value => { setAccount(value); setSent(false); setCode(""); }} placeholder="输入注册时使用的账号" autoComplete="username" /><VerificationFields account={account} sent={sent} code={code} onSent={() => { setSent(true); setCode(""); }} onCode={setCode} /><PasswordField label="新密码" value={password} onChange={setPassword} autoComplete="new-password" /><PasswordField label="确认新密码" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />{confirmPassword && password !== confirmPassword && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">两次输入的密码不一致。</p>}<Button type="submit" className="w-full" disabled={!valid}>确认重置</Button></form></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="找回密码" backTo="/auth/login" /><form onSubmit={submit} className="space-y-5 px-4 py-6"><AuthIntro /><AuthField label="手机号" value={account} onChange={value => { setAccount(value.replace(/\D/g, "").slice(0, 11)); setSent(false); setCode(""); }} placeholder="输入注册时使用的手机号" autoComplete="tel" /><VerificationFields account={account} sent={sent} code={code} onSent={() => { setSent(true); setCode(""); }} onCode={setCode} /><PasswordField label="新密码" value={password} onChange={setPassword} autoComplete="new-password" /><PasswordField label="确认新密码" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />{confirmPassword && password !== confirmPassword && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">两次输入的密码不一致。</p>}<Button type="submit" className="w-full" disabled={!valid}>确认重置</Button></form></PublicShell>;
 }

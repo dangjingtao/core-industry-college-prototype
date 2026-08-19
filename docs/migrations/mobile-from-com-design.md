@@ -246,6 +246,8 @@ Route audit PASS
 - wildcard 必须显式 404，不静默吞回首页；
 - 深层赛事路由必须保留 competitionId。
 
+> 2026-08-19 决策更新：登录账号体系仅手机号，`/me/email-reminder` 语义路由随页面一并移除（见 backlog 已确认决策）。以 `audit-routes.mjs` 实测数量为准。
+
 ---
 
 ## 7. 必须重新跑的五条母动线

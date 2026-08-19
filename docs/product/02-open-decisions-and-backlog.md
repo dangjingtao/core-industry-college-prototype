@@ -343,6 +343,14 @@ C. **积分与成长分拆成两个对象**
 - 创域 / 本地运营；
 - AI 简历 / 人才能力表达。
 
+### 已确认决策（2026-08-19）｜手机端登录账号体系仅手机号
+
+- 手机端登录 / 注册 / 找回密码 / 微信绑定流程的账号身份只使用手机号，不再提供邮箱账号；
+- 因此移除 `/me/email-reminder`（未绑定邮箱提醒）页面与路由；
+- 学生 Profile / 简历中的邮箱仅作为可编辑的联系方式展示字段保留，不作为登录账号身份。
+
+施工：`apps/mobile/src/features/auth/AuthPages.tsx`、`apps/mobile/src/features/platform-support/SupportPages.tsx`、`apps/mobile/src/app/App.tsx`、`apps/mobile/src/routes/registry.ts`。
+
 ---
 
 ## 8. 新仓库验收要求
