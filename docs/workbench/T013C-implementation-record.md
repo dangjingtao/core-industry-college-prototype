@@ -34,13 +34,19 @@ T013C 卡已固化 Mockplus 114–118、131–134 的页面语义和 P0 交互�
   - S5 PPT mock 成果与团队确认动作。
   - S6 私密公司推荐小报告。
   - 企业卡直接复用 `public-platform/data.ts` 中既有 Company stable id。
+- `apps/mobile/src/features/competition-workspace/T013CResultsPage.tsx`
+  - S6 个人成果独立于团队“已生成 / 已采纳”分组展示。
+  - 团队成果列表不会把 S6 私密推荐混入队长采纳流程。
 - `apps/mobile/src/app/App.tsx`
-  - 工坊 task / result 路由升级到 T013C wrapper；S1–S4 仍由 fallback 保持现有契约。
+  - 工坊 task / review / progress / result detail 路由升级到 T013C wrapper；S1–S4 仍由 fallback 保持现有契约。
+  - 工坊成果列表切到 T013C results wrapper，显式维护 S6 私密边界。
 - `apps/mobile/tests/t013c-s5s6.spec.ts`
   - S5 完整浏览器动线。
   - S6 私密动线与 stable company route。
   - S1–S6 六入口 smoke。
   - ended competition 隔离 / 不继续创建赛事期事实。
+- `.github/workflows/r-final-check.yml`
+  - 将 `tests/t013c-s5s6.spec.ts` 纳入 mobile browser regressions；保留原型阶段 browser soft gate，不改变既有 hard gate。
 
 ## 4. 产品边界复核
 
@@ -48,6 +54,7 @@ T013C 卡已固化 Mockplus 114–118、131–134 的页面语义和 P0 交互�
 - 所有运行态仍由现有 `WorkshopRuntimeProvider` 按 `competitionId` 隔离。
 - S6 不写入长期可信事实，不生成黑盒人才评分。
 - S6 推荐企业复用现有 Company 对象，不新增“推荐专用企业表”。
+- S6 私密成果不进入团队“已生成 / 已采纳”列表，不提供队长采纳动作。
 - S5 mock PPT 明确不是实际文件、不是官方比赛提交。
 - 算力继续沿用原型冻结 / 预估表达，没有新增真实扣费模型。
 - ended / revoked 仍由 `RequireCompetitionAccess` 阻断赛事期新操作。
@@ -64,4 +71,10 @@ T013C 卡已固化 Mockplus 114–118、131–134 的页面语义和 P0 交互�
 5. S1–S6 六技能入口同时存在；
 6. 历史 ended 赛事不会进入 S6 新任务，也不会渲染当前赛事的私密结果。
 
-构建、typecheck、T013A/B/C 全量回归以及 CI 状态以本次提交后的 GitHub Actions 为最终机器证据；施工线程只记录事实，不提前判定总卡 PASS。
+## 6. 本线程验证状态
+
+- 新增 T013C TSX / Playwright 文件已做 TypeScript transpile 语法检查，未发现语法级错误。
+- `r-final-check.yml` 已包含 T013C focused browser suite，并会对 `dev` 的 mobile 变更触发既有 quality gate。
+- 当前连接器无法可靠读取这次 push-triggered GitHub Actions run 的最终 conclusion，因此本线程**不伪造 CI 已通过**；typecheck / build / T013A+B+C 浏览器回归的最终机器结论应以对应 Actions run 为准。
+
+施工线程只记录事实，不提前判定 T013 总卡 PASS。
