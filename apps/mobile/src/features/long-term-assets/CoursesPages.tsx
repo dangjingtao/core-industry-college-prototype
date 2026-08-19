@@ -94,7 +94,7 @@ export function CoursesPage() {
 
   return (
     <PublicShell>
-      <PageHeader title="学院" subtitle="系统学习电商与创新创业能力，成果长期沉淀" backTo="-1" />
+      <PageHeader title="学院" subtitle="系统学习电商与创新创业能力，成果长期沉淀" backTo="/home" />
       <div className="space-y-5 px-4 py-5">
         <Carousel items={carouselItems} autoPlay interval={5000} size="lg" />
 
