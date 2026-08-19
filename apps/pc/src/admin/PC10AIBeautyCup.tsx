@@ -85,7 +85,7 @@ export function PC10AIBeautyCup() {
                 <Sparkles size={14} />重点赛事专区 · 2026
               </div>
               <h1 className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.03em] text-[#3C2030] lg:text-4xl">
-                湾区 AI 美妆新零售核心杯
+                粤港澳大湾区AI美妆核心杯
               </h1>
               <p className="mt-2 text-sm font-semibold tracking-[0.16em] text-[#B2437B]">AI BEAUTY · NEW RETAIL</p>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-[#715C68]">
@@ -116,7 +116,7 @@ export function PC10AIBeautyCup() {
                 <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">报名中</span>
               </div>
               <div className="mt-7 grid size-14 place-items-center rounded-2xl bg-white/10 text-[#F9B7D5]"><Sparkles size={25} /></div>
-              <h2 className="mt-5 text-2xl font-semibold">湾区 AI 美妆新零售核心杯</h2>
+              <h2 className="mt-5 text-2xl font-semibold">粤港澳大湾区AI美妆核心杯</h2>
               <p className="mt-3 max-w-lg text-sm leading-6 text-white/70">以 AI 技术驱动美妆产品创新与渠道增长，把真实营销表现作为赛事过程证据之一，但不替代官方评分规则。</p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-white/[0.07] p-4"><p className="text-xs text-white/55">赛事服务</p><p className="mt-2 text-sm font-semibold">报名 × 审核 × 工作区</p></div>
@@ -158,7 +158,7 @@ export function PC10AIBeautyCup() {
           </div>
           <div className="grid gap-0 md:grid-cols-2">
             <div className="space-y-4 p-5">
-              <div><p className="text-xs text-[#A08B96]">当前赛事</p><p className="mt-1 text-sm font-semibold">湾区 AI 美妆新零售核心杯 2026</p></div>
+              <div><p className="text-xs text-[#A08B96]">当前赛事</p><p className="mt-1 text-sm font-semibold">粤港澳大湾区AI美妆核心杯 2026</p></div>
               <div><p className="text-xs text-[#A08B96]">当前团队</p><p className="mt-1 text-sm font-semibold">光感智妆实验室</p></div>
               <div><p className="text-xs text-[#A08B96]">赛道</p><p className="mt-1 text-sm font-semibold">AI 美妆 / 新零售实战</p></div>
             </div>
