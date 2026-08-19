@@ -88,6 +88,9 @@ test("T013B S4 follows Mockplus 123 two questions and persists member pending co
 
   await page.getByRole("button", { name: "GMV / 销售额", exact: true }).click();
   await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+  await expect(page.getByRole("button", { name: "下阶段目标", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "复购与留存", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "转化漏斗变化", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "同比 / 环比趋势", exact: true }).click();
   await page.getByRole("button", { name: "异常波动预警", exact: true }).click();
   await expect(page.getByTestId("t013b-completeness")).toContainText("100%");
