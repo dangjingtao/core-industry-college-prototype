@@ -120,6 +120,7 @@ test("T013C S6 follows Mockplus 131 two-question company recommendation flow", a
 
   await expect(page.getByRole("heading", { name: "公司推荐小报告", exact: true })).toBeVisible();
   await expect(page.getByTestId("s6-private-visibility")).toContainText("不会写入 StudentProfile");
+  await expect(page.getByText("本人填写 · 希望发挥的能力", { exact: true })).toHaveCount(0);
   await expect(page.getByTestId("s6-no-score")).toContainText("没有“人才总分”");
   await expect(page.getByTestId("s6-company-cloud-retail")).toBeVisible();
   await expect(page.locator('[data-company-id="cloud-retail"]')).toHaveAttribute("href", "/companies/cloud-retail");
