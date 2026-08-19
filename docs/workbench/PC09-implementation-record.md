@@ -1,5 +1,8 @@
 # PC09｜三创赛运营工作台施工记录
 
+> 施工基线：`dev@793c67ee25ff401e1d136fd0fd94d24899e0cd88`  
+> 主施工提交：`c22c602cf03703e81c67732111b2ca5a978ffa12`  
+> 任务卡收口：`e006883298b60d7a9397d27167776bc3fdc8e032`  
 > 施工目标：在 PC08 通用赛事基建之上增加三创赛垂直运营工作台；独立运营体验，不复制 Competition / Team / Registration 真相源。
 
 ## 已施工
@@ -29,6 +32,7 @@
 - Team 继续来自 PC02 `competition-control-data.ts`；Stage 继续来自 PC08 `pc08-data.ts`。
 - 普通赛事 `innovation-cup-2026` 不存在三创赛 profile；即使直接访问 `/admin/sanchuang/innovation-cup-2026`，页面也会拒绝进入专属工作台而不是临时套用三创赛逻辑。
 - 没有新增赛事缴费、自动评分、自动排名、晋级算法或三套订单 / 直播 / 视频菜单。
+- 施工期间 `dev` 有 T013C / PC07 并行提交；PC09 最终重放在 `793c67ee…` 最新基线上并使用 fast-forward 更新，没有 force push，也没有覆盖并行文件。
 
 ## Focused browser assertions
 
@@ -43,6 +47,8 @@
 7. 当前筛选 CSV 导出原型动作；
 8. 普通赛事详情不出现 PC09 工作台内容，普通 Competition 直接进入 PC09 路由也会被 capability mapping 拒绝。
 
+首个届次断言限定在 PC09 Hero 标题内，避免标题与 `<option>` 同文案触发 Playwright strict locator 误报。
+
 ## 自动验证说明
 
-仓库既有 `Prototype Quality Gate` 会执行 PC TypeScript / Vite hard gate，并由 PC browser regressions 运行 `pc09.spec.ts`；Cloudflare PC workflow 会对 `dev` 执行 development build / deploy。最终自动化结果以 GitHub Actions实际 run 为准。
+仓库既有 `Prototype Quality Gate` 会执行 PC TypeScript / Vite hard gate，并由 PC browser regressions 运行 `pc09.spec.ts`；Cloudflare PC workflow 会对 `dev` 执行 development build / deploy。最终自动化结果以 GitHub Actions 实际 run 为准。
