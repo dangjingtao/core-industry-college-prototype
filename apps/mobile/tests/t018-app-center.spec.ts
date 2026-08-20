@@ -17,10 +17,11 @@ const entries: [string, string][] = [
   ["合作企业", "/companies"],
   ["帮助与客服", "/support"],
   ["我的比赛团队", "/me/teams"],
+  ["账号绑定", "/me/accounts"],
   ["消息通知", "/me/notifications"],
 ];
 
-test("T018 应用中心 shows 4 grouped sections and 15 real route entries", async ({ page }) => {
+test("T018 应用中心 shows 4 grouped sections and 16 real route entries", async ({ page }) => {
   await page.goto("/apps");
   for (const title of groupTitles) {
     await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
@@ -40,17 +41,17 @@ test("T018 创赛工坊 entry locates active competition workshop and navigates 
   await expect(page.getByTestId("skill-matrix")).toBeVisible();
 });
 
-test("T018 tabbar exposes 应用中心 between 机会 and 我的", async ({ page }) => {
+test("T018 tabbar exposes 应用中心 between 赛事 and 机会", async ({ page }) => {
   await page.goto("/home");
   const nav = page.locator("nav");
   const links = nav.getByRole("link");
   await expect(links).toHaveCount(5);
   await expect(links.nth(0)).toHaveText("首页");
   await expect(links.nth(1)).toHaveText("赛事");
-  await expect(links.nth(2)).toHaveText("机会");
-  await expect(links.nth(3)).toHaveText("应用中心");
+  await expect(links.nth(2)).toHaveText("应用中心");
+  await expect(links.nth(3)).toHaveText("机会");
   await expect(links.nth(4)).toHaveText("我的");
-  await links.nth(3).click();
+  await links.nth(2).click();
   await expect(page).toHaveURL(/\/apps$/);
 });
 

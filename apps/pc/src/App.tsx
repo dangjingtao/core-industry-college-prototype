@@ -24,6 +24,9 @@ import { AIBeautyCupLanding } from "./AIBeautyCupLanding";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
+import { SchoolReview } from "./review/SchoolReview";
+import { SanChuangMockLogin } from "./sanchuang-official/SanChuangMockLogin";
+import { SanChuangOfficialHome } from "./sanchuang-official/SanChuangOfficialHome";
 
 const handoffStorageKey = "core.registration-portal.handoff";
 const handoffTtlMs = 60 * 60 * 1000;
@@ -125,6 +128,8 @@ export function App() {
           <Routes>
             <Route path="/" element={<PCPublicLanding />} />
             <Route path="/ai-beauty-cup" element={<AIBeautyCupLanding />} />
+            <Route path="/3chuang" element={<SanChuangOfficialHome />} />
+            <Route path="/3chuang/login" element={<SanChuangMockLogin />} />
             <Route path="/admin" element={<AdminRoute><PC05AdminOverview /></AdminRoute>} />
             <Route path="/admin/competitions" element={<AdminRoute><PC01OperationsConsole section="competitions" /></AdminRoute>} />
             <Route path="/admin/competitions/categories" element={<AdminRoute><PC08CompetitionInfrastructureConsole view="categories" /></AdminRoute>} />
@@ -159,6 +164,7 @@ export function App() {
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminNotFound /></AdminRoute>} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
+            <Route path="/review/*" element={<SchoolReview />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </PC05StateProvider>

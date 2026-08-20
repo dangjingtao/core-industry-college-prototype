@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, Link2, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
@@ -59,10 +59,11 @@ const groups: AppGroup[] = [
   },
   {
     title: "消息与我的",
-    subtitle: "团队与通知",
+    subtitle: "团队、账号与通知",
     accent: "bg-[#e9f6f1] text-[#247456]",
     entries: [
       { label: "我的比赛团队", to: "/me/teams", icon: Flag, description: "各赛事团队与成员" },
+      { label: "账号绑定", to: "/me/accounts", icon: Link2, description: "绑定常用电商与内容账号" },
       { label: "消息通知", to: "/me/notifications", icon: Bell, description: "通知与提醒" },
     ],
   },

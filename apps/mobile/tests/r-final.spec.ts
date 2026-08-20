@@ -76,12 +76,10 @@ test("R-Final home notification control reaches the account notification center"
   await expect(page).toHaveURL(/\/me\/notifications$/);
 });
 
-test("R-Final account and support routes have visible entries from My", async ({ page }) => {
+test("R-Final account and support routes have visible entries from My and App Center", async ({ page }) => {
   await page.goto("/me");
   const entries = [
     ["消息通知", "/me/notifications"],
-    ["账号绑定", "/me/accounts"],
-    ["帮助与客服", "/support"],
     ["用户协议", "/legal/user-agreement"],
     ["隐私政策", "/legal/privacy"],
     ["关于", "/about"],
@@ -91,9 +89,16 @@ test("R-Final account and support routes have visible entries from My", async ({
     await expect(page.getByRole("link", { name: new RegExp(name) })).toHaveAttribute("href", href);
   }
 
+  await page.goto("/apps");
+  for (const [name, href] of [
+    ["账号绑定", "/me/accounts"],
+    ["帮助与客服", "/support"],
+  ] as const) {
+    await expect(page.getByRole("link", { name: new RegExp(`^${name}：`) })).toHaveAttribute("href", href);
+  }
   await page.getByRole("link", { name: /帮助与客服/ }).click();
-  await expect(page.getByRole("heading", { name: "帮助与客服", exact: true })).toBeVisible();
-  const chatEntry = page.getByRole("link", { name: /进入客服会话/ });
+  await expect(page.getByRole("heading", { name: "帮助中心", exact: true })).toBeVisible();
+  const chatEntry = page.getByRole("link", { name: /联系人工客服/ });
   await expect(chatEntry).toBeVisible();
   await expect(chatEntry).toHaveAttribute("href", /\/support\/chat/);
 });

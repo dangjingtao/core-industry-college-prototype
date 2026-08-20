@@ -2,8 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("T014 我的页 exposes legacy service entries and new prototype routes", async ({ page }) => {
   await page.goto("/me");
-  await expect(page.getByRole("link", { name: /我的卡包/ })).toHaveAttribute("href", "/benefits/wallet");
-  await expect(page.getByRole("link", { name: /比赛团队/ })).toHaveAttribute("href", "/me/teams");
+  await expect(page.getByRole("link", { name: /我的卡券/ })).toHaveAttribute("href", "/benefits/wallet");
   await expect(page.getByRole("link", { name: /设置中心/ })).toHaveAttribute("href", "/me/settings");
 
   await page.goto("/me/teams");
@@ -23,24 +22,21 @@ test("T014 我的页 exposes legacy service entries and new prototype routes", a
   await expect(page.getByText("反馈已提交，感谢你的建议。", { exact: true })).toBeVisible();
 });
 
-test("T014 我的页 已精简为入口列表 + 摘要行，移除 3 个杂碎 Section", async ({ page }) => {
+test("T014 我的页 已精简为入口列表，移出的入口统一收敛到应用中心", async ({ page }) => {
   await page.goto("/me");
-
-  const summary = page.getByRole("link", { name: /段经历 · .* 张证书 · .* 份投递 · 关注 .* 家企业/ });
-  await expect(summary).toBeVisible();
-  await expect(summary).toHaveAttribute("href", "/assets");
 
   const entries = [
     ["长期资产", "/assets"],
-    ["我的卡包", "/benefits/wallet"],
+    ["我的卡券", "/benefits/wallet"],
     ["消息通知", "/me/notifications"],
-    ["比赛团队", "/me/teams"],
-    ["账号绑定", "/me/accounts"],
     ["设置中心", "/me/settings"],
-    ["帮助与客服", "/support"],
   ];
   for (const [label, href] of entries) {
     await expect(page.getByRole("link", { name: new RegExp("^" + label + "$"), exact: true })).toHaveAttribute("href", href);
+  }
+
+  for (const label of ["比赛团队", "账号绑定", "帮助与客服"]) {
+    await expect(page.getByRole("link", { name: new RegExp("^" + label + "$"), exact: true })).toHaveCount(0);
   }
 
   await expect(page.getByText("这个账号已经沉淀了什么")).toHaveCount(0);
@@ -49,7 +45,7 @@ test("T014 我的页 已精简为入口列表 + 摘要行，移除 3 个杂碎 S
 
   await expect(page.getByRole("button", { name: "退出登录" })).toBeVisible();
 
-  await summary.click();
+  await page.getByRole("link", { name: /^长期资产$/ }).click();
   await expect(page).toHaveURL(/\/assets$/);
   await expect(page.getByRole("heading", { name: "长期资产", exact: true })).toBeVisible();
 });

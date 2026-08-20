@@ -26,7 +26,9 @@
    运营沙盒等模拟小游戏作为赛事、课程或活动可选模块时的边界、接入协议和首期验收标准。
 8. [`product/06-business-simulation-demo-confirmation.md`](./product/06-business-simulation-demo-confirmation.md)
    面向负责人的“经营决策体验”首期产品定位、范围、风险和确认项。
-9. 与当前任务直接相关的 migration / reference 文档。
+9. [`product/07-sandbox-v2-design-evaluation.md`](./product/07-sandbox-v2-design-evaluation.md)
+   “运营沙盒 V2.0”完整方案的评估与分级：可并入长期愿景 / 需产品决策 / 暂缓，及决策门槛清单。
+10. 与当前任务直接相关的 migration / reference 文档。
 
 不要只看当前页面代码就自行推导产品模型，也不要只因为旧页面已经映射到新路由就认为旧功能完整覆盖。
 

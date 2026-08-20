@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Award, Bell, BriefcaseBusiness, Check, ChevronRight, Download, FileText, GraduationCap, Headphones, HelpCircle, Info, Link2, PenLine, Save, Settings, ShieldCheck, Users, Wallet } from "lucide-react";
+import { Award, Bell, BriefcaseBusiness, Check, ChevronRight, Download, FileText, GraduationCap, HelpCircle, Info, PenLine, Save, Settings, ShieldCheck, Wallet } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, ConfirmDialog, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { workspaceData, resultById } from "../competition-workspace/data";
@@ -44,10 +44,7 @@ export function MyPage() {
     { label: "长期资产", to: "/assets", icon: BriefcaseBusiness },
     { label: "我的卡券", to: "/benefits/wallet", icon: Wallet },
     { label: "消息通知", to: "/me/notifications", icon: Bell, state: { from: "/me" } },
-    { label: "比赛团队", to: "/me/teams", icon: Users },
-    { label: "账号绑定", to: "/me/accounts", icon: Link2 },
     { label: "设置中心", to: "/me/settings", icon: Settings },
-    { label: "帮助与客服", to: "/support", icon: Headphones },
   ];
   const aboutEntries = [
     { label: "用户协议", to: "/legal/user-agreement", icon: FileText },
