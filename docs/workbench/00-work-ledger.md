@@ -41,10 +41,10 @@
 
 | 卡片 | 主题 | 类型 | 状态 | 前置 |
 | --- | --- | --- | --- | --- |
-| F00 | 手机端接入现有响应式报名门户 | 施工 | 待评审 | 无 |
-| F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | 待评审 | F00 协议边界明确后可施工 |
-| F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | 待评审 | 可与 F01 并行 |
-| F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | 待评审 | F01 部分数据模型 |
+| F00 | 手机端接入现有响应式报名门户 | 施工 | PASS | 无 |
+| F01 | 学生主档 + Onboarding / Profile / 问卷 | 施工 | PASS | F00 协议边界明确后可施工 |
+| F02 | 企业可信信息 + 可信凭证完整能力 | 施工 | PASS | 可与 F01 并行 |
+| F03 | 账号 / 简历 / 团队 / 外部 handoff 补齐 | 施工 | PASS | F01 部分数据模型 |
 | F04 | 学力值 / 第三方账号 / 任务 / 主体 / 创域等 | 产品决策 | 待决策 | 可并行讨论，不允许施工线程自行拍板 |
 | T006 | 创赛福利板块补充 | 施工 | 已完成（首页入口 + 页面结构，F04 经济模型占位） | F04 Decision A |
 | T007 | 三创同学会（原赛友风采） | 施工 | 已完成 | 无 |
@@ -118,7 +118,8 @@ PC03 与 PC04 可在 PC01 完成后并行；PC-BD01 在 PC02–PC04 稳定后完
 # F00｜手机端接入现有三创赛响应式报名门户
 
 **类型：施工卡**  
-**状态：待评审**  
+**状态：PASS**  
+**独立复审：`docs/workbench/F00-review.md`，结论 `PASS`**  
 **优先级：P0**
 
 ## 背景
@@ -221,14 +222,16 @@ PC03 与 PC04 可在 PC01 完成后并行；PC-BD01 在 PC02–PC04 稳定后完
 - Build / CI：GitHub Actions `Deploy PC to Cloudflare Pages` run `32014377562` 与 `Deploy Mobile to Cloudflare Pages` run `32014377555` 均完成 dev type-check、Vite build 与 Cloudflare deploy，结论 `success`；
 - Mobile mother flow B 与 PC portal Playwright 已补跨端协议 / callback 回归用例；当前部署 workflows 不执行 Playwright，因此浏览器用例属于已提交的评审证据，仍需独立评审实际执行，不把“测试已写”冒充 browser PASS；
 - 协议与真相源边界详见 `docs/workbench/F00-registration-handoff.md`；
-- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
+- 独立复审：`docs/workbench/F00-review.md`，结论 `PASS`；阻断修复提交 `38245d9d6c20f7395ae81927a93637baa9e8cd46`，真实双服务 cross-app browser 与 CI run `32017114188` 均 success；
+- 当前结论：PASS，可关闭；后续只参加 `R-Final` 功能级总回归。
 
 ---
 
 # F01｜学生主档 + Onboarding / Profile / 问卷
 
 **类型：施工卡**  
-**状态：待评审**  
+**状态：PASS**  
+**独立复审：`docs/workbench/F01-review.md`，结论 `PASS`**  
 **优先级：P0**
 
 ## 问题
@@ -307,15 +310,16 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
 - F00 尚未完成真实跨端 callback，本卡不把“真实报名回流已接通”伪装成完成事实；
 - Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32013927360`，mobile dev type-check、Vite build 与 deploy 为 `success`；
 - 详细字段去向、入口职责与评审动线：`docs/workbench/F01-student-profile-implementation.md`；
-- 评审提交 SHA：待独立评审；
-- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
+- 独立复审：`docs/workbench/F01-review.md`，结论 `PASS`；阻断修复提交 `7da28be0b12e74db148b7149ae4f746dc523833a`，focused browser run `32019232067` success；
+- 当前结论：PASS，可关闭；后续只参加 `R-Final` 功能级总回归。
 
 ---
 
 # F02｜企业可信信息 + 可信凭证完整能力
 
 **类型：施工卡**  
-**状态：待评审**  
+**状态：PASS**  
+**独立复审：`docs/workbench/F002-review.md`，结论 `PASS`**  
 **优先级：P0**
 
 ## A. 企业工商 / 可信基础信息
@@ -379,15 +383,16 @@ Google Drive 原始 Mockplus 中还存在大量真实采集维度：
   - `2ff2631c8d6979c83041f9ac7bcdd72c03f82f46`
 - Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32013871701`，`Type-check and build mobile preview` 与 `Deploy mobile` 均为 `success`；该 run head `0994f12faf0f11eb7b00220b777b0efaa015b7fc` 直接包含 F002 全部实现；
 - 详细施工与评审动线：`docs/workbench/F002-implementation-record.md`；
-- 评审提交 SHA：待独立评审；
-- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
+- 独立复审：`docs/workbench/F002-review.md`，结论 `PASS`；阻断修复提交 `6e79997c359860bf2a545b198f62391fb9b0b09f`，focused regression `1b0243500f576e28880f568d2435819216541d0f`，build/deploy run `32016438710` 与 focused run `32016602993` 均 success；
+- 当前结论：PASS，可关闭；后续只参加 `R-Final` 功能级总回归。
 
 ---
 
 # F03｜账号 / 简历 / 团队 / 外部 handoff 补齐
 
 **类型：施工卡**  
-**状态：待评审**  
+**状态：PASS**  
+**独立复审：`docs/workbench/F003-review.md`，结论 `PASS`**  
 **优先级：P1 / P2**
 
 这张卡只补业务已经清楚的小功能，不在此卡解决 F04 未决模型。
@@ -472,8 +477,8 @@ PC 报名门户已经支持报名期成员添加 / 移除。
 - Build / CI：GitHub Actions `Deploy Mobile to Cloudflare Pages` run `32014523170`，`Type-check and build mobile preview` 与 `Deploy mobile` 均为 `success`；
 - 浏览器专项回归已新增 `apps/mobile/tests/f003.spec.ts`，覆盖退出、结构化教育经历 + `returnTo`、赛事期团队变更申请、资料下载、公众号 / 企微 / 课程分享 handoff；当前部署 workflow 不执行 Playwright，因此“测试已写”不作为 browser PASS；
 - 详细施工与验收边界：`docs/workbench/F003-implementation-record.md`；
-- 评审提交 SHA：待独立评审；
-- 当前结论：实现完成，等待独立功能评审；施工线程不自行标记 `PASS`。
+- 独立复审：`docs/workbench/F003-review.md`，结论 `PASS`；阻断修复 PR #4 / `5ff0e2203a197812c3111e431850350f48d7903a`，focused Chromium run `32021118328`（5 passed）、合并后 Mobile CI run `32021340204` 均 success；
+- 当前结论：PASS，可关闭；后续只参加 `R-Final` 功能级总回归。
 
 ---
 

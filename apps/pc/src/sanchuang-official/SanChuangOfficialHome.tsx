@@ -56,7 +56,6 @@ function Hero() {
     <section className="relative overflow-hidden border-b border-border-subtle bg-surface">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="s3c-dotgrid absolute inset-0 opacity-[0.03]" />
-        <span className="absolute -right-6 top-6 hidden select-none text-[220px] leading-none tracking-tight text-text-primary/[0.04] lg:block">三创</span>
         <div className="absolute -bottom-24 -left-24 size-[360px] rounded-full bg-primary-container blur-3xl" />
         <div className="absolute -right-24 -top-24 size-[320px] rounded-full bg-primary-container blur-3xl" />
       </div>

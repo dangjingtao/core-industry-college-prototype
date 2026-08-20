@@ -11,6 +11,16 @@
   var app = document.getElementById("app");
   var state = { roundIndex: 0, choices: [] };
 
+  function applyTheme() {
+    if (!cfg.theme) return;
+    var s = document.documentElement.style;
+    if (cfg.theme.primary) s.setProperty("--color-primary", cfg.theme.primary);
+    if (cfg.theme.primaryContainer) s.setProperty("--color-primary-container", cfg.theme.primaryContainer);
+    if (cfg.theme.onPrimaryContainer) s.setProperty("--color-on-primary-container", cfg.theme.onPrimaryContainer);
+    if (cfg.theme.accent) s.setProperty("--color-accent", cfg.theme.accent);
+  }
+  applyTheme();
+
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -133,7 +143,7 @@
   function renderRound() {
     var round = cfg.rounds[state.roundIndex];
     var html = headerHtml();
-    html += '<div class="card"><div class="round-meta"><span class="round-badge">第 ' + (state.roundIndex + 1) + cfg.roundUnit + "</span>" + dotsHtml() + "</div>";
+    html += '<div class="card' + (cfg.optionStyle === "rows" ? " options-rows" : "") + '"><div class="round-meta"><span class="round-badge">第 ' + (state.roundIndex + 1) + cfg.roundUnit + "</span>" + dotsHtml() + "</div>";
     html += '<h2 class="round-title">' + round.title + "</h2>";
     html += '<p class="round-scenario">' + round.scenario + "</p>";
     round.options.forEach(function (option, index) {
@@ -161,7 +171,7 @@
     var html = headerHtml();
     html += '<div class="card"><div class="result-head"><div class="result-title">本次经营结果</div>';
     html += "<p class=\"result-note\">" + cfg.intro + "</p></div>";
-    html += '<div class="metrics">';
+    html += '<div class="metrics' + (cfg.metricStyle === "list" ? " is-list" : "") + '">';
     cfg.metrics.forEach(function (m) {
       var value = m.format ? m.format(totals[m.key]) : totals[m.key];
       html += metricHtml(m.label, value);
