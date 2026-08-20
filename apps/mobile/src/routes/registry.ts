@@ -97,7 +97,7 @@ export const routeDefinitions: RouteDefinition[] = [
 export const candidatePrimaryNavigation = [
   { label: "首页", to: "/home" },
   { label: "赛事", to: "/competitions" },
-  { label: "机会", to: "/opportunities" },
   { label: "应用中心", to: "/apps" },
+  { label: "机会", to: "/opportunities" },
   { label: "我的", to: "/me" },
 ] as const;

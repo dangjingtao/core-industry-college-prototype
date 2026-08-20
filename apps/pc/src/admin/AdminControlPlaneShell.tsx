@@ -134,7 +134,10 @@ export function AdminControlPlaneShell({ children }: { children: ReactNode }) {
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-subtle bg-surface lg:flex lg:flex-col">
       <div className="border-b border-border-subtle px-5 py-5"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-control bg-primary text-on-primary"><Database size={20} aria-hidden="true" /></div><div><p className="text-sm font-semibold text-text-primary">核心产业学院</p><p className="mt-0.5 text-xs text-text-tertiary">运营后台</p></div></div></div>
       <nav className="flex-1 overflow-y-auto p-3" aria-label="管理端主导航"><GlobalNavigation /></nav>
-      <div className="border-t border-border-subtle p-3"><Link to="/registration-portal/start" className="flex min-h-11 items-center justify-between rounded-control px-3 text-sm font-medium text-text-secondary hover:bg-surface-subtle"><span>三创赛报名门户</span><ChevronRight size={16} aria-hidden="true" /></Link></div>
+      <div className="border-t border-border-subtle p-3">
+        <Link to="/registration-portal/start" className="flex min-h-11 items-center justify-between rounded-control px-3 text-sm font-medium text-text-secondary hover:bg-surface-subtle"><span>三创赛报名门户</span><ChevronRight size={16} aria-hidden="true" /></Link>
+        <Link data-testid="school-review-entry" to="/review/login" className="mt-1 flex min-h-11 items-center justify-between rounded-control px-3 text-sm font-medium text-text-secondary hover:bg-surface-subtle"><span>学校报名审核</span><ChevronRight size={16} aria-hidden="true" /></Link>
+      </div>
     </aside>
     <div className="lg:pl-64">
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface/95 backdrop-blur">

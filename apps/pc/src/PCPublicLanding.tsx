@@ -109,7 +109,6 @@ export function PCPublicLanding() {
         <section className="mx-auto max-w-[1240px] px-5 py-14 lg:px-8 lg:py-18">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-brand">平台能力</p>
-            <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">不只服务一场比赛</h2>
             <p className="mt-3 text-sm leading-7 text-text-secondary">核心产业学院把赛事作为重要入口，同时连接课程、企业资源、实践机会与长期可信资产。</p>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -124,13 +123,23 @@ export function PCPublicLanding() {
         </section>
 
         <section className="border-y border-border-subtle bg-surface">
-          <div className="mx-auto grid max-w-[1240px] gap-6 px-5 py-10 lg:grid-cols-2 lg:px-8">
+          <div className="mx-auto grid max-w-[1240px] gap-6 px-5 py-10 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
             <Link to="/registration-portal/start" className="group rounded-container border border-border-subtle bg-background p-6 transition hover:shadow-floating">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex size-11 items-center justify-center rounded-control bg-primary-container text-text-brand"><Trophy size={20} /></div>
                   <h2 className="mt-4 text-xl font-semibold">我是参赛学生 / 团队</h2>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">进入三创赛响应式报名门户，完成报名、团队信息与后续赛事流程。</p>
+                </div>
+                <ArrowRight className="mt-1 text-text-tertiary transition group-hover:translate-x-1 group-hover:text-text-brand" />
+              </div>
+            </Link>
+            <Link to="/review/login" className="group rounded-container border border-border-subtle bg-background p-6 transition hover:shadow-floating">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex size-11 items-center justify-center rounded-control bg-surface-subtle text-text-brand"><GraduationCap size={20} /></div>
+                  <h2 className="mt-4 text-xl font-semibold">我是老师</h2>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">进入学校报名审核，处理本授权学校的团队报名与材料真实性审核。</p>
                 </div>
                 <ArrowRight className="mt-1 text-text-tertiary transition group-hover:translate-x-1 group-hover:text-text-brand" />
               </div>

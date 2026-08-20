@@ -58,8 +58,8 @@ export function PageHeader({ title, backTo, right }: { title: string; backTo?: s
 const navItems = [
   { label: "首页", to: "/home", icon: Home },
   { label: "赛事", to: "/competitions", icon: Trophy },
-  { label: "机会", to: "/opportunities", icon: BriefcaseBusiness },
   { label: "应用中心", to: "/apps", icon: LayoutGrid },
+  { label: "机会", to: "/opportunities", icon: BriefcaseBusiness },
   { label: "我的", to: "/me", icon: UserRound },
 ];
 
