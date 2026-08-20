@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, HeartHandshake, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
@@ -55,6 +55,14 @@ const groups: AppGroup[] = [
       { label: "三创同学会", to: "/stories", icon: Users, description: "赛友风采与项目资源" },
       { label: "合作企业", to: "/companies", icon: Building2, description: "企业资源与品牌" },
       { label: "帮助与客服", to: "/support", icon: Headphones, description: "帮助文档与客服" },
+    ],
+  },
+  {
+    title: "社会责任",
+    subtitle: "公益与青年行动",
+    accent: "bg-[#e9f6f1] text-[#247456]",
+    entries: [
+      { label: "公益助力", to: "/welfare", icon: HeartHandshake, description: "观看公益视频，助力社会议题" },
     ],
   },
   {

@@ -1,6 +1,7 @@
 import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/state";
+import { welfareProjectById, welfareProjects } from "../welfare/data";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
   emptyStudentProfile,
@@ -40,6 +41,16 @@ export type ProfileState = StudentProfile;
 
 export type EnrollmentResult = { success: true } | { success: false; reason: string };
 
+export type WelfareParticipationRecord = {
+  id: string;
+  projectId: string;
+  helpedAt: string;
+  /** 激励视频广告播放回执 ID，真实 SDK 接入后回填 */
+  adPlaybackId?: string;
+  /** 奖励发放状态，F04 Decision A 前固定为 pending */
+  rewardStatus: "pending" | "granted" | "failed";
+};
+
 type LongTermAssetsContextValue = {
   learning: LearningRecord[];
   benefitStatuses: Record<string, BenefitStatus>;
@@ -64,6 +75,10 @@ type LongTermAssetsContextValue = {
   useBenefit: (benefitId: string) => void;
   claimCertificate: (certificateId: string) => void;
   claimEducationIdentity: () => void;
+  welfareParticipations: WelfareParticipationRecord[];
+  welfareProjectStats: Record<string, number>;
+  hasHelpedWelfare: (projectId: string) => boolean;
+  helpWelfare: (projectId: string) => { success: true } | { success: false; reason: string };
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
@@ -146,6 +161,8 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [profileSources, setProfileSources] = useState<StudentProfileSources>(() => initialProfileSources(seedStudentProfile));
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>(seedEnrolledCourseIds);
   const [creditBalance, setCreditBalance] = useState<number>(seedCreditBalance);
+  const [welfareParticipations, setWelfareParticipations] = useState<WelfareParticipationRecord[]>([]);
+  const [welfareProjectStats, setWelfareProjectStats] = useState<Record<string, number>>(() => Object.fromEntries(welfareProjects.map(project => [project.id, project.current])));
 
   const benefitStatusFor = useCallback((benefitId: string): BenefitStatus => {
     const benefit = benefitById(benefitId);
@@ -176,6 +193,8 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     setCertificates([]);
     setEnrolledCourseIds([]);
     setCreditBalance(seedCreditBalance);
+    setWelfareParticipations([]);
+    setWelfareProjectStats(Object.fromEntries(welfareProjects.map(project => [project.id, project.current])));
     setResume(emptyResume);
     setProfile(nextProfile);
     setProfileSources(initialProfileSources(nextProfile));
@@ -287,6 +306,26 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       if (!session.loggedIn) return;
       setEducationIdentity(current => current && current.status === "claimable" ? { ...current, status: "claimed", issuedAt: "2026-08-17" } : current);
     },
+    welfareParticipations,
+    welfareProjectStats,
+    hasHelpedWelfare: projectId => welfareParticipations.some(record => record.projectId === projectId),
+    helpWelfare: projectId => {
+      if (!session.loggedIn) return { success: false, reason: "请先登录" };
+      const project = welfareProjectById(projectId);
+      if (!project) return { success: false, reason: "项目不存在" };
+      if (project.status === "ended") return { success: false, reason: "项目已结束" };
+      if (project.status === "upcoming") return { success: false, reason: "项目尚未开始" };
+      if (welfareParticipations.some(record => record.projectId === projectId)) return { success: false, reason: "你已经助力过该项目" };
+      const record: WelfareParticipationRecord = {
+        id: `WELF-${Date.now()}`,
+        projectId,
+        helpedAt: new Date().toISOString(),
+        rewardStatus: "pending",
+      };
+      setWelfareParticipations(current => [...current, record]);
+      setWelfareProjectStats(current => ({ ...current, [projectId]: (current[projectId] ?? project.current) + 1 }));
+      return { success: true };
+    },
     toggleResumeFact: factKey => {
       if (!session.loggedIn) return;
       setResume(current => ({
@@ -310,7 +349,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     updateProfile,
     initializeNewAccount,
     mergeProfileFromSource,
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, session.loggedIn, updateProfile, mergeProfileFromSource]);
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, welfareParticipations, welfareProjectStats, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }

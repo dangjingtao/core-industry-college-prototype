@@ -51,6 +51,7 @@ import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, Profi
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
+import { WelfareAdPage, WelfareDetailPage, WelfareListPage } from "../features/welfare/WelfarePages";
 import {
   CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
@@ -178,6 +179,9 @@ export function App() {
               <Route path="/tasks" element={<TaskCenterPage />} />
               <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
+              <Route path="/welfare" element={<WelfareListPage />} />
+              <Route path="/welfare/:welfareId" element={<WelfareDetailPage />} />
+              <Route path="/welfare/:welfareId/ad" element={<WelfareAdPage />} />
               <Route path="/modules/simulations/:assignmentId" element={<SimulationHostPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

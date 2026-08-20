@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, MessageCircle, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, MessageCircle, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
+import { welfareProjects } from "../welfare/data";
 import { companies, companyById, competitions, competitionById, opportunities, opportunityById, type Competition, type Opportunity } from "./data";
 import { PublicPlatformProvider, usePublicPlatform, type IdentityScenario, type ListKey } from "./state";
 
@@ -277,6 +278,11 @@ export function HomePage() {
   const openCompetitionCount = competitions.filter(item => item.status === "registrationOpen").length;
   const { tasks: newbieTasks } = useNewbieTasks();
   const newbieRemaining = newbieTasks.filter(t => !t.completed).length;
+  const { welfareProjectStats } = useLongTermAssets();
+  const featuredWelfare = useMemo(() => {
+    return welfareProjects.find(p => p.featured && p.status === "active") ?? welfareProjects.find(p => p.status === "active") ?? welfareProjects.find(p => p.status !== "ended");
+  }, []);
+  const featuredWelfareCurrent = featuredWelfare ? (welfareProjectStats[featuredWelfare.id] ?? featuredWelfare.current) : 0;
   const taskEntries: HomeTaskEntry[] = [
     {
       id: "newbie",
@@ -356,6 +362,27 @@ export function HomePage() {
 
       {!guest && !activeCompetition && <Card className="border border-border-subtle"><h2 className="text-base font-semibold text-text-primary">还没有可用赛事工作区</h2><p className="mt-2 text-sm leading-5 text-text-secondary">公共赛事、机会和成长资源仍可正常使用。</p></Card>}
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}
+
+      {featuredWelfare && (
+        <Section title="公益助力" action={<Link to="/welfare" className="text-sm font-medium text-text-brand">更多公益</Link>}>
+          <Link to={`/welfare/${featuredWelfare.id}`} className="block">
+            <Card interactive className="relative overflow-hidden p-0">
+              <div className={`flex items-center gap-4 bg-gradient-to-br ${featuredWelfare.cover} p-4 text-on-primary`}>
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><HeartHandshake size={22} aria-hidden="true" /></span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-semibold">{featuredWelfare.title}</h3>
+                  <p className="mt-1 line-clamp-1 text-xs opacity-90">{featuredWelfare.summary}</p>
+                </div>
+                <ChevronRight size={20} className="shrink-0 opacity-80" aria-hidden="true" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5 text-xs text-text-secondary">
+                <span>已助力 {featuredWelfareCurrent.toLocaleString("zh-CN")} / 目标 {featuredWelfare.goal.toLocaleString("zh-CN")} 次</span>
+                <span className="font-medium text-text-brand">去助力</span>
+              </div>
+            </Card>
+          </Link>
+        </Section>
+      )}
 
       <Section title="热门赛事" action={<Link to="/competitions" className="text-sm font-medium text-text-brand">查看全部</Link>}><div className="flex snap-x gap-3 overflow-x-auto pb-1">{competitions.slice(0,2).map(item => { const [label, tone] = competitionStatus(item); return <Link to={`/competitions/${item.id}`} key={item.id} className="w-[82%] shrink-0 snap-start"><Card interactive className="h-full p-4"><StatusTag tone={tone}>{label}</StatusTag><h3 className="mt-3 line-clamp-2 text-base font-semibold leading-6 text-text-primary">{item.name}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-text-secondary">{item.summary}</p></Card></Link>; })}</div></Section>
 
