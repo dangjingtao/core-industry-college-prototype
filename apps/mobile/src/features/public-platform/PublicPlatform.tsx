@@ -271,7 +271,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const guest = useGuest();
   const view = usePrototypeView();
-  const { identities, applications } = usePublicPlatform();
+  const { identities, applications, learningPoints } = usePublicPlatform();
   const activeIdentity = identities.find(identity => identity.identityStatus === "active");
   const activeCompetition = guest ? undefined : competitionById(activeIdentity?.competitionId);
   const openOpportunityCount = opportunities.filter(item => item.status === "open").length;
@@ -334,14 +334,14 @@ export function HomePage() {
     { label: "合作企业", description: "发现品牌与机会", to: "/companies", icon: Building2 },
     { label: "三创同学会", description: "赛友风采与项目资源", to: "/stories", icon: Users },
   ];
-  return <PublicShell showNavigation={true}><header className="flex items-center justify-between px-4 pb-4 pt-6"><div><div className="flex items-center gap-2"><p className="text-xs font-medium text-text-brand">核心产业学院</p>{guest && <span className="text-xs text-text-tertiary">未登录</span>}</div><h1 className="mt-1 text-xl font-semibold text-text-primary">{guest ? "你好，欢迎来看看" : "嗨，今天也一起向前"}</h1></div><button aria-label="消息通知" onClick={() => {
+  return <PublicShell showNavigation={true}><header className="flex items-center justify-between px-4 pb-4 pt-6"><div><div className="flex items-center gap-2"><p className="text-xs font-medium text-text-brand">核心产业学院</p>{guest && <span className="text-xs text-text-tertiary">未登录</span>}</div><h1 className="mt-1 text-xl font-semibold text-text-primary">{guest ? "你好，欢迎来看看" : "嗨，今天也一起向前"}</h1></div><div className="flex items-center gap-2">{!guest && <button type="button" aria-label="查看学力值与创赛福利" title="奖励规则待产品确认，当前为演示值" onClick={() => navigate("/benefits")} className="flex h-11 items-center gap-1.5 rounded-full bg-surface px-3 text-sm font-medium text-text-primary transition active:bg-surface-pressed"><Sparkles size={16} className="text-text-brand" aria-hidden="true" /><span>学力值 {learningPoints.toLocaleString("zh-CN")}</span></button>}<button aria-label="消息通知" onClick={() => {
           if (guest) {
             const returnTo = encodeURIComponent("/me/notifications?from=/home");
             navigate(`/auth/login?returnTo=${returnTo}`);
           } else {
             navigate("/me/notifications", { state: { from: "/home" } });
           }
-        }} className="relative flex size-11 items-center justify-center rounded-full bg-surface text-text-primary"><Bell size={21} aria-hidden="true" /><span className="absolute right-2 top-2 size-2 rounded-full bg-danger" /></button></header>
+        }} className="relative flex size-11 items-center justify-center rounded-full bg-surface text-text-primary"><Bell size={21} aria-hidden="true" /><span className="absolute right-2 top-2 size-2 rounded-full bg-danger" /></button></div></header>
     {view !== "ready" ? <div className="px-4"><StateBlock state={view} /></div> : <div className="space-y-7 px-4">
       <section className="overflow-hidden rounded-[20px] bg-gradient-to-br from-primary to-[#7569ff] p-5 text-on-primary shadow-floating"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium opacity-80">{activeCompetition ? "我的赛事" : "正在报名"}</p><h2 className="mt-2 text-xl font-semibold leading-7">{activeCompetition?.name ?? competitions[0].name}</h2><p className="mt-2 text-sm opacity-85">{activeCompetition ? "赛事身份有效，继续推进你的参赛项目" : "发现适合你的赛事，开启一段新经历"}</p></div><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><Trophy size={22} aria-hidden="true" /></span></div><div className="mt-5 flex gap-2">{activeCompetition ? <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate(`/competitions/${activeCompetition.id}/workspace`)}>进入当前赛事</button> : <button className="min-h-touch flex-1 rounded-control bg-white px-4 text-sm font-semibold text-text-brand" onClick={() => navigate("/competitions")}>发现比赛</button>}<button className="flex min-h-touch items-center justify-center rounded-control bg-white/15 px-4 text-sm font-medium" onClick={() => navigate("/competitions")}>全部赛事<ChevronRight size={16} aria-hidden="true" /></button></div></section>
 

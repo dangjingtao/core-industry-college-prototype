@@ -28,6 +28,8 @@ export type PublicPlatformState = {
   identityMode: IdentityMode;
   listView: ListViewState;
   listScroll: Record<ListKey, number>;
+  /** 学力值数值：F04 Decision A 占位展示，待经济模型确认后替换为真实来源 */
+  learningPoints: number;
   setIdentityMode: (mode: "multi" | "none") => void;
   login: () => void;
   registerAccount: () => void;
@@ -73,6 +75,8 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
   const [identityMode, setIdentityModeValue] = useState<IdentityMode>("multi");
   const [listView, setListView] = useState(initialListView);
   const [listScroll, setListScrollState] = useState<Record<ListKey, number>>({ competitions: 0, opportunities: 0, companies: 0 });
+  // 学力值数值为 F04 Decision A 占位展示，待经济模型确认后替换为真实来源
+  const [learningPoints] = useState<number>(1250);
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get("guest") === "1") setSession({ loggedIn: false, profileComplete: false });
@@ -122,7 +126,7 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
   const guardedIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => { if (session.loggedIn) setCompetitionIdentityScenario(competitionId, scenario); }, [session.loggedIn, setCompetitionIdentityScenario]);
 
   const value = useMemo<PublicPlatformState>(() => ({
-    session, applications, followedCompanies, identities, identityMode, listView, listScroll,
+    session, applications, followedCompanies, identities, identityMode, listView, listScroll, learningPoints,
     setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest,
     setCompetitionIdentityScenario: guardedIdentityScenario,
     upsertRegistrationPending,
@@ -131,7 +135,7 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
     toggleFollow: guardedToggleFollow,
     updateListView,
     setListScroll,
-  }), [session, applications, followedCompanies, identities, identityMode, listView, listScroll, setIdentityMode, login, continueAsGuest, guardedIdentityScenario, upsertRegistrationPending, guardedSubmitApplication, setApplicationStatus, guardedToggleFollow, updateListView, setListScroll]);
+  }), [session, applications, followedCompanies, identities, identityMode, listView, listScroll, learningPoints, setIdentityMode, login, continueAsGuest, guardedIdentityScenario, upsertRegistrationPending, guardedSubmitApplication, setApplicationStatus, guardedToggleFollow, updateListView, setListScroll]);
 
   return <PublicPlatformContext.Provider value={value}>{children}</PublicPlatformContext.Provider>;
 }
