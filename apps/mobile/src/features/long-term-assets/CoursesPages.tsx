@@ -13,6 +13,7 @@ const statusLabel = (status: "notStarted" | "inProgress" | "completed") => statu
 
 const categoryTabs = [
   { value: "all" as const, label: "全部" },
+  { value: "onboarding" as const, label: "新手必修" },
   { value: "opc" as const, label: "OPC" },
   { value: "beauty-retail" as const, label: "美妆新零售" },
   { value: "rural-revitalization" as const, label: "乡村振兴" },
@@ -52,6 +53,54 @@ function CourseValueTag({ course, compact = false }: { course: Course; compact?:
 function CategoryTag({ category }: { category: Exclude<CourseCategory, "all"> }) {
   const label = categoryTabs.find(item => item.value === category)?.label ?? category;
   return <span className="rounded-full bg-surface px-2 py-1 text-xs text-text-secondary">{label}</span>;
+}
+
+function OnboardingCourseRow({ course }: { course: Course }) {
+  const { learningFor, enrolledFor } = useLongTermAssets();
+  const navigate = useNavigate();
+  const record = learningFor(course.id);
+  const enrolled = enrolledFor(course.id);
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(`/courses/${course.id}`)}
+      className="flex w-full items-center gap-4 rounded-container border border-border-subtle bg-surface p-3 text-left transition active:bg-surface-pressed"
+    >
+      <CourseCover course={course} className="h-[72px] w-[72px] shrink-0" />
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm font-semibold text-text-primary">{course.title}</h3>
+          {enrolled && record.status !== "notStarted" && <StatusTag tone={record.status === "completed" ? "success" : "info"}>{statusLabel(record.status)}</StatusTag>}
+        </div>
+        <p className="line-clamp-1 text-xs leading-5 text-text-secondary">{course.summary}</p>
+        {enrolled ? <ProgressBar value={record.progress} /> : <p className="text-xs text-text-tertiary">{course.duration} · {course.chapterCount} 节</p>}
+      </div>
+    </button>
+  );
+}
+
+function OnboardingCoursesSection() {
+  const navigate = useNavigate();
+  const loggedIn = useAccountLoggedIn();
+  const onboardingCourses = courses.filter(course => course.category === "onboarding");
+  return (
+    <section aria-labelledby="courses-onboarding-title" className="space-y-3">
+      <div className="flex min-h-6 items-center justify-between gap-3">
+        <h2 id="courses-onboarding-title" className="text-lg font-semibold text-text-primary">新手必修</h2>
+        <Link to="/courses/center" className="text-sm font-medium text-text-brand">查看全部</Link>
+      </div>
+      <p className="text-sm text-text-secondary">首次使用建议先完成，帮你快速上手参赛与就业主线</p>
+      <div className="space-y-3">
+        {onboardingCourses.map(course => <OnboardingCourseRow key={course.id} course={course} />)}
+      </div>
+      {!loggedIn && (
+        <Card>
+          <p className="text-sm text-text-secondary">登录后可保存新手课程学习进度，并解锁后续推荐课程。</p>
+          <Button className="mt-3 w-full" onClick={() => navigate("/auth/login?returnTo=/courses")}>登录后学习</Button>
+        </Card>
+      )}
+    </section>
+  );
 }
 
 export function CoursesPage() {
@@ -97,6 +146,8 @@ export function CoursesPage() {
       <PageHeader title="学院" subtitle="系统学习电商与创新创业能力，成果长期沉淀" backTo="/home" />
       <div className="space-y-5 px-4 py-5">
         <Carousel items={carouselItems} autoPlay interval={5000} size="lg" />
+
+        <OnboardingCoursesSection />
 
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text-primary">课程中心</h2>

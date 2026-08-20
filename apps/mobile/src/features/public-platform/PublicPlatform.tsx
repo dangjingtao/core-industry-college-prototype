@@ -1,149 +1,162 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Check, ChevronRight, ClipboardList, Gift, MessageCircle, Sparkles, Trophy, Users } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, MessageCircle, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
-import { scenarios } from "../../mock/scenarios";
-import type { CompetitionIdentityState } from "../../state/model";
+import { useLongTermAssets } from "../long-term-assets/store";
 import { companies, companyById, competitions, competitionById, opportunities, opportunityById, type Competition, type Opportunity } from "./data";
+import { PublicPlatformProvider, usePublicPlatform, type IdentityScenario, type ListKey } from "./state";
 
-type ApplicationRecord = { opportunityId: string; status: "submitted" | "statusUnknown" };
-type IdentityMode = "multi" | "none" | "runtime";
-type SessionState = { loggedIn: boolean; profileComplete: boolean };
-type ListViewState = {
-  competitionKeywords: string[];
-  competitionStatus: string;
-  opportunityKeywords: string[];
-  opportunityMode: string;
-  companyKeywords: string[];
-  companyIndustry: string;
-};
+export { PublicPlatformProvider, usePublicPlatform };
+export type { IdentityScenario };
+
 const matchesKeywords = (haystack: string, keywords: readonly string[]) => keywords.every(term => haystack.includes(term));
 const companyIndustries = Array.from(new Set(companies.map(item => item.industry)));
-type ListKey = "competitions" | "opportunities" | "companies";
-export type IdentityScenario = "none" | "pending" | "rejected" | "active" | "revoked";
 
-type PublicPlatformState = {
-  session: SessionState;
-  applications: ApplicationRecord[];
-  followedCompanies: string[];
-  identities: CompetitionIdentityState[];
-  identityMode: IdentityMode;
-  listView: ListViewState;
-  listScroll: Record<ListKey, number>;
-  setIdentityMode: (mode: "multi" | "none") => void;
-  login: () => void;
-  registerAccount: () => void;
-  completeProfile: () => void;
-  logout: () => void;
-  continueAsGuest: () => void;
-  setCompetitionIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
-  upsertRegistrationPending: (competitionId: string) => void;
-  submitApplication: (opportunityId: string) => void;
-  setApplicationStatus: (opportunityId: string, status: ApplicationRecord["status"]) => void;
-  toggleFollow: (companyId: string) => void;
-  updateListView: (patch: Partial<ListViewState>) => void;
-  setListScroll: (key: ListKey, value: number) => void;
+const NEWBIE_COURSE_IDS = ["app-guide", "ai-tools-quickstart", "first-competition-guide"];
+const NEWBIE_BENEFIT_IDS = ["benefit-tencent-map-ride", "benefit-taobao-flash-takeout", "benefit-luckin-coffee", "benefit-cotti-coffee", "benefit-campus-video"];
+
+function todayKey() {
+  return new Date().toLocaleDateString("zh-CN");
+}
+
+function useTodayCheckIn() {
+  const [checkedIn, setCheckedIn] = useState(() => {
+    try {
+      return typeof localStorage !== "undefined" && localStorage.getItem("home-newbie-checkin-date") === todayKey();
+    } catch {
+      return false;
+    }
+  });
+  const checkIn = () => {
+    try {
+      localStorage.setItem("home-newbie-checkin-date", todayKey());
+    } catch {
+      // ignore
+    }
+    setCheckedIn(true);
+  };
+  return { checkedIn, checkIn };
+}
+
+type NewbieTask = {
+  id: string;
+  label: string;
+  description: string;
+  icon: ReactNode;
+  iconClass: string;
+  to: string;
+  action: string;
+  completed: boolean;
+  onAction?: () => void;
 };
 
-const PublicPlatformContext = createContext<PublicPlatformState | null>(null);
+function useNewbieTasks() {
+  const { session, identities } = usePublicPlatform();
+  const { learning, benefitStatusFor } = useLongTermAssets();
+  const { checkedIn, checkIn } = useTodayCheckIn();
 
-function syncCompetitionStatus(identity: CompetitionIdentityState): CompetitionIdentityState {
-  const competition = competitionById(identity.competitionId);
-  return competition ? { ...identity, competitionStatus: competition.status } : identity;
+  const tasks = useMemo<NewbieTask[]>(() => {
+    const loggedIn = session.loggedIn;
+    return [
+      {
+        id: "profile",
+        label: "完善学生资料",
+        description: "填写学校、专业等基础信息，解锁更多能力",
+        icon: <UserCheck size={18} aria-hidden="true" />,
+        iconClass: "bg-[#fff2e8] text-[#c45b1b]",
+        to: "/me/profile",
+        action: "去完善",
+        completed: loggedIn && session.profileComplete,
+      },
+      {
+        id: "checkin",
+        label: "每日打卡",
+        description: "登录 App 完成今日打卡，养成参赛学习习惯",
+        icon: <CalendarCheck size={18} aria-hidden="true" />,
+        iconClass: "bg-[#e9f6f1] text-[#247456]",
+        to: "/home",
+        action: "打卡",
+        completed: checkedIn,
+        onAction: checkIn,
+      },
+      {
+        id: "newbie-course",
+        label: "学习新手课程",
+        description: "5 分钟了解 App 使用、AI 工具与创赛报名",
+        icon: <BookOpen size={18} aria-hidden="true" />,
+        iconClass: "bg-[#eaf5ff] text-[#2879d0]",
+        to: "/courses",
+        action: "去学习",
+        completed: loggedIn && NEWBIE_COURSE_IDS.some(id => {
+          const record = learning.find(item => item.courseId === id);
+          return record ? record.progress > 0 : false;
+        }),
+      },
+      {
+        id: "benefit",
+        label: "领取创赛福利",
+        description: "领取咖啡券、出行券等学生专属福利",
+        icon: <Gift size={18} aria-hidden="true" />,
+        iconClass: "bg-[#fff7df] text-[#946218]",
+        to: "/benefits",
+        action: "去领取",
+        completed: loggedIn && NEWBIE_BENEFIT_IDS.some(id => ["claimed", "used"].includes(benefitStatusFor(id))),
+      },
+      {
+        id: "competition",
+        label: "发现一场赛事",
+        description: "浏览正在报名的赛事，开启你的创赛之旅",
+        icon: <Trophy size={18} aria-hidden="true" />,
+        iconClass: "bg-[#f3efff] text-[#6f4bc2]",
+        to: "/competitions",
+        action: "去发现",
+        completed: loggedIn && identities.length > 0,
+      },
+    ];
+  }, [session, identities, learning, benefitStatusFor, checkedIn, checkIn]);
+
+  const allCompleted = useMemo(() => tasks.every(task => task.completed), [tasks]);
+  return { tasks, allCompleted };
 }
 
-function multiIdentitySeed() {
-  return scenarios.multiCompetitionAccount.competitions.identities.map(syncCompetitionStatus);
-}
+function HomeNewbieTaskZone() {
+  const navigate = useNavigate();
+  const { tasks, allCompleted } = useNewbieTasks();
+  if (allCompleted) return null;
+  const completedCount = tasks.filter(t => t.completed).length;
 
-const initialListView: ListViewState = {
-  competitionKeywords: [],
-  competitionStatus: "all",
-  opportunityKeywords: [],
-  opportunityMode: "all",
-  companyKeywords: [],
-  companyIndustry: "all",
-};
-
-export function PublicPlatformProvider({ children }: { children: ReactNode }) {
-  const location = useLocation();
-  const enteredAsGuest = new URLSearchParams(location.search).get("guest") === "1";
-  const [session, setSession] = useState<SessionState>(() => ({ loggedIn: !enteredAsGuest, profileComplete: !enteredAsGuest }));
-  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
-  const [followedCompanies, setFollowedCompanies] = useState<string[]>(["northstar-beauty"]);
-  const [identities, setIdentities] = useState<CompetitionIdentityState[]>(multiIdentitySeed);
-  const [identityMode, setIdentityModeValue] = useState<IdentityMode>("multi");
-  const [listView, setListView] = useState(initialListView);
-  const [listScroll, setListScrollState] = useState<Record<ListKey, number>>({ competitions: 0, opportunities: 0, companies: 0 });
-
-  useEffect(() => {
-    if (new URLSearchParams(location.search).get("guest") === "1") setSession({ loggedIn: false, profileComplete: false });
-  }, [location.search]);
-
-  const setIdentityMode = useCallback((mode: "multi" | "none") => {
-    setIdentityModeValue(mode);
-    setIdentities(mode === "multi" ? multiIdentitySeed() : []);
-  }, []);
-  const login = useCallback(() => setSession({ loggedIn: true, profileComplete: true }), []);
-  const registerAccount = useCallback(() => {
-    setSession({ loggedIn: true, profileComplete: false });
-    setApplications([]);
-    setFollowedCompanies([]);
-    setIdentities([]);
-    setIdentityModeValue("runtime");
-  }, []);
-  const completeProfile = useCallback(() => setSession(current => current.loggedIn ? { ...current, profileComplete: true } : current), []);
-  const logout = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
-  const continueAsGuest = useCallback(() => setSession({ loggedIn: false, profileComplete: false }), []);
-  const setCompetitionIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => {
-    setIdentities(current => {
-      if (scenario === "none") return current.filter(identity => identity.competitionId !== competitionId);
-      const competition = competitionById(competitionId);
-      const existing = current.find(identity => identity.competitionId === competitionId);
-      const next: CompetitionIdentityState = {
-        competitionId,
-        competitionStatus: competition?.status ?? existing?.competitionStatus ?? "registrationOpen",
-        identityStatus: scenario === "active" ? "active" : scenario === "pending" ? "pending" : scenario === "rejected" ? "rejected" : "revoked",
-        registrationStatus: scenario === "active" ? "approved" : scenario === "pending" ? "pending" : scenario === "rejected" ? "rejected" : "approved",
-      };
-      return existing ? current.map(identity => identity.competitionId === competitionId ? next : identity) : [...current, next];
-    });
-    setIdentityModeValue("runtime");
-  }, []);
-  const upsertRegistrationPending = useCallback((competitionId: string) => setCompetitionIdentityScenario(competitionId, "pending"), [setCompetitionIdentityScenario]);
-  const submitApplication = useCallback((opportunityId: string) => {
-    setApplications(records => records.some(record => record.opportunityId === opportunityId) ? records : [...records, { opportunityId, status: "submitted" }]);
-  }, []);
-  const setApplicationStatus = useCallback((opportunityId: string, status: ApplicationRecord["status"]) => setApplications(records => records.map(record => record.opportunityId === opportunityId ? { ...record, status } : record)), []);
-  const toggleFollow = useCallback((companyId: string) => setFollowedCompanies(ids => ids.includes(companyId) ? ids.filter(id => id !== companyId) : [...ids, companyId]), []);
-  const updateListView = useCallback((patch: Partial<ListViewState>) => setListView(current => ({ ...current, ...patch })), []);
-  const setListScroll = useCallback((key: ListKey, value: number) => setListScrollState(current => current[key] === value ? current : { ...current, [key]: value }), []);
-
-  const guardedSubmitApplication = useCallback((opportunityId: string) => { if (session.loggedIn) submitApplication(opportunityId); }, [session.loggedIn, submitApplication]);
-  const guardedToggleFollow = useCallback((companyId: string) => { if (session.loggedIn) toggleFollow(companyId); }, [session.loggedIn, toggleFollow]);
-  const guardedIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => { if (session.loggedIn) setCompetitionIdentityScenario(competitionId, scenario); }, [session.loggedIn, setCompetitionIdentityScenario]);
-
-  const value = useMemo<PublicPlatformState>(() => ({
-    session, applications, followedCompanies, identities, identityMode, listView, listScroll,
-    setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest,
-    setCompetitionIdentityScenario: guardedIdentityScenario,
-    upsertRegistrationPending,
-    submitApplication: guardedSubmitApplication,
-    setApplicationStatus,
-    toggleFollow: guardedToggleFollow,
-    updateListView,
-    setListScroll,
-  }), [session, applications, followedCompanies, identities, identityMode, listView, listScroll, setIdentityMode, login, continueAsGuest, guardedIdentityScenario, upsertRegistrationPending, guardedSubmitApplication, setApplicationStatus, guardedToggleFollow, updateListView, setListScroll]);
-
-  return <PublicPlatformContext.Provider value={value}>{children}</PublicPlatformContext.Provider>;
-}
-
-export function usePublicPlatform() {
-  const value = useContext(PublicPlatformContext);
-  if (!value) throw new Error("PublicPlatformProvider missing");
-  return value;
+  return (
+    <section aria-labelledby="home-newbie-title" className="space-y-3">
+      <div className="flex min-h-6 items-center justify-between gap-3">
+        <h2 id="home-newbie-title" className="text-base font-semibold text-text-primary">新手任务</h2>
+        <span className="text-sm font-medium text-text-brand">{completedCount}/{tasks.length}</span>
+      </div>
+      <p className="text-sm text-text-secondary">完成新手任务，快速熟悉平台核心能力</p>
+      <div className="space-y-2">
+        {tasks.map(task => (
+          <button
+            key={task.id}
+            type="button"
+            disabled={task.completed}
+            onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
+            className={`flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition ${task.completed ? "opacity-70" : "active:bg-surface-pressed"}`}
+          >
+            <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2">
+                <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
+                {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
+            </span>
+            <span className={`shrink-0 text-xs font-medium ${task.completed ? "text-text-tertiary" : "text-text-brand"}`}>{task.completed ? "已完成" : task.action}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function usePrototypeView() {
@@ -294,6 +307,7 @@ export function HomePage() {
       iconClass: "bg-[#f3efff] text-[#6f4bc2]",
     },
   ];
+  const { allCompleted: newbieTasksCompleted } = useNewbieTasks();
   const growthResources = [
     { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
     { label: "创赛福利", description: "学力值、权益与兑换", to: "/benefits", icon: Gift },
@@ -323,7 +337,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <HomeTaskZone entries={taskEntries} />
+      {newbieTasksCompleted ? <HomeTaskZone entries={taskEntries} /> : <HomeNewbieTaskZone />}
 
       {!guest && !activeCompetition && <Card className="border border-border-subtle"><h2 className="text-base font-semibold text-text-primary">还没有可用赛事工作区</h2><p className="mt-2 text-sm leading-5 text-text-secondary">公共赛事、机会和成长资源仍可正常使用。</p></Card>}
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}

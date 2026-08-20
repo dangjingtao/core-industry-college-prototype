@@ -10,7 +10,8 @@ export type CourseCategory =
   | "rural-revitalization"
   | "ai-ecommerce"
   | "data-analytics"
-  | "business-project";
+  | "business-project"
+  | "onboarding";
 
 export type CourseEntitlement = "free" | "creditRequired" | "benefitRequired";
 
@@ -185,6 +186,48 @@ export const courses: Course[] = [
     category: "ai-ecommerce",
     cover: "from-[#06b6d4] to-[#3b82f6]",
   },
+  {
+    id: "app-guide",
+    title: "App 使用指南",
+    summary: "5 分钟带你熟悉首页、赛事、机会、学院与个人中心的核心动线。",
+    description: "面向首次使用核心产业学院 App 的学生，快速介绍首页任务专区、赛事发现与报名、机会投递、学院学习、创赛福利与个人资产等一级能力，帮助你建立清晰的产品地图。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "3 课时",
+    chapterCount: 3,
+    lessons: ["认识首页", "参赛与就业主线", "学院与权益"],
+    entitlement: "free",
+    cost: 0,
+    category: "onboarding",
+    cover: "from-[#f59e0b] to-[#f97316]",
+  },
+  {
+    id: "ai-tools-quickstart",
+    title: "AI 工具快速入门",
+    summary: "学会用 AI 辅助调研、文案、数据分析与路演准备。",
+    description: "从学生真实参赛场景出发，演示如何用 AI 工具快速完成用户调研、商品文案、数据洞察与路演 PPT 准备，重点在于把 AI 当成协作助手，而不是替代思考。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "4 课时",
+    chapterCount: 4,
+    lessons: ["AI 能帮你做什么", "调研与文案", "数据与可视化", "路演材料准备"],
+    entitlement: "free",
+    cost: 0,
+    category: "onboarding",
+    cover: "from-[#8b5cf6] to-[#ec4899]",
+  },
+  {
+    id: "first-competition-guide",
+    title: "如何报名我的第一场创赛",
+    summary: "从选赛、组队到提交报名的完整流程与常见注意事项。",
+    description: "针对第一次参加创新创业比赛的学生，系统讲解如何选择合适的赛事、准备报名材料、组建团队、完成学校审核，以及报名后如何进入赛事工作区继续推进项目。",
+    source: { type: "platform", label: "平台公共课程" },
+    duration: "3 课时",
+    chapterCount: 3,
+    lessons: ["选赛与组队", "报名与审核", "进入赛事工作区"],
+    entitlement: "free",
+    cost: 0,
+    category: "onboarding",
+    cover: "from-[#10b981] to-[#06b6d4]",
+  },
 ];
 
 export const benefits: Benefit[] = [
@@ -211,6 +254,34 @@ export const benefits: Benefit[] = [
     expiresAt: "2026-09-15",
     initialStatus: "eligible",
     externalUrl: "https://s.click.taobao.com/t?e=m%3D2%26s%3Dflash-takeout-coupon",
+    claimHint: "后台已绑定手机号，点击即可跳转 H5 领取。",
+    bindPhone: true,
+    couponValidityDays: 7,
+    dailyClaimLimit: 1,
+  },
+  {
+    id: "benefit-luckin-coffee",
+    title: "瑞幸咖啡饮品券",
+    summary: "瑞幸咖啡合作饮品券，领取后可在瑞幸咖啡 App/小程序使用。",
+    source: { type: "platform", label: "瑞幸咖啡" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-30",
+    initialStatus: "eligible",
+    externalUrl: "https://www.luckincoffee.com/coupon?student=2026",
+    claimHint: "后台已绑定手机号，点击即可跳转 H5 领取。",
+    bindPhone: true,
+    couponValidityDays: 7,
+    dailyClaimLimit: 1,
+  },
+  {
+    id: "benefit-cotti-coffee",
+    title: "库迪咖啡饮品券",
+    summary: "库迪咖啡合作饮品券，领取后可在库迪咖啡 App/小程序使用。",
+    source: { type: "platform", label: "库迪咖啡" },
+    reason: "平台公共学生福利，登录后即可领取。",
+    expiresAt: "2026-09-30",
+    initialStatus: "eligible",
+    externalUrl: "https://www.cotticoffee.com/coupon?student=2026",
     claimHint: "后台已绑定手机号，点击即可跳转 H5 领取。",
     bindPhone: true,
     couponValidityDays: 7,

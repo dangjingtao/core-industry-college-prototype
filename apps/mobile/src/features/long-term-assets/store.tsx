@@ -1,6 +1,6 @@
 import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { usePublicPlatform } from "../public-platform/PublicPlatform";
+import { usePublicPlatform } from "../public-platform/state";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
   emptyStudentProfile,
