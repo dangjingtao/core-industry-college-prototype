@@ -6,6 +6,7 @@ import {
   CompaniesPage,
   CompetitionsPage,
   HomePage,
+  NewbieTasksPage,
   OpportunitiesPage,
   OpportunityDetailPage,
   PublicPlatformProvider,
@@ -175,6 +176,7 @@ export function App() {
               <Route path="/legal/privacy" element={<LegalPage kind="privacy" />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/tasks" element={<TaskCenterPage />} />
+              <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
               <Route path="/modules/simulations/:assignmentId" element={<SimulationHostPage />} />
               <Route path="*" element={<NotFoundPage />} />

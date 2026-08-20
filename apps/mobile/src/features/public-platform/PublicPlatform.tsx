@@ -14,7 +14,7 @@ export type { IdentityScenario };
 const matchesKeywords = (haystack: string, keywords: readonly string[]) => keywords.every(term => haystack.includes(term));
 const companyIndustries = Array.from(new Set(companies.map(item => item.industry)));
 
-const NEWBIE_COURSE_IDS = ["app-guide", "ai-tools-quickstart", "first-competition-guide"];
+const NEWBIE_COURSE_IDS = ["newbie-essential"];
 const NEWBIE_BENEFIT_IDS = ["benefit-tencent-map-ride", "benefit-taobao-flash-takeout", "benefit-luckin-coffee", "benefit-cotti-coffee", "benefit-campus-video"];
 
 function todayKey() {
@@ -121,41 +121,55 @@ function useNewbieTasks() {
   return { tasks, allCompleted };
 }
 
-function HomeNewbieTaskZone() {
+export function NewbieTasksPage() {
   const navigate = useNavigate();
   const { tasks, allCompleted } = useNewbieTasks();
-  if (allCompleted) return null;
   const completedCount = tasks.filter(t => t.completed).length;
 
   return (
-    <section aria-labelledby="home-newbie-title" className="space-y-3">
-      <div className="flex min-h-6 items-center justify-between gap-3">
-        <h2 id="home-newbie-title" className="text-base font-semibold text-text-primary">新手任务</h2>
-        <span className="text-sm font-medium text-text-brand">{completedCount}/{tasks.length}</span>
+    <PublicShell showNavigation={false}>
+      <PageHeader title="新手任务" subtitle="完成 5 项引导，快速熟悉平台核心能力" backTo="/home" />
+      <div className="space-y-4 px-4 py-5">
+        {allCompleted ? (
+          <Card className="py-8 text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-bg text-success-text">
+              <Check size={28} aria-hidden="true" />
+            </div>
+            <h2 className="mt-4 text-base font-semibold text-text-primary">新手任务已全部完成</h2>
+            <p className="mt-2 text-sm text-text-secondary">你已经熟悉了平台核心能力，去探索更多赛事与机会吧。</p>
+            <Button className="mt-5" onClick={() => navigate("/home")}>返回首页</Button>
+          </Card>
+        ) : (
+          <>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">进度</span>
+              <span className="font-medium text-text-brand">{completedCount}/{tasks.length}</span>
+            </div>
+            <div className="space-y-2">
+              {tasks.map(task => (
+                <button
+                  key={task.id}
+                  type="button"
+                  disabled={task.completed}
+                  onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
+                  className={`flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition ${task.completed ? "opacity-70" : "active:bg-surface-pressed"}`}
+                >
+                  <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
+                      {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
+                  </span>
+                  <span className={`shrink-0 text-xs font-medium ${task.completed ? "text-text-tertiary" : "text-text-brand"}`}>{task.completed ? "已完成" : task.action}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
-      <p className="text-sm text-text-secondary">完成新手任务，快速熟悉平台核心能力</p>
-      <div className="space-y-2">
-        {tasks.map(task => (
-          <button
-            key={task.id}
-            type="button"
-            disabled={task.completed}
-            onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
-            className={`flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition ${task.completed ? "opacity-70" : "active:bg-surface-pressed"}`}
-          >
-            <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
-                {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
-            </span>
-            <span className={`shrink-0 text-xs font-medium ${task.completed ? "text-text-tertiary" : "text-text-brand"}`}>{task.completed ? "已完成" : task.action}</span>
-          </button>
-        ))}
-      </div>
-    </section>
+    </PublicShell>
   );
 }
 
@@ -261,18 +275,20 @@ export function HomePage() {
   const activeCompetition = guest ? undefined : competitionById(activeIdentity?.competitionId);
   const openOpportunityCount = opportunities.filter(item => item.status === "open").length;
   const openCompetitionCount = competitions.filter(item => item.status === "registrationOpen").length;
+  const { tasks: newbieTasks } = useNewbieTasks();
+  const newbieRemaining = newbieTasks.filter(t => !t.completed).length;
   const taskEntries: HomeTaskEntry[] = [
-    ...(activeCompetition ? [{
-      id: "workshop",
-      source: "创赛工坊",
-      title: "继续赛事内任务",
-      detail: `${activeCompetition.name} · 创赛工坊`,
-      status: "赛事内",
-      tone: "neutral" as const,
-      to: `/competitions/${activeCompetition.id}/workspace/workshop`,
+    {
+      id: "newbie",
+      source: "新人",
+      title: "新手任务",
+      detail: "完成 5 项引导，快速上手平台",
+      status: newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已完成",
+      tone: newbieRemaining > 0 ? "info" : "success",
+      to: "/tasks/newbie",
       icon: <Sparkles size={19} aria-hidden="true" />,
       iconClass: "bg-[#e9f6f1] text-[#247456]",
-    }] : []),
+    },
     {
       id: "competition",
       source: "赛事",
@@ -307,7 +323,6 @@ export function HomePage() {
       iconClass: "bg-[#f3efff] text-[#6f4bc2]",
     },
   ];
-  const { allCompleted: newbieTasksCompleted } = useNewbieTasks();
   const growthResources = [
     { label: "课程", description: "提升参赛与职业能力", to: "/courses", icon: BookOpen },
     { label: "创赛福利", description: "学力值、权益与兑换", to: "/benefits", icon: Gift },
@@ -337,7 +352,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {newbieTasksCompleted ? <HomeTaskZone entries={taskEntries} /> : <HomeNewbieTaskZone />}
+      <HomeTaskZone entries={taskEntries} />
 
       {!guest && !activeCompetition && <Card className="border border-border-subtle"><h2 className="text-base font-semibold text-text-primary">还没有可用赛事工作区</h2><p className="mt-2 text-sm leading-5 text-text-secondary">公共赛事、机会和成长资源仍可正常使用。</p></Card>}
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}
