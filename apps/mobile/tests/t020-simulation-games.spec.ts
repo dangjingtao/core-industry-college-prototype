@@ -49,3 +49,18 @@ test("T020 新游戏深层刷新不 404", async ({ page }) => {
   await page.reload();
   await expect(page.locator("h1")).toHaveText("校园饮品店经营体验");
 });
+
+test("T020 不同游戏使用不同形式变体", async ({ page }) => {
+  await page.goto("/modules/simulations/activity-campus-drinks");
+  await page.getByRole("button", { name: "开始体验" }).click();
+  await expect(page.frameLocator('iframe[title="校园饮品店经营体验"]').locator(".options-rows")).toHaveCount(1);
+
+  await page.goto("/modules/simulations/activity-live-commerce");
+  await page.getByRole("button", { name: "开始体验" }).click();
+  const frame = page.frameLocator('iframe[title="直播间运营体验"]');
+  await expect(frame.locator(".options-rows")).toHaveCount(0);
+  await frame.getByRole("button", { name: /引流款在前/ }).click();
+  await frame.getByRole("button", { name: /付费投流/ }).click();
+  await frame.getByRole("button", { name: /憋单促单/ }).click();
+  await expect(frame.locator(".metrics.is-list")).toHaveCount(1);
+});
