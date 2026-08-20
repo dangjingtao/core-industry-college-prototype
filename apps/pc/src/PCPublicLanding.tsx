@@ -55,7 +55,7 @@ export function PCPublicLanding() {
                 <span className="mt-2 block text-text-brand">连接真实产业，沉淀真实成长</span>
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-text-secondary lg:text-lg">
-                面向高校学生、学校与产业合作伙伴，承接创新创业赛事、产业课程、实践机会、权益与可信成果，让一次参赛继续连接到长期成长。
+                面向高校学生、学校与产业合作伙伴，承接创新创业赛事、产业课程、实践机会、权益与可信空间，让一次参赛继续连接到长期成长。
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -74,7 +74,7 @@ export function PCPublicLanding() {
               <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-text-secondary">
                 <span className="inline-flex items-center gap-2"><UsersRound size={16} className="text-text-brand" />学生长期成长</span>
                 <span className="inline-flex items-center gap-2"><Building2 size={16} className="text-text-brand" />校企资源协同</span>
-                <span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-text-brand" />可信成果沉淀</span>
+                <span className="inline-flex items-center gap-2"><ShieldCheck size={16} className="text-text-brand" />可信空间沉淀</span>
               </div>
             </div>
 

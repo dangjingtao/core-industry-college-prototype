@@ -99,7 +99,7 @@ test("PC05 freeze is approval-gated and execution writes audit without deleting 
 
 test("PC05 long-term assets keep technical metadata secondary without inventing parallel IDs", async ({ page }) => {
   await page.goto("/admin/assets");
-  await expect(page.getByRole("heading", { name: "比赛结束了，可信成果仍然在" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "比赛结束了，可信空间仍然在" })).toBeVisible();
   await expect(page.getByText("competition-result-sanchuang-15", { exact: false })).not.toBeVisible();
 
   const experience = page.getByTestId("asset-Experience");

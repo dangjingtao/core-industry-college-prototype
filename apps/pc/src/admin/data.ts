@@ -115,7 +115,7 @@ export const appPcDataMap: AppPcMapRow[] = [
     source: "平台配置 / API 同步 / 文件导入 / 人工修正 / Runtime",
     states: "upcoming · registrationOpen · inProgress · ended；identity pending/active/rejected/revoked",
     stableIds: "competitionId；身份关系 = accountId + competitionId",
-    retention: "赛事可归档；身份历史、成绩与可信成果长期保留",
+    retention: "赛事可归档；身份历史、成绩与可信空间长期保留",
   },
   {
     route: "/opportunities",

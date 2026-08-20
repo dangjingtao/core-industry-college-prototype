@@ -5,7 +5,7 @@ const groupTitles = ["学习成长", "福利权益", "工具与服务", "消息�
 const entries: [string, string][] = [
   ["课程学习", "/courses"],
   ["学力值", "/growth/score"],
-  ["可信成果", "/assets"],
+  ["可信空间", "/assets"],
   ["创赛福利", "/benefits"],
   ["我的卡券", "/benefits/wallet"],
   ["兑换中心", "/benefits/exchange"],

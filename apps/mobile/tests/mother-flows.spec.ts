@@ -136,7 +136,7 @@ test("E ended competition hands off to long-term experience and trusted result",
   await page.getByRole("link", { name: /第十五届三创赛/ }).click();
   await expect(page.getByRole("heading", { name: "参赛经历", exact: true })).toBeVisible();
   await page.getByRole("link", { name: /成绩 \/ 成果/ }).click();
-  await expect(page.getByRole("heading", { name: "成绩与可信成果", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "成绩与可信空间", exact: true })).toBeVisible();
   await expect(page.getByText("校赛一等奖", { exact: true })).toBeVisible();
 });
 

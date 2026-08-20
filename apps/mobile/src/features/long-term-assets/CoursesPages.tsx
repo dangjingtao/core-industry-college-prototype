@@ -573,7 +573,7 @@ export function CourseDetailPage() {
         open={showClaimSuccessDialog}
         onOpenChange={setShowClaimSuccessDialog}
         title="领取成功"
-        description="恭喜你领取成功，电子证书已加入你的可信成果。"
+        description="恭喜你领取成功，电子证书已加入你的可信空间。"
         size="sm"
         footer={
           <div className="flex w-full flex-col gap-3">

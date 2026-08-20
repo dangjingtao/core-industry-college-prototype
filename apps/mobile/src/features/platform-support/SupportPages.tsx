@@ -364,7 +364,7 @@ export function OnboardingSurveyPage() {
 
 export function OnboardingReadyPage() {
   const navigate = useNavigate();
-  return <PublicShell showNavigation={false}><PageHeader title="准备好了" /><div className="space-y-5 px-4 py-8"><Card><StatusTag tone="success">资料已完成</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">先从比赛或机会开始</h1><p className="mt-2 text-sm leading-5 text-text-secondary">课程、权益和可信成果会作为支撑能力出现，不需要先完成一整套成长任务。</p></Card><Button className="w-full" onClick={() => navigate("/home")}>进入首页</Button></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="准备好了" /><div className="space-y-5 px-4 py-8"><Card><StatusTag tone="success">资料已完成</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">先从比赛或机会开始</h1><p className="mt-2 text-sm leading-5 text-text-secondary">课程、权益和可信空间会作为支撑能力出现，不需要先完成一整套成长任务。</p></Card><Button className="w-full" onClick={() => navigate("/home")}>进入首页</Button></div></PublicShell>;
 }
 
 export function NewsPage() {
@@ -694,7 +694,7 @@ export function AlumniListPage() {
 
 const supportFaqs = [
   { q: "报名后为什么还不能进入赛事工作区？", a: "报名后需要学校审核，审核通过即可获得赛事身份并进入工作区。" },
-  { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信成果」→「我的证书」和「成绩查询」中。" },
+  { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中。" },
   { q: "投递使用的是哪一份简历？", a: "投递机会时会优先使用「长期简历」中的可信经历。" },
   { q: "权益即将到期怎么办？", a: "可在「我的卡券」中查看有效期，或联系企业微信福利官咨询。" },
 ];
@@ -810,7 +810,7 @@ function replyForQuestion(text: string): string {
   const lower = text.toLowerCase();
   if (lower.includes("报名")) return "报名流程：进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。";
   if (lower.includes("工作区") || lower.includes("赛事")) return "报名审核通过后，可在首页「任务专区」或「我的」→「当前赛事」进入赛事工作区，查看阶段任务与提交材料。";
-  if (lower.includes("证书") || lower.includes("成绩")) return "比赛结束后，证书与成绩会沉淀到「可信成果」→「我的证书」和「成绩查询」中，可保存、下载或验真。";
+  if (lower.includes("证书") || lower.includes("成绩")) return "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。";
   if (lower.includes("简历")) return "长期简历在「我的」→「长期简历」中维护；投递机会时会优先使用长期简历中的可信经历。";
   if (lower.includes("实习") || lower.includes("机会")) return "实习与项目机会在「机会」Tab 查看；部分机会与赛事身份、课程学习记录相关联，具体以岗位要求为准。";
   if (lower.includes("人工")) return "已为你打开人工客服通道，请扫描弹窗中的企业微信二维码联系福利官。";
@@ -822,7 +822,7 @@ type ChatMessage = { id: string; role: "user" | "assistant"; text: string; };
 export function SupportChatPage() {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信成果和投递相关的问题。" },
+    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信空间和投递相关的问题。" },
   ]);
   const [showHumanModal, setShowHumanModal] = useState(false);
   const [hasManualInput, setHasManualInput] = useState(false);
@@ -956,7 +956,7 @@ export function LegalPage({ kind }: { kind: "user" | "privacy" }) {
 }
 
 export function AboutPage() {
-  return <PublicShell showNavigation={false}><PageHeader title="关于" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card><h1 className="text-lg font-semibold text-text-primary">核心产业学院</h1><p className="mt-3 text-sm leading-6 text-text-secondary">围绕参赛、企业实践与就业/实习建立长期学生账号；课程、权益与可信成果作为支撑能力长期沉淀。</p></Card><Card><p className="text-xs text-text-secondary">Prototype · Com Design consumer</p></Card></div></PublicShell>;
+  return <PublicShell showNavigation={false}><PageHeader title="关于" backTo="/me" /><div className="space-y-5 px-4 py-6"><Card><h1 className="text-lg font-semibold text-text-primary">核心产业学院</h1><p className="mt-3 text-sm leading-6 text-text-secondary">围绕参赛、企业实践与就业/实习建立长期学生账号；课程、权益与可信空间作为支撑能力长期沉淀。</p></Card><Card><p className="text-xs text-text-secondary">Prototype · Com Design consumer</p></Card></div></PublicShell>;
 }
 
 function DecisionBlockedPage({ title, decision, body, backTo }: { title: string; decision: string; body: string; backTo: string }) {

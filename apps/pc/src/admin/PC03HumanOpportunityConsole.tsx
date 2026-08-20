@@ -104,7 +104,7 @@ export function PC03HumanOpportunityConsole({ selectedId }: { selectedId?: strin
 
           <div className="rounded-container border border-border-subtle bg-surface p-5">
             <div className="flex items-center gap-2"><Filter size={18} className="text-text-brand" /><h2 className="font-semibold">发送人群</h2></div>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">使用学校、专业、地区、赛事经历、课程与可信成果等可解释条件筛选，运营可以在发送前人工增删。</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">使用学校、专业、地区、赛事经历、课程与可信空间等可解释条件筛选，运营可以在发送前人工增删。</p>
             <div className="mt-4 flex flex-wrap gap-2">{targetFields.map(field => <span key={field} className="rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-medium">{field}</span>)}</div>
             <div className="mt-4 space-y-2">{targetPreview.map(row => <button type="button" key={row.label} onClick={() => toggleTarget(row.label)} className="flex w-full items-center justify-between gap-3 rounded-control border border-border-subtle p-3 text-left"><div><p className="text-sm font-semibold">{row.label}</p><p className="mt-1 text-xs text-text-secondary">{row.facts}</p></div><StatusTag tone={selectedTargets.has(row.label) ? "success" : "neutral"}>{selectedTargets.has(row.label) ? "发送" : "排除"}</StatusTag></button>)}</div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-text-tertiary">当前范围：{selectedTargets.size} 人</p><button type="button" onClick={() => setConfirmed(true)} className="inline-flex min-h-11 items-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary"><Send size={16} />确认发送范围</button></div>

@@ -190,7 +190,7 @@ const competitionExtensions: Record<string, CompetitionControlExtension> = {
       id: "project-brand-2026",
       name: "校园轻运动品牌验证计划",
       track: "品牌创新",
-      summary: "赛事期 CompetitionProject；赛事结束后只 handoff 摘要、经历、团队角色与可信成果。",
+      summary: "赛事期 CompetitionProject；赛事结束后只 handoff 摘要、经历、团队角色与可信空间。",
       stage: "报名准备",
     },
     resources: [{ id: "brand-cup-guide", title: "赛事说明与提交规范", category: "规则", source: "平台配置", updatedAt: "2026-08-18" }],

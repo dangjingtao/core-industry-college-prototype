@@ -25,12 +25,12 @@ type AppGroup = {
 const groups: AppGroup[] = [
   {
     title: "学习成长",
-    subtitle: "课程、学力值与可信成果",
+    subtitle: "课程、学力值与可信空间",
     accent: "bg-[#eaf5ff] text-[#2879d0]",
     entries: [
       { label: "课程学习", to: "/courses", icon: BookOpen, description: "平台课程与学习记录" },
       { label: "学力值", to: "/growth/score", icon: Coins, description: "学力值余额与明细" },
-      { label: "可信成果", to: "/assets", icon: Award, description: "经历、成绩与证书" },
+      { label: "可信空间", to: "/assets", icon: Award, description: "经历、成绩与证书" },
     ],
   },
   {
