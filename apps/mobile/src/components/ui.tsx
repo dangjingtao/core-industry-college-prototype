@@ -32,7 +32,7 @@ export function Section({ title, subtitle, action, children, className = "" }: {
 
 export function StatusTag({ tone = "info", children }: { tone?: "info" | "success" | "warning" | "danger" | "neutral"; children: ReactNode }) {
   const toneClass = tone === "success" ? "bg-success-bg text-success-text" : tone === "warning" ? "bg-warning-bg text-warning-text" : tone === "danger" ? "bg-danger-bg text-danger-text" : tone === "neutral" ? "bg-surface-subtle text-text-secondary" : "bg-info-bg text-info-text";
-  return <span className={`inline-flex min-h-6 items-center rounded-full px-2 text-xs font-medium ${toneClass}`}>{children}</span>;
+  return <span className={`inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-2 text-xs font-medium ${toneClass}`}>{children}</span>;
 }
 
 export function PageHeader({ title, backTo, right }: { title: string; backTo?: string; subtitle?: string; right?: ReactNode }) {
