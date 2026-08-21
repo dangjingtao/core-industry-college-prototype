@@ -62,7 +62,7 @@ const groups: AppGroup[] = [
     subtitle: "公益与青年行动",
     accent: "bg-[#e9f6f1] text-[#247456]",
     entries: [
-      { label: "公益助力", to: "/welfare", icon: HeartHandshake, description: "观看公益视频，助力社会议题" },
+      { label: "公益助力", to: "/welfare?returnTo=/apps", icon: HeartHandshake, description: "观看公益视频，助力社会议题" },
     ],
   },
   {

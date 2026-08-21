@@ -362,7 +362,7 @@ export function HomePage() {
       {guest && <Card className="flex items-center justify-between gap-3 border border-border-subtle"><div><h2 className="text-sm font-semibold text-text-primary">登录后保存你的进度</h2><p className="mt-1 text-xs text-text-secondary">报名、投递与长期成果持续沉淀</p></div><SecondaryButton className="shrink-0" onClick={() => navigate("/auth/login?returnTo=/home")}>登录 / 注册</SecondaryButton></Card>}
 
       {featuredWelfare && (
-        <Link to={`/welfare/${featuredWelfare.id}`} className="block">
+        <Link to={`/welfare/${featuredWelfare.id}?returnTo=/home`} className="block">
           <Card interactive className={`relative overflow-hidden bg-gradient-to-br ${featuredWelfare.cover} p-4 text-on-primary`}>
             <div className="flex items-center gap-3">
               <HeartHandshake size={22} className="shrink-0 opacity-90" aria-hidden="true" />

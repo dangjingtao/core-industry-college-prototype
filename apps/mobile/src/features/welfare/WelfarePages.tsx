@@ -1,6 +1,6 @@
 import { ChevronRight, HeartHandshake, Play, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, GhostButton, PageHeader, PublicShell, Section, SecondaryButton, StatusTag, StateBlock } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/state";
@@ -63,6 +63,8 @@ function WelfareCard({ project, current }: { project: WelfareProject; current: n
 
 export function WelfareListPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = new URLSearchParams(location.search).get("returnTo") || undefined;
   const { welfareProjectStats, welfareParticipations } = useLongTermAssets();
   const [tab, setTab] = useState<"active" | "ended" | "mine">("active");
 
@@ -76,7 +78,7 @@ export function WelfareListPage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="公益助力" backTo="/home" />
+      <PageHeader title="公益助力" backTo={returnTo ?? "/home"} />
       <div className="space-y-4 px-4 py-5">
         <p className="text-sm leading-5 text-text-secondary">观看公益倡导视频，为乡村教育、绿色消费等社会议题贡献一次助力。</p>
         <div className="flex gap-2">
@@ -117,6 +119,8 @@ export function WelfareListPage() {
 export function WelfareDetailPage() {
   const { welfareId } = useParams<{ welfareId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = new URLSearchParams(location.search).get("returnTo") || undefined;
   const { session } = usePublicPlatform();
   const { welfareProjectStats, hasHelpedWelfare } = useLongTermAssets();
   const project = welfareId ? welfareProjectById(welfareId) : undefined;
@@ -124,7 +128,7 @@ export function WelfareDetailPage() {
   if (!project) {
     return (
       <PublicShell showNavigation={false}>
-        <PageHeader title="公益助力" backTo="/welfare" />
+        <PageHeader title="公益助力" backTo={returnTo ?? "/welfare"} />
         <div className="px-4 py-6">
           <StateBlock state="empty" />
         </div>
@@ -139,7 +143,7 @@ export function WelfareDetailPage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="公益助力" backTo="/welfare" />
+      <PageHeader title="公益助力" backTo={returnTo ?? "/welfare"} />
       <div className="space-y-5 px-4 py-5">
         <div className={`overflow-hidden rounded-container bg-gradient-to-br ${project.cover} p-5 text-on-primary`}>
           <div className="flex items-start justify-between gap-3">
@@ -184,7 +188,7 @@ export function WelfareDetailPage() {
 
         <div className="sticky bottom-0 -mx-4 border-t border-border-subtle bg-surface px-4 py-4">
           {!session.loggedIn ? (
-            <SecondaryButton className="w-full" onClick={() => navigate(`/auth/login?returnTo=/welfare/${project.id}`)}>登录后助力</SecondaryButton>
+            <SecondaryButton className="w-full" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent(`/welfare/${project.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`)}`)}>登录后助力</SecondaryButton>
           ) : helped ? (
             <Button className="w-full" disabled>已助力</Button>
           ) : project.status === "ended" ? (
@@ -192,7 +196,7 @@ export function WelfareDetailPage() {
           ) : project.status === "upcoming" ? (
             <Button className="w-full" disabled>即将开始</Button>
           ) : (
-            <Button className="w-full" onClick={() => navigate(`/welfare/${project.id}/ad`)}>
+            <Button className="w-full" onClick={() => navigate(`/welfare/${project.id}/ad${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`)}>
               <Play size={16} className="mr-1.5" aria-hidden="true" />
               观看广告，完成助力
             </Button>
@@ -206,13 +210,15 @@ export function WelfareDetailPage() {
 export function WelfareAdPage() {
   const { welfareId } = useParams<{ welfareId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = new URLSearchParams(location.search).get("returnTo") || undefined;
   const { helpWelfare, hasHelpedWelfare, welfareProjectStats } = useLongTermAssets();
   const project = welfareId ? welfareProjectById(welfareId) : undefined;
 
   if (!project) {
     return (
       <PublicShell showNavigation={false}>
-        <PageHeader title="公益广告" backTo="/welfare" />
+        <PageHeader title="公益广告" backTo={returnTo ?? "/welfare"} />
         <div className="px-4 py-6"><StateBlock state="empty" /></div>
       </PublicShell>
     );
@@ -220,17 +226,18 @@ export function WelfareAdPage() {
 
   const helped = hasHelpedWelfare(project.id);
   const current = welfareProjectStats[project.id] ?? project.current;
+  const detailPath = `/welfare/${project.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`;
 
   const handleSimulateAdComplete = () => {
     const result = helpWelfare(project.id);
     if (result.success) {
-      navigate(`/welfare/${project.id}`);
+      navigate(detailPath);
     }
   };
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="观看公益视频" backTo={`/welfare/${project.id}`} />
+      <PageHeader title="观看公益视频" backTo={detailPath} />
       <div className="space-y-6 px-4 py-6">
         <div className={`mx-auto flex size-20 items-center justify-center rounded-full bg-gradient-to-br ${project.cover} text-on-primary shadow-floating`}>
           <Play size={32} aria-hidden="true" />
