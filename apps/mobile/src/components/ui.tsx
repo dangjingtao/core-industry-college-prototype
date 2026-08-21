@@ -6,15 +6,15 @@ export { Dialog } from "@core/shared";
 export type { DialogProps } from "@core/shared";
 
 export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`min-h-touch rounded-control bg-primary px-4 text-sm font-medium text-on-primary transition active:bg-primary-pressed disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
+  return <button className={`inline-flex min-h-touch items-center justify-center rounded-control bg-primary px-4 text-sm font-medium text-on-primary transition active:bg-primary-pressed disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }
 
 export function SecondaryButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`min-h-touch rounded-control bg-[var(--color-secondary)] px-4 text-sm font-medium text-text-brand transition active:bg-[var(--color-secondary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
+  return <button className={`inline-flex min-h-touch items-center justify-center rounded-control bg-[var(--color-secondary)] px-4 text-sm font-medium text-text-brand transition active:bg-[var(--color-secondary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--color-disabled)] disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }
 
 export function GhostButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`min-h-touch rounded-control px-3 text-sm font-medium text-text-brand transition active:bg-surface-pressed disabled:cursor-not-allowed disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
+  return <button className={`inline-flex min-h-touch items-center justify-center rounded-control px-3 text-sm font-medium text-text-brand transition active:bg-surface-pressed disabled:cursor-not-allowed disabled:text-[var(--color-text-disabled)] ${className}`} {...props} />;
 }
 
 export function Card({ children, className = "", interactive = false, ...rest }: { children: ReactNode; className?: string; interactive?: boolean } & React.HTMLAttributes<HTMLDivElement>) {
