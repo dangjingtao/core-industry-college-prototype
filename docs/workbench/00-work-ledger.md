@@ -1223,7 +1223,8 @@ PC05 不是只验 `/admin/students` 页面。它必须对 PC01–PC04 与 PC-BD0
   - `docs/workbench/00-work-ledger.md`：更新 T019 状态。
 - 手机号数据继续复用 `StudentProfile`，不新建 Store；未绑定引导跳转 `/me/profile?returnTo=...`。
 - TypeScript `typecheck` 与 Vite `build` 本地通过。
-- 浏览器用例已编写；当前环境未安装 Playwright 浏览器，用例未能实际执行，待你确认后 push 到远端由 CI 执行。
+- 浏览器用例已编写；当前环境未安装 Playwright 浏览器，本地未实际执行，已由 `dev` 分支远端 CI 承接。
+- 已 push 到 `origin dev`：`d25c9c2`。
 
 ---
 
@@ -1491,3 +1492,11 @@ F04 Decision A / C
 - 不允许在首页写死单一公益项目，必须支持运营动态配置；
 - 不允许前端伪造广告播放完成状态并直接发放奖励；
 - 不允许将公益板块做成全局任务系统以外的第二套奖励真相源。
+
+## 已实现（待决策外的中保真原型）
+
+- 首页拼贴广告位、应用中心入口、公益列表 / 详情 / 广告页已按中保真实现；
+- 2026-08-21 修复公益项目详情页左上角返回跳转：通过 `returnTo` 查询参数区分首页 Banner（回首页）与应用中心（回应用中心）入口，列表内进入则回列表；
+- 修复提交：`7cb1a1d`，已 push 到 `origin dev`。
+
+---
