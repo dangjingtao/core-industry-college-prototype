@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, ThumbsDown, ThumbsUp, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, ThumbsDown, ThumbsUp, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
@@ -692,60 +692,39 @@ export function AlumniListPage() {
   );
 }
 
-type FaqCategory = "报名" | "赛事" | "权益" | "课程" | "账号";
+type FaqCategory = "热门" | "报名" | "赛事" | "权益" | "课程" | "账号";
 
-const faqCategories: FaqCategory[] = ["报名", "赛事", "权益", "课程", "账号"];
+const faqCategories: FaqCategory[] = ["热门", "报名", "赛事", "权益", "课程", "账号"];
 
-const supportFaqs: { q: string; a: string; category: FaqCategory }[] = [
+const supportFaqs: { q: string; a: string; category: Exclude<FaqCategory, "热门">; hot?: boolean }[] = [
+  { q: "如何报名三创赛？", a: "进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。", category: "报名", hot: true },
+  { q: "报名后多久能进入赛事工作区？", a: "学校审核通常在 1-3 个工作日内完成，审核通过后可在首页「任务专区」或「我的」→「当前赛事」进入工作区。", category: "报名", hot: true },
   { q: "报名后为什么还不能进入赛事工作区？", a: "报名后需要学校审核，审核通过即可获得赛事身份并进入工作区。", category: "报名" },
   { q: "报名时可以修改身份信息吗？", a: "提交报名后身份信息进入审核，审核前可在「我的赛事」中修改；审核通过后需联系学校老师或人工客服处理。", category: "报名" },
+  { q: "证书和成绩在哪里查看？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。", category: "赛事", hot: true },
   { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中。", category: "赛事" },
   { q: "赛事身份被回收了怎么办？", a: "赛事结束后或退出团队可能导致身份回收，历史记录仍保留在长期账号中，如需恢复请联系人工客服。", category: "赛事" },
+  { q: "怎么修改已提交的简历？", a: "长期简历在「我的」→「长期简历」中维护；更新后会同步到后续投递机会。", category: "账号", hot: true },
   { q: "投递使用的是哪一份简历？", a: "投递机会时会优先使用「长期简历」中的可信经历。", category: "账号" },
+  { q: "如何修改已绑定的第三方账号？", a: "可在「我的」→「设置」→「第三方账号绑定」中解除或重新绑定。", category: "账号" },
   { q: "权益即将到期怎么办？", a: "可在「我的卡券」中查看有效期，或联系企业微信福利官咨询。", category: "权益" },
   { q: "课程学习记录会保留多久？", a: "课程学习记录会沉淀到长期账号，不会随赛事周期消失，可在「学院」→「学习记录」查看。", category: "课程" },
-  { q: "如何修改已绑定的第三方账号？", a: "可在「我的」→「设置」→「第三方账号绑定」中解除或重新绑定。", category: "账号" },
-];
-
-const hotFaqs = [
-  { q: "如何报名三创赛？", a: "进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。" },
-  { q: "报名后多久能进入赛事工作区？", a: "学校审核通常在 1-3 个工作日内完成，审核通过后可在首页「任务专区」或「我的」→「当前赛事」进入工作区。" },
-  { q: "证书和成绩在哪里查看？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。" },
-  { q: "怎么修改已提交的简历？", a: "长期简历在「我的」→「长期简历」中维护；更新后会同步到后续投递机会。" },
 ];
 
 export function SupportHomePage() {
-  const [activeCategory, setActiveCategory] = useState<FaqCategory>("报名");
-  const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
+  const [activeCategory, setActiveCategory] = useState<FaqCategory>("热门");
 
-  const filtered = useMemo(() => supportFaqs.filter(item => item.category === activeCategory), [activeCategory]);
-
-  const toggleIndex = (index: number) => {
-    setOpenIndexes(prev => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  };
+  const filtered = useMemo(() => {
+    if (activeCategory === "热门") return supportFaqs.filter(item => item.hot);
+    return supportFaqs.filter(item => item.category === activeCategory);
+  }, [activeCategory]);
 
   return (
     <PublicShell>
       <PageHeader title="帮助中心" subtitle="先自助定位，再进入客服会话" backTo="/me" />
       <div className="space-y-6 px-4 py-5">
-        <Section title="热门问题">
-          <div className="space-y-3">
-            {hotFaqs.map(item => (
-              <Card key={item.q} className="border border-border-subtle">
-                <h3 className="text-sm font-semibold text-text-primary">{item.q}</h3>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">{item.a}</p>
-              </Card>
-            ))}
-          </div>
-        </Section>
-
         <Section title="常见问题">
-          <div className="sticky top-0 z-10 -mx-1 mb-3 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 mb-3 overflow-x-auto px-1 pb-1">
             <div className="flex gap-2" role="tablist" aria-label="常见问题分类">
               {faqCategories.map(category => {
                 const active = category === activeCategory;
@@ -754,10 +733,7 @@ export function SupportHomePage() {
                     key={category}
                     role="tab"
                     aria-selected={active}
-                    onClick={() => {
-                      setActiveCategory(category);
-                      setOpenIndexes(new Set());
-                    }}
+                    onClick={() => setActiveCategory(category)}
                     className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${active ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
                   >
                     {category}
@@ -766,21 +742,13 @@ export function SupportHomePage() {
               })}
             </div>
           </div>
-          <div className="space-y-2">
-            {filtered.map((item, index) => {
-              const open = openIndexes.has(index);
-              return (
-                <Card key={item.q} className="overflow-hidden">
-                  <button type="button" onClick={() => toggleIndex(index)} className="flex w-full items-center justify-between gap-3 py-1 text-left">
-                    <span className="text-sm font-medium text-text-primary">{item.q}</span>
-                    <ChevronDown size={18} className={`shrink-0 text-text-tertiary transition-transform duration-200 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
-                  </button>
-                  {open && (
-                    <p className="mt-2 border-t border-border-subtle pt-2 text-sm leading-6 text-text-secondary">{item.a}</p>
-                  )}
-                </Card>
-              );
-            })}
+          <div className="space-y-3">
+            {filtered.map(item => (
+              <Card key={item.q} className="border border-border-subtle">
+                <h3 className="text-sm font-semibold text-text-primary">{item.q}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{item.a}</p>
+              </Card>
+            ))}
             {filtered.length === 0 && (
               <p className="py-6 text-center text-sm text-text-secondary">该分类下暂无问题，可进入智能客服咨询。</p>
             )}
