@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, MessageCircle, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -384,9 +384,6 @@ export function HomePage() {
       <Section title="精选机会" action={<Link to="/opportunities" className="text-sm font-medium text-text-brand">查看全部</Link>}><div className="space-y-3">{opportunities.filter(item => item.status === "open").slice(0,2).map(item => <OpportunityCard item={item} key={item.id} />)}</div></Section>
       {!guest && <div className="flex justify-center pb-2"><AccountScenarioSwitch /></div>}
     </div>}<PrototypeStateTools />
-    <div className="fixed inset-x-0 bottom-20 z-40 mx-auto flex max-w-md justify-end px-4 pointer-events-none">
-      <Link to="/support/chat" aria-label="智能客服" className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-floating transition active:scale-95"><MessageCircle size={26} aria-hidden="true" /></Link>
-    </div>
   </PublicShell>;
 }
 
