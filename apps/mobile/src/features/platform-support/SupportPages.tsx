@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, ThumbsDown, ThumbsUp, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
@@ -692,21 +692,33 @@ export function AlumniListPage() {
   );
 }
 
-const supportFaqs = [
-  { q: "报名后为什么还不能进入赛事工作区？", a: "报名后需要学校审核，审核通过即可获得赛事身份并进入工作区。" },
-  { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中。" },
-  { q: "投递使用的是哪一份简历？", a: "投递机会时会优先使用「长期简历」中的可信经历。" },
-  { q: "权益即将到期怎么办？", a: "可在「我的卡券」中查看有效期，或联系企业微信福利官咨询。" },
+type FaqCategory = "报名" | "赛事" | "权益" | "课程" | "账号";
+
+const faqCategories: FaqCategory[] = ["报名", "赛事", "权益", "课程", "账号"];
+
+const supportFaqs: { q: string; a: string; category: FaqCategory }[] = [
+  { q: "报名后为什么还不能进入赛事工作区？", a: "报名后需要学校审核，审核通过即可获得赛事身份并进入工作区。", category: "报名" },
+  { q: "报名时可以修改身份信息吗？", a: "提交报名后身份信息进入审核，审核前可在「我的赛事」中修改；审核通过后需联系学校老师或人工客服处理。", category: "报名" },
+  { q: "比赛结束后证书和成绩在哪里？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中。", category: "赛事" },
+  { q: "赛事身份被回收了怎么办？", a: "赛事结束后或退出团队可能导致身份回收，历史记录仍保留在长期账号中，如需恢复请联系人工客服。", category: "赛事" },
+  { q: "投递使用的是哪一份简历？", a: "投递机会时会优先使用「长期简历」中的可信经历。", category: "账号" },
+  { q: "权益即将到期怎么办？", a: "可在「我的卡券」中查看有效期，或联系企业微信福利官咨询。", category: "权益" },
+  { q: "课程学习记录会保留多久？", a: "课程学习记录会沉淀到长期账号，不会随赛事周期消失，可在「学院」→「学习记录」查看。", category: "课程" },
+  { q: "如何修改已绑定的第三方账号？", a: "可在「我的」→「设置」→「第三方账号绑定」中解除或重新绑定。", category: "账号" },
+];
+
+const hotFaqs = [
+  { q: "如何报名三创赛？", a: "进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。" },
+  { q: "报名后多久能进入赛事工作区？", a: "学校审核通常在 1-3 个工作日内完成，审核通过后可在首页「任务专区」或「我的」→「当前赛事」进入工作区。" },
+  { q: "证书和成绩在哪里查看？", a: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。" },
+  { q: "怎么修改已提交的简历？", a: "长期简历在「我的」→「长期简历」中维护；更新后会同步到后续投递机会。" },
 ];
 
 export function SupportHomePage() {
-  const [query, setQuery] = useState("");
-  const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set([0]));
+  const [activeCategory, setActiveCategory] = useState<FaqCategory>("报名");
+  const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return supportFaqs;
-    return supportFaqs.filter(item => item.q.includes(query) || item.a.includes(query));
-  }, [query]);
+  const filtered = useMemo(() => supportFaqs.filter(item => item.category === activeCategory), [activeCategory]);
 
   const toggleIndex = (index: number) => {
     setOpenIndexes(prev => {
@@ -717,25 +729,43 @@ export function SupportHomePage() {
     });
   };
 
-  const expandAll = () => {
-    setOpenIndexes(new Set(filtered.map((_, i) => i)));
-  };
-
   return (
     <PublicShell>
       <PageHeader title="帮助中心" subtitle="先自助定位，再进入客服会话" backTo="/me" />
       <div className="space-y-6 px-4 py-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-tertiary" aria-hidden="true" />
-          <input
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder="搜索问题，例如：报名后多久能进赛事工作区"
-            className="h-11 w-full rounded-control border border-border bg-surface pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary"
-          />
-        </div>
+        <Section title="热门问题">
+          <div className="space-y-3">
+            {hotFaqs.map(item => (
+              <Card key={item.q} className="border border-border-subtle">
+                <h3 className="text-sm font-semibold text-text-primary">{item.q}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{item.a}</p>
+              </Card>
+            ))}
+          </div>
+        </Section>
 
-        <Section title="常见问题" action={<button type="button" onClick={expandAll} className="text-xs font-medium text-text-brand">查看全部</button>}>
+        <Section title="常见问题">
+          <div className="sticky top-0 z-10 -mx-1 mb-3 overflow-x-auto px-1 pb-1">
+            <div className="flex gap-2" role="tablist" aria-label="常见问题分类">
+              {faqCategories.map(category => {
+                const active = category === activeCategory;
+                return (
+                  <button
+                    key={category}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => {
+                      setActiveCategory(category);
+                      setOpenIndexes(new Set());
+                    }}
+                    className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${active ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="space-y-2">
             {filtered.map((item, index) => {
               const open = openIndexes.has(index);
@@ -752,7 +782,7 @@ export function SupportHomePage() {
               );
             })}
             {filtered.length === 0 && (
-              <p className="py-6 text-center text-sm text-text-secondary">未找到相关问题，可尝试联系人工客服。</p>
+              <p className="py-6 text-center text-sm text-text-secondary">该分类下暂无问题，可进入智能客服咨询。</p>
             )}
           </div>
         </Section>
@@ -806,50 +836,124 @@ const hotQuestions = [
   "实习机会需要先有赛事身份吗？",
 ];
 
-function replyForQuestion(text: string): string {
+const fallbackReply = "我已记录你的问题，会根据平台知识库继续学习。如果问题紧急，可以点击右上角「人工客服」获取企业微信支持。";
+
+function replyForQuestion(text: string): { answer: string; resolved: boolean } {
   const lower = text.toLowerCase();
-  if (lower.includes("报名")) return "报名流程：进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。";
-  if (lower.includes("工作区") || lower.includes("赛事")) return "报名审核通过后，可在首页「任务专区」或「我的」→「当前赛事」进入赛事工作区，查看阶段任务与提交材料。";
-  if (lower.includes("证书") || lower.includes("成绩")) return "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。";
-  if (lower.includes("简历")) return "长期简历在「我的」→「长期简历」中维护；投递机会时会优先使用长期简历中的可信经历。";
-  if (lower.includes("实习") || lower.includes("机会")) return "实习与项目机会在「机会」Tab 查看；部分机会与赛事身份、课程学习记录相关联，具体以岗位要求为准。";
-  if (lower.includes("人工")) return "已为你打开人工客服通道，请扫描弹窗中的企业微信二维码联系福利官。";
-  return "我已记录你的问题，会根据平台知识库继续学习。如果问题紧急，可以点击右上角「人工客服」获取企业微信支持。";
+  if (lower.includes("人工")) return { answer: "已为你打开人工客服通道，请扫描弹窗中的企业微信二维码联系福利官。", resolved: true };
+  if (lower.includes("报名")) return { answer: "报名流程：进入「全部赛事」→ 选择赛事 → 完成身份选择 / 团队报名 → 等待学校审核通过后即可获得赛事身份。", resolved: true };
+  if (lower.includes("工作区") || lower.includes("赛事")) return { answer: "报名审核通过后，可在首页「任务专区」或「我的」→「当前赛事」进入赛事工作区，查看阶段任务与提交材料。", resolved: true };
+  if (lower.includes("证书") || lower.includes("成绩")) return { answer: "比赛结束后，证书与成绩会沉淀到「可信空间」→「我的证书」和「成绩查询」中，可保存、下载或验真。", resolved: true };
+  if (lower.includes("简历")) return { answer: "长期简历在「我的」→「长期简历」中维护；投递机会时会优先使用长期简历中的可信经历。", resolved: true };
+  if (lower.includes("实习") || lower.includes("机会")) return { answer: "实习与项目机会在「机会」Tab 查看；部分机会与赛事身份、课程学习记录相关联，具体以岗位要求为准。", resolved: true };
+  return { answer: fallbackReply, resolved: false };
 }
 
-type ChatMessage = { id: string; role: "user" | "assistant"; text: string; };
+type ChatMessage = { id: string; role: "user" | "assistant"; text: string; createdAt: number; feedback?: "up" | "down"; };
+
+function formatChatTime(timestamp: number) {
+  const date = new Date(timestamp);
+  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+}
 
 export function SupportChatPage() {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信空间和投递相关的问题。" },
+    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信空间和投递相关的问题。", createdAt: Date.now() },
   ]);
   const [showHumanModal, setShowHumanModal] = useState(false);
-  const [hasManualInput, setHasManualInput] = useState(false);
+  const [showHotQuestions, setShowHotQuestions] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [unresolvedCount, setUnresolvedCount] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const openHumanModal = () => setShowHumanModal(true);
+
+  const scrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping, scrollToBottom]);
+
   const send = useCallback((text: string, isManual = false) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", text: trimmed };
-    const assistantMsg: ChatMessage = { id: `a-${Date.now() + 1}`, role: "assistant", text: replyForQuestion(trimmed) };
-    setMessages(current => [...current, userMsg, assistantMsg]);
+    const now = Date.now();
+    const userMsg: ChatMessage = { id: `u-${now}`, role: "user", text: trimmed, createdAt: now };
+    const { answer, resolved } = replyForQuestion(trimmed);
+    setMessages(current => [...current, userMsg]);
     setDraft("");
-    if (isManual) setHasManualInput(true);
+    if (isManual) setShowHotQuestions(false);
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages(current => [...current, { id: `a-${Date.now()}`, role: "assistant", text: answer, createdAt: Date.now() }]);
+      if (resolved) {
+        setUnresolvedCount(0);
+      } else {
+        setUnresolvedCount(prev => {
+          const next = prev + 1;
+          if (next >= 2) {
+            setTimeout(() => {
+              setMessages(curr => [...curr, { id: `system-${Date.now()}`, role: "assistant", text: "连续两次没有匹配到答案，建议你联系人工客服获取更精准的帮助。", createdAt: Date.now() }]);
+            }, 400);
+          }
+          return next;
+        });
+      }
+    }, 700);
   }, []);
-  const openHumanModal = () => setShowHumanModal(true);
+
+  const setFeedback = useCallback((messageId: string, feedback: "up" | "down") => {
+    setMessages(current => current.map(item => item.id === messageId ? { ...item, feedback } : item));
+  }, []);
+
   return <PublicShell showNavigation={false}>
     <PageHeader title="智能客服" backTo="/support" right={<button aria-label="人工客服" onClick={openHumanModal} className="flex size-9 items-center justify-center rounded-full bg-surface text-text-primary"><Headphones size={20} aria-hidden="true" /></button>} />
     <div className="flex h-[calc(100dvh-120px)] flex-col px-4 pb-4">
-      <div className="flex-1 space-y-4 overflow-y-auto py-4">
-        {messages.map(item => <div key={item.id} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${item.role === "user" ? "rounded-br-md bg-primary text-on-primary" : "rounded-bl-md bg-surface text-text-primary"}`}>{item.text}</div></div>)}
-        <div className={`overflow-hidden transition-all duration-300 ease-out ${hasManualInput ? "max-h-0 -translate-x-full opacity-0" : "max-h-60 translate-x-0 opacity-100"}`}>
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4">
+        {messages.map((item, index) => {
+          const showTime = index === 0 || item.createdAt - messages[index - 1].createdAt > 5 * 60 * 1000;
+          return (
+            <div key={item.id} className="space-y-1">
+              {showTime && <p className="text-center text-xs text-text-tertiary">{formatChatTime(item.createdAt)}</p>}
+              <div className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${item.role === "user" ? "rounded-br-md bg-primary text-on-primary" : "rounded-bl-md bg-surface text-text-primary"}`}>
+                  {item.text}
+                </div>
+              </div>
+              {item.role === "assistant" && item.id !== "welcome" && (
+                <div className={`flex gap-1 ${item.role === "assistant" ? "justify-start" : "justify-end"}`}>
+                  <button aria-label="有帮助" onClick={() => setFeedback(item.id, "up")} className={`flex size-6 items-center justify-center rounded-full transition ${item.feedback === "up" ? "bg-primary-container text-text-brand" : "text-text-tertiary"}`}><ThumbsUp size={12} aria-hidden="true" /></button>
+                  <button aria-label="没帮助" onClick={() => setFeedback(item.id, "down")} className={`flex size-6 items-center justify-center rounded-full transition ${item.feedback === "down" ? "bg-error-container text-error" : "text-text-tertiary"}`}><ThumbsDown size={12} aria-hidden="true" /></button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="flex max-w-[85%] items-center gap-1 rounded-2xl rounded-bl-md bg-surface px-4 py-3">
+              <span className="size-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "0ms" }} />
+              <span className="size-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "150ms" }} />
+              <span className="size-1.5 animate-bounce rounded-full bg-text-tertiary" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        )}
+        <div className={`overflow-hidden transition-all duration-300 ease-out ${showHotQuestions ? "max-h-60 translate-x-0 opacity-100" : "max-h-0 -translate-x-full opacity-0"}`}>
           <div className="space-y-2 pb-1">
             <p className="text-xs text-text-tertiary">热门问题，点击直接提问：</p>
             <div className="flex flex-wrap gap-2">{hotQuestions.map(q => <button key={q} onClick={() => send(q)} className="rounded-full border border-border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition active:bg-surface-pressed">{q}</button>)}</div>
           </div>
         </div>
+        {!showHotQuestions && (
+          <button onClick={() => setShowHotQuestions(true)} className="text-xs font-medium text-text-brand">查看热门问题</button>
+        )}
       </div>
       <div className="shrink-0 space-y-3 border-t border-border-subtle pt-3">
-        <div className="flex items-end gap-2"><input value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(draft, true); } }} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary" placeholder="输入你的问题" /><button aria-label="发送" disabled={!draft.trim()} onClick={() => send(draft, true)} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition active:scale-95 disabled:opacity-40"><Send size={18} aria-hidden="true" /></button></div>
+        <div className="flex items-end gap-2"><input value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(draft, true); } }} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary" placeholder="输入你的问题" /><button aria-label="发送" disabled={!draft.trim() || isTyping} onClick={() => send(draft, true)} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition active:scale-95 disabled:opacity-40"><Send size={18} aria-hidden="true" /></button></div>
         <div className="flex items-center justify-between gap-3"><button onClick={openHumanModal} className="text-xs font-medium text-text-brand">请求人工客服</button><Link to="/support" className="text-xs text-text-tertiary">查看帮助中心</Link></div>
       </div>
     </div>
