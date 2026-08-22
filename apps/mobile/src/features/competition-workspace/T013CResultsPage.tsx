@@ -20,10 +20,11 @@ export function T013CResultsPage() {
 
   const runtime = getRuntime(competitionId);
   const allResults = completedResults(runtime);
-  const privateResult = runtime.taskRuns["s6-company-match"]?.status === "completed"
-    ? resultById("result-s6-company-match")
-    : undefined;
-  const teamResults = allResults.filter(result => result.id !== "result-s6-company-match");
+  const privateResultIds = ["result-s6-job-recommend", "result-s6-career-advisor"];
+  const privateResults = privateResultIds
+    .map(id => ({ id, taskId: resultById(id)?.taskId ?? "", title: resultById(id)?.title ?? "", summary: resultById(id)?.summary ?? "" }))
+    .filter(item => item.taskId && runtime.taskRuns[item.taskId]?.status === "completed");
+  const teamResults = allResults.filter(result => !privateResultIds.includes(result.id));
   const acceptedIds = runtime.acceptedResultIds;
   const generated = teamResults.filter(result => !acceptedIds.includes(result.id));
   const adopted = teamResults.filter(result => acceptedIds.includes(result.id));
@@ -45,17 +46,19 @@ export function T013CResultsPage() {
   return <PublicShell showNavigation={false}><PageHeader title="工坊成果" backTo={`/competitions/${competitionId}/workspace/workshop`} /><RequireCompetitionAccess><div className="space-y-5 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
 
-    {privateResult && <section aria-label="个人成果" data-testid="s6-private-history">
-      <Card className="border border-info bg-info-bg">
-        <div className="flex items-start gap-3">
-          <EyeOff size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-info-text" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-info-text">个人成果 · 仅自己可见</p><h2 className="mt-1 font-semibold text-info-text">{privateResult.title}</h2></div><StatusTag tone="info">私密</StatusTag></div>
-            <p className="mt-2 text-sm leading-5 text-info-text">{privateResult.summary}</p>
-            <SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${privateResult.id}`)}>查看公司推荐</SecondaryButton>
+    {privateResults.length > 0 && <section aria-label="个人成果" data-testid="s6-private-history">
+      <div className="space-y-3">
+        {privateResults.map(item => <Card key={item.id} className="border border-info bg-info-bg">
+          <div className="flex items-start gap-3">
+            <EyeOff size={20} aria-hidden="true" className="mt-0.5 shrink-0 text-info-text" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-info-text">个人成果 · 仅自己可见</p><h2 className="mt-1 font-semibold text-info-text">{item.title}</h2></div><StatusTag tone="info">私密</StatusTag></div>
+              <p className="mt-2 text-sm leading-5 text-info-text">{item.summary}</p>
+              <SecondaryButton className="mt-4 w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/results/${item.id}`)}>查看{item.title}</SecondaryButton>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>)}
+      </div>
     </section>}
 
     <div role="tablist" aria-label="团队成果分组" className="inline-flex w-full rounded-control bg-surface p-1" data-testid="results-tablist">
