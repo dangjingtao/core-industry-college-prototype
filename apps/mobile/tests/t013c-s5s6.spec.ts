@@ -149,3 +149,78 @@ test("T013C ended competition cannot expose active competition S6 private output
   await expect(page.getByRole("heading", { name: "赛事期权限已回收", exact: true })).toBeVisible();
   await expect(page.getByText("生成结果仅自己可见", { exact: true })).toHaveCount(0);
 });
+
+test("T013C S6 experience transform turns competition facts into resume and interview copy", async ({ page }) => {
+  await page.goto(`${workshop}/tasks/s6-experience-transform/answer`);
+
+  await expect(page.getByRole("heading", { name: "经历转化", exact: true })).toBeVisible();
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("比赛的赛事级别是");
+  await answerCurrent(page, "省级");
+  await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("你在队伍中担任什么角色");
+  await answerCurrent(page, "队长 / 项目负责人");
+  await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("比赛最终成果是");
+  await answerCurrent(page, "省级奖项");
+  await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("项目名称与你的主要职责");
+  await page.getByPlaceholder(/智创校园/).fill("项目「岭南植物精粹」；我负责用户调研与运营落地");
+  await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("这场比赛锻炼了你哪些能力");
+  await answerCurrent(page, "技术开发");
+  await answerCurrent(page, "数据分析");
+  await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("关键成就");
+  await page.getByPlaceholder(/STAR/).fill("主导改版原型，将注册转化率提升 30%");
+  await expect(page.getByTestId("t013c-completeness")).toContainText("100%");
+  await page.getByRole("button", { name: "回答完毕，进入下一步", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "经历转化生成确认", exact: true })).toBeVisible();
+  await expect(page.getByTestId("s6-private-visibility")).toContainText("生成结果仅自己可见");
+  await page.getByRole("button", { name: "确认生成", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "生成简历与面试表达", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "模拟进入运行", exact: true }).click();
+  await page.getByRole("button", { name: "模拟生成完成", exact: true }).click();
+  await page.getByRole("button", { name: "查看本任务成果", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "简历与面试表达", exact: true })).toBeVisible();
+  await expect(page.getByTestId("s6-exp-private-visibility")).toContainText("生成结果仅自己可见");
+  await expect(page.getByText("版本一 · 量化成果版", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("s6-exp-no-score")).toContainText("不是人才评分");
+});
+
+test("T013C S6 quality test runs four-dimension likert and renders radar", async ({ page }) => {
+  await page.goto(`${workshop}/tasks/s6-quality-test/answer`);
+
+  await expect(page.getByRole("heading", { name: "素养测评", exact: true })).toBeVisible();
+  await expect(page.getByTestId("t013c-dynamic-question")).toContainText("我喜欢动手实践");
+
+  for (let index = 0; index < 16; index++) {
+    await page.getByRole("button", { name: "3", exact: true }).click();
+    if (index < 15) {
+      await page.getByRole("button", { name: "继续下一题", exact: true }).click();
+    }
+  }
+  await expect(page.getByTestId("t013c-completeness")).toContainText("100%");
+  await page.getByRole("button", { name: "回答完毕，进入下一步", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "素养画像生成确认", exact: true })).toBeVisible();
+  await expect(page.getByTestId("s6-private-visibility")).toContainText("生成结果仅自己可见");
+  await page.getByRole("button", { name: "确认生成", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "生成职业素养画像", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "模拟进入运行", exact: true }).click();
+  await page.getByRole("button", { name: "模拟生成完成", exact: true }).click();
+  await page.getByRole("button", { name: "查看本任务成果", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "职业素养画像", exact: true })).toBeVisible();
+  await expect(page.getByTestId("s6-quality-radar")).toContainText("兴趣倾向");
+  await expect(page.getByTestId("s6-quality-tendency")).toContainText("驱动型");
+  await expect(page.getByTestId("s6-quality-no-score")).toContainText("不是能力评分");
+});

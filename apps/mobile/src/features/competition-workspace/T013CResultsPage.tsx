@@ -20,7 +20,7 @@ export function T013CResultsPage() {
 
   const runtime = getRuntime(competitionId);
   const allResults = completedResults(runtime);
-  const privateResultIds = ["result-s6-job-recommend", "result-s6-career-advisor"];
+  const privateResultIds = ["result-s6-job-recommend", "result-s6-career-advisor", "result-s6-experience-transform", "result-s6-quality-test"];
   const privateResults = privateResultIds
     .map(id => ({ id, taskId: resultById(id)?.taskId ?? "", title: resultById(id)?.title ?? "", summary: resultById(id)?.summary ?? "" }))
     .filter(item => item.taskId && runtime.taskRuns[item.taskId]?.status === "completed");
@@ -70,7 +70,7 @@ export function T013CResultsPage() {
 
     {activeTab === "generated" && (generated.length
       ? <div className="space-y-3" data-testid="results-pane-generated">{generated.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="info">已生成</StatusTag></div></Card></Link>)}</div>
-      : <Card className="py-8 text-center" data-testid="results-pane-generated"><p className="font-semibold text-text-primary">还没有未采纳的团队成果</p><p className="mt-2 text-sm text-text-secondary">S6 个人公司推荐不会进入团队成果分组。</p></Card>)}
+      : <Card className="py-8 text-center" data-testid="results-pane-generated"><p className="font-semibold text-text-primary">还没有未采纳的团队成果</p><p className="mt-2 text-sm text-text-secondary">S6 个人岗位推荐不会进入团队成果分组。</p></Card>)}
 
     {activeTab === "adopted" && (adopted.length
       ? <div className="space-y-3" data-testid="results-pane-adopted">{adopted.map(result => <Link className="block" key={result.id} to={`/competitions/${competitionId}/workspace/workshop/results/${result.id}`}><Card interactive><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{result.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{result.summary}</p></div><StatusTag tone="success">已采纳</StatusTag></div></Card></Link>)}</div>

@@ -186,10 +186,10 @@ export const workshopSkills: WorkshopSkill[] = [
   {
     id: "s6",
     code: "S6",
-    name: "职业规划",
-    summary: "把赛事表现转成求职表达与机会匹配。",
-    capabilities: ["职业顾问", "面试准备", "公司推荐", "简历亮点"],
-    taskIds: ["s6-career-advisor", "s6-job-recommend"],
+    name: "职业发展",
+    summary: "把赛事表现转成能力画像、求职表达与机会匹配。",
+    capabilities: ["职业顾问", "岗位推荐", "经历转化", "素养测评"],
+    taskIds: ["s6-career-advisor", "s6-job-recommend", "s6-experience-transform", "s6-quality-test"],
   },
 ];
 
@@ -293,6 +293,28 @@ export const workshopTasks: WorkshopTask[] = [
     requiredMaterials: ["projectBrief"],
     resultId: "result-s6-job-recommend",
   },
+  {
+    id: "s6-experience-transform",
+    skillId: "s6",
+    title: "生成简历与面试表达",
+    summary: "把比赛经历按 STAR 法则转成简历语言、面试话术与作品集证明。",
+    prompt: "请说明赛事级别、角色、成果与锻炼的能力，并补充项目与职责描述。",
+    helper: "转化结果仅为求职表达建议，不构成获奖事实或人才评分。",
+    computeCost: 6,
+    requiredMaterials: ["projectBrief"],
+    resultId: "result-s6-experience-transform",
+  },
+  {
+    id: "s6-quality-test",
+    skillId: "s6",
+    title: "生成职业素养画像",
+    summary: "从兴趣、性格、能力与价值取向四维测评，生成能力雷达与职业倾向建议。",
+    prompt: "请按四个维度逐题自评，AI 会汇总成素养画像与职业倾向。",
+    helper: "测评结果仅为自我探索参考，不构成能力评分或录取结论。",
+    computeCost: 6,
+    requiredMaterials: ["projectBrief"],
+    resultId: "result-s6-quality-test",
+  },
 ];
 
 export const workshopQuestions: Record<string, WorkshopQuestion[]> = {
@@ -346,6 +368,8 @@ export const workshopComputePolicies: Record<string, WorkshopComputePolicy> = {
   "s5-pitch-ppt": { estimateMin: 90, estimateMax: 150, actual: 128 },
   "s6-career-advisor": { estimateMin: 50, estimateMax: 80, actual: 62 },
   "s6-job-recommend": { estimateMin: 50, estimateMax: 80, actual: 60 },
+  "s6-experience-transform": { estimateMin: 50, estimateMax: 80, actual: 58 },
+  "s6-quality-test": { estimateMin: 40, estimateMax: 70, actual: 52 },
 };
 
 export const workshopResultDetails: Record<string, WorkshopResultDetail> = {
@@ -423,7 +447,7 @@ export const resultTemplates: WorkshopResultTemplate[] = [
     title: "职业画像与岗位建议",
     summary: "结合专业、兴趣、能力与城市行业偏好，形成可进一步验证的职业探索方向。",
     highlights: ["画像标签基于兴趣与能力组合生成", "岗位推荐标注 AI 建议，非人才评分", "发展路径按近期 / 中期 / 长期拆分"],
-    nextSuggestion: "完成职业画像后，可继续使用公司推荐或比赛经验转化生成求职表达。",
+    nextSuggestion: "完成职业画像后，可继续使用岗位推荐或比赛经验转化生成求职表达。",
   },
   {
     id: "result-s6-job-recommend",
@@ -432,6 +456,22 @@ export const resultTemplates: WorkshopResultTemplate[] = [
     summary: "结合职业方向、城市与技能偏好，匹配可探索的企业及其热门岗位。",
     highlights: ["企业与岗位标注 AI 建议，非人才评分", "支持原型模拟投递与已投递标记", "岗位信息为模拟数据，不构成真实录用承诺"],
     nextSuggestion: "针对推荐岗位补齐核心技能后，可结合职业顾问的发展路径逐步推进。",
+  },
+  {
+    id: "result-s6-experience-transform",
+    taskId: "s6-experience-transform",
+    title: "简历与面试表达包",
+    summary: "基于比赛经历生成多版本简历语言、面试话术与作品集证明。",
+    highlights: ["简历按量化成果 / 精炼概述 / 岗位导向三版本组织", "面试话术覆盖自我介绍、职责、挑战、协作与收获", "作品集证明标注 AI 生成，获奖信息需本人核验"],
+    nextSuggestion: "结合职业顾问的发展路径，把转化出的表达放进个人求职材料。",
+  },
+  {
+    id: "result-s6-quality-test",
+    taskId: "s6-quality-test",
+    title: "职业素养画像",
+    summary: "四维测评生成能力雷达与职业倾向建议，帮助你更了解自己。",
+    highlights: ["雷达覆盖兴趣 / 性格 / 能力 / 价值四维", "职业倾向标注 AI 建议，非人才评分", "提升建议按薄弱维度给出可执行动作"],
+    nextSuggestion: "结合素养画像进入职业顾问，收敛更具体的岗位方向。",
   },
 ];
 

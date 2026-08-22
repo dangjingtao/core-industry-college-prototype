@@ -10,11 +10,13 @@ import { CompetitionContextLine, RequireCompetitionAccess, TaskScenarioTools } f
 type Question = {
   id: string;
   label: string;
-  type: "single" | "multiple";
+  type: "single" | "multiple" | "text" | "scale";
   options: string[];
   helper?: string;
   ai?: string;
   customPlaceholder?: string;
+  placeholder?: string;
+  dimension?: string;
 };
 
 export const CUSTOM_PREFIX = "✎ ";
@@ -175,16 +177,111 @@ const questions: Record<string, Question[]> = {
       customPlaceholder: "也可直接描述你的目标，如 想进互联网做产品…",
     },
   ],
+  "s6-experience-transform": [
+    {
+      id: "level",
+      label: "比赛的赛事级别是？",
+      type: "single",
+      options: ["国家级", "省级", "校级", "其他 / 不确定"],
+      ai: "先把比赛的级别定下来，这会影响简历里成果的分量表达。",
+    },
+    {
+      id: "role",
+      label: "你在队伍中担任什么角色？",
+      type: "single",
+      options: ["队长 / 项目负责人", "核心技术负责人", "产品 / 设计负责人", "运营 / 推广负责人", "团队成员"],
+      ai: "你在队伍里的角色，决定简历上如何描述责任与贡献。",
+    },
+    {
+      id: "result",
+      label: "比赛最终成果是？",
+      type: "single",
+      options: ["国家级奖项", "省级奖项", "校级奖项", "晋级决赛 / 优秀奖", "参赛但未获奖"],
+      ai: "选一个最高级别的成果，AI 会据此安排表达重点。",
+      customPlaceholder: "还可补充具体名次，如 省级一等奖、最佳创意奖…",
+    },
+    {
+      id: "projectDuty",
+      label: "项目名称与你的主要职责（选填）",
+      type: "text",
+      options: [],
+      placeholder: "例如：智创校园 — AI 就业服务平台；我负责前端开发与产品原型，主导用户调研…",
+      ai: "这一步描述项目和你负责的部分，越具体，转化的简历语言越精准。",
+    },
+    {
+      id: "skills",
+      label: "这场比赛锻炼了你哪些能力？",
+      type: "multiple",
+      options: ["技术开发", "产品设计", "数据分析", "团队协作", "沟通表达", "创新思维", "项目管理", "市场运营", "演讲答辩", "文档写作", "不限"],
+      ai: "选出这场比赛中锻炼到的能力，会直接进入作品集的能力标签。",
+      customPlaceholder: "还可补充其它能力，如 视频剪辑、英语表达…",
+    },
+    {
+      id: "ach",
+      label: "分享一个比赛中的关键成就（选填）",
+      type: "text",
+      options: [],
+      placeholder: "建议用 STAR：情境 - 任务 - 行动 - 结果。例如：为提升用户体验，我主导改版原型，将注册转化率提升 30%",
+      ai: "最后补充一个关键成就，面试官最想听到你如何解决问题、带来结果。",
+    },
+  ],
+  "s6-quality-test": [
+    { id: "interest1", label: "我喜欢动手实践，做看得见成果的事", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "兴趣倾向", helper: "1=非常不符合，5=非常符合" },
+    { id: "interest2", label: "我喜欢钻研问题，弄清楚事物背后的原理", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "兴趣倾向", helper: "1=非常不符合，5=非常符合" },
+    { id: "interest3", label: "我喜欢与人交流，帮助或影响他人", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "兴趣倾向", helper: "1=非常不符合，5=非常符合" },
+    { id: "interest4", label: "我喜欢创意表达，做出与众不同的方案", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "兴趣倾向", helper: "1=非常不符合，5=非常符合" },
+    { id: "personality1", label: "我习惯主动表达，乐于带动氛围", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "性格特质", helper: "1=非常不符合，5=非常符合" },
+    { id: "personality2", label: "我做事细致耐心，注重计划与条理", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "性格特质", helper: "1=非常不符合，5=非常符合" },
+    { id: "personality3", label: "我善于倾听，能理解和照顾他人感受", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "性格特质", helper: "1=非常不符合，5=非常符合" },
+    { id: "personality4", label: "我果断敢为，遇到问题能快速决策", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "性格特质", helper: "1=非常不符合，5=非常符合" },
+    { id: "ability1", label: "我擅长数据分析与逻辑推理", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "能力优势", helper: "1=非常不符合，5=非常符合" },
+    { id: "ability2", label: "我擅长组织协调，推动团队协作", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "能力优势", helper: "1=非常不符合，5=非常符合" },
+    { id: "ability3", label: "我擅长写作表达，清晰传递信息", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "能力优势", helper: "1=非常不符合，5=非常符合" },
+    { id: "ability4", label: "我擅长创新构思，快速产出新点子", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "能力优势", helper: "1=非常不符合，5=非常符合" },
+    { id: "value1", label: "我更看重稳定与保障，喜欢可预期的环境", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "价值取向", helper: "1=非常不符合，5=非常符合" },
+    { id: "value2", label: "我更看重成就感，渴望挑战和高目标", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "价值取向", helper: "1=非常不符合，5=非常符合" },
+    { id: "value3", label: "我更看重助人与奉献，希望工作有意义", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "价值取向", helper: "1=非常不符合，5=非常符合" },
+    { id: "value4", label: "我更看重自由创新，不喜欢被规则束缚", type: "scale", options: ["1", "2", "3", "4", "5"], dimension: "价值取向", helper: "1=非常不符合，5=非常符合" },
+  ],
 };
 
 const specializedTaskIds = new Set(Object.keys(questions));
-const generatedTaskIds = new Set(["s5-pitch-ppt", "s6-job-recommend", "s6-career-advisor"]);
+const generatedTaskIds = new Set(["s5-pitch-ppt", "s6-job-recommend", "s6-career-advisor", "s6-experience-transform", "s6-quality-test"]);
 
 function taskBasePath(competitionId: string, taskId: string) {
   return `/competitions/${competitionId}/workspace/workshop/tasks/${taskId}`;
 }
 
-function QuestionField({ question, values, onToggle }: { question: Question; values: string[]; onToggle: (option: string) => void }) {
+function QuestionField({ question, values, onToggle, onTextChange }: { question: Question; values: string[]; onToggle: (option: string) => void; onTextChange?: (value: string) => void }) {
+  if (question.type === "text") {
+    return <fieldset className="space-y-3">
+      <legend className="text-base font-semibold leading-6 text-text-primary">{question.label}</legend>
+      {question.helper && <p className="text-xs leading-5 text-text-secondary">{question.helper}</p>}
+      <textarea
+        value={values[0] ?? ""}
+        onChange={event => onTextChange?.(event.target.value)}
+        rows={4}
+        className="w-full rounded-control border border-border bg-surface p-3 text-base leading-6 text-text-primary outline-none focus:border-primary"
+        placeholder={question.placeholder}
+      />
+    </fieldset>;
+  }
+  if (question.type === "scale") {
+    return <fieldset className="space-y-3">
+      <legend className="text-base font-semibold leading-6 text-text-primary">{question.label}</legend>
+      {question.helper && <p className="text-xs leading-5 text-text-secondary">{question.helper}</p>}
+      <div className="grid grid-cols-5 gap-2">{question.options.map(option => {
+        const selected = values.includes(option);
+        return <button
+          key={option}
+          type="button"
+          aria-pressed={selected}
+          onClick={() => onToggle(option)}
+          className={`min-h-touch rounded-control border text-lg font-semibold ${selected ? "border-primary bg-info-bg text-text-brand" : "border-border bg-surface text-text-secondary"}`}
+        >{option}</button>;
+      })}</div>
+    </fieldset>;
+  }
   return <fieldset className="space-y-3">
     <legend className="text-base font-semibold leading-6 text-text-primary">{question.label}</legend>
     {question.helper && <p className="text-xs leading-5 text-text-secondary">{question.helper}</p>}
@@ -232,13 +329,15 @@ function SpecializedAnswerPage() {
   const answered = requiredQuestions.filter(question => (selections[question.id]?.length ?? 0) > 0).length;
   const completeness = requiredQuestions.length ? Math.round((answered / requiredQuestions.length) * 100) : 100;
   const question = taskQuestions[step];
-  const currentAnswered = question ? (selections[question.id]?.length ?? 0) > 0 : true;
+  const currentAnswered = question ? (question.type === "text" ? true : (selections[question.id]?.length ?? 0) > 0) : true;
   const allAnswered = completeness === 100;
   const isS5Precheck = taskId === "s5-score-precheck";
   const isS5Ppt = taskId === "s5-pitch-ppt";
-  const isS6 = taskId === "s6-job-recommend";
+  const isJobRecommend = taskId === "s6-job-recommend";
   const isCareerAdvisor = taskId === "s6-career-advisor";
-  const isPersonal = isS6 || isCareerAdvisor;
+  const isExperienceTransform = taskId === "s6-experience-transform";
+  const isQualityTest = taskId === "s6-quality-test";
+  const isPersonal = isJobRecommend || isCareerAdvisor || isExperienceTransform || isQualityTest;
 
   const setCustom = (questionId: string, value: string) => {
     setSelections(current => {
@@ -250,6 +349,10 @@ function SpecializedAnswerPage() {
     });
   };
 
+  const setText = (questionId: string, value: string) => {
+    setSelections(current => ({ ...current, [questionId]: value.trim() ? [value] : [] }));
+  };
+
   const toggle = (option: string) => {
     if (!question) return;
     setSelections(current => {
@@ -257,7 +360,7 @@ function SpecializedAnswerPage() {
       const optionsOnly = existing.filter(item => !item.startsWith(CUSTOM_PREFIX));
       const customOnly = existing.filter(item => item.startsWith(CUSTOM_PREFIX));
       let nextOptions: string[];
-      if (question.type === "single") {
+      if (question.type !== "multiple") {
         nextOptions = [option];
       } else if (unlimitedOptions.has(option)) {
         nextOptions = optionsOnly.includes(option) ? [] : [option];
@@ -280,7 +383,7 @@ function SpecializedAnswerPage() {
     navigate(`${taskBasePath(competitionId, taskId)}/review`);
   };
 
-  const title = isS5Precheck ? "赛事评分预检" : isS5Ppt ? "路演 PPT" : isCareerAdvisor ? "职业顾问" : "岗位推荐";
+  const title = isS5Precheck ? "赛事评分预检" : isS5Ppt ? "路演 PPT" : isCareerAdvisor ? "职业顾问" : isExperienceTransform ? "经历转化" : isQualityTest ? "素养测评" : "岗位推荐";
   const nextLabel = isS5Precheck ? "完成预检，继续 PPT 问答" : "回答完毕，进入下一步";
   const noteTitle = isS5Precheck ? "还有什么要点补充（选填）" : isS5Ppt ? "是否还有要点补充（选填）" : "补充说明（选填）";
   const notePlaceholder = isS5Precheck
@@ -289,39 +392,39 @@ function SpecializedAnswerPage() {
       ? "补充路演必须保留的事实、叙事重点或限制…"
       : isCareerAdvisor
         ? "补充职业困扰、具体目标、实践经历或其它个人背景…"
-        : "补充希望加入的行业、岗位类型、工作偏好或其它信息…";
+        : isExperienceTransform
+          ? "补充比赛细节、可量化成果或希望强化的表达…"
+          : isQualityTest
+            ? "补充你对自己素养的补充说明或疑问…"
+            : "补充希望加入的行业、岗位类型、工作偏好或其它信息…";
   const uploadTitle = isS5Ppt ? "上传其它数据（选填）" : "补充材料（选填）";
-  const uploadHint = isS6 || isCareerAdvisor
+  const uploadHint = isPersonal
     ? "可补充简历、项目材料或图片；原型只记录文件名，不上传真实文件。"
     : "支持 PDF / Excel / CSV / 图片；原型只记录文件名，不上传真实文件。";
 
-  return <PublicShell showNavigation={false}><PageHeader title="动态答题" backTo={`/competitions/${competitionId}/workspace/workshop/skills/${task.skillId}`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
-    <CompetitionContextLine competitionId={competitionId} />
-    <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-text-brand">{task.skillId.toUpperCase()} · 动态问答</p>
-          <h1 className="mt-2 text-lg font-semibold text-text-primary">{title}</h1>
-          <p className="mt-2 text-sm leading-5 text-text-secondary">{isS5Precheck ? "先按当前项目阶段和真实比赛材料做评分预检，再进入独立的 PPT 问答。" : isS5Ppt ? "这一段与评分预检分开，按路演时长和 PPT 风格整理生成输入。" : isCareerAdvisor ? "按专业、兴趣、能力与城市行业偏好，生成职业画像与岗位建议。" : "根据职业方向、城市与技能偏好，匹配可探索的企业与热门岗位。"}</p>
-        </div>
-        <StatusTag tone="info">{step + 1}/{taskQuestions.length}</StatusTag>
+  return <PublicShell showNavigation={false}><PageHeader title="动态答题" backTo={`/competitions/${competitionId}/workspace/workshop/skills/${task.skillId}`} /><RequireCompetitionAccess><div className="space-y-4 px-4 py-4">
+    <Card className="bg-surface-subtle" data-testid="t013c-completeness">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2"><StatusTag tone="info">{task.skillId.toUpperCase()}</StatusTag><h2 className="truncate text-sm font-semibold text-text-primary">{title}</h2></div>
+        <div className="flex shrink-0 items-center gap-2"><StatusTag tone="neutral">{step + 1}/{taskQuestions.length}</StatusTag><strong className="text-sm text-text-primary">{completeness}%</strong></div>
       </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary transition-all" style={{ width: `${completeness}%` }} /></div>
     </Card>
 
-    {question && <Section title={`问题 ${step + 1}`} subtitle={isPersonal ? "AI 顾问逐题对话" : "按原型逐题回答"}><Card data-testid="t013c-dynamic-question">
-      {isPersonal && <div className="mb-4 flex items-start gap-3 rounded-control bg-surface-subtle p-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Sparkles size={16} aria-hidden="true" /></div><div><p className="text-sm font-medium text-text-primary">AI 顾问 · 第 {step + 1} 题</p><p className="mt-1 text-sm leading-5 text-text-secondary">{question.ai ?? question.label}</p></div></div>}
-      <QuestionField question={question} values={selections[question.id] ?? []} onToggle={toggle} />
+    {question && <Card data-testid="t013c-dynamic-question">
+      {isPersonal && <div className="mb-3 flex items-start gap-2 rounded-control bg-surface-subtle px-3 py-2"><Sparkles size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-info-text" /><div><p className="text-xs font-medium text-text-brand">AI 顾问 · 第 {step + 1} 题{question.dimension ? ` · ${question.dimension}` : ""}</p><p className="mt-0.5 text-sm leading-5 text-text-primary">{question.ai ?? question.label}</p></div></div>}
+      <QuestionField question={question} values={selections[question.id] ?? []} onToggle={toggle} onTextChange={value => setText(question.id, value)} />
       {isPersonal && question.customPlaceholder && <textarea
         value={customValue(selections[question.id])}
         onChange={event => setCustom(question.id, event.target.value)}
         rows={2}
-        className="mt-4 w-full rounded-control border border-border bg-surface p-3 text-sm leading-5 text-text-primary outline-none focus:border-primary"
+        className="mt-3 w-full rounded-control border border-border bg-surface px-3 py-2 text-sm leading-5 text-text-primary outline-none focus:border-primary"
         placeholder={`输入框（选填）：${question.customPlaceholder}`}
       />}
       {currentAnswered && (isPersonal
-        ? <div className="mt-5 rounded-control bg-info-bg p-3" data-testid="t013c-ai-next-feedback"><div className="flex items-start gap-2 text-sm leading-5 text-info-text"><Sparkles size={16} aria-hidden="true" className="mt-0.5 shrink-0" /><span>{aiFeedback(question, selections[question.id] ?? [])}</span></div></div>
-        : step < taskQuestions.length - 1 && <div className="mt-5 rounded-control bg-info-bg p-3" data-testid="t013c-ai-next-feedback"><div className="flex items-center gap-2 text-sm font-medium text-info-text"><Sparkles size={16} aria-hidden="true" />AI 正在分析回答，准备下一题</div></div>)}
-    </Card></Section>}
+        ? <div className="mt-3 rounded-control bg-info-bg px-3 py-2" data-testid="t013c-ai-next-feedback"><div className="flex items-start gap-2 text-sm leading-5 text-info-text"><Sparkles size={14} aria-hidden="true" className="mt-0.5 shrink-0" /><span>{aiFeedback(question, selections[question.id] ?? [])}</span></div></div>
+        : step < taskQuestions.length - 1 && <div className="mt-3 rounded-control bg-info-bg px-3 py-2" data-testid="t013c-ai-next-feedback"><div className="flex items-center gap-2 text-sm font-medium text-info-text"><Sparkles size={14} aria-hidden="true" />AI 正在分析回答，准备下一题</div></div>)}
+    </Card>}
 
     <div className="grid grid-cols-2 gap-2">
       <SecondaryButton disabled={step === 0} onClick={() => setStep(current => Math.max(0, current - 1))}>上一题</SecondaryButton>
@@ -334,10 +437,8 @@ function SpecializedAnswerPage() {
 
     {allAnswered && <Section title={uploadTitle}><label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface px-4 text-center"><span className="text-sm font-medium text-text-brand">{uploadName || "点击选择补充材料"}</span><span className="mt-1 text-xs leading-5 text-text-secondary">{uploadHint}</span><input className="sr-only" type="file" accept=".pdf,.xls,.xlsx,.csv,image/*" onChange={event => setUploadName(event.target.files?.[0]?.name ?? "")} /></label></Section>}
 
-    <Card className="bg-surface-subtle" data-testid="t013c-completeness"><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">作答完善度</span><strong className="text-text-primary">{completeness}%</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary" style={{ width: `${completeness}%` }} /></div></Card>
-
-    {isS6 && <Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">个人建议边界</p><p className="mt-2 text-sm leading-5 text-info-text">企业与岗位仅为 AI 求职探索建议，不构成人才评分，也不会写入可信档案。</p></Card>}
-    {isCareerAdvisor && <Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">个人建议边界</p><p className="mt-2 text-sm leading-5 text-info-text">职业画像与岗位仅为 AI 探索建议，不构成人才评分，也不会写入可信档案。</p></Card>}
+    {isPersonal && <Card className="border border-info bg-info-bg"><p className="font-medium text-info-text">个人建议边界</p><p className="mt-2 text-sm leading-5 text-info-text">{isJobRecommend ? "企业与岗位仅为 AI 求职探索建议，不构成人才评分，也不会写入可信档案。" : isCareerAdvisor ? "职业画像与岗位仅为 AI 探索建议，不构成人才评分，也不会写入可信档案。" : isExperienceTransform ? "简历与面试表达仅为求职表达建议，不构成获奖事实或人才评分。" : "素养画像仅为自我探索参考，不构成能力评分或录取结论。"}</p></Card>}
+    <CompetitionContextLine competitionId={competitionId} />
     <TaskScenarioTools competitionId={competitionId} taskId={taskId} />
   </div></RequireCompetitionAccess></PublicShell>;
 }
@@ -365,9 +466,11 @@ function SpecializedReviewPage() {
   const rows = summaryRows(taskId, runtime);
   const allAnswered = rows.length > 0 && rows.every(row => row.value !== "未回答");
   const enoughCompute = runtime.computeBalance >= policy.estimateMax;
-  const isS6 = taskId === "s6-job-recommend";
+  const isJobRecommend = taskId === "s6-job-recommend";
   const isCareerAdvisor = taskId === "s6-career-advisor";
-  const isPersonal = isS6 || isCareerAdvisor;
+  const isExperienceTransform = taskId === "s6-experience-transform";
+  const isQualityTest = taskId === "s6-quality-test";
+  const isPersonal = isJobRecommend || isCareerAdvisor || isExperienceTransform || isQualityTest;
   const ready = allAnswered && enoughCompute;
   const coreFacts = rows.flatMap(row => row.value.split("、")).filter(Boolean).slice(0, 8);
   const supplementalNotes = taskId === "s5-pitch-ppt"
@@ -382,12 +485,12 @@ function SpecializedReviewPage() {
     navigate(`${taskBasePath(competitionId, taskId)}/progress`);
   };
 
-  return <PublicShell showNavigation={false}><PageHeader title={isS6 ? "岗位推荐生成确认" : isCareerAdvisor ? "职业画像生成确认" : "PPT 生成确认"} backTo={`${taskBasePath(competitionId, taskId)}/answer`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+  return <PublicShell showNavigation={false}><PageHeader title={isJobRecommend ? "岗位推荐生成确认" : isCareerAdvisor ? "职业画像生成确认" : isExperienceTransform ? "经历转化生成确认" : isQualityTest ? "素养画像生成确认" : "PPT 生成确认"} backTo={`${taskBasePath(competitionId, taskId)}/answer`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
     <CompetitionContextLine competitionId={competitionId} />
     <Card>
-      <p className="text-xs font-medium text-text-brand">{isPersonal ? "S6 · 职业规划 / 个人建议" : "S5 · 赛事冲刺 / 路演 PPT"}</p>
-      <h1 className="mt-2 text-lg font-semibold text-text-primary">{isS6 ? "生成企业岗位推荐" : isCareerAdvisor ? "生成职业画像与岗位建议" : "基于用户方案生成可直接使用的路演 PPT"}</h1>
-      <p className="mt-3 text-sm leading-6 text-text-secondary">{isS6 ? "根据本人填写的职业方向、城市与技能偏好匹配企业与热门岗位；推荐不是能力事实，也不是人才评分。" : isCareerAdvisor ? "基于专业、兴趣、能力与城市行业偏好生成职业画像与岗位方向；建议不是能力事实，也不是人才评分。" : "确认后创建当前赛事下的 PPT 生成任务。原型只生成结构化 mock 成果，不伪造真实 PPT 文件或官方提交。"}</p>
+      <p className="text-xs font-medium text-text-brand">{isPersonal ? "S6 · 职业发展 / 个人建议" : "S5 · 赛事冲刺 / 路演 PPT"}</p>
+      <h1 className="mt-2 text-lg font-semibold text-text-primary">{isJobRecommend ? "生成企业岗位推荐" : isCareerAdvisor ? "生成职业画像与岗位建议" : isExperienceTransform ? "生成简历与面试表达" : isQualityTest ? "生成职业素养画像" : "基于用户方案生成可直接使用的路演 PPT"}</h1>
+      <p className="mt-3 text-sm leading-6 text-text-secondary">{isJobRecommend ? "根据本人填写的职业方向、城市与技能偏好匹配企业与热门岗位；推荐不是能力事实，也不是人才评分。" : isCareerAdvisor ? "基于专业、兴趣、能力与城市行业偏好生成职业画像与岗位方向；建议不是能力事实，也不是人才评分。" : isExperienceTransform ? "基于赛事级别、角色、成果与能力，把比赛经历转成简历语言、面试话术与作品集证明；表达不是获奖事实。" : isQualityTest ? "基于四维自评生成素养画像与职业倾向；测评不是能力评分，也不构成录取结论。" : "确认后创建当前赛事下的 PPT 生成任务。原型只生成结构化 mock 成果，不伪造真实 PPT 文件或官方提交。"}</p>
     </Card>
 
     <Section title="问答摘要"><div className="space-y-2">{rows.map(row => <Card key={row.id}><p className="text-xs text-text-secondary">{row.label}</p><p className="mt-1 text-sm font-medium leading-5 text-text-primary">{row.value}</p></Card>)}</div></Section>
@@ -398,7 +501,7 @@ function SpecializedReviewPage() {
       <Card data-testid="t013c-review-estimate"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Battery size={20} aria-hidden="true" /></div><div><p className="text-xs font-medium text-text-brand">算力预估</p><p className="mt-1 text-sm text-text-secondary">当前可用 {runtime.computeBalance}</p><p className="mt-1 text-base font-semibold text-text-primary">预计 {policy.estimateMin}–{policy.estimateMax} 算力</p></div></div></Card>
       <Card data-testid="t013c-review-freeze"><div className="flex items-start gap-3"><div className="rounded-control bg-info-bg p-2 text-info-text"><Snowflake size={20} aria-hidden="true" /></div><div><p className="text-xs font-medium text-text-brand">冻结提示</p><p className="mt-1 text-sm text-text-secondary">确认后按原型规则先冻结上限 {policy.estimateMax}；这只是原型表达，不形成真实扣费规则。</p></div></div></Card>
       {isPersonal
-        ? <Card className="border border-info bg-info-bg" data-testid="s6-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-1 text-sm leading-5 text-info-text">{isS6 ? "本人填写 / 赛事档案属于事实输入；企业与岗位匹配均标注为 AI 建议，不写回可信档案。" : "本人填写 / 赛事档案属于事实输入；职业画像和岗位方向均标注为 AI 建议，不写回可信档案。"}</p></div></div></Card>
+        ? <Card className="border border-info bg-info-bg" data-testid="s6-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-1 text-sm leading-5 text-info-text">{isJobRecommend ? "本人填写 / 赛事档案属于事实输入；企业与岗位匹配均标注为 AI 建议，不写回可信档案。" : isCareerAdvisor ? "本人填写 / 赛事档案属于事实输入；职业画像和岗位方向均标注为 AI 建议，不写回可信档案。" : isExperienceTransform ? "本人填写 / 赛事档案属于事实输入；转化出的简历与面试表达标注为 AI 建议，获奖信息需本人核验，不写回可信档案。" : "本人填写 / 赛事档案属于事实输入；素养画像与职业倾向标注为 AI 建议，不写回可信档案。"}</p></div></div></Card>
         : <Card data-testid="t013c-team-visibility"><div className="flex items-start gap-3"><Users size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-text-primary">结果对全队可见</p><p className="mt-1 text-sm leading-5 text-text-secondary">队员可编辑后提交确认，队长可采纳并标记用于比赛。</p></div></div></Card>}
       <Card><div className="flex items-start gap-3"><FileCheck2 size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-text-primary">成果归属</p><p className="mt-1 text-sm leading-5 text-text-secondary">绑定当前 competitionId / workspace / task，不跨赛事复用运行态。</p></div></div></Card>
     </div>
@@ -421,13 +524,15 @@ function SpecializedProgressPage() {
   const run = runtime.taskRuns[taskId];
   const status = run?.status ?? "ready";
   const progress = run?.progress ?? 0;
-  const isS6 = taskId === "s6-job-recommend";
+  const isJobRecommend = taskId === "s6-job-recommend";
   const isCareerAdvisor = taskId === "s6-career-advisor";
-  const output = isS6 ? "企业岗位推荐" : isCareerAdvisor ? "职业画像与岗位建议" : "路演 PPT";
+  const isExperienceTransform = taskId === "s6-experience-transform";
+  const isQualityTest = taskId === "s6-quality-test";
+  const output = isJobRecommend ? "企业岗位推荐" : isCareerAdvisor ? "职业画像与岗位建议" : isExperienceTransform ? "简历与面试表达" : isQualityTest ? "职业素养画像" : "路演 PPT";
   const steps = [
     { label: "已读取参赛档案", done: progress >= 16 },
     { label: "已检查问答材料", done: progress >= 35 },
-    { label: isS6 ? "正在生成企业岗位推荐" : isCareerAdvisor ? "正在生成职业画像与岗位建议" : "正在生成路演 PPT", done: progress >= 68 },
+    { label: isJobRecommend ? "正在生成企业岗位推荐" : isCareerAdvisor ? "正在生成职业画像与岗位建议" : isExperienceTransform ? "正在生成简历与面试表达" : isQualityTest ? "正在生成职业素养画像" : "正在生成路演 PPT", done: progress >= 68 },
     { label: "质量检查", done: progress >= 100 },
   ];
   const tone = status === "failed" ? "danger" : status === "completed" ? "success" : "info";

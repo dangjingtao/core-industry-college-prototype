@@ -8,7 +8,7 @@ import { useWorkshopRuntime, type WorkshopResultDraft } from "./runtime";
 import { CompetitionContextLine, RequireCompetitionAccess } from "./shared";
 import { pickOptions } from "./T013CTaskPages";
 
-const specialResultIds = new Set(["result-s5-pitch-ppt", "result-s6-job-recommend", "result-s6-career-advisor"]);
+const specialResultIds = new Set(["result-s5-pitch-ppt", "result-s6-job-recommend", "result-s6-career-advisor", "result-s6-experience-transform", "result-s6-quality-test"]);
 
 function defaultDraft(resultId: string) {
   const result = resultById(resultId);
@@ -143,7 +143,7 @@ function S6JobRecommendResult({ competitionId, resultId }: { competitionId: stri
     <Card className="border border-info bg-info-bg" data-testid="s6-job-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-2 text-sm leading-5 text-info-text">这是个人求职探索建议，不进入团队成果确认，也不会写入 StudentProfile、比赛成绩、证书或其它可信事实。</p></div></div></Card>
 
     <Card>
-      <p className="text-xs font-medium text-text-brand">S6 · 职业规划 / 岗位推荐</p>
+      <p className="text-xs font-medium text-text-brand">S6 · 职业发展 / 岗位推荐</p>
       <h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">企业岗位推荐</h1>
       <p className="mt-4 text-sm leading-6 text-text-secondary">{result?.summary ?? "结合职业方向、城市与技能偏好，匹配可探索的企业与热门岗位。"}</p>
     </Card>
@@ -296,7 +296,7 @@ function S6CareerAdvisorResult({ competitionId, resultId }: { competitionId: str
   const pathSteps = [
     { period: "近期 · 0-6 个月", text: "围绕推荐岗位补齐 1-2 项核心能力，用赛事与课程经历补一段可验证的项目描述。" },
     { period: "中期 · 6-18 个月", text: "进入目标行业实习或项目实践，积累可量化成果，验证画像与岗位方向的匹配度。" },
-    { period: "长期 · 2-3 年", text: "形成“能力 - 作品 - 结果”三件套表达，结合公司推荐结果收敛求职目标。" },
+    { period: "长期 · 2-3 年", text: "形成“能力 - 作品 - 结果”三件套表达，结合岗位推荐结果收敛求职目标。" },
   ];
 
   return <PublicShell showNavigation={false}><PageHeader title="职业画像成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
@@ -305,7 +305,7 @@ function S6CareerAdvisorResult({ competitionId, resultId }: { competitionId: str
     <Card className="border border-info bg-info-bg" data-testid="s6-career-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-2 text-sm leading-5 text-info-text">这是个人职业探索建议，不进入团队成果确认，也不会写入 StudentProfile、比赛成绩、证书或其它可信事实。</p></div></div></Card>
 
     <Card>
-      <p className="text-xs font-medium text-text-brand">S6 · 职业规划 / 职业顾问</p>
+      <p className="text-xs font-medium text-text-brand">S6 · 职业发展 / 职业顾问</p>
       <h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">职业画像与岗位建议</h1>
       <p className="mt-4 text-sm leading-6 text-text-secondary">{result?.summary ?? "结合专业、兴趣、能力与城市行业偏好，形成可进一步验证的职业探索方向。"}</p>
     </Card>
@@ -324,6 +324,99 @@ function S6CareerAdvisorResult({ competitionId, resultId }: { competitionId: str
   </div></RequireCompetitionAccess></PublicShell>;
 }
 
+function S6ExperienceTransformResult({ competitionId, resultId }: { competitionId: string; resultId: string }) {
+  const { getRuntime } = useWorkshopRuntime();
+  const runtime = getRuntime(competitionId);
+  const run = runtime.taskRuns["s6-experience-transform"];
+  const result = resultById(resultId);
+  const s = run?.selections ?? {};
+  const level = s.level?.[0] ?? "未填写";
+  const role = s.role?.[0] ?? "未填写";
+  const resultText = s.result?.[0] ?? "未填写";
+  const projectDuty = s.projectDuty?.[0] ?? "";
+  const skills = pickOptions(s.skills ?? []);
+  const ach = s.ach?.[0] ?? "";
+  const skillText = skills.length ? skills.join("、") : "团队协作";
+  const dutyBrief = projectDuty || "在比赛中承担团队角色并推进项目落地";
+
+  const resumes = [
+    { title: "版本一 · 量化成果版", body: `以${role}身份参与${level}赛事并取得${resultText}，${dutyBrief}。通过 ${skillText} 等能力推动项目从方案到落地，为团队贡献关键成果。` },
+    { title: "版本二 · 精炼概述版", body: `${level}赛事参与者，担任${role}，擅长${skillText}，在项目推进中负责核心执行并取得${resultText}。` },
+    { title: "版本三 · 岗位导向版", body: `具备${skillText}等与目标岗位强相关的经历：在${level}赛事中承担${role}，${dutyBrief}，最终取得${resultText}。` },
+  ];
+  const interviews = [
+    { q: "请先做一个自我介绍。", a: `我来自${role}背景，在${level}赛事中负责项目推进，重点积累了 ${skillText} 相关经验，希望把这些能力带入目标岗位。` },
+    { q: "你在团队中具体负责什么？", a: `我担任${role}，${dutyBrief}，通过${skillText}支撑团队达成目标。` },
+    { q: "讲一个你遇到的最大挑战及解决过程。", a: ach ? `比赛中最有挑战的是${ach}，我通过拆解问题、联动队友逐步解决，最终稳定交付。` : `比赛中最大的挑战是资源有限，我通过拆解目标和复用已有素材，在期限内完成关键交付。` },
+    { q: "你是怎么和团队协作的？", a: `我习惯先对齐目标再分工，定期同步进度，遇到分歧用数据和实验说话，保证团队朝同一方向推进。` },
+    { q: "这段经历给你带来什么收获？", a: `除了${skillText}的能力提升，我更理解如何把想法变成结果，也明确了自己在团队中最适合的发力位置。` },
+  ];
+  const suggestions = [
+    `用「动词开头 + 数据佐证」的句式写简历，例如"主导…提升了 30%"，比罗列职责更有冲击力。`,
+    `把与目标岗位强相关的 ${skillText.split("、")[0] ?? "能力"} 等 2-3 个能力标签放在简历最显眼位置。`,
+    ach ? `把这段关键成就写进面试的"最大挑战"回答：先说结论、再讲过程、最后落到结果。` : `补充一段用 STAR 法则写的关键成就，面试官最想听到你如何解决问题、带来结果。`,
+  ];
+
+  return <PublicShell showNavigation={false}><PageHeader title="经历转化成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+    <CompetitionContextLine competitionId={competitionId} />
+    <Card className="border border-info bg-info-bg" data-testid="s6-exp-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-2 text-sm leading-5 text-info-text">这是个人求职表达建议，不进入团队成果确认，也不会写入 StudentProfile、比赛成绩、证书或其它可信事实。</p></div></div></Card>
+    <Card><p className="text-xs font-medium text-text-brand">S6 · 职业发展 / 经历转化</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">简历与面试表达</h1><p className="mt-4 text-sm leading-6 text-text-secondary">{result?.summary ?? "把比赛经历按 STAR 法则转成简历语言、面试话术与作品集证明。"}</p></Card>
+    <Section title="事实输入"><Card data-testid="s6-exp-fact-input"><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-text-secondary">赛事级别</p><p className="mt-1 text-sm font-medium text-text-primary">{level}</p></div><div><p className="text-xs text-text-secondary">队伍角色</p><p className="mt-1 text-sm font-medium text-text-primary">{role}</p></div><div><p className="text-xs text-text-secondary">比赛成果</p><p className="mt-1 text-sm font-medium text-text-primary">{resultText}</p></div><div><p className="text-xs text-text-secondary">锻炼能力</p><p className="mt-1 text-sm font-medium text-text-primary">{skillText}</p></div></div>{projectDuty && <p className="mt-3 border-t border-border-subtle pt-3 text-xs text-text-secondary">项目与职责：<span className="font-medium text-text-primary">{projectDuty}</span></p>}{ach && <p className="mt-2 border-t border-border-subtle pt-3 text-xs text-text-secondary">关键成就：<span className="font-medium text-text-primary">{ach}</span></p>}</Card></Section>
+    <Section title="简历语言" subtitle="STAR 法则生成三版本"><div className="space-y-3">{resumes.map(item => <Card key={item.title} data-testid={`s6-exp-resume-${item.title.slice(3, 5)}`}><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{item.body}</p></Card>)}</div></Section>
+    <Section title="面试话术示例"><div className="space-y-3">{interviews.map(item => <Card key={item.q}><p className="text-sm font-semibold text-text-primary">Q：{item.q}</p><p className="mt-2 text-sm leading-5 text-text-secondary">A：{item.a}</p></Card>)}</div></Section>
+    <Section title="作品集证明"><Card data-testid="s6-exp-proof"><div className="flex flex-wrap gap-2">{skills.length ? skills.map(skill => <StatusTag key={skill} tone="info">{skill}</StatusTag>) : <StatusTag tone="neutral">团队协作</StatusTag>}</div><p className="mt-3 text-sm leading-5 text-text-secondary">以上能力标签基于赛事经历生成，可配合获奖证书、项目截图与作品链接作为求职证明素材；获奖信息需本人核验。</p></Card></Section>
+    <Section title="优化建议"><Card data-testid="s6-exp-suggest"><div className="space-y-2">{suggestions.map((text, index) => <p key={`${text}-${index}`} className="text-sm leading-5 text-text-primary">· {text}</p>)}</div></Card></Section>
+    <Card className="border border-warning bg-warning-bg" data-testid="s6-exp-no-score"><div className="flex items-start gap-3"><FileText size={20} aria-hidden="true" className="text-warning-text" /><div><p className="font-medium text-warning-text">不是人才评分</p><p className="mt-2 text-sm leading-5 text-warning-text">简历与面试表达为原型模拟文本，不把赛事表现转换成不可解释的人才评分，获奖信息请以官方证书为准。</p></div></div></Card>
+    <Button className="w-full" onClick={() => window.history.back()}>返回上一页</Button>
+  </div></RequireCompetitionAccess></PublicShell>;
+}
+
+const qualityDims = [
+  { key: "interest", name: "兴趣倾向", ids: ["interest1", "interest2", "interest3", "interest4"] },
+  { key: "personality", name: "性格特质", ids: ["personality1", "personality2", "personality3", "personality4"] },
+  { key: "ability", name: "能力优势", ids: ["ability1", "ability2", "ability3", "ability4"] },
+  { key: "value", name: "价值取向", ids: ["value1", "value2", "value3", "value4"] },
+] as const;
+
+function qualityTendency(top: string) {
+  if (top === "interest") return { title: "兴趣驱动型", text: "你更容易从「喜欢做什么」出发选择方向，适合从创意、内容、探索类岗位切入。" };
+  if (top === "personality") return { title: "特质驱动型", text: "你的性格优势更突出，适合从协作、管理、执行类岗位切入，靠稳定与条理建立信任。" };
+  if (top === "ability") return { title: "能力驱动型", text: "你的能力长板更明显，适合从技术、数据、表达类岗位切入，用可量化的能力说话。" };
+  return { title: "价值驱动型", text: "你更看重工作带来的意义与回报，适合选择与个人价值观契合的行业与团队。" };
+}
+
+function S6QualityTestResult({ competitionId, resultId }: { competitionId: string; resultId: string }) {
+  const { getRuntime } = useWorkshopRuntime();
+  const runtime = getRuntime(competitionId);
+  const run = runtime.taskRuns["s6-quality-test"];
+  const result = resultById(resultId);
+  const s = run?.selections ?? {};
+  const scores = qualityDims.map(dim => {
+    const raw = dim.ids.reduce((sum, id) => sum + Number(s[id]?.[0] ?? 3), 0);
+    return { ...dim, raw, pct: Math.round(((raw - 4) / 16) * 100) };
+  });
+  const top = [...scores].sort((a, b) => b.raw - a.raw)[0];
+  const tendency = qualityTendency(top.key);
+  const weak = [...scores].sort((a, b) => a.raw - b.raw)[0];
+  const advices = [
+    `你的优势维度是「${top.name}」（得分 ${top.raw}/20），求职表达里优先放大这一面。`,
+    `相对薄弱的是「${weak.name}」（得分 ${weak.raw}/20），可结合赛事与项目经历刻意补强 1-2 项相关能力。`,
+    "雷达图与职业倾向仅用于自我探索，不构成能力评分，也不要据此否定自己。",
+  ];
+
+  return <PublicShell showNavigation={false}><PageHeader title="素养画像成果" backTo={`/competitions/${competitionId}/workspace/workshop/results`} /><RequireCompetitionAccess><div className="space-y-6 px-4 py-5">
+    <CompetitionContextLine competitionId={competitionId} />
+    <Card className="border border-info bg-info-bg" data-testid="s6-quality-private-visibility"><div className="flex items-start gap-3"><EyeOff size={20} aria-hidden="true" className="text-info-text" /><div><p className="font-medium text-info-text">生成结果仅自己可见</p><p className="mt-2 text-sm leading-5 text-info-text">这是个人自我探索建议，不进入团队成果确认，也不会写入 StudentProfile、比赛成绩、证书或其它可信事实。</p></div></div></Card>
+    <Card><p className="text-xs font-medium text-text-brand">S6 · 职业发展 / 素养测评</p><h1 className="mt-2 text-xl font-semibold leading-7 text-text-primary">职业素养画像</h1><p className="mt-4 text-sm leading-6 text-text-secondary">{result?.summary ?? "从兴趣、性格、能力与价值取向四维自评，生成能力雷达与职业倾向。"}</p></Card>
+    <Section title="能力雷达图" subtitle="四维得分（满分 20）"><Card data-testid="s6-quality-radar"><div className="space-y-4">{scores.map(dim => <div key={dim.key}><div className="flex items-center justify-between text-sm"><span className="text-text-secondary">{dim.name}</span><strong className="text-text-primary">{dim.raw}/20</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-border-subtle"><div className="h-full bg-primary" style={{ width: `${dim.pct}%` }} /></div></div>)}</div></Card></Section>
+    <Section title="职业倾向推荐"><Card data-testid="s6-quality-tendency"><div className="flex items-start gap-3"><Compass size={20} aria-hidden="true" className="text-info-text" /><div><h2 className="font-semibold text-text-primary">{tendency.title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{tendency.text}</p></div></div></Card></Section>
+    <Section title="AI 个性化解读"><Card data-testid="s6-quality-ai"><div className="flex items-start gap-3"><Sparkles size={20} aria-hidden="true" className="text-info-text" /><div className="space-y-2">{advices.map((text, index) => <p key={`${text}-${index}`} className="text-sm leading-5 text-text-primary">· {text}</p>)}</div></div></Card></Section>
+    <Section title="提升建议"><Card data-testid="s6-quality-advice"><div className="space-y-2"><p className="text-sm leading-5 text-text-primary">· 围绕优势维度「{top.name}」找 1-2 个可验证的项目或比赛经历，把自评变成可展示的成果。</p><p className="text-sm leading-5 text-text-primary">· 针对薄弱维度「{weak.name}」制定一个小目标，例如通过课程、实践或协作场景刻意练习。</p><p className="text-sm leading-5 text-text-primary">· 可结合职业顾问与岗位推荐，把素养画像收敛成具体岗位方向。</p></div></Card></Section>
+    <Card className="border border-warning bg-warning-bg" data-testid="s6-quality-no-score"><div className="flex items-start gap-3"><FileText size={20} aria-hidden="true" className="text-warning-text" /><div><p className="font-medium text-warning-text">不是能力评分</p><p className="mt-2 text-sm leading-5 text-warning-text">四维得分来自本人自评，仅供自我探索参考，不构成能力评分，也不代表任何录取或比赛结论。</p></div></div></Card>
+    <Button className="w-full" onClick={() => window.history.back()}>返回上一页</Button>
+  </div></RequireCompetitionAccess></PublicShell>;
+}
+
 export function T013CResultDetailPage() {
   const { competitionId, resultId } = useParams();
   if (!competitionId || !resultId || !specialResultIds.has(resultId)) return <T013BResultDetailPage />;
@@ -332,6 +425,10 @@ export function T013CResultDetailPage() {
       ? <S5PptResult competitionId={competitionId} resultId={resultId} />
       : resultId === "result-s6-job-recommend"
         ? <S6JobRecommendResult competitionId={competitionId} resultId={resultId} />
-        : <S6CareerAdvisorResult competitionId={competitionId} resultId={resultId} />}
+        : resultId === "result-s6-experience-transform"
+          ? <S6ExperienceTransformResult competitionId={competitionId} resultId={resultId} />
+          : resultId === "result-s6-quality-test"
+            ? <S6QualityTestResult competitionId={competitionId} resultId={resultId} />
+            : <S6CareerAdvisorResult competitionId={competitionId} resultId={resultId} />}
   </ResultGate>;
 }
