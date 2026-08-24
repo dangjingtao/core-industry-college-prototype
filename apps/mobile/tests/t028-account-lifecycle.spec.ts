@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+test("T028 provisioned member login enters activation instead of normal login", async ({ page }) => {
+  await page.goto("/auth/login?accountCase=preaccount&returnTo=%2Fcompetitions%2Fmine");
+  await expect(page).toHaveURL(/\/auth\/competition-account\?case=unclaimed/);
+  await expect(page.getByRole("heading", { name: "赛事报名已为你创建待激活账号" })).toBeVisible();
+});
+
 test("T028 unclaimed competition account requires explicit activation", async ({ page }) => {
   await page.goto("/auth/competition-account?case=unclaimed");
 
