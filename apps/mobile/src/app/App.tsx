@@ -53,6 +53,7 @@ import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../feature
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
+import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import { WelfareAdPage, WelfareDetailPage, WelfareListPage } from "../features/welfare/WelfarePages";
@@ -177,7 +178,7 @@ export function App() {
               <Route path="/me/settings" element={account(<SettingsPage />)} />
               <Route path="/me/authorization" element={account(<AuthorizationPage />)} />
               <Route path="/me/feedback" element={account(<FeedbackPage />)} />
-              <Route path="/me/subjects" element={account(<SubjectDecisionPage />)} />
+              <Route path="/me/subjects" element={account(<SubjectDecisionPage />} />
               <Route path="/me/notifications" element={account(<NotificationsPage />)} />
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />
               <Route path="/legal/user-agreement" element={<LegalPage kind="user" />} />
@@ -186,6 +187,7 @@ export function App() {
               <Route path="/tasks" element={<TaskCenterPage />} />
               <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
+              <Route path="/apps/startup-shop" element={<StartupShopPage />} />
               <Route path="/redeem" element={account(<RedeemCodePage />)} />
               <Route path="/redeem/result" element={account(<RedeemResultPage />)} />
               <Route path="/welfare" element={<WelfareListPage />} />
