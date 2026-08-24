@@ -32,7 +32,7 @@ export function RedeemCodePage() {
       navigate(`/redeem/result?code=${encodeURIComponent(code)}`);
       return;
     }
-    setError(result.status === "alreadyRedeemed" ? "你已经领取过该活动权益" : result.reason);
+    setError("reason" in result ? result.reason : result.message);
   }
 
   return <PublicShell showNavigation={false}>
