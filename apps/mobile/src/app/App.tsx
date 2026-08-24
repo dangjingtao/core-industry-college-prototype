@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { RouteLab } from "../dev/RouteLab";
 import {
   ApplicationsPage,
@@ -65,6 +65,7 @@ import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
+import { SplashOverlay, useSplashGate } from "../features/long-term-assets/SplashOverlay";
 import { WelfareAdPage, WelfareDetailPage, WelfareListPage } from "../features/welfare/WelfarePages";
 import {
   CompanyDetailTrustedPage,
@@ -98,6 +99,16 @@ import {
 
 const account = (page: ReactNode) => <AccountRequired>{page}</AccountRequired>;
 
+/** T040：欢迎页前置开屏广告（会话内一次；深链/回流动线跳过） */
+function WelcomeSplashPage() {
+  const location = useLocation();
+  const { visible, dismiss } = useSplashGate(location.search);
+  return <>
+    <WelcomePage />
+    {visible && <SplashOverlay onDone={dismiss} />}
+  </>;
+}
+
 export function App() {
   return (
     <PublicPlatformProvider>
@@ -107,7 +118,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/welcome" replace />} />
               <Route path="/dev/routes" element={<RouteLab />} />
-              <Route path="/welcome" element={<WelcomePage />} />
+              <Route path="/welcome" element={<WelcomeSplashPage />} />
               <Route path="/auth/login" element={<CompetitionAwareLoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/wechat/authorize" element={<WechatAuthorizePage />} />
