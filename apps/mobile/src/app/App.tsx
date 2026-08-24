@@ -178,7 +178,7 @@ export function App() {
               <Route path="/me/settings" element={account(<SettingsPage />)} />
               <Route path="/me/authorization" element={account(<AuthorizationPage />)} />
               <Route path="/me/feedback" element={account(<FeedbackPage />)} />
-              <Route path="/me/subjects" element={account(<SubjectDecisionPage />} />
+              <Route path="/me/subjects" element={account(<SubjectDecisionPage />)} />
               <Route path="/me/notifications" element={account(<NotificationsPage />)} />
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />
               <Route path="/legal/user-agreement" element={<LegalPage kind="user" />} />
