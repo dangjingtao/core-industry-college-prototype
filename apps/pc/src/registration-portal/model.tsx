@@ -156,14 +156,14 @@ function initialState(): RegistrationPortalState {
     members: [],
     team: seedTeam,
     reviewStatus: "draft",
-    rejectionReason: "团队成员信息与报名材料不一致，请核对成员学校、手机号与学号后重新提交。",
+    rejectionReason: "团队报名材料需要核对，请根据学校审核意见修正后重新提交。",
     commitment: seedCommitment,
     reportSubmitted: false,
     certificateReady: false,
   };
 }
 
-function provisionSubmittedMembers(members: TeamMember[]) {
+function resolveApprovedMembers(members: TeamMember[]) {
   return members.map(member => {
     if (member.accountResolution === "registered") {
       return { ...member, competitionBinding: "bound" as const };
@@ -215,11 +215,9 @@ export function RegistrationPortalProvider({ children }: { children: ReactNode }
     updateTeam: patch => setState(current => ({ ...current, team: { ...current.team, ...patch } })),
     addMember: member => setState(current => ({ ...current, members: current.members.some(item => item.id === member.id || item.phone === member.phone) ? current.members : [...current.members, member] })),
     removeMember: memberId => setState(current => ({ ...current, members: current.members.filter(item => item.id !== memberId) })),
-    submitReview: () => setState(current => current.members.some(member => member.accountResolution === "conflict")
-      ? current
-      : { ...current, members: provisionSubmittedMembers(current.members), reviewStatus: "pending" }),
+    submitReview: () => setState(current => ({ ...current, reviewStatus: "pending" })),
     rejectReview: () => setState(current => ({ ...current, reviewStatus: "rejected" })),
-    approveReview: () => setState(current => ({ ...current, reviewStatus: "approved" })),
+    approveReview: () => setState(current => ({ ...current, members: resolveApprovedMembers(current.members), reviewStatus: "approved" })),
     updateCommitment: patch => setState(current => ({ ...current, commitment: { ...current.commitment, ...patch } })),
     generateCommitment: () => setState(current => ({ ...current, commitment: { ...current.commitment, generated: true } })),
     completeRegistration: () => setState(current => ({ ...current, reviewStatus: "completed", certificateReady: true })),
@@ -230,11 +228,12 @@ export function RegistrationPortalProvider({ children }: { children: ReactNode }
     loadScenario: scenario => setState(current => {
       if (scenario === "leaderDraft") return { ...initialState(), role: "leader" };
       if (scenario === "memberWaiting") return { ...initialState(), role: "member", quizPassed: true };
-      const submittedMembers = provisionSubmittedMembers([seedMember, seedUnregisteredMember]);
+      const submittedMembers = [seedMember, seedUnregisteredMember];
+      const approvedMembers = resolveApprovedMembers(submittedMembers);
       if (scenario === "pending") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "pending" };
       if (scenario === "rejected") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "rejected" };
-      if (scenario === "approved") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "approved" };
-      if (scenario === "completed") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "completed", commitment: { ...seedCommitment, generated: true }, reportSubmitted: true, certificateReady: true };
+      if (scenario === "approved") return { ...initialState(), role: "leader", quizPassed: true, members: approvedMembers, reviewStatus: "approved" };
+      if (scenario === "completed") return { ...initialState(), role: "leader", quizPassed: true, members: approvedMembers, reviewStatus: "completed", commitment: { ...seedCommitment, generated: true }, reportSubmitted: true, certificateReady: true };
       return { ...current, reviewStatus: "closed" };
     }),
   }), [state]);
