@@ -46,7 +46,8 @@ import {
   T034CourseDetailPage,
   T034CoursesPage,
 } from "../features/long-term-assets/T034CoursePages";
-import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, ExchangeCenterPage, ExchangeDetailPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
+import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
+import { T035ExchangeCenterPage, T035ExchangeDetailPage } from "../features/long-term-assets/T035ExchangePages";
 import {
   AssetsHomePage,
   CertificatesPage,
@@ -150,8 +151,8 @@ export function App() {
               <Route path="/courses/:courseId/achievement" element={account(<T034CourseAchievementPage />)} />
               <Route path="/benefits" element={<BenefitsPage />} />
               <Route path="/benefits/free" element={<FreeBenefitsPage />} />
-              <Route path="/benefits/exchange" element={<ExchangeCenterPage />} />
-              <Route path="/benefits/exchange/:exchangeId" element={<ExchangeDetailPage />} />
+              <Route path="/benefits/exchange" element={<T035ExchangeCenterPage />} />
+              <Route path="/benefits/exchange/:exchangeId" element={<T035ExchangeDetailPage />} />
               <Route path="/benefits/credits" element={<CreditDetailsPage />} />
               <Route path="/benefits/wallet" element={account(<BenefitsWalletPage />)} />
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
