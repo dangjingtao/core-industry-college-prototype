@@ -37,6 +37,7 @@ export type PublicPlatformState = {
   logout: () => void;
   continueAsGuest: () => void;
   setCompetitionIdentityScenario: (competitionId: string, scenario: IdentityScenario) => void;
+  setCompetitionSchoolApproved: (competitionId: string) => void;
   upsertRegistrationPending: (competitionId: string) => void;
   submitApplication: (opportunityId: string) => void;
   setApplicationStatus: (opportunityId: string, status: ApplicationRecord["status"]) => void;
@@ -112,6 +113,22 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
     });
     setIdentityModeValue("runtime");
   }, []);
+  const setCompetitionSchoolApproved = useCallback((competitionId: string) => {
+    setIdentities(current => {
+      const competition = competitionById(competitionId);
+      const existing = current.find(identity => identity.competitionId === competitionId);
+      const next: CompetitionIdentityState = {
+        competitionId,
+        competitionStatus: competition?.status ?? existing?.competitionStatus ?? "registrationOpen",
+        registrationStatus: "approved",
+        // 学校审核通过只代表平台承接报名已通过。若外部赛事资格尚未确认，
+        // CompetitionIdentity 继续 pending，不能提前开放正式赛事权限。
+        identityStatus: existing?.identityStatus === "active" ? "active" : "pending",
+      };
+      return existing ? current.map(identity => identity.competitionId === competitionId ? next : identity) : [...current, next];
+    });
+    setIdentityModeValue("runtime");
+  }, []);
   const upsertRegistrationPending = useCallback((competitionId: string) => setCompetitionIdentityScenario(competitionId, "pending"), [setCompetitionIdentityScenario]);
   const submitApplication = useCallback((opportunityId: string) => {
     setApplications(records => records.some(record => record.opportunityId === opportunityId) ? records : [...records, { opportunityId, status: "submitted" }]);
@@ -124,18 +141,20 @@ export function PublicPlatformProvider({ children }: { children: ReactNode }) {
   const guardedSubmitApplication = useCallback((opportunityId: string) => { if (session.loggedIn) submitApplication(opportunityId); }, [session.loggedIn, submitApplication]);
   const guardedToggleFollow = useCallback((companyId: string) => { if (session.loggedIn) toggleFollow(companyId); }, [session.loggedIn, toggleFollow]);
   const guardedIdentityScenario = useCallback((competitionId: string, scenario: IdentityScenario) => { if (session.loggedIn) setCompetitionIdentityScenario(competitionId, scenario); }, [session.loggedIn, setCompetitionIdentityScenario]);
+  const guardedSchoolApproved = useCallback((competitionId: string) => { if (session.loggedIn) setCompetitionSchoolApproved(competitionId); }, [session.loggedIn, setCompetitionSchoolApproved]);
 
   const value = useMemo<PublicPlatformState>(() => ({
     session, applications, followedCompanies, identities, identityMode, listView, listScroll, learningPoints,
     setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest,
     setCompetitionIdentityScenario: guardedIdentityScenario,
+    setCompetitionSchoolApproved: guardedSchoolApproved,
     upsertRegistrationPending,
     submitApplication: guardedSubmitApplication,
     setApplicationStatus,
     toggleFollow: guardedToggleFollow,
     updateListView,
     setListScroll,
-  }), [session, applications, followedCompanies, identities, identityMode, listView, listScroll, learningPoints, setIdentityMode, login, continueAsGuest, guardedIdentityScenario, upsertRegistrationPending, guardedSubmitApplication, setApplicationStatus, guardedToggleFollow, updateListView, setListScroll]);
+  }), [session, applications, followedCompanies, identities, identityMode, listView, listScroll, learningPoints, setIdentityMode, login, registerAccount, completeProfile, logout, continueAsGuest, guardedIdentityScenario, guardedSchoolApproved, upsertRegistrationPending, guardedSubmitApplication, setApplicationStatus, guardedToggleFollow, updateListView, setListScroll]);
 
   return <PublicPlatformContext.Provider value={value}>{children}</PublicPlatformContext.Provider>;
 }
