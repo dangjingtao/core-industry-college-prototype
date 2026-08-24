@@ -15,20 +15,21 @@ import {
 
 const portalBase = "/registration-portal";
 
+const navItems = [
+  { label: "团队信息", to: `${portalBase}/team` },
+  { label: "承诺书", to: `${portalBase}/commitment` },
+  { label: "团队业绩报告", to: `${portalBase}/report` },
+  { label: "证书下载", to: `${portalBase}/certificates` },
+] as const;
+
 function Shell({ title, children, step, showNav = false }: { title: string; children: ReactNode; step?: number; showNav?: boolean }) {
   const location = useLocation();
-  const nav = [
-    ["团队信息", `${portalBase}/team`],
-    ["承诺书", `${portalBase}/commitment`],
-    ["团队业绩报告", `${portalBase}/report`],
-    ["证书下载", `${portalBase}/certificates`],
-  ] as const;
   return <div className="min-h-screen bg-background text-foreground">
     <div className="flex items-center justify-center gap-2 border-b border-warning/20 bg-warning-bg px-4 py-2 text-center text-sm font-medium text-warning-text"><Bell className="h-4 w-4" aria-hidden="true" />团队注册报名时间：2025年10月20日—2026年1月20日 · T028 账号流程修正版</div>
     <header className="border-b border-border-subtle bg-surface"><div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 lg:px-8"><Link to={`${portalBase}/start`} className="font-semibold text-text-primary">全国大学生电子商务“创新、创意及创业”挑战赛</Link><span className="text-xs text-text-tertiary">队长 PC 报名入口</span></div></header>
     <div className={`mx-auto grid max-w-[1440px] gap-6 px-4 py-6 lg:px-8 ${showNav ? "lg:grid-cols-[220px_minmax(0,1fr)]" : ""}`}>
-      {showNav && <aside className="hidden lg:block"><div className="overflow-hidden rounded-container border border-border-subtle bg-surface">{nav.map(([label, to]) => <Link key={to} to={to} className={`block border-b border-border-subtle px-5 py-4 text-sm font-medium last:border-0 ${location.pathname.startsWith(to) ? "bg-primary-container text-text-brand" : "text-text-secondary"}`}>{label}</Link>)}</div></aside>}
-      <main className="min-w-0"><div className="mb-5"><h1 className="text-2xl font-semibold text-text-primary">{title}</h1><p className="mt-1 text-sm text-text-secondary">队员账号只在学校审核通过后创建 / 绑定；团队提交阶段只保存赛事报名资料。</p></div>{step !== undefined && <Steps current={step} />}{children}</main>
+      {showNav && <aside className="hidden lg:block"><div className="overflow-hidden rounded-container border border-border-subtle bg-surface">{navItems.map(item => <Link key={item.to} to={item.to} className={`block border-b border-border-subtle px-5 py-4 text-sm font-medium last:border-0 ${location.pathname.startsWith(item.to) ? "bg-primary-container text-text-brand" : "text-text-secondary"}`}>{item.label}</Link>)}</div></aside>}
+      <main className="min-w-0"><div className="mb-5"><h1 className="text-2xl font-semibold text-text-primary">{title}</h1><p className="mt-1 text-sm text-text-secondary">队员账号只在学校审核通过后创建 / 绑定；团队提交阶段只保存赛事报名资料。</p></div>{step !== undefined && <Steps current={step} />}{showNav && <div className="mb-5 flex gap-2 overflow-x-auto lg:hidden">{navItems.map(item => <Link key={item.to} to={item.to} className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ${location.pathname.startsWith(item.to) ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{item.label}</Link>)}</div>}{children}</main>
     </div>
     <ScenarioDock />
   </div>;
@@ -38,13 +39,17 @@ function Panel({ title, children, action }: { title?: string; children: ReactNod
   return <section className="overflow-hidden rounded-container border border-border-subtle bg-surface">{(title || action) && <div className="flex min-h-14 items-center justify-between border-b border-border-subtle px-5 py-3"><h2 className="font-semibold text-text-primary">{title}</h2>{action}</div>}<div className="p-5">{children}</div></section>;
 }
 
-function Field({ label, value, onChange, required = false, disabled = false }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; disabled?: boolean }) {
-  return <label className="grid gap-2 sm:grid-cols-[120px_1fr] sm:items-center"><span className="text-sm text-text-secondary">{required && <span className="mr-1 text-danger">*</span>}{label}</span><input value={value} disabled={disabled} onChange={event => onChange(event.target.value)} className="h-11 rounded-control border border-border bg-surface px-3 text-sm disabled:bg-surface-subtle" /></label>;
+function Field({ label, value, onChange, required = false, disabled = false, type = "text" }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; disabled?: boolean; type?: string }) {
+  return <label className="grid gap-2 sm:grid-cols-[120px_1fr] sm:items-center"><span className="text-sm text-text-secondary">{required && <span className="mr-1 text-danger">*</span>}{label}</span><input value={value} type={type} disabled={disabled} onChange={event => onChange(event.target.value)} className="h-11 rounded-control border border-border bg-surface px-3 text-sm disabled:bg-surface-subtle" /></label>;
+}
+
+function TextAreaField({ label, value, onChange, placeholder, required = false, rows = 4 }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean; rows?: number }) {
+  return <label className="grid gap-2 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-start"><span className="pt-2 text-sm text-text-secondary">{required && <span className="mr-1 text-danger">*</span>}{label}</span><textarea className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm leading-6 text-text-primary outline-none focus:border-primary" value={value} rows={rows} placeholder={placeholder} onChange={event => onChange(event.target.value)} /></label>;
 }
 
 function Steps({ current }: { current: number }) {
   const labels = ["队长账号", "赛事规则", "团队资料", "学校审核", "账号创建", "承诺书", "完成"];
-  return <div className="mb-6 overflow-x-auto rounded-container border border-border-subtle bg-surface p-3"><div className="flex min-w-[720px] items-center">{labels.map((label, index) => <div key={label} className="flex flex-1 items-center gap-2"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${index < current ? "bg-success text-white" : index === current ? "bg-primary text-on-primary" : "bg-surface-subtle text-text-tertiary"}`}>{index < current ? <Check className="h-4 w-4" /> : index + 1}</span><span className="text-xs font-medium text-text-primary">{label}</span>{index < labels.length - 1 && <span className="h-px flex-1 bg-border-subtle" />}</div>)}</div></div>;
+  return <div className="mb-6 overflow-x-auto rounded-container border border-border-subtle bg-surface p-3"><div className="flex min-w-[720px] items-center">{labels.map((label, index) => <div key={label} className="flex flex-1 items-center gap-2"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${index < current ? "bg-success text-white" : index === current ? "bg-primary text-on-primary" : "bg-surface-subtle text-text-tertiary"}`}>{index < current ? <Check className="h-4 w-4" aria-hidden="true" /> : index + 1}</span><span className="text-xs font-medium text-text-primary">{label}</span>{index < labels.length - 1 && <span className="h-px flex-1 bg-border-subtle" />}</div>)}</div></div>;
 }
 
 function statusTone(status: ReviewStatus) {
@@ -76,7 +81,7 @@ function AccountPage() {
   const { role, account, updateAccount } = useRegistrationPortal();
   const [mode, setMode] = useState<"login" | "register">("login");
   if (role !== "leader") return <Navigate to={`${portalBase}/start`} replace />;
-  return <Shell title="队长账号" step={0}><Panel title="使用核心学院长期账号"><div className="mx-auto max-w-3xl space-y-4"><div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1"><button className={`h-11 rounded-control text-sm font-medium ${mode === "login" ? "bg-surface text-text-brand" : "text-text-secondary"}`} onClick={() => setMode("login")}>已有账号登录</button><button className={`h-11 rounded-control text-sm font-medium ${mode === "register" ? "bg-surface text-text-brand" : "text-text-secondary"}`} onClick={() => setMode("register")}>新队长注册</button></div><Field label="手机号" value={account.phone} required onChange={phone => updateAccount({ phone })} />{mode === "register" && <><Field label="学校" value={account.school} required onChange={school => updateAccount({ school })} /><Field label="赛道" value={account.track} required onChange={track => updateAccount({ track })} /><Field label="团队名称" value={account.teamName} required onChange={teamName => updateAccount({ teamName })} /><Field label="邮箱" value={account.email} required onChange={email => updateAccount({ email })} /></>}<div className="rounded-control bg-primary-container/40 p-3 text-sm leading-6 text-text-secondary">手机号是当前登录与账号解析凭证；长期资产归属于稳定 userId，未来换绑手机号不会迁移成新账号。</div><div className="flex justify-end"><Button onClick={() => navigate(`${portalBase}/quiz`)}>{mode === "login" ? "登录并继续报名" : "注册并继续报名"}</Button></div></div></Panel></Shell>;
+  return <Shell title="队长账号" step={0}><Panel title="使用核心学院长期账号"><div className="mx-auto max-w-3xl space-y-4"><div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1"><button className={`h-11 rounded-control text-sm font-medium ${mode === "login" ? "bg-surface text-text-brand" : "text-text-secondary"}`} onClick={() => setMode("login")}>已有账号登录</button><button className={`h-11 rounded-control text-sm font-medium ${mode === "register" ? "bg-surface text-text-brand" : "text-text-secondary"}`} onClick={() => setMode("register")}>新队长注册</button></div><Field label="手机号" value={account.phone} required onChange={phone => updateAccount({ phone })} />{mode === "login" ? <Field label="密码" value="prototype123" type="password" required onChange={() => undefined} /> : <><Field label="学校" value={account.school} required onChange={school => updateAccount({ school })} /><Field label="赛道" value={account.track} required onChange={track => updateAccount({ track })} /><Field label="团队名称" value={account.teamName} required onChange={teamName => updateAccount({ teamName })} /><Field label="邮箱" value={account.email} required onChange={email => updateAccount({ email })} /></>}<div className="rounded-control bg-primary-container/40 p-3 text-sm leading-6 text-text-secondary">手机号是当前登录与账号解析凭证；长期资产归属于稳定 userId，未来换绑手机号不会迁移成新账号。</div><div className="flex justify-end"><Button onClick={() => navigate(`${portalBase}/quiz`)}>{mode === "login" ? "登录并继续报名" : "注册并继续报名"}</Button></div></div></Panel></Shell>;
 }
 
 function QuizPage() {
@@ -110,7 +115,7 @@ function AddMembersPage() {
   const navigate = useNavigate();
   const { members, addMember, removeMember } = useRegistrationPortal();
   const [draft, setDraft] = useState({ name: "", school: "", phone: "", email: "", studentId: "" });
-  const valid = draft.name.trim() && draft.school.trim() && /^1\d{10}$/.test(draft.phone) && draft.email.trim() && draft.studentId.trim();
+  const valid = Boolean(draft.name.trim() && draft.school.trim() && /^1\d{10}$/.test(draft.phone) && draft.email.trim() && draft.studentId.trim());
   const add = () => { if (!valid) return; addMember({ id: `member-${draft.phone}`, ...draft, ...resolveMemberAccount(draft.phone) }); setDraft({ name: "", school: "", phone: "", email: "", studentId: "" }); };
   return <Shell title="录入团队成员" step={2} showNav><div className="space-y-5"><Panel title="赛事成员资料"><div className="space-y-4"><div className="rounded-control bg-primary-container/40 p-3 text-sm leading-6 text-text-secondary">手机号用于审核通过后的账号解析；姓名、学校、学号按赛事报名要求填写，但不作为长期账号强绑定条件。</div><Field label="姓名" value={draft.name} required onChange={name => setDraft(current => ({ ...current, name }))} /><Field label="学校" value={draft.school} required onChange={school => setDraft(current => ({ ...current, school }))} /><Field label="手机号" value={draft.phone} required onChange={phone => setDraft(current => ({ ...current, phone: phone.replace(/\D/g, "").slice(0, 11) }))} /><Field label="邮箱" value={draft.email} required onChange={email => setDraft(current => ({ ...current, email }))} /><Field label="学号" value={draft.studentId} required onChange={studentId => setDraft(current => ({ ...current, studentId }))} /><Button disabled={!valid} onClick={add}>加入团队名单</Button></div></Panel><Panel title="原型状态样例"><div className="grid gap-3 md:grid-cols-3">{[demoMember, demoUnregisteredMember, demoConflictMember].map(member => <div key={member.id} className="rounded-control border border-border-subtle p-4"><StatusTag tone={accountTone(member)}>{accountLabel(member)}</StatusTag><p className="mt-3 font-medium text-text-primary">{member.name}</p><p className="mt-1 text-xs text-text-secondary">{member.phone}</p>{members.some(item => item.id === member.id) ? <SecondaryButton className="mt-3 w-full" onClick={() => removeMember(member.id)}>移除样例</SecondaryButton> : <Button className="mt-3 w-full" onClick={() => addMember(member)}>加入此状态样例</Button>}</div>)}</div></Panel><div className="flex justify-end"><Button onClick={() => navigate(`${portalBase}/team`)}>保存成员并返回</Button></div></div></Shell>;
 }
@@ -129,27 +134,31 @@ function ReviewPage() {
 
 function CommitmentPage() {
   const navigate = useNavigate();
-  const { reviewStatus, commitment, generateCommitment, completeRegistration } = useRegistrationPortal();
-  if (reviewStatus !== "approved" && reviewStatus !== "completed") return <Shell title="承诺书" showNav><Panel><p className="text-sm text-text-secondary">团队审核通过后开放。</p></Panel></Shell>;
-  return <Shell title="承诺书" step={5} showNav><Panel title="参赛团队承诺与说明书"><p className="text-sm leading-6 text-text-secondary">项目：{commitment.projectTitle}</p><div className="mt-4 flex flex-wrap gap-3"><Button onClick={generateCommitment}>生成承诺书</Button><SecondaryButton disabled={!commitment.generated}>下载团队承诺书</SecondaryButton><SecondaryButton>下载指导老师承诺书模板</SecondaryButton></div>{commitment.generated && <Button className="mt-5" onClick={() => { completeRegistration(); navigate(`${portalBase}/complete`); }}>确认承诺书并完成报名</Button>}</Panel></Shell>;
+  const { reviewStatus, commitment, updateCommitment, generateCommitment, completeRegistration } = useRegistrationPortal();
+  if (reviewStatus !== "approved" && reviewStatus !== "completed") return <Shell title="承诺书" showNav><Panel><div className="py-10 text-center"><StatusTag tone="warning">前置条件未满足</StatusTag><p className="mt-3 text-sm text-text-secondary">团队审核通过后才可填写并生成承诺书。</p><SecondaryButton className="mt-5" onClick={() => navigate(`${portalBase}/review`)}>查看审核状态</SecondaryButton></div></Panel></Shell>;
+  const complete = () => { completeRegistration(); navigate(`${portalBase}/complete`); };
+  return <Shell title="承诺书" step={5} showNav><div className="space-y-5"><Panel title="项目信息"><div className="space-y-4"><Field label="项目标题" required value={commitment.projectTitle} onChange={projectTitle => updateCommitment({ projectTitle })} /><TextAreaField label="项目摘要" required value={commitment.projectSummary} onChange={projectSummary => updateCommitment({ projectSummary })} /></div></Panel><Panel title="参赛团队承诺与说明书"><div className="space-y-4"><TextAreaField label="主要创新点" value={commitment.innovation} onChange={innovation => updateCommitment({ innovation })} placeholder="50–100字" /><TextAreaField label="主要创意点" value={commitment.creativity} onChange={creativity => updateCommitment({ creativity })} placeholder="100–200字" /><TextAreaField label="主要创业点" value={commitment.entrepreneurship} onChange={entrepreneurship => updateCommitment({ entrepreneurship })} placeholder="200–300字" /><div className="rounded-container bg-surface-subtle p-4 text-sm leading-6 text-text-secondary">我们郑重承诺：已仔细阅读大赛规则，并做如上承诺和必要说明，将严格按照大赛规则参加比赛。</div><div className="flex flex-wrap gap-3"><SecondaryButton>保存承诺书</SecondaryButton><Button onClick={generateCommitment}>生成承诺书</Button><SecondaryButton disabled={!commitment.generated}>下载团队承诺书</SecondaryButton><SecondaryButton>下载指导老师承诺书模板</SecondaryButton></div>{commitment.generated && <div className="rounded-control border border-success/30 bg-success-bg px-4 py-3 text-sm text-success-text">承诺书已生成，可下载预览并完成报名。</div>}</div></Panel><div className="flex justify-end"><Button disabled={!commitment.generated} onClick={complete}>确认承诺书并完成报名</Button></div></div></Shell>;
 }
 
 function CompletePage() {
   const navigate = useNavigate();
-  return <Shell title="报名完成" step={6} showNav><Panel><div className="py-6 text-center"><h2 className="text-xl font-semibold text-text-primary">完整报名流程已完成</h2><p className="mt-2 text-sm text-text-secondary">队员长期账号不随本赛事团队生命周期结束。</p><div className="mt-5 flex justify-center gap-3"><Button onClick={() => navigate(`${portalBase}/team`)}>查看团队</Button><SecondaryButton onClick={() => navigate(`${portalBase}/report`)}>团队业绩报告</SecondaryButton></div></div></Panel></Shell>;
+  return <Shell title="报名完成" step={6} showNav><Panel><div className="mx-auto max-w-2xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">完整报名流程已完成</h2><p className="mt-2 text-sm leading-6 text-text-secondary">队长账号、学校审核、审核后的成员账号处理与承诺书均已闭环。队员的核心学院账号属于长期账号，不随本赛事团队生命周期结束。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><Button onClick={() => navigate(`${portalBase}/team`)}>查看团队信息</Button><SecondaryButton onClick={() => navigate(`${portalBase}/report`)}>团队业绩报告</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/certificates`)}>查看证书下载</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/review`)}>查看审核记录</SecondaryButton></div></div></Panel></Shell>;
 }
 
 function ReportPage() {
-  return <Shell title="团队业绩报告" showNav><Panel><p className="text-sm leading-6 text-text-secondary">业绩报告属于赛事后续能力，不参与账号创建与绑定时序。</p></Panel></Shell>;
+  const { reviewStatus, reportSubmitted, submitReport } = useRegistrationPortal();
+  const allowed = reviewStatus === "completed";
+  return <Shell title="团队业绩报告" showNav><Panel title="团队业绩报告"><div className="max-w-3xl space-y-5">{!allowed ? <div className="rounded-control border border-warning/30 bg-warning-bg p-4 text-sm text-warning-text">报名完成后开放团队业绩报告。当前页面保留既有后续状态，不参与 T028 账号时序。</div> : <><TextAreaField label="阶段业绩摘要" value="完成校园美妆用户访谈、内容投放与阶段经营复盘，形成首轮可验证经营数据。" onChange={() => undefined} rows={5} /><div className="grid gap-3 sm:grid-cols-[132px_minmax(0,1fr)]"><span className="pt-2 text-sm text-text-secondary">附件材料</span><button className="rounded-control border border-dashed border-primary px-4 py-4 text-left text-sm font-medium text-text-brand">⇧ 上传团队业绩报告 / 数据附件</button></div>{reportSubmitted ? <div className="rounded-control bg-success-bg p-4 text-sm text-success-text">业绩报告已提交，可在截止前更新。</div> : <div className="flex justify-end"><Button onClick={submitReport}>提交团队业绩报告</Button></div>}</>}</div></Panel></Shell>;
 }
 
 function CertificatesPage() {
   const { certificateReady, reviewStatus } = useRegistrationPortal();
-  return <Shell title="证书下载" showNav><Panel><p className="text-sm text-text-secondary">{certificateReady && reviewStatus === "completed" ? "校赛参赛证书已具备下载条件。" : "当前阶段暂无可下载证书。"}</p></Panel></Shell>;
+  const ready = certificateReady && reviewStatus === "completed";
+  return <Shell title="证书下载" showNav><Panel><div className="flex items-center justify-between border-b border-border-subtle pb-3"><div className="flex gap-5 text-sm font-medium"><span className="border-b-2 border-primary pb-3 text-text-brand">校赛 {ready ? 1 : 0}</span><span className="pb-3 text-text-secondary">省赛 0</span></div><SecondaryButton>刷新</SecondaryButton></div>{ready ? <div className="mt-5 rounded-container border border-border-subtle p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><StatusTag tone="success">可下载</StatusTag><h2 className="mt-3 text-lg font-semibold text-text-primary">第十六届三创赛 · 校赛参赛证书</h2><p className="mt-1 text-sm text-text-secondary">团队：号外号外爆卖爆卖 · 示例证书状态</p></div><Button>下载证书</Button></div></div> : <div className="py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-container bg-surface-subtle text-2xl text-text-tertiary">□</div><p className="mt-4 text-sm text-text-tertiary">当前阶段暂无证书</p></div>}</Panel></Shell>;
 }
 
 function ClosedPage() {
-  return <Shell title="报名已截止"><Panel><p className="text-sm text-text-secondary">已提交团队仍可查看资料与审核结果，但不能继续新增成员或修改核心信息。</p></Panel></Shell>;
+  return <Shell title="报名已截止"><Panel><div className="mx-auto max-w-xl py-10 text-center"><StatusTag tone="neutral">报名关闭</StatusTag><h2 className="mt-4 text-xl font-semibold text-text-primary">队伍编辑时间已截止</h2><p className="mt-2 text-sm leading-6 text-text-secondary">已提交团队仍可查看报名资料与审核结果，但不能继续新增成员或修改团队核心信息。如有疑问请联系管理员。</p><SecondaryButton className="mt-6">联系管理员</SecondaryButton></div></Panel></Shell>;
 }
 
 function ScenarioDock() {
@@ -161,6 +170,7 @@ function ScenarioDock() {
     ["rejected", "审核驳回", `${portalBase}/review`],
     ["approved", "审核通过", `${portalBase}/review`],
     ["completed", "报名完成", `${portalBase}/complete`],
+    ["closed", "报名截止", `${portalBase}/closed`],
   ] as const;
   return <details className="fixed bottom-3 right-3 z-50 rounded-container border border-border-subtle bg-surface p-2 text-xs shadow-floating"><summary className="cursor-pointer px-2 py-1 font-medium text-text-secondary">报名原型状态</summary><div className="mt-2 grid grid-cols-2 gap-1">{items.map(([scenario, label, to]) => <button key={scenario} className="rounded-control px-2 py-2 text-text-brand" onClick={() => { loadScenario(scenario); navigate(to); }}>{label}</button>)}</div></details>;
 }
