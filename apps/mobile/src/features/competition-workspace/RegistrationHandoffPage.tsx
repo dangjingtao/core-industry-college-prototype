@@ -50,6 +50,7 @@ export function RegistrationHandoffPage() {
     login,
     logout,
     setCompetitionIdentityScenario,
+    setCompetitionSchoolApproved,
   } = usePublicPlatform();
   const { getRuntime } = useWorkshopRuntime();
   const [callbackNotice, setCallbackNotice] = useState<string>();
@@ -93,8 +94,8 @@ export function RegistrationHandoffPage() {
       setCompetitionIdentityScenario(competitionId, "rejected");
       setCallbackNotice("报名门户已回流：学校审核未通过，可回 PC 报名门户修正后重新提交。 ");
     } else if (callback.status === "approved") {
-      setCompetitionIdentityScenario(competitionId, "active");
-      setCallbackNotice("报名门户已回流：学校审核通过，团队名单已锁定。赛事生命周期不会因此自动切换为进行中。 ");
+      setCompetitionSchoolApproved(competitionId);
+      setCallbackNotice("报名门户已回流：学校审核通过，团队名单已锁定；如该赛事还有外部官方资格确认，正式赛事身份继续等待权威结果。 ");
     } else {
       setCallbackNotice("已从报名门户返回，当前尚未形成新的赛事身份。 ");
     }
@@ -113,6 +114,7 @@ export function RegistrationHandoffPage() {
     navigate,
     session.loggedIn,
     setCompetitionIdentityScenario,
+    setCompetitionSchoolApproved,
     setIdentityMode,
   ]);
 
@@ -122,7 +124,16 @@ export function RegistrationHandoffPage() {
   const runtime = getRuntime(competitionId);
   if (runtime.lifecycle === "ended") return <PublicShell showNavigation={false}><PageHeader title="赛事报名" backTo={`/competitions/${competitionId}`} /><div className="space-y-4 px-4 py-6"><Card className="border border-border-subtle"><StatusTag tone="neutral">赛事已结束</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">报名与审核操作已关闭</h1><p className="mt-2 text-sm text-text-secondary">赛事详情、工作区和报名门户共用同一赛事阶段边界。</p></Card><SecondaryButton className="w-full" onClick={() => navigate(`/competitions/${competitionId}`)}>返回赛事详情</SecondaryButton></div></PublicShell>;
 
-  const state = identity?.identityStatus === "active" ? "approved" : identity?.identityStatus === "pending" ? "pending" : identity?.identityStatus === "rejected" ? "rejected" : "ready";
+  const state = identity?.identityStatus === "active"
+    ? "qualified"
+    : identity?.registrationStatus === "approved" && identity.identityStatus === "pending"
+      ? "officialPending"
+      : identity?.identityStatus === "pending"
+        ? "schoolPending"
+        : identity?.identityStatus === "rejected"
+          ? "rejected"
+          : "ready";
+
   const openPortal = () => {
     if (!portalUrl) return;
     const snapshotSaved = saveRegistrationHandoffAccountSnapshot({ session, identities, identityMode });
@@ -132,15 +143,17 @@ export function RegistrationHandoffPage() {
     }
     window.location.assign(portalUrl);
   };
-  const simulateApproved = () => setCompetitionIdentityScenario(competitionId, "active");
+  const simulateSchoolApproved = () => setCompetitionSchoolApproved(competitionId);
+  const simulateOfficialConfirmed = () => setCompetitionIdentityScenario(competitionId, "active");
 
   return <PublicShell showNavigation={false}><PageHeader title="赛事报名" subtitle="PC 主报名 · Mobile handoff 兜底" backTo={`/competitions/${competitionId}`} /><div className="space-y-5 px-4 py-6">
-    <Card><StatusTag tone={state === "approved" ? "success" : state === "rejected" ? "danger" : state === "pending" ? "warning" : "info"}>{state}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{competition.name}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">队长以 PC 响应式报名门户作为主报名端；App 负责赛事入口、登录、状态回流与无电脑场景兜底，不再维护第二套原生报名长表单。</p></Card>
+    <Card><StatusTag tone={state === "qualified" ? "success" : state === "rejected" ? "danger" : state === "schoolPending" || state === "officialPending" ? "warning" : "info"}>{state}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">{competition.name}</h1><p className="mt-2 text-sm leading-5 text-text-secondary">队长以 PC 响应式报名门户作为主报名端；App 负责赛事入口、登录、状态回流与无电脑场景兜底，不再维护第二套原生报名长表单。</p></Card>
     {callbackNotice && <Card className="border border-info bg-info-bg"><p className="text-sm text-info-text">{callbackNotice}</p></Card>}
     {state === "ready" && <><Card className="border border-border-subtle"><p className="font-medium text-text-primary">打开同一套 PC 响应式报名门户</p><p className="mt-2 text-sm leading-5 text-text-secondary">复杂团队资料推荐在电脑完成；手机也可以继续打开同一响应式页面作为兜底。系统会携带 competitionId、返回地址与账号上下文，不会产生第二份报名事实。</p></Card><Button data-testid="registration-portal-link" data-portal-url={portalUrl ?? ""} className="w-full" disabled={!portalUrl} onClick={openPortal}>{portalUrl ? "打开响应式报名门户" : "报名门户地址未配置"}</Button></>}
-    {state === "pending" && <><Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">团队已提交，等待学校审核真实性</p><p className="mt-2 text-sm text-warning-text">审核期间团队名单冻结；普通队员账号尚不创建，正式赛事工作区权限也不会因为提交而提前开放。</p></Card><div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => setCompetitionIdentityScenario(competitionId, "rejected")}>模拟审核未通过</SecondaryButton><Button onClick={simulateApproved}>模拟审核通过</Button></div></>}
+    {state === "schoolPending" && <><Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">团队已提交，等待学校审核真实性</p><p className="mt-2 text-sm text-warning-text">审核期间团队名单冻结；普通队员账号尚不创建，正式赛事工作区权限也不会因为提交而提前开放。</p></Card><div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => setCompetitionIdentityScenario(competitionId, "rejected")}>模拟审核未通过</SecondaryButton><Button onClick={simulateSchoolApproved}>模拟学校审核通过</Button></div></>}
     {state === "rejected" && <><Card className="border border-danger bg-danger-bg"><p className="font-medium text-danger-text">报名审核未通过</p><p className="mt-2 text-sm text-danger-text">团队返回可修正状态；普通队员账号此前没有创建，因此不存在账号回滚。</p></Card><Button data-testid="registration-portal-link" data-portal-url={portalUrl ?? ""} className="w-full" disabled={!portalUrl} onClick={openPortal}>回 PC 报名门户修正</Button></>}
-    {state === "approved" && <><Card className="border border-success bg-success-bg"><p className="font-medium text-success-text">学校审核通过，团队名单已锁定</p><p className="mt-2 text-sm text-success-text">后续不再增员或替换成员；成员账号按 T028 处理。赛事阶段与外部官方资格仍按各自状态推进，不由学校审核结果自动改成“进行中”。</p></Card><Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>查看赛事工作区状态</Button></>}
+    {state === "officialPending" && <><Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">学校审核通过，等待外部官方资格确认</p><p className="mt-2 text-sm text-warning-text">团队名单已经锁定，成员账号按 T028 创建 / 绑定；但正式 CompetitionIdentity 仍为 pending，不提前开放正式赛事工作区。对于没有外部第二层确认的赛事，可由后台规则直接完成资格确认。</p></Card><div className="grid grid-cols-2 gap-2"><SecondaryButton onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>验证工作区仍受限</SecondaryButton><Button onClick={simulateOfficialConfirmed}>模拟外部官方资格确认</Button></div></>}
+    {state === "qualified" && <><Card className="border border-success bg-success-bg"><p className="font-medium text-success-text">赛事资格已确认</p><p className="mt-2 text-sm text-success-text">报名流程与正式赛事身份都已确认；实际赛事阶段仍由独立 lifecycle 控制，未开始时只开放允许提前查看的团队 / 资料能力。</p></Card><Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>查看赛事工作区状态</Button></>}
     <SecondaryButton className="w-full" onClick={() => navigate(`/competitions/${competitionId}`)}>返回赛事详情</SecondaryButton>
   </div></PublicShell>;
 }
