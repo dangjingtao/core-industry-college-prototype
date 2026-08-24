@@ -1,10 +1,9 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, CupSoda, Flag, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, Flag, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { simulationAssignments } from "../simulations/registry";
 
 type AppEntry = {
   label: string;
@@ -78,8 +77,6 @@ const groups: AppGroup[] = [
   },
 ];
 
-const featuredInteractionAssignmentId = "activity-campus-drinks";
-
 function AppGrid({ group }: { group: AppGroup }) {
   return <div className="grid grid-cols-3 gap-3">{group.entries.map(entry => {
     const Icon = entry.icon;
@@ -88,22 +85,22 @@ function AppGrid({ group }: { group: AppGroup }) {
 }
 
 function FeaturedInteraction() {
-  const assignment = simulationAssignments[featuredInteractionAssignmentId];
-  if (!assignment?.enabled) return null;
-  return <Section title="经营小挑战" subtitle="几分钟玩一局，不用认真上课">
-    <Link to={`/modules/simulations/${assignment.assignmentId}`} className="block">
-      <Card interactive className="overflow-hidden p-0">
-        <div className="flex items-center gap-4 p-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-[18px] bg-[#fff3dd] text-[#a96816]"><CupSoda size={28} aria-hidden="true" /></span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-text-primary">校园饮品店</h3><StatusTag tone="info">约 3 分钟</StatusTag></div>
-            <p className="mt-1 text-sm leading-5 text-text-secondary">选菜单 → 做活动 → 扛高峰，看看你的小店最后经营得怎么样。</p>
-            <p className="mt-2 text-xs text-text-tertiary">可以重复体验；当前不计正式成绩，也不自动变成能力证明。</p>
+  return <Section title="我的创业小店" subtitle="把日常学习与活跃包装成一间持续成长的小店">
+    <Card className="overflow-hidden p-0">
+      <div className="flex items-start gap-4 p-4">
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-[18px] bg-[#fff3dd] text-[#a96816]"><Store size={28} aria-hidden="true" /></span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-text-primary">我的创业小店</h3><StatusTag tone="neutral">敬请期待</StatusTag></div>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">每个用户拥有一间虚拟小店，把“打开 App”变成“回来经营我的店”。</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">签到 / 答题 / 上课 → 进货</span>
+            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">拉新 → 客流</span>
+            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">日常活跃 → 店铺成长</span>
+            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">养成等级 → 权益折扣</span>
           </div>
-          <span className="text-lg text-text-tertiary" aria-hidden="true">›</span>
         </div>
-      </Card>
-    </Link>
+      </div>
+    </Card>
   </Section>;
 }
 
@@ -122,7 +119,7 @@ export function AppCenterPage() {
     badge: "三创赛专属",
   };
   const renderGroups = groups.map(group => group.title === "工具与服务" ? { ...group, entries: [workshopEntry, ...group.entries] } : group);
-  return <PublicShell showNavigation={true}><PageHeader title="应用中心" subtitle="常用功能，也可以轻松玩一下" /><div className="space-y-7 px-4 py-5">
+  return <PublicShell showNavigation={true}><PageHeader title="应用中心" subtitle="平台功能与互动入口" /><div className="space-y-7 px-4 py-5">
     <FeaturedInteraction />
     {renderGroups.map(group => <Section key={group.title} title={group.title} subtitle={group.subtitle}><AppGrid group={group} /></Section>)}
   </div></PublicShell>;
