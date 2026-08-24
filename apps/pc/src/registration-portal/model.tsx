@@ -3,6 +3,8 @@ import type { RegistrationCallbackStatus } from "@core/shared";
 
 export type RegistrationRole = "leader" | "member";
 export type ReviewStatus = "draft" | "pending" | "rejected" | "approved" | "completed" | "closed";
+export type AccountResolutionStatus = "registered" | "provision" | "provisioned" | "conflict";
+export type CompetitionBindingStatus = "notBound" | "bound" | "blocked";
 
 export type AccountDraft = {
   school: string;
@@ -20,6 +22,8 @@ export type TeamMember = {
   phone: string;
   email: string;
   studentId: string;
+  accountResolution: AccountResolutionStatus;
+  competitionBinding: CompetitionBindingStatus;
 };
 
 export type TeamDraft = {
@@ -110,6 +114,30 @@ const seedMember: TeamMember = {
   phone: "13800138000",
   email: "zhangsan@example.edu.cn",
   studentId: "20260001",
+  accountResolution: "registered",
+  competitionBinding: "notBound",
+};
+
+const seedUnregisteredMember: TeamMember = {
+  id: "member-lisi",
+  name: "李四",
+  school: "广东技术师范大学",
+  phone: "13900139000",
+  email: "lisi@example.edu.cn",
+  studentId: "20260002",
+  accountResolution: "provision",
+  competitionBinding: "notBound",
+};
+
+const seedConflictMember: TeamMember = {
+  id: "member-conflict",
+  name: "王五",
+  school: "广东技术师范大学",
+  phone: "13600136000",
+  email: "wangwu@example.edu.cn",
+  studentId: "20260003",
+  accountResolution: "conflict",
+  competitionBinding: "blocked",
 };
 
 const seedCommitment: CommitmentDraft = {
@@ -128,11 +156,23 @@ function initialState(): RegistrationPortalState {
     members: [],
     team: seedTeam,
     reviewStatus: "draft",
-    rejectionReason: "团队成员信息与报名材料不一致，请核对成员学校、邮箱后重新提交。",
+    rejectionReason: "团队成员信息与报名材料不一致，请核对成员学校、手机号与学号后重新提交。",
     commitment: seedCommitment,
     reportSubmitted: false,
     certificateReady: false,
   };
+}
+
+function provisionSubmittedMembers(members: TeamMember[]) {
+  return members.map(member => {
+    if (member.accountResolution === "registered") {
+      return { ...member, competitionBinding: "bound" as const };
+    }
+    if (member.accountResolution === "provision") {
+      return { ...member, accountResolution: "provisioned" as const, competitionBinding: "bound" as const };
+    }
+    return member;
+  });
 }
 
 function callbackStatusFromState(state: RegistrationPortalState): RegistrationCallbackStatus {
@@ -173,9 +213,11 @@ export function RegistrationPortalProvider({ children }: { children: ReactNode }
     updateAccount: patch => setState(current => ({ ...current, account: { ...current.account, ...patch } })),
     passQuiz: () => setState(current => ({ ...current, quizPassed: true })),
     updateTeam: patch => setState(current => ({ ...current, team: { ...current.team, ...patch } })),
-    addMember: member => setState(current => ({ ...current, members: current.members.some(item => item.id === member.id) ? current.members : [...current.members, member] })),
+    addMember: member => setState(current => ({ ...current, members: current.members.some(item => item.id === member.id || item.phone === member.phone) ? current.members : [...current.members, member] })),
     removeMember: memberId => setState(current => ({ ...current, members: current.members.filter(item => item.id !== memberId) })),
-    submitReview: () => setState(current => ({ ...current, reviewStatus: "pending" })),
+    submitReview: () => setState(current => current.members.some(member => member.accountResolution === "conflict")
+      ? current
+      : { ...current, members: provisionSubmittedMembers(current.members), reviewStatus: "pending" }),
     rejectReview: () => setState(current => ({ ...current, reviewStatus: "rejected" })),
     approveReview: () => setState(current => ({ ...current, reviewStatus: "approved" })),
     updateCommitment: patch => setState(current => ({ ...current, commitment: { ...current.commitment, ...patch } })),
@@ -188,10 +230,11 @@ export function RegistrationPortalProvider({ children }: { children: ReactNode }
     loadScenario: scenario => setState(current => {
       if (scenario === "leaderDraft") return { ...initialState(), role: "leader" };
       if (scenario === "memberWaiting") return { ...initialState(), role: "member", quizPassed: true };
-      if (scenario === "pending") return { ...initialState(), role: "leader", quizPassed: true, members: [seedMember], reviewStatus: "pending" };
-      if (scenario === "rejected") return { ...initialState(), role: "leader", quizPassed: true, members: [seedMember], reviewStatus: "rejected" };
-      if (scenario === "approved") return { ...initialState(), role: "leader", quizPassed: true, members: [seedMember], reviewStatus: "approved" };
-      if (scenario === "completed") return { ...initialState(), role: "leader", quizPassed: true, members: [seedMember], reviewStatus: "completed", commitment: { ...seedCommitment, generated: true }, reportSubmitted: true, certificateReady: true };
+      const submittedMembers = provisionSubmittedMembers([seedMember, seedUnregisteredMember]);
+      if (scenario === "pending") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "pending" };
+      if (scenario === "rejected") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "rejected" };
+      if (scenario === "approved") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "approved" };
+      if (scenario === "completed") return { ...initialState(), role: "leader", quizPassed: true, members: submittedMembers, reviewStatus: "completed", commitment: { ...seedCommitment, generated: true }, reportSubmitted: true, certificateReady: true };
       return { ...current, reviewStatus: "closed" };
     }),
   }), [state]);
@@ -205,4 +248,12 @@ export function useRegistrationPortal() {
   return value;
 }
 
+export function resolveMemberAccount(phone: string): Pick<TeamMember, "accountResolution" | "competitionBinding"> {
+  if (phone === seedMember.phone) return { accountResolution: "registered", competitionBinding: "notBound" };
+  if (phone === seedConflictMember.phone) return { accountResolution: "conflict", competitionBinding: "blocked" };
+  return { accountResolution: "provision", competitionBinding: "notBound" };
+}
+
 export const demoMember = seedMember;
+export const demoUnregisteredMember = seedUnregisteredMember;
+export const demoConflictMember = seedConflictMember;
