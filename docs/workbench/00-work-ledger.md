@@ -71,6 +71,8 @@
 | T025 | 赛事项目材料是否支持 APP 端编辑 | 产品决策 / 讨论 | 待决策 | PC02、赛事 Runtime、团队权限 |
 | T026 | APP 内公益助力板块（首页拼贴广告位 + 应用中心常驻入口 + 看广告助力） | 产品决策 / 施工 | 待决策 | F04 Decision A、T016、T018、广告接入 |
 | T027 | 邀请码 / 福利码领取入口（新用户邀请码 + 线下活动扫码/填码） | 产品决策 / 施工 | 待决策 | F04 Decision A、T006、T015、T018、扫码/码管理 |
+| T028 | 账号生命周期 / 赛事自动开通 / 手机号换绑 | 施工 / 收口 | 已实现（中保真；build / Playwright 回归证据待补） | F01、F03、T015、PC02 |
+| T029 | 三创赛报名端职责 + 团队生命周期 / 减员闭环 | 施工 / 收口 | 已实现（中保真；T032 教师审核工作台落地后最终验收） | F00、T028、PC02 |
 | PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | PASS | 无 |
 | PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | PASS | PC01 |
 | PC03 | Organization + 机会 + 内容运营 | 施工 | PASS | PC01 |
@@ -1565,3 +1567,81 @@ F04 Decision A / C
   - 路由注册表补充 `redeem.code` 与 `redeem.result`。
 - 状态：待决策 → 中保真原型已实现（奖励数值为占位，待 F04 Decision A）。
 - 已 push 到 `origin dev`：`54ae8f8`，合并远端后最终 HEAD 为 `ed2941b`。
+
+---
+
+# T028｜账号生命周期 / 赛事自动开通 / 手机号换绑
+
+**类型：施工 / 收口卡**  
+**状态：已实现（中保真；build / Playwright 回归证据待补）**  
+**优先级：P0**  
+**前置：F01 学生主档、F03 账号/简历/团队、T015 登录注册流程、PC02 赛事控制台**
+
+## 背景
+
+解决跨端登录 / 注册 / 账号绑定的统一流程，核心是保证“App 账号长期存在；赛事身份按赛事生命周期存在”以及“一个账号可关联多个赛事身份”。
+
+## 已实现要点
+
+- 队长在 PC 端登录/注册并完成团队报名；
+- 团队提交时**不创建**普通队员长期账号、**不绑定**赛事身份；
+- 学校审核通过后才触发账号解析：
+  - 未注册手机号生成 `provisioned_unclaimed` 待激活账号；
+  - 已注册手机号复用原 `userId` 自动新增赛事身份；
+- 手机号是唯一硬匹配字段；姓名/学校/学号不作为账号绑定必填条件；
+- 自动绑定的赛事身份默认 `acknowledgementStatus = unconfirmed`，用户可点击“这不是我的参赛信息”进入 `disputed`，仅暂停该赛事身份高风险操作；
+- 团队减员只影响本赛事关系，不注销核心学院长期账号；
+- 赛事外允许自助换绑手机号，赛事中普通自助换绑暂停，保留人工高风险换绑；新手机号已占用时禁止自动合并。
+
+## 待补验收
+
+- [ ] `apps/mobile` 与 `apps/pc` clean install / typecheck / build 通过；
+- [ ] Playwright 回归契约执行并记录结果：
+  - `apps/mobile/tests/t028-account-lifecycle.spec.ts`
+  - `apps/mobile/tests/t028-account-recognition.spec.ts`
+  - `apps/mobile/tests/t028-phone-rebinding.spec.ts`
+  - `apps/pc/tests/registration-portal.spec.ts`
+- [ ] 更新 `docs/reference/history-and-review-evidence.md` 与 `docs/product/02-open-decisions-and-backlog.md`。
+
+## 关键参考
+
+- `docs/product/06-account-lifecycle-and-phone-binding.md`
+- `docs/product/07-account-activation-and-identity-confirmation.md`
+- `docs/workbench/T028-implementation-record.md`
+
+---
+
+# T029｜三创赛报名端职责 + 团队生命周期 / 减员闭环
+
+**类型：施工 / 收口卡**  
+**状态：已实现（中保真；T032 教师审核工作台落地后最终验收）**  
+**优先级：P0**  
+**前置：F00 手机端接入响应式报名门户、T028 账号生命周期、PC02 赛事控制台**
+
+## 背景
+
+明确三创赛报名主端职责与团队生命周期状态机，修正旧流程中“学校审核通过即等于赛事 identity active / lifecycle inProgress”的错误耦合。
+
+## 已实现要点
+
+- 报名主端为 **PC 响应式报名门户**；Mobile App 仅做赛事发现、登录、状态回流、无电脑场景兜底；
+- 队长在 PC 端录入团队成员，队员无需提前单独注册；
+- 团队生命周期：`Draft → SchoolReviewPending → ApprovedLocked → OfficialPending/Ready → InProgress → Ended`；
+- 学校审核通过后团队名单锁定：禁止增员、替换、直接修改已锁定成员事实；后续人员变化只允许减员申请；
+- 继续沿用 2026-08-19 `GAP-05` 减员规则：选择成员 → 填写原因 → 提交审核，不上传减员申请表或证明材料，不提供泛化“成员变更”；
+- 学校审核只更新报名/身份侧状态，不改赛事 `lifecycle`；
+- 新增 `setCompetitionSchoolApproved(competitionId)`，只把 `registrationStatus` 置为 `approved`，`identityStatus` 仍保持 `pending`；
+- Workspace 不新增业务真相源，仅根据 `registrationStatus + identityStatus` 派生 UI；
+- Mobile handoff 文案已修正，明确手机端是兜底而非第二套报名系统。
+
+## 待补验收
+
+- [ ] PC 团队锁定回归契约执行：提交后冻结、驳回后返回编辑、通过后锁定、不显示增员/替换入口；
+- [ ] Mobile 减员回归契约执行：只存在减员申请、无增员替换、无文件上传、pending 时成员事实不变、ended 后不再开放新减员；
+- [ ] T032 教师审核工作台落地后，确认减员入口落点与通知链路；
+- [ ] 同步更新 `docs/reference/history-and-review-evidence.md` 与 `docs/product/02-open-decisions-and-backlog.md`。
+
+## 关键参考
+
+- `docs/product/08-registration-channel-and-team-lifecycle.md`
+- `docs/workbench/T029-implementation-record.md`
