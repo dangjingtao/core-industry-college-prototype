@@ -24,6 +24,7 @@ import { AIBeautyCupLanding } from "./AIBeautyCupLanding";
 import { PCPublicLanding } from "./PCPublicLanding";
 import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { T030CommitmentPage } from "./registration-portal/T030CommitmentPage";
+import { T031CertificatesPage, T031ReportPage } from "./registration-portal/T031ResultsPages";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
 import { SchoolReview } from "./review/SchoolReview";
 import { SanChuangMockLogin } from "./sanchuang-official/SanChuangMockLogin";
@@ -165,6 +166,8 @@ export function App() {
             <Route path="/admin/governance/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/*" element={<AdminRoute><AdminNotFound /></AdminRoute>} />
             <Route path="/registration-portal/commitment" element={<T030CommitmentPage />} />
+            <Route path="/registration-portal/report" element={<T031ReportPage />} />
+            <Route path="/registration-portal/certificates" element={<T031CertificatesPage />} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
             <Route path="/review/*" element={<SchoolReview />} />
             <Route path="*" element={<Navigate to="/" replace />} />
