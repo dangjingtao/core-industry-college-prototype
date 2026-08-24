@@ -51,6 +51,10 @@ export type Benefit = {
   requiresCompetitionId?: string;
   externalUrl?: string;
   claimHint?: string;
+  /** 是否通过接口直接发放到已绑定手机号（替代外部 H5 跳转领取） */
+  apiIssued?: boolean;
+  /** apiIssued 时提示用户前往使用的目标 App 名称 */
+  useInApp?: string;
   /** 是否通过后台绑定用户手机号，领取时无需再次输入 */
   bindPhone?: boolean;
   /** 券有效期（天），自领取之日起算 */
@@ -213,7 +217,9 @@ export const benefits: Benefit[] = [
     expiresAt: "2026-09-30",
     initialStatus: "eligible",
     externalUrl: "https://map.qq.com/?_wv=1027&coupon=student-ride",
-    claimHint: "后台已绑定手机号，点击即可跳转 H5 领取。",
+    claimHint: "已通过接口发放到你绑定的手机号，请在「腾讯地图」App 内使用相同手机号登录查看/使用。",
+    apiIssued: true,
+    useInApp: "腾讯地图",
     bindPhone: true,
     couponValidityDays: 7,
     dailyClaimLimit: 1,
@@ -227,7 +233,9 @@ export const benefits: Benefit[] = [
     expiresAt: "2026-09-15",
     initialStatus: "eligible",
     externalUrl: "https://s.click.taobao.com/t?e=m%3D2%26s%3Dflash-takeout-coupon",
-    claimHint: "后台已绑定手机号，点击即可跳转 H5 领取。",
+    claimHint: "已通过接口发放到你绑定的手机号，请在「淘宝闪购」App 内使用相同手机号登录查看/使用。",
+    apiIssued: true,
+    useInApp: "淘宝闪购",
     bindPhone: true,
     couponValidityDays: 7,
     dailyClaimLimit: 1,

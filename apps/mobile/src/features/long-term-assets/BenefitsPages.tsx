@@ -4,6 +4,7 @@ import { ChevronRight, Coins, Info, Phone, Search, ShoppingBag, Sparkles, Trendi
 import { Dialog } from "@core/shared";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { benefitById, benefits, exchangeItemById, exchangeItems, learningCreditRecords, type BenefitStatus } from "./data";
+import { InfoFeedAdCard, mockRewardedAds, RewardedVideoAd, useInfoFeedAd } from "./Ads";
 import { SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
 import { useLongTermAssets } from "./store";
 
@@ -199,11 +200,17 @@ export function BenefitDetailPage() {
   const item = benefitById(benefitId);
   const [phone, setPhone] = useState("");
   const [showClaimedDialog, setShowClaimedDialog] = useState(false);
+  const [adOpen, setAdOpen] = useState(false);
   const { benefitStatusFor, claimBenefit, useBenefit, profile } = useLongTermAssets();
   if (!item) return <PublicShell showNavigation={false}><PageHeader title="权益不存在" backTo={`/benefits${query}`} /></PublicShell>;
   const status = loggedIn ? benefitStatusFor(item.id) : undefined;
   const claim = () => accountAction(() => { claimBenefit(item.id); setShowClaimedDialog(true); });
   const use = () => accountAction(() => useBenefit(item.id));
+  const currentAd = mockRewardedAds[item.id.length % mockRewardedAds.length];
+  const infoFeedAd = useInfoFeedAd(item.id);
+  const startAdClaim = () => { setAdOpen(true); };
+  const handleAdComplete = () => { setAdOpen(false); claim(); };
+  const handleAdClose = () => { setAdOpen(false); };
   const maskedPhone = profile.phone ? `${profile.phone.slice(0, 3)} **** ${profile.phone.slice(7)}` : "未绑定手机号";
   const phoneReady = Boolean(profile.phone && profile.phoneVerified === "verified");
   const profileReturnTo = `/benefits/${item.id}${query}`;
@@ -243,13 +250,13 @@ export function BenefitDetailPage() {
                   <input type="tel" value={phone} onChange={event => setPhone(event.target.value)} placeholder="请输入领取手机号" className="mt-1 w-full rounded-control border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" />
                 </label>
               )}
-              <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary">
-                {item.id === "benefit-tencent-map-ride" ? "领取打车券" : "去 H5 领取页"}
-              </a>
-              <SecondaryButton className="w-full" onClick={claim}>我已领取，标记状态</SecondaryButton>
+              <Button className="w-full" onClick={startAdClaim}>看广告领{item.id === "benefit-tencent-map-ride" ? "打车券" : item.id === "benefit-taobao-flash-takeout" ? "外卖券" : "权益"}</Button>
+              {item.externalUrl && !item.apiIssued && (
+                <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block text-center text-sm font-medium text-text-brand">直接去合作方页面领取</a>
+              )}
             </>
           )}
-          {(item.couponValidityDays || item.dailyClaimLimit) && (
+          {(item.couponValidityDays || item.dailyClaimLimit || item.apiIssued) && (
             <Card className="border border-border-subtle">
               <div className="flex items-center gap-2">
                 <Info size={16} className="text-text-tertiary" aria-hidden="true" />
@@ -259,24 +266,30 @@ export function BenefitDetailPage() {
                 {item.couponValidityDays && <li>券有效期：领取后 {item.couponValidityDays} 天内有效</li>}
                 {item.dailyClaimLimit && <li>领取限制：同一手机号每天限领 {item.dailyClaimLimit} 次</li>}
                 {item.bindPhone && <li>发放方式：后台自动绑定已验证手机号，无需重复输入</li>}
+                {item.apiIssued && item.useInApp && <li>使用方式：请打开「{item.useInApp}」App，使用相同手机号登录后查看/使用</li>}
               </ul>
             </Card>
           )}
         </div>
-      ) : <Button className="w-full" onClick={claim}>领取权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}</div>
-    <Dialog
-      open={showClaimedDialog}
-      onOpenChange={setShowClaimedDialog}
-      title="领取成功"
-      description={`「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
-      size="sm"
-      footer={
-        <div className="flex w-full flex-col gap-3">
-          <Button className="w-full" onClick={() => { setShowClaimedDialog(false); navigate("/benefits/wallet"); }}>查看我的卡券</Button>
-          <SecondaryButton className="w-full" onClick={() => { setShowClaimedDialog(false); window.open(item.externalUrl, "_blank", "noopener,noreferrer"); }}>去使用</SecondaryButton>
-        </div>
-      }
-    />
+      ) : <Button className="w-full" onClick={startAdClaim}>看广告领权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}<InfoFeedAdCard ad={infoFeedAd} seed={item.id} /></div>
+      <Dialog
+        open={showClaimedDialog}
+        onOpenChange={setShowClaimedDialog}
+        title="领取成功"
+        description={`「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
+        size="sm"
+        footer={
+          <div className="flex w-full flex-col gap-3">
+            <Button className="w-full" onClick={() => { setShowClaimedDialog(false); navigate("/benefits/wallet"); }}>查看我的卡券</Button>
+            {item.apiIssued && item.useInApp ? (
+              <p className="text-center text-sm leading-5 text-text-secondary">请打开「{item.useInApp}」App，使用相同手机号登录后查看/使用</p>
+            ) : (
+              <SecondaryButton className="w-full" onClick={() => { setShowClaimedDialog(false); window.open(item.externalUrl, "_blank", "noopener,noreferrer"); }}>去使用</SecondaryButton>
+            )}
+          </div>
+        }
+      />
+      <RewardedVideoAd open={adOpen} ad={currentAd} onComplete={handleAdComplete} onClose={handleAdClose} />
   </PublicShell>;
 }
 
