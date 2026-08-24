@@ -186,10 +186,10 @@ export const workshopSkills: WorkshopSkill[] = [
   {
     id: "s6",
     code: "S6",
-    name: "职业规划",
-    summary: "把赛事表现转成求职表达与机会匹配。",
-    capabilities: ["职业顾问", "面试准备", "公司推荐", "简历亮点"],
-    taskIds: ["s6-company-match"],
+    name: "职业发展",
+    summary: "把赛事表现转成能力画像、求职表达与机会匹配。",
+    capabilities: ["职业顾问", "岗位推荐", "经历转化", "素养测评"],
+    taskIds: ["s6-career-advisor", "s6-job-recommend", "s6-experience-transform", "s6-quality-test"],
   },
 ];
 
@@ -272,15 +272,48 @@ export const workshopTasks: WorkshopTask[] = [
     resultId: "result-s5-pitch-ppt",
   },
   {
-    id: "s6-company-match",
+    id: "s6-career-advisor",
     skillId: "s6",
-    title: "生成公司与岗位方向建议",
-    summary: "结合比赛表现和职业偏好，整理可探索的公司与岗位方向。",
-    prompt: "请说明偏好的行业、城市和希望继续发挥的能力。",
-    helper: "结果仅作为职业探索建议，是否投递由学生自己决定。",
+    title: "生成职业画像与岗位建议",
+    summary: "基于专业、兴趣、能力与城市行业偏好，生成职业画像、推荐岗位与发展路径。",
+    prompt: "请说明所在阶段、专业、兴趣方向、能力优势与期望城市行业。",
+    helper: "画像与岗位仅为职业探索建议，不构成人才评分或就业承诺。",
     computeCost: 6,
     requiredMaterials: ["projectBrief"],
-    resultId: "result-s6-company-match",
+    resultId: "result-s6-career-advisor",
+  },
+  {
+    id: "s6-job-recommend",
+    skillId: "s6",
+    title: "生成企业岗位推荐",
+    summary: "基于职业方向、城市与技能偏好，匹配企业及其热门岗位，并支持模拟投递。",
+    prompt: "请说明期望的职业方向、城市、掌握技能与薪资规模偏好。",
+    helper: "企业与岗位仅为求职探索建议，是否投递由学生自己决定。",
+    computeCost: 6,
+    requiredMaterials: ["projectBrief"],
+    resultId: "result-s6-job-recommend",
+  },
+  {
+    id: "s6-experience-transform",
+    skillId: "s6",
+    title: "生成简历与面试表达",
+    summary: "把比赛经历按 STAR 法则转成简历语言、面试话术与作品集证明。",
+    prompt: "请说明赛事级别、角色、成果与锻炼的能力，并补充项目与职责描述。",
+    helper: "转化结果仅为求职表达建议，不构成获奖事实或人才评分。",
+    computeCost: 6,
+    requiredMaterials: ["projectBrief"],
+    resultId: "result-s6-experience-transform",
+  },
+  {
+    id: "s6-quality-test",
+    skillId: "s6",
+    title: "生成职业素养画像",
+    summary: "从兴趣、性格、能力与价值取向四维测评，生成能力雷达与职业倾向建议。",
+    prompt: "请按四个维度逐题自评，AI 会汇总成素养画像与职业倾向。",
+    helper: "测评结果仅为自我探索参考，不构成能力评分或录取结论。",
+    computeCost: 6,
+    requiredMaterials: ["projectBrief"],
+    resultId: "result-s6-quality-test",
   },
 ];
 
@@ -323,12 +356,6 @@ export const workshopQuestions: Record<string, WorkshopQuestion[]> = {
     { id: "focus", label: "最需要强化的部分", type: "multiple", options: ["开场问题", "市场证据", "运营数据", "商业模式", "团队优势", "结尾诉求"], required: true },
     { id: "qa", label: "模拟问答重点", type: "multiple", options: ["竞品差异", "数据真实性", "盈利方式", "规模化路径", "团队能力"], required: true },
   ],
-  "s6-company-match": [
-    { id: "career", label: "更希望发展的职业方向", type: "multiple", options: ["品牌增长", "内容运营", "电商运营", "数据分析", "产品运营"], required: true },
-    { id: "strength", label: "比赛中最有信心的能力", type: "multiple", options: ["用户洞察", "内容表达", "数据复盘", "团队协作", "项目推进"], required: true },
-    { id: "readiness", label: "当前职业准备程度", type: "scale", options: ["1", "2", "3", "4", "5"], required: true },
-    { id: "city", label: "优先探索的城市", type: "multiple", options: ["广州", "深圳", "杭州", "上海", "不限"], required: true },
-  ],
 };
 
 export const workshopComputePolicies: Record<string, WorkshopComputePolicy> = {
@@ -339,7 +366,10 @@ export const workshopComputePolicies: Record<string, WorkshopComputePolicy> = {
   "s4-weekly-review": { estimateMin: 40, estimateMax: 70, actual: 35 },
   "s5-score-precheck": { estimateMin: 40, estimateMax: 60, actual: 50 },
   "s5-pitch-ppt": { estimateMin: 90, estimateMax: 150, actual: 128 },
-  "s6-company-match": { estimateMin: 50, estimateMax: 80, actual: 64 },
+  "s6-career-advisor": { estimateMin: 50, estimateMax: 80, actual: 62 },
+  "s6-job-recommend": { estimateMin: 50, estimateMax: 80, actual: 60 },
+  "s6-experience-transform": { estimateMin: 50, estimateMax: 80, actual: 58 },
+  "s6-quality-test": { estimateMin: 40, estimateMax: 70, actual: 52 },
 };
 
 export const workshopResultDetails: Record<string, WorkshopResultDetail> = {
@@ -350,7 +380,8 @@ export const workshopResultDetails: Record<string, WorkshopResultDetail> = {
   "result-s4-weekly-review": { finding: "曝光增长没有同步带来成交，主要损耗发生在详情页到加购。", weakness: "首购利益点不清晰。", risks: ["扩大投放会放大当前漏斗损耗", "复购样本仍然不足"], actions: ["先调整首购利益点", "下期仅验证详情页到加购转化"], score: 73, rating: "B 需验证", dimensions: [{ label: "流量", score: 88 }, { label: "加购", score: 64 }, { label: "成交", score: 68 }] },
   "result-s5-score-precheck": { finding: "创新表达较清楚，真实性证据和商业闭环最可能被追问。", weakness: "交易证据与规模化路径不够完整。", risks: ["答辩时把预测当成事实", "竞品差异解释过于抽象"], actions: ["整理事实证据附录", "完成一轮全员模拟问答"], score: 76, rating: "B+ 可冲刺", dimensions: [{ label: "创新", score: 84 }, { label: "真实", score: 67 }, { label: "表达", score: 78 }] },
   "result-s5-pitch-ppt": { finding: "8 分钟路演建议压缩为 9 页主叙事，证据页集中回答真实性与增长逻辑。", weakness: "中段数据页信息密度过高。", risks: ["超时导致结尾诉求丢失", "关键证据没有来源标注"], actions: ["前 90 秒讲问题与用户", "完成一次计时演练并记录追问"], score: 82, rating: "A- 可演练", dimensions: [{ label: "结构", score: 88 }, { label: "证据", score: 76 }, { label: "节奏", score: 82 }] },
-  "result-s6-company-match": { finding: "赛事表现体现了内容运营与数据复盘优势，适合品牌增长和电商运营方向。", weakness: "结构化数据表达仍需补强。", risks: ["职业建议不能替代本人选择", "不把赛事评分直接作为人才评分"], actions: ["完成品牌增长课程", "用赛事材料整理一段可验证项目经历"], score: 79, rating: "方向清晰", dimensions: [{ label: "运营", score: 86 }, { label: "数据", score: 72 }, { label: "协作", score: 82 }] },
+  "result-s6-career-advisor": { finding: "职业方向应优先从兴趣与能力的交集出发，再结合城市行业偏好收敛。", weakness: "岗位匹配基于自评能力，缺少真实项目佐证。", risks: ["职业建议不能替代本人选择", "自评能力需要赛事与项目经历验证"], actions: ["用赛事经历补一段可验证项目描述", "针对推荐岗位补齐 1-2 项核心能力"], score: 78, rating: "方向可探索", dimensions: [{ label: "兴趣", score: 80 }, { label: "能力", score: 75 }, { label: "匹配", score: 72 }] },
+  "result-s6-job-recommend": { finding: "职业方向与城市偏好清晰时，企业匹配主要受技能与规模偏好影响。", weakness: "推荐基于自评偏好，缺少真实投递与面试反馈。", risks: ["企业建议不能替代本人选择", "薪资与岗位信息为原型模拟数据"], actions: ["用赛事经历补充一段可验证项目描述", "针对推荐岗位补齐核心技能后尝试投递"], score: 77, rating: "方向可探索", dimensions: [{ label: "方向", score: 82 }, { label: "技能", score: 74 }, { label: "匹配", score: 75 }] },
 };
 
 export const resultTemplates: WorkshopResultTemplate[] = [
@@ -411,12 +442,36 @@ export const resultTemplates: WorkshopResultTemplate[] = [
     nextSuggestion: "按结构修改后再做一次计时演练。",
   },
   {
-    id: "result-s6-company-match",
-    taskId: "s6-company-match",
-    title: "公司与岗位方向建议",
-    summary: "赛事中体现出的内容运营与数据复盘能力，更适合品牌增长、内容电商和运营分析方向。",
-    highlights: ["优先探索：品牌增长实习", "可补强：结构化数据表达", "城市偏好：广州 / 深圳", "结果仅用于学生本人职业探索"],
-    nextSuggestion: "赛后可从长期资产进入平台简历，再自主选择是否投递。",
+    id: "result-s6-career-advisor",
+    taskId: "s6-career-advisor",
+    title: "职业画像与岗位建议",
+    summary: "结合专业、兴趣、能力与城市行业偏好，形成可进一步验证的职业探索方向。",
+    highlights: ["画像标签基于兴趣与能力组合生成", "岗位推荐标注 AI 建议，非人才评分", "发展路径按近期 / 中期 / 长期拆分"],
+    nextSuggestion: "完成职业画像后，可继续使用岗位推荐或比赛经验转化生成求职表达。",
+  },
+  {
+    id: "result-s6-job-recommend",
+    taskId: "s6-job-recommend",
+    title: "企业岗位推荐",
+    summary: "结合职业方向、城市与技能偏好，匹配可探索的企业及其热门岗位。",
+    highlights: ["企业与岗位标注 AI 建议，非人才评分", "支持原型模拟投递与已投递标记", "岗位信息为模拟数据，不构成真实录用承诺"],
+    nextSuggestion: "针对推荐岗位补齐核心技能后，可结合职业顾问的发展路径逐步推进。",
+  },
+  {
+    id: "result-s6-experience-transform",
+    taskId: "s6-experience-transform",
+    title: "简历与面试表达包",
+    summary: "基于比赛经历生成多版本简历语言、面试话术与作品集证明。",
+    highlights: ["简历按量化成果 / 精炼概述 / 岗位导向三版本组织", "面试话术覆盖自我介绍、职责、挑战、协作与收获", "作品集证明标注 AI 生成，获奖信息需本人核验"],
+    nextSuggestion: "结合职业顾问的发展路径，把转化出的表达放进个人求职材料。",
+  },
+  {
+    id: "result-s6-quality-test",
+    taskId: "s6-quality-test",
+    title: "职业素养画像",
+    summary: "四维测评生成能力雷达与职业倾向建议，帮助你更了解自己。",
+    highlights: ["雷达覆盖兴趣 / 性格 / 能力 / 价值四维", "职业倾向标注 AI 建议，非人才评分", "提升建议按薄弱维度给出可执行动作"],
+    nextSuggestion: "结合素养画像进入职业顾问，收敛更具体的岗位方向。",
   },
 ];
 
