@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { BriefcaseBusiness, ChevronLeft, Home, LayoutGrid, MessageCircle, Trophy, UserRound } from "lucide-react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { BriefcaseBusiness, ChevronLeft, Home, LayoutGrid, Trophy, UserRound } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { CustomerServiceBubble } from "../features/platform-support/CustomerServiceBubble";
 
 export { Dialog } from "@core/shared";
 export type { DialogProps } from "@core/shared";
@@ -73,11 +74,7 @@ export function PublicShell({ children, showNavigation = false }: { children: Re
           return <NavLink key={item.to} to={item.to} className={({ isActive }) => `flex min-h-touch flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${isActive ? "text-text-brand" : "text-text-tertiary"}`}><Icon aria-hidden="true" size={22} strokeWidth={2} />{item.label}</NavLink>;
         })}
       </nav>}
-      <div className="fixed inset-x-0 bottom-20 z-40 mx-auto flex max-w-md justify-end px-4 pointer-events-none">
-        <Link to="/support/chat" aria-label="智能客服" className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-floating transition active:scale-95">
-          <MessageCircle size={26} aria-hidden="true" />
-        </Link>
-      </div>
+      <CustomerServiceBubble />
     </div>
   );
 }
