@@ -54,3 +54,32 @@ test("T028 removal language keeps long-lived app account independent", async ({ 
   await expect(page.getByText(/减员审核通过后只回收本赛事团队 \/ 工作区权限/)).toBeVisible();
   await expect(page.getByText(/长期账号、手机号绑定、其它赛事身份与长期资产继续保留/)).toBeVisible();
 });
+
+test("T029 submitted roster is frozen during school review", async ({ page }) => {
+  await page.goto("/registration-portal/start");
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "待审核" }).click();
+
+  await page.getByRole("link", { name: "团队信息" }).first().click();
+  await expect(page.getByText(/团队已进入学校审核/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "录入成员" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "移除" })).toHaveCount(0);
+});
+
+test("T029 rejected roster returns to edit while approved roster stays locked", async ({ page }) => {
+  await page.goto("/registration-portal/start");
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "待审核" }).click();
+  await page.getByRole("button", { name: "模拟审核未通过" }).click();
+  await page.getByRole("button", { name: "返回修正" }).click();
+
+  await expect(page.getByRole("button", { name: "录入成员" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "修正后重新提交审核" })).toBeVisible();
+
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "审核通过" }).click();
+  await page.getByRole("link", { name: "团队信息" }).first().click();
+
+  await expect(page.getByRole("button", { name: "录入成员" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /增员|替换成员/ })).toHaveCount(0);
+});
