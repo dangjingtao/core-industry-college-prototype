@@ -1582,6 +1582,10 @@ F04 Decision A / C
   - 兑换码输入框 placeholder 改为「请输入五位兑换码」；
   - 兑换码页面右上角扫一扫图标移除，保留页面底部「扫一扫」入口；
   - 「我的」页面右上角扫一扫图标移除，移至资料卡右上角：竞赛经验 pill 下方、邮箱文本右上方。
+- 2026-08-24 扫一扫逻辑调整（`5987c51`）：
+  - 移除扫一扫跳转 `/redeem` 与原扫码占位弹窗；
+  - `LongTermAssetsStore` 新增 `simulateScanRedeem()`，模拟扫码后直接生成一条 source 为 `scan` 的兑换记录并增加 5 学力值；
+  - 「我的」页面与「兑换码」页面的扫一扫按钮均改为调用 `simulateScanRedeem()` 后直接跳转 `/redeem/result?code=...` 展示领取成功页面。
 
 ---
 
