@@ -183,3 +183,39 @@ export function InfoFeedAdCard({ ad, seed }: { ad: RewardedAdPlacement; seed: st
 export function useInfoFeedAd(seed: string) {
   return pickAd(mockRewardedAds, seed);
 }
+
+/**
+ * T039 广告位②：机会板块信息流广告
+ * 与列表卡片同构（同 padding / 行结构 / 行高），高度与岗位 / 企业列表卡片一致。
+ * 位置：岗位列表 / 企业列表第 2 张卡片之后。
+ */
+export function ListFeedAdCard({ ad, seed }: { ad: RewardedAdPlacement; seed: string }) {
+  return (
+    <Card interactive className="space-y-3" data-testid="list-feed-ad">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold leading-6 text-text-primary">{ad.title}</h3>
+          <p className="mt-1 text-sm text-text-secondary">{ad.advertiser}</p>
+        </div>
+        <StatusTag tone="neutral">广告</StatusTag>
+      </div>
+      <p className="line-clamp-2 text-sm leading-5 text-text-secondary">{ad.tagline}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusTag tone="neutral">品牌合作</StatusTag>
+        <button
+          type="button"
+          onClick={() => window.open("https://example.com/demo-ad", "_blank", "noopener,noreferrer")}
+          className="min-h-touch text-sm font-medium text-text-brand"
+        >
+          查看详情
+        </button>
+        <span className="ml-auto text-[11px] text-text-tertiary">种子 {seed.slice(0, 4)}</span>
+      </div>
+    </Card>
+  );
+}
+
+/** 机会板块信息流广告：按列表维度确定性取一条示例物料 */
+export function useListFeedAd(seed: string) {
+  return pickAd(mockRewardedAds, seed);
+}
