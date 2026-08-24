@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ShieldCheck, Trophy } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, StatusTag } from "../../components/ui";
+import { LoginPage } from "./AuthPages";
 
 type Scenario = "unclaimed" | "existing" | "disputed" | "confirmed";
 
@@ -9,6 +10,17 @@ function scenarioFromSearch(search: string): Scenario {
   const value = new URLSearchParams(search).get("case");
   if (value === "existing" || value === "disputed" || value === "confirmed") return value;
   return "unclaimed";
+}
+
+export function CompetitionAwareLoginPage() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  if (params.get("accountCase") === "preaccount") {
+    const returnTo = params.get("returnTo");
+    const target = `/auth/competition-account?case=unclaimed${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`;
+    return <Navigate to={target} replace />;
+  }
+  return <LoginPage />;
 }
 
 const competitionName = "第十六届全国大学生三创赛";
@@ -60,6 +72,7 @@ export function CompetitionAccountPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const scenario = scenarioFromSearch(location.search);
+  const returnTo = new URLSearchParams(location.search).get("returnTo");
   const [accepted, setAccepted] = useState(false);
   const [activated, setActivated] = useState(false);
   const [confirmed, setConfirmed] = useState(scenario === "confirmed");
@@ -98,7 +111,7 @@ export function CompetitionAccountPage() {
           {activated ? (
             <Card className="border border-success/30 bg-success-bg">
               <div className="flex items-start gap-3"><CheckCircle2 size={20} className="mt-0.5 text-success-text" aria-hidden="true" /><div><h2 className="font-semibold text-success-text">账号已激活</h2><p className="mt-1 text-sm leading-6 text-success-text">继续使用同一个手机号和 userId，本次赛事身份已经保留，不会重新创建第二个账号。</p></div></div>
-              <Button className="mt-4 w-full" onClick={() => navigate("/home")}>进入核心学院</Button>
+              <Button className="mt-4 w-full" onClick={() => navigate(returnTo?.startsWith("/") ? returnTo : "/home")}>进入核心学院</Button>
             </Card>
           ) : (
             <div className="space-y-3">
