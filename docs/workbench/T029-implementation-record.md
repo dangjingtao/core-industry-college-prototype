@@ -30,7 +30,7 @@ Draft
 → SchoolReviewPending
 → rejected → Draft/Edit
 → approved → ApprovedLocked
-→ 后续资格 / 赛事阶段
+→ 外部资格确认（赛事需要时）
 → InProgress
 → Ended
 ```
@@ -59,9 +59,9 @@ Draft
 
 ---
 
-## 2. 本轮发现并修复的关键语义错误
+## 2. 本轮发现并修复的关键状态耦合
 
-### 学校审核通过不能改变赛事生命周期
+### 2.1 学校审核不能改变赛事 lifecycle
 
 此前 Mobile 报名 callback 的 `approved` 分支同时执行：
 
@@ -72,9 +72,7 @@ lifecycle → inProgress
 
 这把“学校审核结果”和“赛事是否已经开始”错误合并。
 
-本轮已移除 `setLifecycle(..., "inProgress")`。
-
-现在：
+第一步已移除 `setLifecycle(..., "inProgress")`：
 
 ```text
 school review approved
@@ -82,11 +80,83 @@ school review approved
 → 不改赛事 lifecycle
 ```
 
-赛事仍由独立 `notStarted | inProgress | ended` 控制。
+赛事继续独立使用：
+
+```text
+notStarted | inProgress | ended
+```
 
 提交：
 
 - `8c493d24d4f9cba7f6be25bcf6169f944b2611b7` — `fix(T029): separate registration review from competition lifecycle`
+
+### 2.2 学校审核通过也不能直接等于正式 CompetitionIdentity active
+
+继续检查后发现：即使不修改 lifecycle，若学校审核通过仍直接写：
+
+```text
+identityStatus = active
+```
+
+当赛事本身已经处于 `inProgress` 时，仍可能提前开放正式 Workspace。
+
+当前 `CompetitionIdentityState` 本来就有两个不同字段：
+
+```text
+registrationStatus
+identityStatus
+```
+
+因此本轮没有新增第三份状态 Store，而是把两个既有字段真正拆开使用：
+
+```text
+团队提交
+registrationStatus = pending
+identityStatus = pending
+
+学校审核通过
+registrationStatus = approved
+identityStatus = pending
+
+外部官方资格确认（赛事需要时）
+registrationStatus = approved
+identityStatus = active
+```
+
+对于没有外部第二层资格确认的普通赛事，后台规则可以在学校审核通过后直接完成 `identityStatus = active`。
+
+新增接口：
+
+```text
+setCompetitionSchoolApproved(competitionId)
+```
+
+它只把平台承接报名置为 `approved`，不会越权把正式赛事身份激活。
+
+提交：
+
+- `4bc75a4d5a6b8a84a52696413007251d8bc4360c` — `feat(T029): separate school approval from active competition identity`
+- `0fdc26fb94f62e7383a481eb936e99642c2df140` — `feat(T029): keep school-approved registration pending official qualification`
+
+### 2.3 Workspace 派生态补充 qualificationPending
+
+Workspace 不新增业务真相源，只根据现有字段派生展示：
+
+```text
+registrationStatus = approved
++ identityStatus = pending
+→ qualificationPending
+```
+
+对应提示：
+
+> 学校审核已通过，等待赛事资格确认
+
+正式 Workspace 继续受限。
+
+提交：
+
+- `f69fab928750b82ed51fdca5d9784dbbd764479a` — `feat(T029): distinguish official qualification pending workspace state`
 
 ---
 
@@ -102,8 +172,10 @@ school review approved
 - Mobile 不再维护第二套原生报名长表单；
 - 手机仍可打开同一响应式门户作为无电脑兜底；
 - rejected 后回 PC 修正；
-- approved 后名单锁定；
-- 审核通过不自动启动赛事。
+- 学校 approved 后名单锁定；
+- 学校审核通过不自动启动赛事；
+- 需要外部官方资格确认时，保持正式 CompetitionIdentity pending；
+- 原型可单独模拟外部官方资格确认，确认后才 active。
 
 ---
 
@@ -133,6 +205,20 @@ Mobile 赛事入口
 提交：
 
 - `6cf2c974a71ca6be1763b3193f198e1c61614fb1` — `test(T029): align cross-app handoff with captain PC registration`
+
+另外新增学校审核 / 官方资格分层回归：
+
+```text
+school approved callback
+→ registrationStatus approved
+→ identityStatus pending
+→ Workspace qualificationPending
+→ 正式 Workspace 仍受限
+```
+
+提交：
+
+- `873c59af1ca77a8c1dc57b25ab8dfb3b31f5a928` — `test(T029): keep school-approved registration out of formal workspace`
 
 ---
 
@@ -190,7 +276,7 @@ Mobile 赛事入口
 
 ---
 
-## 7. 当前不新增“官方确认”第三份前端真相源
+## 7. 不新增“官方确认”第三份前端真相源
 
 PC02 已明确三层事实：
 
@@ -200,24 +286,25 @@ PC02 已明确三层事实：
 核心学院叠加服务
 ```
 
-T029 正式设计文档已要求学校审核和外部赛事资格不能混为一谈。
-
-但当前 Mobile 原型已有：
+T029 现在直接复用已有：
 
 ```text
+CompetitionIdentity.registrationStatus
 CompetitionIdentity.identityStatus
 WorkshopRuntime.lifecycle
 ```
 
-并且 `active + notStarted` 已能表达：
+分别表达：
 
-- 已有赛事身份；
-- 团队与资料可提前查看；
-- 赛事执行动作尚未开放。
+```text
+平台承接报名是否通过
+正式赛事身份是否生效
+赛事当前是否开始 / 结束
+```
 
-本轮不为了中保真再新增 `OfficialQualificationStore`，避免产生第三份重复真相源。
+Mobile 只派生 `qualificationPending` 用于 UI，不持有第四份事实。
 
-真实后台接入时，应由 PC02 的外部权威资格映射到现有赛事身份 / permission，而不是在 Mobile 自己维护一套“官方确认”状态。
+真实后台接入时，由 PC02 / 外部权威来源更新正式赛事身份；Mobile 只消费最终状态。
 
 ---
 
@@ -240,7 +327,7 @@ T029 产品主干已完成：
 
 - PC / Mobile 职责明确；
 - 队长 / 队员职责与 T028 对齐；
-- 报名审核与赛事生命周期解耦；
+- 学校审核、正式赛事身份、赛事 lifecycle 三层状态已经解耦；
 - 审核前后团队编辑边界明确；
 - GAP-05 冲突已按现行明确决策收口；
 - PC / Mobile 回归契约已提交。
