@@ -6,12 +6,18 @@ test("T028 provisioned member login enters activation instead of normal login", 
   await expect(page.getByRole("heading", { name: "赛事报名已为你创建待激活账号" })).toBeVisible();
 });
 
-test("T028 unclaimed competition account requires explicit activation", async ({ page }) => {
+test("T028 unclaimed competition account requires phone verification and explicit activation", async ({ page }) => {
   await page.goto("/auth/competition-account?case=unclaimed");
 
   await expect(page.getByRole("heading", { name: "赛事报名已为你创建待激活账号" })).toBeVisible();
   await expect(page.getByText(/未激活前，不默认开启课程推荐、就业画像或营销订阅/)).toBeVisible();
+  await expect(page.getByRole("checkbox")).toBeDisabled();
   await expect(page.getByRole("button", { name: "确认并激活账号" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "发送验证码" }).click();
+  await page.getByLabel("验证码").fill("123456");
+  await page.getByRole("button", { name: "验证手机号" }).click();
+  await expect(page.getByText(/手机号 13900139000 已验证/)).toBeVisible();
 
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "确认并激活账号" }).click();
