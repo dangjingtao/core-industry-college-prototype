@@ -52,3 +52,21 @@ test("T029 Mobile fallback enters captain PC registration and returns pending st
   await expect(page.getByText(/第十六届全国大学生电子商务/)).toBeVisible();
   await expect(page.getByText("pending", { exact: true })).toBeVisible();
 });
+
+test("T029 school approval locks roster but keeps formal competition identity pending", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: /原型账号：多赛事身份/ }).click();
+  await expect(page.getByRole("button", { name: /原型账号：无赛事身份/ })).toBeVisible();
+
+  await page.evaluate(() => {
+    window.history.pushState({}, "", "/competitions/sanchuang-16/registration?handoff=registration-portal&registrationCompetitionId=sanchuang-16&registrationStatus=approved&registrationSource=pc-registration-portal");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+
+  await expect(page.getByText("学校审核通过，等待外部官方资格确认", { exact: true })).toBeVisible();
+  await expect(page.getByText(/正式 CompetitionIdentity 仍为 pending/)).toBeVisible();
+
+  await page.getByRole("button", { name: "验证工作区仍受限" }).click();
+  await expect(page.getByText("学校审核已通过，等待赛事资格确认", { exact: true })).toBeVisible();
+  await expect(page.getByText(/正式赛事工作区不会提前开放/)).toBeVisible();
+});
