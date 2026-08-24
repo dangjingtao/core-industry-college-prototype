@@ -50,6 +50,7 @@ import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../feature
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
+import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import { WelfareAdPage, WelfareDetailPage, WelfareListPage } from "../features/welfare/WelfarePages";
 import {
@@ -179,6 +180,8 @@ export function App() {
               <Route path="/tasks" element={<TaskCenterPage />} />
               <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
+              <Route path="/redeem" element={account(<RedeemCodePage />)} />
+              <Route path="/redeem/result" element={account(<RedeemResultPage />)} />
               <Route path="/welfare" element={<WelfareListPage />} />
               <Route path="/welfare/:welfareId" element={<WelfareDetailPage />} />
               <Route path="/welfare/:welfareId/ad" element={<WelfareAdPage />} />

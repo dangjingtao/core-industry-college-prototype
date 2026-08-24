@@ -1,6 +1,7 @@
 import { isCourseCompleted } from "@core/shared";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePublicPlatform } from "../public-platform/state";
+import { redeemCodeWithBackend, type CodeRedemptionRecord, type RedemptionOutcome } from "../redeem/data";
 import { welfareProjectById, welfareProjects } from "../welfare/data";
 import { benefitById, benefits, courses, initialCertificates, initialCompetitionResults, initialEducationIdentity, type BenefitStatus, type CertificateRecord, type CompetitionResultRecord, type EducationIdentityRecord } from "./data";
 import {
@@ -79,6 +80,8 @@ type LongTermAssetsContextValue = {
   welfareProjectStats: Record<string, number>;
   hasHelpedWelfare: (projectId: string) => boolean;
   helpWelfare: (projectId: string) => { success: true } | { success: false; reason: string };
+  codeRedemptions: CodeRedemptionRecord[];
+  redeemCode: (code: string, outcome: RedemptionOutcome, source: "manual" | "scan") => boolean;
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
@@ -163,6 +166,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
   const [creditBalance, setCreditBalance] = useState<number>(seedCreditBalance);
   const [welfareParticipations, setWelfareParticipations] = useState<WelfareParticipationRecord[]>([]);
   const [welfareProjectStats, setWelfareProjectStats] = useState<Record<string, number>>(() => Object.fromEntries(welfareProjects.map(project => [project.id, project.current])));
+  const [codeRedemptions, setCodeRedemptions] = useState<CodeRedemptionRecord[]>([]);
 
   const benefitStatusFor = useCallback((benefitId: string): BenefitStatus => {
     const benefit = benefitById(benefitId);
@@ -195,6 +199,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     setCreditBalance(seedCreditBalance);
     setWelfareParticipations([]);
     setWelfareProjectStats(Object.fromEntries(welfareProjects.map(project => [project.id, project.current])));
+    setCodeRedemptions([]);
     setResume(emptyResume);
     setProfile(nextProfile);
     setProfileSources(initialProfileSources(nextProfile));
@@ -326,6 +331,22 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       setWelfareProjectStats(current => ({ ...current, [projectId]: (current[projectId] ?? project.current) + 1 }));
       return { success: true };
     },
+    codeRedemptions,
+    redeemCode: (code, outcome, source) => {
+      if (!session.loggedIn || outcome.status !== "valid") return false;
+      if (codeRedemptions.some(record => record.code === code)) return false;
+      const record: CodeRedemptionRecord = {
+        id: `REDEEM-${Date.now()}`,
+        code,
+        type: outcome.type,
+        amount: outcome.amount,
+        redeemedAt: new Date().toISOString(),
+        source,
+      };
+      setCodeRedemptions(current => [...current, record]);
+      setCreditBalance(current => current + outcome.amount);
+      return true;
+    },
     toggleResumeFact: factKey => {
       if (!session.loggedIn) return;
       setResume(current => ({
@@ -349,7 +370,7 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
     updateProfile,
     initializeNewAccount,
     mergeProfileFromSource,
-  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, welfareParticipations, welfareProjectStats, session.loggedIn, updateProfile, mergeProfileFromSource]);
+  }), [learning, benefitStatuses, benefitStatusFor, certificates, competitionResults, educationIdentity, resume, profile, profileSources, creditBalance, enrolledCourseIds, welfareParticipations, welfareProjectStats, codeRedemptions, session.loggedIn, updateProfile, mergeProfileFromSource]);
 
   return <LongTermAssetsContext.Provider value={value}>{children}</LongTermAssetsContext.Provider>;
 }

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, HeartHandshake, Link2, Newspaper, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
@@ -40,6 +40,7 @@ const groups: AppGroup[] = [
     entries: [
       { label: "创赛福利", to: "/benefits", icon: Gift, description: "平台与赛事专属福利" },
       { label: "我的卡券", to: "/benefits/wallet", icon: Wallet, description: "已领取的卡券与权益" },
+      { label: "兑换码", to: "/redeem", icon: QrCode, description: "填写邀请码或福利码" },
       { label: "兑换中心", to: "/benefits/exchange", icon: RefreshCw, description: "用学力值兑换好物" },
     ],
   },

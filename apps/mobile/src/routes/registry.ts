@@ -91,6 +91,8 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "about", path: "/about", context: "public", purpose: "关于", states: ["ready"] },
   { id: "tasks.center", path: "/tasks", context: "public", purpose: "已有业务下一步聚合", states: ["guest", "activeCompetition", "noIdentity", "filtered", "empty"] },
   { id: "appCenter.home", path: "/apps", context: "public", purpose: "应用中心：平台功能与工具全量出口", states: ["ready"] },
+  { id: "redeem.code", path: "/redeem", context: "account", purpose: "兑换码填写与扫一扫", states: ["ready", "submitting", "empty", "error"] },
+  { id: "redeem.result", path: "/redeem/result", context: "account", purpose: "兑换码结果展示", states: ["success", "alreadyRedeemed", "invalid", "expired", "exhausted", "missing"] },
   { id: "simulations.host", path: "/modules/simulations/:assignmentId", context: "public", purpose: "模拟模块宿主容器：加载独立 H5 小游戏并回传完成状态", states: ["unavailable", "ready", "running", "completed", "error"] },
 ];
 
