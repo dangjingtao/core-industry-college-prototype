@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, Clapperboard, ClipboardList, Coins, CupSoda, Flag, Gift, Globe, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Ticket, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, CupSoda, Flag, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Card, PageHeader, PublicShell, Section } from "../../components/ui";
+import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { simulationAssignments, simulationModuleManifests } from "../simulations/registry";
+import { simulationAssignments } from "../simulations/registry";
 
 type AppEntry = {
   label: string;
@@ -78,19 +78,33 @@ const groups: AppGroup[] = [
   },
 ];
 
-const simulationIcons: Record<string, LucideIcon> = {
-  "community-commerce": Store,
-  "local-life-coupon": Ticket,
-  "campus-drinks": CupSoda,
-  "live-commerce": Clapperboard,
-  "cross-border-selection": Globe,
-};
+const featuredInteractionAssignmentId = "activity-campus-drinks";
 
 function AppGrid({ group }: { group: AppGroup }) {
   return <div className="grid grid-cols-3 gap-3">{group.entries.map(entry => {
     const Icon = entry.icon;
     return <Link key={entry.to} to={entry.to} className="block" aria-label={`${entry.label}：${entry.description}`}><Card interactive className="flex min-h-[96px] flex-col items-center justify-center gap-2 p-2 text-center"><span className={`relative flex size-10 shrink-0 items-center justify-center rounded-[14px] ${entry.accent ?? group.accent}`}><Icon size={20} aria-hidden="true" />{entry.badge && <span className="absolute -right-2 -top-2 -skew-x-12 rounded-[4px] bg-[#f04438] px-1 py-px text-[8px] font-medium leading-3 text-white shadow-sm" aria-hidden="true">{entry.badge}</span>}</span><span className="text-xs font-medium text-text-primary">{entry.label}</span></Card></Link>;
   })}</div>;
+}
+
+function FeaturedInteraction() {
+  const assignment = simulationAssignments[featuredInteractionAssignmentId];
+  if (!assignment?.enabled) return null;
+  return <Section title="经营小挑战" subtitle="几分钟玩一局，不用认真上课">
+    <Link to={`/modules/simulations/${assignment.assignmentId}`} className="block">
+      <Card interactive className="overflow-hidden p-0">
+        <div className="flex items-center gap-4 p-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-[18px] bg-[#fff3dd] text-[#a96816]"><CupSoda size={28} aria-hidden="true" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-text-primary">校园饮品店</h3><StatusTag tone="info">约 3 分钟</StatusTag></div>
+            <p className="mt-1 text-sm leading-5 text-text-secondary">选菜单 → 做活动 → 扛高峰，看看你的小店最后经营得怎么样。</p>
+            <p className="mt-2 text-xs text-text-tertiary">可以重复体验；当前不计正式成绩，也不自动变成能力证明。</p>
+          </div>
+          <span className="text-lg text-text-tertiary" aria-hidden="true">›</span>
+        </div>
+      </Card>
+    </Link>
+  </Section>;
 }
 
 export function AppCenterPage() {
@@ -107,25 +121,9 @@ export function AppCenterPage() {
     accent: "bg-[#e9f6f1] text-[#247456]",
     badge: "三创赛专属",
   };
-  const activeSimulationAssignments = useMemo(() => Object.values(simulationAssignments).filter(assignment => assignment.enabled), []);
-  const simulationGroup: AppGroup | null = activeSimulationAssignments.length ? {
-    title: "互动体验",
-    subtitle: "活动启用的轻量经营模拟",
-    accent: "bg-[#e9f6f1] text-[#247456]",
-    entries: activeSimulationAssignments.map(assignment => {
-      const manifest = simulationModuleManifests[assignment.moduleId];
-      return {
-        label: manifest?.title ?? "模拟体验",
-        to: `/modules/simulations/${assignment.assignmentId}`,
-        icon: simulationIcons[assignment.moduleId] ?? Store,
-        description: manifest?.description ?? "轻量互动体验",
-        accent: "bg-[#e9f6f1] text-[#247456]",
-      };
-    }),
-  } : null;
   const renderGroups = groups.map(group => group.title === "工具与服务" ? { ...group, entries: [workshopEntry, ...group.entries] } : group);
-  const orderedGroups = simulationGroup ? [...renderGroups.slice(0, 2), simulationGroup, ...renderGroups.slice(2)] : renderGroups;
-  return <PublicShell showNavigation={true}><PageHeader title="应用中心" subtitle="平台功能与工具总入口" /><div className="space-y-7 px-4 py-5">
-    {orderedGroups.map(group => <Section key={group.title} title={group.title} subtitle={group.subtitle}><AppGrid group={group} /></Section>)}
+  return <PublicShell showNavigation={true}><PageHeader title="应用中心" subtitle="常用功能，也可以轻松玩一下" /><div className="space-y-7 px-4 py-5">
+    <FeaturedInteraction />
+    {renderGroups.map(group => <Section key={group.title} title={group.title} subtitle={group.subtitle}><AppGrid group={group} /></Section>)}
   </div></PublicShell>;
 }
