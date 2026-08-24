@@ -200,6 +200,7 @@ export function BenefitDetailPage() {
   const item = benefitById(benefitId);
   const [phone, setPhone] = useState("");
   const [showClaimedDialog, setShowClaimedDialog] = useState(false);
+  const [adConfirmOpen, setAdConfirmOpen] = useState(false);
   const [adOpen, setAdOpen] = useState(false);
   const { benefitStatusFor, claimBenefit, useBenefit, profile } = useLongTermAssets();
   if (!item) return <PublicShell showNavigation={false}><PageHeader title="权益不存在" backTo={`/benefits${query}`} /></PublicShell>;
@@ -208,7 +209,8 @@ export function BenefitDetailPage() {
   const use = () => accountAction(() => useBenefit(item.id));
   const currentAd = mockRewardedAds[item.id.length % mockRewardedAds.length];
   const infoFeedAd = useInfoFeedAd(item.id);
-  const startAdClaim = () => { setAdOpen(true); };
+  const startAdClaim = () => { setAdConfirmOpen(true); };
+  const confirmStartAd = () => { setAdConfirmOpen(false); setAdOpen(true); };
   const handleAdComplete = () => { setAdOpen(false); claim(); };
   const handleAdClose = () => { setAdOpen(false); };
   const maskedPhone = profile.phone ? `${profile.phone.slice(0, 3)} **** ${profile.phone.slice(7)}` : "未绑定手机号";
@@ -250,7 +252,7 @@ export function BenefitDetailPage() {
                   <input type="tel" value={phone} onChange={event => setPhone(event.target.value)} placeholder="请输入领取手机号" className="mt-1 w-full rounded-control border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary" />
                 </label>
               )}
-              <Button className="w-full" onClick={startAdClaim}>看广告领{item.id === "benefit-tencent-map-ride" ? "打车券" : item.id === "benefit-taobao-flash-takeout" ? "外卖券" : "权益"}</Button>
+              <Button className="w-full" onClick={startAdClaim}>领取{item.id === "benefit-tencent-map-ride" ? "打车券" : item.id === "benefit-taobao-flash-takeout" ? "外卖券" : "权益"}</Button>
               {item.externalUrl && !item.apiIssued && (
                 <a href={item.externalUrl} target="_blank" rel="noreferrer" className="block text-center text-sm font-medium text-text-brand">直接去合作方页面领取</a>
               )}
@@ -271,7 +273,7 @@ export function BenefitDetailPage() {
             </Card>
           )}
         </div>
-      ) : <Button className="w-full" onClick={startAdClaim}>看广告领权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}<InfoFeedAdCard ad={infoFeedAd} seed={item.id} /></div>
+      ) : <Button className="w-full" onClick={startAdClaim}>领取权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}<InfoFeedAdCard ad={infoFeedAd} seed={item.id} /></div>
       <Dialog
         open={showClaimedDialog}
         onOpenChange={setShowClaimedDialog}
@@ -286,6 +288,19 @@ export function BenefitDetailPage() {
             ) : (
               <SecondaryButton className="w-full" onClick={() => { setShowClaimedDialog(false); window.open(item.externalUrl, "_blank", "noopener,noreferrer"); }}>去使用</SecondaryButton>
             )}
+          </div>
+        }
+      />
+      <Dialog
+        open={adConfirmOpen}
+        onOpenChange={setAdConfirmOpen}
+        title={`领取「${item.title}」`}
+        description="观看一段广告后领取成功。"
+        size="sm"
+        footer={
+          <div className="flex w-full flex-col gap-3">
+            <Button className="w-full" onClick={confirmStartAd}>观看广告并领取</Button>
+            <SecondaryButton className="w-full" onClick={() => setAdConfirmOpen(false)}>再想想</SecondaryButton>
           </div>
         }
       />
