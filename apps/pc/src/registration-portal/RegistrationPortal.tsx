@@ -2,7 +2,16 @@ import { useState, type ReactNode } from "react";
 import { Bell, Check } from "lucide-react";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Button, SecondaryButton, StatusTag } from "../components/ui";
-import { demoMember, RegistrationPortalProvider, useRegistrationPortal, type RegistrationRole, type ReviewStatus } from "./model";
+import {
+  demoConflictMember,
+  demoMember,
+  demoUnregisteredMember,
+  RegistrationPortalProvider,
+  resolveMemberAccount,
+  useRegistrationPortal,
+  type ReviewStatus,
+  type TeamMember,
+} from "./model";
 
 const portalBase = "/registration-portal";
 
@@ -26,13 +35,13 @@ function PortalFrame({ title, children, showNav = false, actions }: { title: str
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-container bg-primary-container text-xl font-bold text-text-brand">三</div>
           <div className="min-w-0"><p className="truncate text-sm font-semibold text-text-primary sm:text-base">全国大学生电子商务“创新、创意及创业”挑战赛</p><p className="mt-0.5 text-xs text-text-secondary">报名门户 · 响应式中保真原型</p></div>
         </Link>
-        <div className="hidden items-center gap-2 md:flex"><Link to={`${portalBase}/start`} className="rounded-control px-3 py-2 text-sm text-text-secondary hover:bg-surface-subtle">报名首页</Link><span className="text-xs text-text-tertiary">独立原型路由</span></div>
+        <div className="hidden items-center gap-2 md:flex"><Link to={`${portalBase}/start`} className="rounded-control px-3 py-2 text-sm text-text-secondary hover:bg-surface-subtle">报名首页</Link><span className="text-xs text-text-tertiary">队长 PC 报名入口</span></div>
       </div>
     </header>
     <div className={`mx-auto grid w-full max-w-[1440px] gap-6 px-4 py-6 lg:px-8 ${showNav ? "lg:grid-cols-[220px_minmax(0,1fr)]" : ""}`}>
       {showNav && <aside className="hidden lg:block"><div className="sticky top-6 overflow-hidden rounded-container border border-border-subtle bg-surface">{navItems.map(item => { const active = location.pathname.startsWith(item.to); return <Link key={item.to} to={item.to} className={`block min-h-touch border-b border-border-subtle px-5 py-4 text-sm font-medium last:border-b-0 ${active ? "border-l-4 border-l-primary bg-primary-container text-text-brand" : "text-text-secondary hover:bg-surface-subtle"}`}>{item.label}</Link>; })}</div></aside>}
       <main className="min-w-0">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold text-text-primary sm:text-[28px]">{title}</h1><p className="mt-1 text-sm text-text-secondary">PC 优先宽布局，窄屏自动收成单列，不进入手机端主导航。</p></div>{actions}</div>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold text-text-primary sm:text-[28px]">{title}</h1><p className="mt-1 text-sm text-text-secondary">队长在 PC 完成账号、团队与报名材料；队员账号由团队提交后的账号解析流程处理。</p></div>{actions}</div>
         {showNav && <div className="mb-5 flex gap-2 overflow-x-auto lg:hidden">{navItems.map(item => { const active = location.pathname.startsWith(item.to); return <Link key={item.to} to={item.to} className={`whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ${active ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`}>{item.label}</Link>; })}</div>}
         {children}
       </main>
@@ -57,7 +66,7 @@ function TextAreaField({ label, value, onChange, placeholder, required = false, 
 }
 
 function StepStrip({ current }: { current: number }) {
-  const labels = ["身份", "账号注册", "注册答题", "团队报名", "审核", "承诺书", "完成"];
+  const labels = ["队长账号", "赛事规则", "团队资料", "账号解析", "学校审核", "承诺书", "完成"];
   return <div className="mb-6 overflow-x-auto rounded-container border border-border-subtle bg-surface px-3 py-3"><div className="flex min-w-[690px] items-center">{labels.map((label, index) => <div key={label} className="flex flex-1 items-center"><div className="flex items-center gap-2"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${index < current ? "bg-success text-white" : index === current ? "bg-primary text-on-primary" : "bg-surface-subtle text-text-tertiary"}`}>{index < current ? <Check aria-hidden="true" className="h-4 w-4" /> : index + 1}</span><span className={`text-xs font-medium ${index <= current ? "text-text-primary" : "text-text-tertiary"}`}>{label}</span></div>{index < labels.length - 1 && <div className={`mx-2 h-px flex-1 ${index < current ? "bg-success" : "bg-border-subtle"}`} />}</div>)}</div></div>;
 }
 
@@ -69,30 +78,44 @@ function statusLabel(status: ReviewStatus) {
   return status === "pending" ? "合规未审" : status === "rejected" ? "审核未通过" : status === "approved" ? "审核通过" : status === "completed" ? "报名完成" : status === "closed" ? "报名已截止" : "待提交";
 }
 
+function memberAccountLabel(member: TeamMember) {
+  if (member.accountResolution === "conflict") return "身份冲突，需核验";
+  if (member.accountResolution === "provision") return "未注册，提交后自动开通";
+  if (member.accountResolution === "provisioned") return "账号已开通，待本人认领";
+  if (member.competitionBinding === "bound") return "已有账号，赛事身份已绑定";
+  return "已有账号，提交后绑定赛事身份";
+}
+
+function memberAccountTone(member: TeamMember) {
+  if (member.accountResolution === "conflict") return "danger" as const;
+  if (member.accountResolution === "provision" || member.accountResolution === "provisioned") return "warning" as const;
+  return member.competitionBinding === "bound" ? "success" as const : "info" as const;
+}
+
 function StartPage() {
   const navigate = useNavigate();
   const { setRole, reset } = useRegistrationPortal();
-  const choose = (role: RegistrationRole) => { reset(); setRole(role); navigate(`${portalBase}/account`); };
+  const startLeader = () => { reset(); setRole("leader"); navigate(`${portalBase}/account`); };
   return <PortalFrame title="三创赛报名"><StepStrip current={0} /><div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
-    <Panel><div className="max-w-2xl"><StatusTag tone="info">第十六届全国大学生三创赛</StatusTag><h2 className="mt-4 text-2xl font-semibold text-text-primary">选择报名身份</h2><p className="mt-3 text-sm leading-6 text-text-secondary">完整保留旧业务中的队长 / 队员分支，但不继承旧 Mockplus 的错误跳转。个人注册完成后，队长继续创建团队并提交学校审核；队员进入等待队长绑定状态。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><button onClick={() => choose("leader")} className="rounded-container border border-primary bg-primary-container p-5 text-left transition hover:-translate-y-0.5"><p className="text-lg font-semibold text-text-brand">我是队长</p><p className="mt-2 text-sm leading-5 text-text-secondary">注册账号 → 答题 → 创建团队 → 添加成员 → 提交审核 → 承诺书</p></button><button onClick={() => choose("member")} className="rounded-container border border-border p-5 text-left transition hover:-translate-y-0.5 hover:border-primary"><p className="text-lg font-semibold text-text-primary">我是队员</p><p className="mt-2 text-sm leading-5 text-text-secondary">注册账号 → 答题 → 注册成功 → 等待队长通过邮箱绑定</p></button></div></div></Panel>
-    <Panel title="流程说明"><ol className="space-y-4 text-sm text-text-secondary"><li><b className="text-text-primary">1. 账号注册</b><p className="mt-1 leading-5">学校、登录名、手机号、邮箱和密码；队长额外选择赛道并填写团队名称。</p></li><li><b className="text-text-primary">2. 注册答题</b><p className="mt-1 leading-5">保留旧流程中的赛事规则答题节点，答题完成后进入不同角色后续流程。</p></li><li><b className="text-text-primary">3. 团队报名</b><p className="mt-1 leading-5">队长完善团队信息、绑定已注册队员、保存并提交审核。</p></li><li><b className="text-text-primary">4. 审核与承诺书</b><p className="mt-1 leading-5">覆盖待审核、驳回、通过、编辑截止以及承诺书生成/下载。</p></li></ol></Panel>
+    <Panel><div className="max-w-2xl"><StatusTag tone="info">第十六届全国大学生三创赛</StatusTag><h2 className="mt-4 text-2xl font-semibold text-text-primary">由队长在 PC 发起团队报名</h2><p className="mt-3 text-sm leading-6 text-text-secondary">队员不再需要提前到 PC 单独注册。队长提交团队成员名单后，系统会识别已有核心学院账号；未注册成员自动预开通 App 账号，已有账号自动增加本次赛事身份。</p><Button className="mt-6" onClick={startLeader}>我是队长，开始报名</Button><div className="mt-5 rounded-container border border-border-subtle bg-surface-subtle p-4"><p className="font-semibold text-text-primary">我是队员，需要做什么？</p><p className="mt-2 text-sm leading-6 text-text-secondary">把真实手机号、姓名、学校与学号提供给队长即可。团队提交后，你会收到短信或在下次登录核心学院 App 时看到参赛身份通知。</p></div></div></Panel>
+    <Panel title="新的账号处理原则"><ol className="space-y-4 text-sm text-text-secondary"><li><b className="text-text-primary">1. 队长账号</b><p className="mt-1 leading-5">PC 使用核心学院长期账号，不再新造“三创赛独立账号”。</p></li><li><b className="text-text-primary">2. 团队成员</b><p className="mt-1 leading-5">直接录入成员资料，不要求队员先注册。</p></li><li><b className="text-text-primary">3. 团队提交</b><p className="mt-1 leading-5">未注册自动开通；已注册自动绑定赛事身份；身份冲突必须先核验。</p></li><li><b className="text-text-primary">4. 减员</b><p className="mt-1 leading-5">只回收本赛事团队关系和权限，不影响成员继续使用 App。</p></li></ol></Panel>
   </div></PortalFrame>;
 }
 
 function AccountPage() {
   const navigate = useNavigate();
   const { role, account, updateAccount } = useRegistrationPortal();
+  const [mode, setMode] = useState<"login" | "register">("login");
   if (!role) return <Navigate to={`${portalBase}/start`} replace />;
-  return <PortalFrame title={role === "leader" ? "三创队长注册" : "三创队员注册"}><StepStrip current={1} /><Panel title="账号基本信息"><div className="mx-auto max-w-3xl space-y-4">
-    <Field label="学校" value={account.school} required onChange={school => updateAccount({ school })} placeholder="输入学校名称搜索" />
-    {role === "leader" && <><Field label="赛道" value={account.track} required onChange={track => updateAccount({ track })} /><Field label="团队名称" value={account.teamName} required onChange={teamName => updateAccount({ teamName })} placeholder="请输入团队名称" /></>}
-    <Field label="登录名" value={account.username} required onChange={username => updateAccount({ username })} placeholder="请输入登录名" />
-    <Field label="联系电话" value={account.phone} required onChange={phone => updateAccount({ phone })} placeholder="请输入联系电话" />
-    <Field label="邮箱" value={account.email} required onChange={email => updateAccount({ email })} placeholder="请输入邮箱号" />
-    <Field label="密码" value="12345678" type="password" required onChange={() => undefined} placeholder="请输入密码" />
-    <Field label="确认密码" value="12345678" type="password" required onChange={() => undefined} placeholder="请输入确认密码" />
-    <label className="flex items-start gap-2 rounded-control bg-surface-subtle p-3 text-sm text-text-secondary"><input type="checkbox" defaultChecked className="mt-1" /><span>我已阅读并同意《三创赛竞赛规则》</span></label>
-    <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end"><SecondaryButton onClick={() => navigate(`${portalBase}/start`)}>返回选择身份</SecondaryButton><Button onClick={() => navigate(`${portalBase}/quiz`)}>注册并进入答题</Button></div>
+  if (role !== "leader") return <Navigate to={`${portalBase}/start`} replace />;
+  return <PortalFrame title="队长账号"><StepStrip current={0} /><Panel title="使用核心学院长期账号"><div className="mx-auto max-w-3xl space-y-5">
+    <div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1"><button onClick={() => setMode("login")} className={`min-h-11 rounded-control text-sm font-medium ${mode === "login" ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`}>已有账号登录</button><button onClick={() => setMode("register")} className={`min-h-11 rounded-control text-sm font-medium ${mode === "register" ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`}>新队长注册</button></div>
+    <div className="rounded-control border border-primary/20 bg-primary-container/40 p-4 text-sm leading-6 text-text-secondary">手机号是当前主要登录凭证，但长期账号由稳定 userId 识别。未来换绑手机号不会创建新账号，也不会迁移赛事资产。</div>
+    {mode === "register" && <><Field label="学校" value={account.school} required onChange={school => updateAccount({ school })} placeholder="输入学校名称搜索" /><Field label="赛道" value={account.track} required onChange={track => updateAccount({ track })} /><Field label="团队名称" value={account.teamName} required onChange={teamName => updateAccount({ teamName })} placeholder="请输入团队名称" /></>}
+    <Field label="手机号" value={account.phone} required onChange={phone => updateAccount({ phone })} placeholder="请输入 11 位手机号" />
+    {mode === "login" ? <><Field label="密码" value="prototype123" type="password" required onChange={() => undefined} placeholder="已设置密码可直接登录" /><div className="flex flex-wrap gap-2"><SecondaryButton>发送验证码（原型）</SecondaryButton><span className="self-center text-xs text-text-tertiary">正式产品同时支持手机号验证码；历史登录名仅作为兼容入口。</span></div></> : <><Field label="邮箱" value={account.email} required onChange={email => updateAccount({ email })} placeholder="用于赛事正式通知" /><Field label="设置密码" value="prototype123" type="password" required onChange={() => undefined} placeholder="至少 8 位" /></>}
+    <label className="flex items-start gap-2 rounded-control bg-surface-subtle p-3 text-sm text-text-secondary"><input type="checkbox" defaultChecked className="mt-1" /><span>我已阅读并同意《三创赛竞赛规则》与核心学院账号协议</span></label>
+    <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end"><SecondaryButton onClick={() => navigate(`${portalBase}/start`)}>返回</SecondaryButton><Button onClick={() => navigate(`${portalBase}/quiz`)}>{mode === "login" ? "登录并继续报名" : "注册并继续报名"}</Button></div>
   </div></Panel></PortalFrame>;
 }
 
@@ -100,52 +123,63 @@ function QuizPage() {
   const navigate = useNavigate();
   const { role, passQuiz } = useRegistrationPortal();
   const [answer, setAnswer] = useState("");
-  if (!role) return <Navigate to={`${portalBase}/start`} replace />;
-  const submit = () => { passQuiz(); navigate(role === "leader" ? `${portalBase}/registration-success` : `${portalBase}/member-waiting`); };
-  return <PortalFrame title="三创注册答题"><StepStrip current={2} /><Panel><div className="mx-auto max-w-3xl"><div className="flex items-center justify-between"><div><p className="text-sm text-text-secondary">试卷进度</p><p className="mt-1 text-lg font-semibold text-text-primary">赛事规则确认 · 1 / 3</p></div><StatusTag tone="info">33%</StatusTag></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-subtle"><div className="h-full w-1/3 rounded-full bg-primary" /></div><div className="mt-8"><h2 className="text-base font-semibold text-text-primary">1. 团队提交报名材料后，在学校审核完成前应该如何处理？</h2><div className="mt-4 grid gap-3">{["继续修改赛事身份并进入工作区","等待审核结果，必要时按反馈修正材料","重新注册一个新的三创账号"].map((item, index) => <button key={item} onClick={() => setAnswer(String(index))} className={`min-h-touch rounded-control border px-4 py-3 text-left text-sm ${answer === String(index) ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-primary"}`}>{String.fromCharCode(65 + index)}. {item}</button>)}</div></div><div className="mt-8 flex justify-end"><Button disabled={!answer} onClick={submit}>提交答题</Button></div></div></Panel></PortalFrame>;
+  if (role !== "leader") return <Navigate to={`${portalBase}/start`} replace />;
+  const submit = () => { passQuiz(); navigate(`${portalBase}/registration-success`); };
+  return <PortalFrame title="赛事规则确认"><StepStrip current={1} /><Panel><div className="mx-auto max-w-3xl"><div className="flex items-center justify-between"><div><p className="text-sm text-text-secondary">试卷进度</p><p className="mt-1 text-lg font-semibold text-text-primary">赛事规则确认 · 1 / 3</p></div><StatusTag tone="info">33%</StatusTag></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-subtle"><div className="h-full w-1/3 rounded-full bg-primary" /></div><div className="mt-8"><h2 className="text-base font-semibold text-text-primary">1. 团队提交成员资料后，成员账号如何处理？</h2><div className="mt-4 grid gap-3">{["要求所有队员先到 PC 注册","未注册自动预开通，已注册自动绑定赛事身份，冲突先核验","为每场比赛重新建立一套赛事账号"].map((item, index) => <button key={item} onClick={() => setAnswer(String(index))} className={`min-h-touch rounded-control border px-4 py-3 text-left text-sm ${answer === String(index) ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-primary"}`}>{String.fromCharCode(65 + index)}. {item}</button>)}</div></div><div className="mt-8 flex justify-end"><Button disabled={!answer} onClick={submit}>提交答题</Button></div></div></Panel></PortalFrame>;
 }
 
 function RegistrationSuccessPage() {
   const navigate = useNavigate();
-  return <PortalFrame title="注册成功"><StepStrip current={3} /><Panel><div className="mx-auto max-w-xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">队长账号注册成功</h2><p className="mt-2 text-sm leading-6 text-text-secondary">下一步完善团队信息、添加已完成注册的队员，并提交学校审核。注册成功不等于赛事报名完成。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/team`)}>进入团队报名</Button></div></Panel></PortalFrame>;
+  return <PortalFrame title="队长账号已就绪"><StepStrip current={2} /><Panel><div className="mx-auto max-w-xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">继续填写团队与成员资料</h2><p className="mt-2 text-sm leading-6 text-text-secondary">队员无需提前注册核心学院。请直接录入真实成员信息，团队正式提交时系统会统一完成账号解析。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/team`)}>进入团队报名</Button></div></Panel></PortalFrame>;
 }
 
 function MemberWaitingPage() {
-  const navigate = useNavigate();
-  const { account } = useRegistrationPortal();
-  return <PortalFrame title="队员注册成功"><StepStrip current={3} /><Panel><div className="mx-auto max-w-xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">注册成功，请等待队长绑定团队信息</h2><p className="mt-2 text-sm leading-6 text-text-secondary">队长可通过你注册使用的邮箱 <b className="text-text-primary">{account.email}</b> 搜索并添加成员。绑定前不会产生赛事团队权限。</p><div className="mt-6 rounded-container bg-surface-subtle p-4 text-left text-sm text-text-secondary"><p>角色：队员</p><p className="mt-1">学校：{account.school}</p><p className="mt-1">当前状态：等待队长绑定</p></div><SecondaryButton className="mt-6" onClick={() => navigate(`${portalBase}/start`)}>返回报名首页</SecondaryButton></div></Panel></PortalFrame>;
+  return <PortalFrame title="队员无需 PC 注册"><Panel><div className="mx-auto max-w-xl py-8 text-center"><StatusTag tone="info">流程已调整</StatusTag><h2 className="mt-4 text-xl font-semibold text-text-primary">队员账号由团队报名自动处理</h2><p className="mt-2 text-sm leading-6 text-text-secondary">如果你尚未注册核心学院，队长提交团队名单后系统会自动预开通 App 账号；如果你已经注册，系统会把本次赛事身份关联到原账号。</p><Link className="mt-6 inline-flex min-h-11 items-center rounded-control bg-primary px-4 text-sm font-semibold text-on-primary" to={`${portalBase}/start`}>返回报名首页</Link></div></Panel></PortalFrame>;
 }
 
 function TeamPage() {
   const navigate = useNavigate();
-  const { team, updateTeam, members, reviewStatus, submitReview } = useRegistrationPortal();
+  const { team, updateTeam, members, reviewStatus, submitReview, removeMember } = useRegistrationPortal();
   if (reviewStatus === "closed") return <Navigate to={`${portalBase}/closed`} replace />;
   const readOnly = reviewStatus === "pending" || reviewStatus === "approved" || reviewStatus === "completed";
-  const submit = () => { submitReview(); navigate(`${portalBase}/review`); };
-  return <PortalFrame title="团队信息" showNav><StepStrip current={3} /><div className="space-y-5">
-    {readOnly && <div className="rounded-control border border-warning/30 bg-warning-bg px-4 py-3 text-sm text-warning-text">队伍编辑时间已截止或已进入审核流程，如有疑问请联系管理员。</div>}
+  const hasConflict = members.some(member => member.accountResolution === "conflict");
+  const submit = () => { if (hasConflict) return; submitReview(); navigate(`${portalBase}/review`); };
+  return <PortalFrame title="团队信息" showNav><StepStrip current={2} /><div className="space-y-5">
+    {readOnly && <div className="rounded-control border border-warning/30 bg-warning-bg px-4 py-3 text-sm text-warning-text">团队已进入正式提交 / 审核流程，成员账号解析结果已锁定；后续成员变更走赛事期减员流程。</div>}
+    {hasConflict && !readOnly && <div className="rounded-control border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger-text">存在手机号命中但实名资料冲突的成员。请先核对成员资料；系统不会仅凭手机号把赛事身份绑定给可能错误的账号。</div>}
     <Panel title="团队基本信息" action={<div className="flex gap-2"><StatusTag tone={statusTone(reviewStatus)}>{statusLabel(reviewStatus)}</StatusTag>{reviewStatus !== "completed" && <StatusTag tone="neutral">合规{reviewStatus === "approved" ? "已审" : "未审"}</StatusTag>}</div>}>
       <div className="mb-6 rounded-container border border-primary/20 bg-primary-container/40 p-4 sm:p-5"><div className="grid gap-5 md:grid-cols-2"><div><p className="text-lg font-semibold text-text-primary">{team.province}</p><p className="mt-2 text-sm text-text-secondary">联系人：{team.contact}</p></div><div><p className="text-lg font-semibold text-text-primary">{team.school}</p><p className="mt-2 text-sm text-text-secondary">联系电话：{team.contactPhone}</p></div></div></div>
       <div className="space-y-4"><label className="grid gap-2 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center"><span className="text-sm text-text-secondary">作品是否首次参赛</span><button disabled={readOnly} onClick={() => updateTeam({ firstParticipation: !team.firstParticipation })} className={`relative h-7 w-12 rounded-full transition ${team.firstParticipation ? "bg-warning" : "bg-border"}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${team.firstParticipation ? "left-6" : "left-1"}`} /></button></label><Field label="比赛类别" value={team.category} required disabled={readOnly} onChange={category => updateTeam({ category })} /><Field label="团队ID" value={team.teamId} disabled onChange={() => undefined} /><Field label="团队名称" value={team.teamName} disabled={readOnly} onChange={teamName => updateTeam({ teamName })} /><Field label="联系电话" value={team.phone} required disabled={readOnly} onChange={phone => updateTeam({ phone })} /><Field label="邮箱" value={team.email} required disabled={readOnly} onChange={email => updateTeam({ email })} /><label className="grid gap-2 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center"><span className="text-sm text-text-secondary">是否跨校团队</span><button disabled={readOnly} onClick={() => updateTeam({ crossSchool: !team.crossSchool })} className={`relative h-7 w-12 rounded-full transition ${team.crossSchool ? "bg-primary" : "bg-border"}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${team.crossSchool ? "left-6" : "left-1"}`} /></button></label></div>
     </Panel>
-    <Panel title="团队成员信息" action={!readOnly && <Button onClick={() => navigate(`${portalBase}/members`)}>添加成员</Button>}><div className="overflow-x-auto"><table className="min-w-[760px] w-full border-collapse text-sm"><thead><tr className="bg-surface-subtle text-left text-text-secondary">{["排序","姓名","学校/公司","手机号码","邮箱","学号","操作"].map(item => <th key={item} className="border border-border-subtle px-3 py-3 font-medium">{item}</th>)}</tr></thead><tbody>{members.length ? members.map((member, index) => <tr key={member.id}><td className="border border-border-subtle px-3 py-3">{index + 1}</td><td className="border border-border-subtle px-3 py-3 font-medium text-text-primary">{member.name}</td><td className="border border-border-subtle px-3 py-3">{member.school}</td><td className="border border-border-subtle px-3 py-3">{member.phone}</td><td className="border border-border-subtle px-3 py-3">{member.email}</td><td className="border border-border-subtle px-3 py-3">{member.studentId}</td><td className="border border-border-subtle px-3 py-3"><button disabled={readOnly} className="text-danger disabled:text-text-tertiary">移除</button></td></tr>) : <tr><td colSpan={7} className="border border-border-subtle px-3 py-8 text-center text-text-tertiary">暂无数据，请先添加已完成注册的队员</td></tr>}</tbody></table></div></Panel>
-    <Panel title="队伍成员申请表" action={!readOnly && <SecondaryButton>保存减员申请表</SecondaryButton>}><div className="flex flex-wrap gap-3"><button className="rounded-control border border-dashed border-primary px-4 py-3 text-sm font-medium text-text-brand">⇧ 上传减员申请表</button><button className="rounded-control px-4 py-3 text-sm font-medium text-text-brand">⇩ 减员申请表模板下载</button></div></Panel>
-    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end"><SecondaryButton onClick={() => navigate(`${portalBase}/start`)}>保存草稿并退出</SecondaryButton>{reviewStatus === "rejected" ? <Button onClick={submit}>修正后重新提交审核</Button> : reviewStatus === "draft" ? <Button disabled={!members.length} onClick={submit}>提交审核</Button> : reviewStatus === "approved" ? <Button onClick={() => navigate(`${portalBase}/commitment`)}>填写承诺书</Button> : <Button onClick={() => navigate(`${portalBase}/review`)}>查看审核状态</Button>}</div>
+    <Panel title="成员账号处理规则"><div className="grid gap-3 md:grid-cols-3"><div className="rounded-control bg-info-bg p-4"><StatusTag tone="info">已有账号</StatusTag><p className="mt-2 text-sm leading-5 text-info-text">实名字段一致时，团队提交后直接增加本次赛事身份，并写入短信 + 站内通知。</p></div><div className="rounded-control bg-warning-bg p-4"><StatusTag tone="warning">未注册</StatusTag><p className="mt-2 text-sm leading-5 text-warning-text">团队提交后自动预开通核心学院账号；本人首次用手机号验证码认领。</p></div><div className="rounded-control bg-danger-bg p-4"><StatusTag tone="danger">身份冲突</StatusTag><p className="mt-2 text-sm leading-5 text-danger-text">手机号命中但姓名 / 学校 / 学号冲突时停止自动绑定，必须先核验。</p></div></div></Panel>
+    <Panel title="团队成员信息" action={!readOnly && <Button onClick={() => navigate(`${portalBase}/members`)}>录入成员</Button>}><div className="overflow-x-auto"><table className="min-w-[980px] w-full border-collapse text-sm"><thead><tr className="bg-surface-subtle text-left text-text-secondary">{["排序","姓名","学校","手机号码","邮箱","学号","账号 / 赛事状态","操作"].map(item => <th key={item} className="border border-border-subtle px-3 py-3 font-medium">{item}</th>)}</tr></thead><tbody>{members.length ? members.map((member, index) => <tr key={member.id}><td className="border border-border-subtle px-3 py-3">{index + 1}</td><td className="border border-border-subtle px-3 py-3 font-medium text-text-primary">{member.name}</td><td className="border border-border-subtle px-3 py-3">{member.school}</td><td className="border border-border-subtle px-3 py-3">{member.phone}</td><td className="border border-border-subtle px-3 py-3">{member.email}</td><td className="border border-border-subtle px-3 py-3">{member.studentId}</td><td className="border border-border-subtle px-3 py-3"><StatusTag tone={memberAccountTone(member)}>{memberAccountLabel(member)}</StatusTag></td><td className="border border-border-subtle px-3 py-3"><button disabled={readOnly} onClick={() => removeMember(member.id)} className="text-danger disabled:text-text-tertiary">移除</button></td></tr>) : <tr><td colSpan={8} className="border border-border-subtle px-3 py-8 text-center text-text-tertiary">暂无成员。无需等待队员先注册，直接录入真实成员资料即可。</td></tr>}</tbody></table></div></Panel>
+    <Panel title="赛事期减员与 App 账号"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="font-medium text-text-primary">减员只改变本赛事团队关系</p><p className="mt-1 text-sm leading-6 text-text-secondary">减员审核通过后回收本赛事团队 / 工作区权限，但成员的核心学院账号、手机号绑定、其它赛事身份与长期资产继续保留。</p></div><SecondaryButton disabled={!readOnly}>发起减员申请</SecondaryButton></div></Panel>
+    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end"><SecondaryButton onClick={() => navigate(`${portalBase}/start`)}>保存草稿并退出</SecondaryButton>{reviewStatus === "rejected" ? <Button disabled={hasConflict} onClick={submit}>修正后重新提交审核</Button> : reviewStatus === "draft" ? <Button disabled={!members.length || hasConflict} onClick={submit}>提交团队并处理成员账号</Button> : reviewStatus === "approved" ? <Button onClick={() => navigate(`${portalBase}/commitment`)}>填写承诺书</Button> : <Button onClick={() => navigate(`${portalBase}/review`)}>查看审核状态</Button>}</div>
   </div></PortalFrame>;
 }
 
 function AddMembersPage() {
   const navigate = useNavigate();
   const { members, addMember, removeMember } = useRegistrationPortal();
-  const [query, setQuery] = useState("zhangsan@example.edu.cn");
-  return <PortalFrame title="添加团队成员" showNav><StepStrip current={3} /><Panel title="通过注册邮箱查找队员"><div className="mx-auto max-w-3xl"><div className="flex flex-col gap-3 sm:flex-row"><input value={query} onChange={event => setQuery(event.target.value)} className="h-11 flex-1 rounded-control border border-border px-3 text-sm outline-none focus:border-primary" placeholder="请输入邮箱查找队员" /><Button>查找</Button></div><div className="mt-5 rounded-container border border-border-subtle p-4"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="font-semibold text-text-primary">张三</p><p className="mt-1 text-sm text-text-secondary">广州大学 · zhangsan@example.edu.cn · 已完成三创账号注册</p></div>{members.some(item => item.id === demoMember.id) ? <SecondaryButton onClick={() => removeMember(demoMember.id)}>移除成员</SecondaryButton> : <Button onClick={() => addMember(demoMember)}>添加</Button>}</div></div><div className="mt-6 flex justify-end"><Button onClick={() => navigate(`${portalBase}/team`)}>保存成员并返回</Button></div></div></Panel></PortalFrame>;
+  const [draft, setDraft] = useState({ name: "", school: "", phone: "", email: "", studentId: "" });
+  const valid = Object.values(draft).every(value => value.trim().length > 0) && /^1\d{10}$/.test(draft.phone);
+  const addDraft = () => {
+    if (!valid) return;
+    const resolution = resolveMemberAccount(draft.phone);
+    addMember({ id: `member-${draft.phone}`, ...draft, ...resolution });
+    setDraft({ name: "", school: "", phone: "", email: "", studentId: "" });
+  };
+  const quickAdd = (member: TeamMember) => addMember(member);
+  return <PortalFrame title="录入团队成员" showNav><StepStrip current={2} /><div className="space-y-5"><Panel title="直接录入成员资料"><div className="mx-auto max-w-3xl space-y-4"><div className="rounded-control border border-primary/20 bg-primary-container/40 p-4 text-sm leading-6 text-text-secondary">队员不需要先到 PC 注册。手机号用于账号命中和本人后续验证码认领；邮箱继续作为赛事正式通知字段。</div><Field label="姓名" value={draft.name} required onChange={name => setDraft(current => ({ ...current, name }))} /><Field label="学校" value={draft.school} required onChange={school => setDraft(current => ({ ...current, school }))} /><Field label="手机号" value={draft.phone} required onChange={phone => setDraft(current => ({ ...current, phone: phone.replace(/\D/g, "").slice(0, 11) }))} placeholder="11 位手机号" /><Field label="邮箱" value={draft.email} required onChange={email => setDraft(current => ({ ...current, email }))} /><Field label="学号" value={draft.studentId} required onChange={studentId => setDraft(current => ({ ...current, studentId }))} /><div className="flex justify-end"><Button disabled={!valid} onClick={addDraft}>校验账号状态并加入团队</Button></div></div></Panel><Panel title="原型状态快速验证"><div className="grid gap-3 md:grid-cols-3">{[demoMember, demoUnregisteredMember, demoConflictMember].map(member => <div key={member.id} className="rounded-container border border-border-subtle p-4"><StatusTag tone={memberAccountTone(member)}>{memberAccountLabel(member)}</StatusTag><p className="mt-3 font-semibold text-text-primary">{member.name}</p><p className="mt-1 text-sm text-text-secondary">{member.school} · {member.phone}</p>{members.some(item => item.id === member.id) ? <SecondaryButton className="mt-4 w-full" onClick={() => removeMember(member.id)}>从团队移除</SecondaryButton> : <Button className="mt-4 w-full" onClick={() => quickAdd(member)}>加入此状态样例</Button>}</div>)}</div></Panel><div className="flex justify-end"><Button onClick={() => navigate(`${portalBase}/team`)}>保存成员并返回</Button></div></div></PortalFrame>;
 }
 
 function ReviewPage() {
   const navigate = useNavigate();
-  const { reviewStatus, rejectReview, approveReview, rejectionReason } = useRegistrationPortal();
+  const { reviewStatus, rejectReview, approveReview, rejectionReason, members } = useRegistrationPortal();
   if (reviewStatus === "draft") return <Navigate to={`${portalBase}/team`} replace />;
-  return <PortalFrame title="报名审核状态" showNav><StepStrip current={4} /><Panel><div className="mx-auto max-w-2xl py-4 text-center"><StatusTag tone={statusTone(reviewStatus)}>{statusLabel(reviewStatus)}</StatusTag>{reviewStatus === "pending" && <><h2 className="mt-4 text-xl font-semibold text-text-primary">报名已提交，等待学校审核真实性</h2><p className="mt-2 text-sm leading-6 text-text-secondary">审核完成前不会获得赛事工作区权限；队长可以查看状态，但团队信息进入只读。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><SecondaryButton onClick={() => { rejectReview(); }}>模拟审核未通过</SecondaryButton><Button onClick={() => { approveReview(); }}>模拟审核通过</Button></div></>}{reviewStatus === "rejected" && <><h2 className="mt-4 text-xl font-semibold text-danger-text">报名审核未通过</h2><p className="mt-2 text-sm leading-6 text-text-secondary">{rejectionReason}</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/team`)}>返回团队信息修正</Button></>}{reviewStatus === "approved" && <><h2 className="mt-4 text-xl font-semibold text-success-text">审核通过</h2><p className="mt-2 text-sm leading-6 text-text-secondary">团队主体与成员信息已通过学校审核。继续填写项目承诺书，完成赛事报名材料。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/commitment`)}>填写承诺书</Button></>}{reviewStatus === "completed" && <><h2 className="mt-4 text-xl font-semibold text-success-text">赛事报名已完成</h2><p className="mt-2 text-sm text-text-secondary">报名材料与承诺书均已完成，可继续查看团队业绩报告与证书状态。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/complete`)}>查看报名结果</Button></>}</div></Panel></PortalFrame>;
+  const provisioned = members.filter(member => member.accountResolution === "provisioned").length;
+  const bound = members.filter(member => member.competitionBinding === "bound").length;
+  return <PortalFrame title="报名审核状态" showNav><StepStrip current={4} /><Panel><div className="mx-auto max-w-2xl py-4 text-center"><StatusTag tone={statusTone(reviewStatus)}>{statusLabel(reviewStatus)}</StatusTag>{reviewStatus === "pending" && <><h2 className="mt-4 text-xl font-semibold text-text-primary">团队已提交，等待学校审核真实性</h2><p className="mt-2 text-sm leading-6 text-text-secondary">成员账号解析已完成：{provisioned} 名未注册队员已预开通核心学院账号，{bound} 名成员已关联本次赛事身份。系统将尝试短信提醒，并保留站内通知供用户登录后查看。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><SecondaryButton onClick={() => { rejectReview(); }}>模拟审核未通过</SecondaryButton><Button onClick={() => { approveReview(); }}>模拟审核通过</Button></div></>}{reviewStatus === "rejected" && <><h2 className="mt-4 text-xl font-semibold text-danger-text">报名审核未通过</h2><p className="mt-2 text-sm leading-6 text-text-secondary">{rejectionReason}</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/team`)}>返回团队信息修正</Button></>}{reviewStatus === "approved" && <><h2 className="mt-4 text-xl font-semibold text-success-text">审核通过</h2><p className="mt-2 text-sm leading-6 text-text-secondary">团队主体与成员信息已通过学校审核。成员长期账号继续独立存在；后续团队关系变化不会注销 App 账号。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/commitment`)}>填写承诺书</Button></>}{reviewStatus === "completed" && <><h2 className="mt-4 text-xl font-semibold text-success-text">赛事报名已完成</h2><p className="mt-2 text-sm text-text-secondary">报名材料与承诺书均已完成，可继续查看团队业绩报告与证书状态。</p><Button className="mt-6" onClick={() => navigate(`${portalBase}/complete`)}>查看报名结果</Button></>}</div></Panel></PortalFrame>;
 }
 
 function CommitmentPage() {
@@ -158,7 +192,7 @@ function CommitmentPage() {
 
 function CompletePage() {
   const navigate = useNavigate();
-  return <PortalFrame title="报名完成" showNav><StepStrip current={6} /><Panel><div className="mx-auto max-w-2xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">完整报名流程已完成</h2><p className="mt-2 text-sm leading-6 text-text-secondary">个人注册、注册答题、团队成员绑定、学校审核与承诺书均已闭环。后续页面属于同一赛事团队门户，但不再改变报名身份。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><Button onClick={() => navigate(`${portalBase}/team`)}>查看团队信息</Button><SecondaryButton onClick={() => navigate(`${portalBase}/report`)}>团队业绩报告</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/certificates`)}>查看证书下载</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/review`)}>查看审核记录</SecondaryButton></div></div></Panel></PortalFrame>;
+  return <PortalFrame title="报名完成" showNav><StepStrip current={6} /><Panel><div className="mx-auto max-w-2xl py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success-text"><Check aria-hidden="true" className="h-8 w-8" /></div><h2 className="mt-4 text-xl font-semibold text-text-primary">完整报名流程已完成</h2><p className="mt-2 text-sm leading-6 text-text-secondary">队长账号、团队成员解析、学校审核与承诺书均已闭环。队员的核心学院账号属于长期账号，不随本赛事团队生命周期结束。</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><Button onClick={() => navigate(`${portalBase}/team`)}>查看团队信息</Button><SecondaryButton onClick={() => navigate(`${portalBase}/report`)}>团队业绩报告</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/certificates`)}>查看证书下载</SecondaryButton><SecondaryButton onClick={() => navigate(`${portalBase}/review`)}>查看审核记录</SecondaryButton></div></div></Panel></PortalFrame>;
 }
 
 function ReportPage() {
@@ -182,7 +216,7 @@ function ScenarioDock() {
   const { loadScenario } = useRegistrationPortal();
   const scenarios = [
     ["leaderDraft", "队长草稿", `${portalBase}/team`],
-    ["memberWaiting", "队员等待", `${portalBase}/member-waiting`],
+    ["memberWaiting", "队员说明", `${portalBase}/member-waiting`],
     ["pending", "待审核", `${portalBase}/review`],
     ["rejected", "审核驳回", `${portalBase}/review`],
     ["approved", "审核通过", `${portalBase}/commitment`],
