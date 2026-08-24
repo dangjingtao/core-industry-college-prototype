@@ -12,6 +12,7 @@ import {
   PublicPlatformProvider,
 } from "../features/public-platform/PublicPlatform";
 import { ForgotPasswordPage, LoginPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
+import { PhoneBindingPage } from "../features/auth/PhoneBindingPage";
 import {
   CompetitionLifecycleDetailPage,
   CompetitionResourceDetailPage,
@@ -166,6 +167,7 @@ export function App() {
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />
               <Route path="/me/resume/education" element={account(<ResumeEducationPage />)} />
               <Route path="/me/accounts" element={account(<AccountsPage />)} />
+              <Route path="/me/accounts/phone" element={account(<PhoneBindingPage />)} />
               <Route path="/me/teams" element={account(<TeamsPage />)} />
               <Route path="/me/teams/:competitionId" element={account(<TeamDetailPage />)} />
               <Route path="/me/settings" element={account(<SettingsPage />)} />
