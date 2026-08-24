@@ -64,7 +64,7 @@ export function RedeemCodePage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="兑换码" backTo="/apps" right={<ScanButton onClick={() => setScanOpen(true)} />} />
+      <PageHeader title="兑换码" backTo="/apps" />
       <div className="space-y-6 px-4 py-5">
         <Card>
           <p className="text-sm text-text-secondary">输入邀请码或线下活动福利码，领取学力值奖励。</p>
@@ -72,7 +72,7 @@ export function RedeemCodePage() {
             value={code}
             onChange={event => setCode(event.target.value)}
             onKeyDown={event => { if (event.key === "Enter") void handleSubmit(); }}
-            placeholder="请输入兑换码"
+            placeholder="请输入五位兑换码"
             className="mt-4 min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm uppercase outline-none focus:border-primary"
           />
           {error && <p className="mt-3 text-sm text-text-danger">{error}</p>}
