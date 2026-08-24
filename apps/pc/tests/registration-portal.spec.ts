@@ -1,61 +1,70 @@
 import { expect, test } from "@playwright/test";
 
-test("standalone registration portal completes leader flow on desktop", async ({ page }) => {
+test("leader submits team and member accounts are resolved automatically", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/registration-portal/start");
   await expect(page.getByRole("heading", { name: "三创赛报名", level: 1 })).toBeVisible();
 
-  await page.getByRole("button", { name: /我是队长/ }).click();
-  await expect(page.getByRole("heading", { name: "三创队长注册", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: "注册并进入答题" }).click();
+  await page.getByRole("button", { name: "我是队长，开始报名" }).click();
+  await expect(page.getByRole("heading", { name: "队长账号", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: "登录并继续报名" }).click();
 
-  await expect(page.getByRole("heading", { name: "三创注册答题", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: /B\. 等待审核结果/ }).click();
+  await expect(page.getByRole("heading", { name: "赛事规则确认", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: /B\. 未注册自动预开通/ }).click();
   await page.getByRole("button", { name: "提交答题" }).click();
 
-  await expect(page.getByRole("heading", { name: "注册成功", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "队长账号已就绪", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: "进入团队报名" }).click();
   await expect(page.getByRole("heading", { name: "团队信息", level: 1 })).toBeVisible();
 
-  await page.getByRole("button", { name: "添加成员" }).click();
-  await expect(page.getByRole("heading", { name: "添加团队成员", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: "添加", exact: true }).click();
+  await page.getByRole("button", { name: "录入成员" }).click();
+  await expect(page.getByRole("heading", { name: "录入团队成员", level: 1 })).toBeVisible();
+  const sampleButtons = page.getByRole("button", { name: "加入此状态样例" });
+  await sampleButtons.nth(0).click();
+  await sampleButtons.nth(1).click();
   await page.getByRole("button", { name: "保存成员并返回" }).click();
 
-  await expect(page.getByText("张三", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "提交审核" }).click();
-  await expect(page.getByText("报名已提交，等待学校审核真实性", { exact: true })).toBeVisible();
+  await expect(page.getByText("已有账号，提交后绑定赛事身份", { exact: true })).toBeVisible();
+  await expect(page.getByText("未注册，提交后自动开通", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "提交团队并处理成员账号" }).click();
 
+  await expect(page.getByText(/未注册队员已预开通核心学院账号/)).toBeVisible();
+  await expect(page.getByText(/成员已关联本次赛事身份/)).toBeVisible();
   await page.getByRole("button", { name: "模拟审核通过" }).click();
-  await expect(page.getByText("团队主体与成员信息已通过学校审核。继续填写项目承诺书，完成赛事报名材料。", { exact: true })).toBeVisible();
+  await expect(page.getByText(/成员长期账号继续独立存在/)).toBeVisible();
   await page.getByRole("button", { name: "填写承诺书" }).click();
 
   await expect(page.getByRole("heading", { name: "承诺书", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: "生成承诺书" }).click();
   await page.getByRole("button", { name: "确认承诺书并完成报名" }).click();
-
-  await expect(page.getByText("完整报名流程已完成", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "查看证书下载" }).click();
-  await expect(page.getByText("第十六届三创赛 · 校赛参赛证书", { exact: true })).toBeVisible();
-
-  await page.locator("aside").getByRole("link", { name: "团队业绩报告" }).click();
-  await expect(page.getByRole("heading", { name: "团队业绩报告", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: "提交团队业绩报告" }).click();
-  await expect(page.getByText("业绩报告已提交，可在截止前更新。", { exact: true })).toBeVisible();
+  await expect(page.getByText(/队员的核心学院账号属于长期账号/)).toBeVisible();
 });
 
-test("standalone registration portal keeps member branch usable on mobile", async ({ page }) => {
+test("phone and identity conflict blocks silent competition binding", async ({ page }) => {
   await page.goto("/registration-portal/start");
-  await page.getByRole("button", { name: /我是队员/ }).click();
-  await expect(page.getByRole("heading", { name: "三创队员注册", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: "注册并进入答题" }).click();
-  await page.getByRole("button", { name: /B\. 等待审核结果/ }).click();
-  await page.getByRole("button", { name: "提交答题" }).click();
-  await expect(page.getByText("注册成功，请等待队长绑定团队信息", { exact: true })).toBeVisible();
-  await expect(page.getByText(/队长可通过你注册使用的邮箱/)).toBeVisible();
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "队长草稿" }).click();
+  await page.getByRole("button", { name: "录入成员" }).click();
+
+  const sampleButtons = page.getByRole("button", { name: "加入此状态样例" });
+  await sampleButtons.nth(2).click();
+  await page.getByRole("button", { name: "保存成员并返回" }).click();
+
+  await expect(page.getByText("身份冲突，需核验", { exact: true })).toBeVisible();
+  await expect(page.getByText(/系统不会仅凭手机号把赛事身份绑定给可能错误的账号/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交团队并处理成员账号" })).toBeDisabled();
 });
 
-test("mobile handoff keeps competition context and returns portal status", async ({ page }) => {
+test("team removal copy keeps long-lived app account independent", async ({ page }) => {
+  await page.goto("/registration-portal/start");
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "待审核" }).click();
+
+  await expect(page.getByText("减员只改变本赛事团队关系", { exact: true })).toBeVisible();
+  await expect(page.getByText(/核心学院账号、手机号绑定、其它赛事身份与长期资产继续保留/)).toBeVisible();
+});
+
+test("mobile handoff preserves competition context with leader PC flow", async ({ page }) => {
   const returnTo = "https://mobile.example.test/competitions/sanchuang-16/registration";
   const query = new URLSearchParams({
     competitionId: "sanchuang-16",
@@ -66,11 +75,8 @@ test("mobile handoff keeps competition context and returns portal status", async
   await page.goto(`/registration-portal/start?${query.toString()}`);
   await expect(page.getByRole("button", { name: "返回 App / 赛事" })).toBeVisible();
 
-  await page.getByRole("button", { name: /我是队员/ }).click();
-  await page.getByRole("button", { name: "注册并进入答题" }).click();
-  await page.getByRole("button", { name: /B\. 等待审核结果/ }).click();
-  await page.getByRole("button", { name: "提交答题" }).click();
-  await expect(page.getByText("注册成功，请等待队长绑定团队信息", { exact: true })).toBeVisible();
+  await page.getByText("报名原型状态").click();
+  await page.getByRole("button", { name: "待审核" }).click();
 
   await page.route("https://mobile.example.test/**", route => route.abort());
   const callbackRequest = page.waitForRequest(request => request.url().startsWith(returnTo));
