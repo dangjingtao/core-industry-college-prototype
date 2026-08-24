@@ -187,7 +187,7 @@ export function App() {
               <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
               <Route path="/redeem" element={account(<RedeemCodePage />)} />
-              <Route path="/redeem/result" element={account(<RedeemResultPage />} />
+              <Route path="/redeem/result" element={account(<RedeemResultPage />)} />
               <Route path="/welfare" element={<WelfareListPage />} />
               <Route path="/welfare/:welfareId" element={<WelfareDetailPage />} />
               <Route path="/welfare/:welfareId/ad" element={<WelfareAdPage />} />
