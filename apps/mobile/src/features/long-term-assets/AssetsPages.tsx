@@ -31,7 +31,7 @@ function lifecycleLabel(lifecycle: "notStarted" | "inProgress" | "ended", identi
 export function MyPage() {
   const navigate = useNavigate();
   const { session, continueAsGuest } = usePublicPlatform();
-  const { profile } = useLongTermAssets();
+  const { profile, simulateScanRedeem } = useLongTermAssets();
   const competitionTag = profile.competitionExperience ? labelFor(competitionExperienceOptions, profile.competitionExperience) : "";
   const educationTag = profile.educationLevel ? labelFor(educationLevelOptions, profile.educationLevel) : "";
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -52,9 +52,17 @@ export function MyPage() {
     { label: "关于", to: "/about", icon: Info },
   ];
   const scanButton = (
-    <Link to="/redeem" aria-label="扫一扫" className="flex min-h-touch min-w-11 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed">
+    <button
+      type="button"
+      aria-label="扫一扫"
+      onClick={() => {
+        const result = simulateScanRedeem();
+        if (result) navigate(`/redeem/result?code=${encodeURIComponent(result.code)}`);
+      }}
+      className="flex min-h-touch min-w-11 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed"
+    >
       <ScanLine size={22} aria-hidden="true" />
-    </Link>
+    </button>
   );
   return <PublicShell showNavigation={true}><PageHeader title="我的" subtitle="长期账号资产，不随单场赛事结束" /><div className="space-y-7 px-4 py-5"><Card className="overflow-hidden"><div aria-hidden="true" className="h-20 bg-gradient-to-br from-primary to-primary-pressed" /><div className="-mt-10 px-4 pb-4"><div className="flex items-end justify-between"><span className="flex size-20 items-center justify-center rounded-full bg-primary-container text-2xl font-semibold text-text-brand ring-4 ring-surface">{profile.nickname.slice(0, 1) || profile.name.slice(0, 1)}</span><div className="flex flex-col items-end gap-2">{competitionTag && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-text-secondary">{competitionTag}</span>}{scanButton}</div></div><div className="mt-3 flex items-center gap-1.5"><h1 className="text-xl font-semibold text-text-primary">{profile.name}</h1>{profile.phoneVerified === "verified" && <Check size={16} className="shrink-0 text-text-brand" aria-hidden="true" />}</div><p className="mt-1 text-sm text-text-secondary">{profile.school} · {profile.major}</p><div className="mt-3 flex flex-wrap gap-2">{profile.city && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{profile.city}</span>}{educationTag && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{educationTag}</span>}</div><p className="mt-3 text-xs text-text-tertiary">{profile.email}</p></div><Link to="/me/profile" className="flex min-h-touch items-center gap-3 border-t border-border-subtle px-4 active:bg-surface-pressed"><PenLine size={16} className="shrink-0 text-text-secondary" aria-hidden="true" /><span className="flex-1 text-sm font-medium text-text-primary">编辑基础资料</span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link></Card>
     <Section title="服务入口"><div className="overflow-hidden rounded-container bg-surface">{serviceEntries.map(({ label, to, icon: Icon, state }, index) => <Link key={to} to={to} state={state} className={`flex min-h-16 items-center gap-3 px-4 py-3 active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""}`}><span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Icon size={18} aria-hidden="true" /></span><span className="min-w-0 flex-1"><strong className="block text-sm font-medium text-text-primary">{label}</strong></span><ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" /></Link>)}</div></Section>

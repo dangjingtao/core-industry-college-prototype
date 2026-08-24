@@ -82,6 +82,7 @@ type LongTermAssetsContextValue = {
   helpWelfare: (projectId: string) => { success: true } | { success: false; reason: string };
   codeRedemptions: CodeRedemptionRecord[];
   redeemCode: (code: string, outcome: RedemptionOutcome, source: "manual" | "scan") => boolean;
+  simulateScanRedeem: () => { code: string; amount: number } | null;
   toggleResumeFact: (factKey: string) => void;
   updateStrengths: (value: string) => void;
   updateEducation: (value: string) => void;
@@ -346,6 +347,22 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
       setCodeRedemptions(current => [...current, record]);
       setCreditBalance(current => current + outcome.amount);
       return true;
+    },
+    simulateScanRedeem: () => {
+      if (!session.loggedIn) return null;
+      const code = `SCAN-${Date.now().toString(36).toUpperCase()}`;
+      const amount = 5;
+      const record: CodeRedemptionRecord = {
+        id: `REDEEM-${Date.now()}`,
+        code,
+        type: "welfare",
+        amount,
+        redeemedAt: new Date().toISOString(),
+        source: "scan",
+      };
+      setCodeRedemptions(current => [...current, record]);
+      setCreditBalance(current => current + amount);
+      return { code, amount };
     },
     toggleResumeFact: factKey => {
       if (!session.loggedIn) return;

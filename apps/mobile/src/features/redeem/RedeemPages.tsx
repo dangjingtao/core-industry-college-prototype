@@ -1,6 +1,6 @@
-import { QrCode, ScanLine } from "lucide-react";
+import { ScanLine } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, PageHeader, PublicShell, SecondaryButton, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { redeemCodeWithBackend, type CodeRedemptionRecord } from "./data";
@@ -10,28 +10,14 @@ function formatDate(iso: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 }
 
-function ScanButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label="扫一扫"
-      onClick={onClick}
-      className="flex min-h-touch min-w-11 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed"
-    >
-      <ScanLine size={22} aria-hidden="true" />
-    </button>
-  );
-}
-
 export function RedeemCodePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { codeRedemptions, redeemCode } = useLongTermAssets();
+  const { codeRedemptions, redeemCode, simulateScanRedeem } = useLongTermAssets();
   const initialCode = new URLSearchParams(location.search).get("code") ?? "";
   const [code, setCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     setCode(initialCode);
@@ -79,7 +65,10 @@ export function RedeemCodePage() {
           <Button className="mt-4 w-full" disabled={!code.trim() || loading} onClick={() => void handleSubmit()}>
             {loading ? "校验中…" : "确认兑换"}
           </Button>
-          <SecondaryButton className="mt-3 w-full" onClick={() => setScanOpen(true)}>
+          <SecondaryButton className="mt-3 w-full" onClick={() => {
+            const result = simulateScanRedeem();
+            if (result) navigate(`/redeem/result?code=${encodeURIComponent(result.code)}`);
+          }}>
             <ScanLine size={16} className="mr-1.5" aria-hidden="true" />
             扫一扫
           </SecondaryButton>
@@ -94,13 +83,6 @@ export function RedeemCodePage() {
           </div>
         )}
       </div>
-
-      {scanOpen && (
-        <ScanPlaceholderDialog onClose={() => setScanOpen(false)} onCode={scanned => {
-          setCode(scanned);
-          setScanOpen(false);
-        }} />
-      )}
     </PublicShell>
   );
 }
@@ -114,32 +96,6 @@ function RecordRow({ record }: { record: CodeRedemptionRecord }) {
       </div>
       <span className="text-sm font-semibold text-text-brand">+{record.amount}</span>
     </Card>
-  );
-}
-
-function ScanPlaceholderDialog({ onClose, onCode }: { onClose: () => void; onCode: (code: string) => void }) {
-  const [value, setValue] = useState("");
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-container bg-surface p-5" onClick={event => event.stopPropagation()}>
-        <div className="flex flex-col items-center">
-          <div className="flex size-32 items-center justify-center rounded-[20px] border-2 border-dashed border-border bg-surface-subtle">
-            <QrCode size={48} className="text-text-tertiary" aria-hidden="true" />
-          </div>
-          <p className="mt-4 text-sm text-text-secondary text-center">扫一扫功能需接入设备摄像头 SDK。<br />原型中可先模拟输入测试码。</p>
-        </div>
-        <input
-          value={value}
-          onChange={event => setValue(event.target.value)}
-          placeholder="粘贴模拟扫码结果"
-          className="mt-4 min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm outline-none focus:border-primary"
-        />
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <SecondaryButton onClick={onClose}>取消</SecondaryButton>
-          <Button onClick={() => { onCode(value); }} disabled={!value.trim()}>确认</Button>
-        </div>
-      </div>
-    </div>
   );
 }
 
