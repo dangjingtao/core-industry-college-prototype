@@ -50,20 +50,20 @@ export function RedeemCodePage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="兑换码" backTo="/apps" />
+      <PageHeader title="活动邀请码" backTo="/apps" />
       <div className="space-y-6 px-4 py-5">
         <Card>
-          <p className="text-sm text-text-secondary">输入邀请码或线下活动福利码，领取学力值奖励。</p>
+          <p className="text-sm text-text-secondary">输入运营活动邀请码或线下福利码，领取对应活动权益。</p>
           <input
             value={code}
             onChange={event => setCode(event.target.value)}
             onKeyDown={event => { if (event.key === "Enter") void handleSubmit(); }}
-            placeholder="请输入五位兑换码"
+            placeholder="请输入活动邀请码"
             className="mt-4 min-h-touch w-full rounded-control border border-border bg-surface px-3 text-sm uppercase outline-none focus:border-primary"
           />
           {error && <p className="mt-3 text-sm text-text-danger">{error}</p>}
           <Button className="mt-4 w-full" disabled={!code.trim() || loading} onClick={() => void handleSubmit()}>
-            {loading ? "校验中…" : "确认兑换"}
+            {loading ? "校验中…" : "领取活动权益"}
           </Button>
           <SecondaryButton className="mt-3 w-full" onClick={() => {
             const result = simulateScanRedeem();
@@ -76,7 +76,7 @@ export function RedeemCodePage() {
 
         {recentRecords.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-text-primary">最近兑换</h2>
+            <h2 className="text-base font-semibold text-text-primary">最近领取</h2>
             {recentRecords.map(record => (
               <RecordRow key={record.id} record={record} />
             ))}
@@ -92,7 +92,7 @@ function RecordRow({ record }: { record: CodeRedemptionRecord }) {
     <Card className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm font-medium text-text-primary">{record.code}</p>
-        <p className="mt-0.5 text-xs text-text-tertiary">{formatDate(record.redeemedAt)} · {record.source === "scan" ? "扫码" : "手动输入"}</p>
+        <p className="mt-0.5 text-xs text-text-tertiary">{formatDate(record.redeemedAt)} · {record.source === "scan" ? "扫码" : "输入邀请码"}</p>
       </div>
       <span className="text-sm font-semibold text-text-brand">+{record.amount}</span>
     </Card>
@@ -109,11 +109,11 @@ export function RedeemResultPage() {
   if (!record) {
     return (
       <PublicShell showNavigation={false}>
-        <PageHeader title="兑换结果" backTo="/redeem" />
+        <PageHeader title="领取结果" backTo="/redeem" />
         <div className="px-4 py-6">
           <Card className="text-center">
-            <p className="text-sm text-text-secondary">未找到兑换记录，请重新输入兑换码。</p>
-            <Button className="mt-4 w-full" onClick={() => navigate("/redeem")}>去兑换</Button>
+            <p className="text-sm text-text-secondary">未找到领取记录，请重新输入邀请码。</p>
+            <Button className="mt-4 w-full" onClick={() => navigate("/redeem")}>重新输入</Button>
           </Card>
         </div>
       </PublicShell>
@@ -122,26 +122,15 @@ export function RedeemResultPage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="兑换结果" backTo="/redeem" />
+      <PageHeader title="领取结果" backTo="/redeem" />
       <div className="space-y-6 px-4 py-5">
         <Card className="text-center">
-          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-success-bg text-success-text">
+          <div className="mx-auto flex size-16 align-items-center justify-center rounded-full bg-success-bg text-success-text">
             <span className="text-2xl font-bold">+{record.amount}</span>
           </div>
           <h2 className="mt-4 text-lg font-semibold text-text-primary">恭喜获得 {record.amount} 学力值</h2>
-          <p className="mt-1 text-sm text-text-secondary">兑换码：{record.code}</p>
+          <p className="mt-1 text-sm text-text-secondary">邀请码：{record.code}</p>
           <p className="mt-1 text-xs text-text-tertiary">当前学力值余额：{creditBalance}</p>
-          <div className="mt-5 space-y-3">
-            <Button className="w-full" onClick={() => navigate("/growth/score")}>查看学力值</Button>
-            <SecondaryButton className="w-full" onClick={() => navigate("/redeem")}>再兑换一个</SecondaryButton>
-          </div>
-        </Card>
-
-        <Card>
-          <h3 className="text-sm font-medium text-text-primary">说明</h3>
-          <p className="mt-2 text-xs leading-5 text-text-secondary">
-            当前奖励为原型示意，真实奖励数值需等 F04 Decision A 明确学力值经济模型后，由后端接口下发。
-          </p>
         </Card>
       </div>
     </PublicShell>
