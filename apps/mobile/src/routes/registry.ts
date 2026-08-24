@@ -15,6 +15,7 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "auth.forgot-password", path: "/auth/forgot-password", context: "public", purpose: "找回密码", states: ["editing", "verificationSent", "completed"] },
   { id: "auth.wechat.authorize", path: "/auth/wechat/authorize", context: "public", purpose: "微信身份授权", states: ["ready", "cancelled"] },
   { id: "auth.wechat.phone", path: "/auth/wechat/phone", context: "public", purpose: "微信获取手机号", states: ["ready", "existingAccount", "provisionedAccount", "cancelled"] },
+  { id: "auth.competitionAccount", path: "/auth/competition-account", context: "public", purpose: "审核通过后的待激活账号、赛事身份确认与异议", states: ["unclaimed", "existing", "confirmed", "disputed"] },
   { id: "onboarding.profile", path: "/onboarding/profile", context: "public", purpose: "基础资料完善", states: ["editing", "validating", "saving", "error"] },
   { id: "onboarding.survey", path: "/onboarding/survey", context: "public", purpose: "问卷采集", states: ["question", "saving", "completed", "error"] },
   { id: "onboarding.ready", path: "/onboarding/ready", context: "public", purpose: "进入平台前确认", states: ["ready"] },
