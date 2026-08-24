@@ -5,6 +5,8 @@ export type RegistrationRole = "leader" | "member";
 export type ReviewStatus = "draft" | "pending" | "rejected" | "approved" | "completed" | "closed";
 export type AccountResolutionStatus = "registered" | "provision" | "provisioned" | "conflict";
 export type CompetitionBindingStatus = "notBound" | "bound" | "blocked";
+export type CompetitionAcknowledgementStatus = "notApplicable" | "unconfirmed" | "confirmed" | "disputed";
+export type AccountActivationStatus = "active" | "pendingApproval" | "unclaimed" | "notApplicable";
 
 export type AccountDraft = {
   school: string;
@@ -24,6 +26,8 @@ export type TeamMember = {
   studentId: string;
   accountResolution: AccountResolutionStatus;
   competitionBinding: CompetitionBindingStatus;
+  acknowledgementStatus: CompetitionAcknowledgementStatus;
+  activationStatus: AccountActivationStatus;
 };
 
 export type TeamDraft = {
@@ -116,6 +120,8 @@ const seedMember: TeamMember = {
   studentId: "20260001",
   accountResolution: "registered",
   competitionBinding: "notBound",
+  acknowledgementStatus: "notApplicable",
+  activationStatus: "active",
 };
 
 const seedUnregisteredMember: TeamMember = {
@@ -127,6 +133,8 @@ const seedUnregisteredMember: TeamMember = {
   studentId: "20260002",
   accountResolution: "provision",
   competitionBinding: "notBound",
+  acknowledgementStatus: "notApplicable",
+  activationStatus: "pendingApproval",
 };
 
 const seedConflictMember: TeamMember = {
@@ -138,6 +146,8 @@ const seedConflictMember: TeamMember = {
   studentId: "20260003",
   accountResolution: "conflict",
   competitionBinding: "blocked",
+  acknowledgementStatus: "notApplicable",
+  activationStatus: "notApplicable",
 };
 
 const seedCommitment: CommitmentDraft = {
@@ -166,10 +176,21 @@ function initialState(): RegistrationPortalState {
 function resolveApprovedMembers(members: TeamMember[]) {
   return members.map(member => {
     if (member.accountResolution === "registered") {
-      return { ...member, competitionBinding: "bound" as const };
+      return {
+        ...member,
+        competitionBinding: "bound" as const,
+        acknowledgementStatus: "unconfirmed" as const,
+        activationStatus: "active" as const,
+      };
     }
     if (member.accountResolution === "provision") {
-      return { ...member, accountResolution: "provisioned" as const, competitionBinding: "bound" as const };
+      return {
+        ...member,
+        accountResolution: "provisioned" as const,
+        competitionBinding: "bound" as const,
+        acknowledgementStatus: "unconfirmed" as const,
+        activationStatus: "unclaimed" as const,
+      };
     }
     return member;
   });
@@ -247,10 +268,29 @@ export function useRegistrationPortal() {
   return value;
 }
 
-export function resolveMemberAccount(phone: string): Pick<TeamMember, "accountResolution" | "competitionBinding"> {
-  if (phone === seedMember.phone) return { accountResolution: "registered", competitionBinding: "notBound" };
-  if (phone === seedConflictMember.phone) return { accountResolution: "conflict", competitionBinding: "blocked" };
-  return { accountResolution: "provision", competitionBinding: "notBound" };
+export function resolveMemberAccount(phone: string): Pick<TeamMember, "accountResolution" | "competitionBinding" | "acknowledgementStatus" | "activationStatus"> {
+  if (phone === seedMember.phone) {
+    return {
+      accountResolution: "registered",
+      competitionBinding: "notBound",
+      acknowledgementStatus: "notApplicable",
+      activationStatus: "active",
+    };
+  }
+  if (phone === seedConflictMember.phone) {
+    return {
+      accountResolution: "conflict",
+      competitionBinding: "blocked",
+      acknowledgementStatus: "notApplicable",
+      activationStatus: "notApplicable",
+    };
+  }
+  return {
+    accountResolution: "provision",
+    competitionBinding: "notBound",
+    acknowledgementStatus: "notApplicable",
+    activationStatus: "pendingApproval",
+  };
 }
 
 export const demoMember = seedMember;
