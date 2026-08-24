@@ -104,16 +104,14 @@ function WelcomeSplashPage() {
   const location = useLocation();
   const { visible, dismiss, replay } = useSplashGate(location.search);
   return <>
-    <div className="relative">
-      <WelcomePage />
-      <button
-        type="button"
-        onClick={replay}
-        className="absolute bottom-3 left-3 z-10 min-h-touch rounded-control bg-surface-subtle px-3 text-xs font-medium text-text-secondary"
-      >
-        重放开屏广告
-      </button>
-    </div>
+    <WelcomePage />
+    <button
+      type="button"
+      onClick={replay}
+      className="fixed bottom-3 left-3 z-40 min-h-touch rounded-control bg-surface-subtle px-3 text-xs font-medium text-text-secondary"
+    >
+      重放开屏广告
+    </button>
     {visible && <SplashOverlay onDone={dismiss} />}
   </>;
 }

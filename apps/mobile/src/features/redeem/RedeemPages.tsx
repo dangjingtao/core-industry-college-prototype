@@ -28,8 +28,13 @@ export function RedeemCodePage() {
     setError(null);
     const result = await redeemCodeWithBackend(code, { source: "manual" });
     setLoading(false);
-    if (result.status === "valid" && redeemCode(code, result, "manual")) {
-      navigate(`/redeem/result?code=${encodeURIComponent(code)}`);
+    if (result.status === "valid") {
+      const ok = redeemCode(code, result, "manual");
+      if (ok) {
+        navigate(`/redeem/result?code=${encodeURIComponent(code)}`);
+        return;
+      }
+      setError("你已经领取过该活动权益");
       return;
     }
     setError(result.status === "alreadyRedeemed" ? "你已经领取过该活动权益" : result.reason);
