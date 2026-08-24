@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Check, FileText, Upload } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button, SecondaryButton, StatusTag } from "../components/ui";
 import { RegistrationPortalProvider, useRegistrationPortal } from "./model";
@@ -9,15 +8,11 @@ function FileCard({
   description,
   downloadLabel,
   ready,
-  uploaded,
-  onUpload,
 }: {
   title: string;
   description: string;
   downloadLabel: string;
   ready: boolean;
-  uploaded: boolean;
-  onUpload: () => void;
 }) {
   return (
     <section className="rounded-container border border-border-subtle bg-surface p-5">
@@ -31,23 +26,14 @@ function FileCard({
             <p className="mt-1 text-sm leading-6 text-text-secondary">{description}</p>
           </div>
         </div>
-        <StatusTag tone={uploaded ? "success" : ready ? "info" : "neutral"}>{uploaded ? "已上传" : ready ? "可下载" : "待生成"}</StatusTag>
+        <StatusTag tone={ready ? "info" : "neutral"}>{ready ? "可下载" : "待生成"}</StatusTag>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5">
         <SecondaryButton disabled={!ready}>{downloadLabel}</SecondaryButton>
-        <button
-          type="button"
-          disabled={!ready || uploaded}
-          onClick={onUpload}
-          className="inline-flex min-h-11 items-center gap-2 rounded-control border border-primary px-4 text-sm font-semibold text-text-brand disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {uploaded ? <Check className="h-4 w-4" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
-          {uploaded ? "已上传签字文件" : "上传签字后的文件"}
-        </button>
       </div>
 
-      {ready && !uploaded && <p className="mt-3 text-xs leading-5 text-text-tertiary">请先下载并打印，完成手写签字后再上传扫描件或照片。</p>}
+      {ready && <p className="mt-3 text-xs leading-5 text-text-tertiary">下载后打印并完成手写签字。签字件无需上传回本系统，按赛事材料要求线下使用即可。</p>}
     </section>
   );
 }
@@ -55,12 +41,9 @@ function FileCard({
 function CommitmentContent() {
   const navigate = useNavigate();
   const { commitment, generateCommitment, completeRegistration } = useRegistrationPortal();
-  const [teamUploaded, setTeamUploaded] = useState(false);
-  const [teacherUploaded, setTeacherUploaded] = useState(false);
-  const completed = commitment.generated && teamUploaded && teacherUploaded;
 
   const finish = () => {
-    if (!completed) return;
+    if (!commitment.generated) return;
     completeRegistration();
     navigate("/registration-portal/complete");
   };
@@ -79,8 +62,8 @@ function CommitmentContent() {
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <StatusTag tone="info">线下手写签字</StatusTag>
-              <h2 className="mt-3 text-lg font-semibold text-text-primary">两份承诺书都需要签字后上传</h2>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">系统根据当前报名项目生成文件。下载打印、完成手写签字，再把签字后的文件上传回来。</p>
+              <h2 className="mt-3 text-lg font-semibold text-text-primary">两份承诺书都保留，但无需回传系统</h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">系统根据当前报名项目生成文件。下载打印、完成手写签字后，按赛事材料要求线下使用，不需要重新上传到核心学院。</p>
             </div>
             <Button disabled={commitment.generated} onClick={generateCommitment}>{commitment.generated ? "承诺书已生成" : "生成两份承诺书"}</Button>
           </div>
@@ -101,26 +84,22 @@ function CommitmentContent() {
             description="由参赛团队确认赛事规则与项目承诺。"
             downloadLabel="下载团队承诺书"
             ready={commitment.generated}
-            uploaded={teamUploaded}
-            onUpload={() => setTeamUploaded(true)}
           />
           <FileCard
             title="指导老师承诺书"
             description="下载模板并由指导老师手写签字。指导老师信息可以后置补充。"
             downloadLabel="下载指导老师承诺书模板"
             ready={commitment.generated}
-            uploaded={teacherUploaded}
-            onUpload={() => setTeacherUploaded(true)}
           />
         </div>
 
-        <section className={`rounded-container border p-5 ${completed ? "border-success/30 bg-success-bg" : "border-border-subtle bg-surface"}`}>
+        <section className="rounded-container border border-border-subtle bg-surface p-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h2 className={`font-semibold ${completed ? "text-success-text" : "text-text-primary"}`}>{completed ? "两份签字文件已上传" : "等待承诺书材料完成"}</h2>
-              <p className={`mt-1 text-sm ${completed ? "text-success-text" : "text-text-secondary"}`}>{completed ? "承诺书步骤已完成，可以继续完成报名。" : "学生 / 团队承诺书和指导老师承诺书缺一不可。"}</p>
+              <h2 className="font-semibold text-text-primary">承诺书无需在线回传</h2>
+              <p className="mt-1 text-sm text-text-secondary">生成两份承诺书后即可继续完成报名；打印、签字属于线下材料环节。</p>
             </div>
-            <Button disabled={!completed} onClick={finish}>完成报名</Button>
+            <Button disabled={!commitment.generated} onClick={finish}>完成报名</Button>
           </div>
         </section>
       </main>
