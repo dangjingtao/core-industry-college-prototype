@@ -26,7 +26,7 @@ import { RegistrationPortal } from "./registration-portal/RegistrationPortal";
 import { T030CommitmentPage } from "./registration-portal/T030CommitmentPage";
 import { T031CertificatesPage, T031ReportPage } from "./registration-portal/T031ResultsPages";
 import { readRegistrationPortalCallbackStatus } from "./registration-portal/model";
-import { SchoolReview } from "./review/SchoolReview";
+import { T032TeacherReviewWorkbench } from "./review/T032TeacherReviewWorkbench";
 import { SanChuangMockLogin } from "./sanchuang-official/SanChuangMockLogin";
 import { SanChuangOfficialHome } from "./sanchuang-official/SanChuangOfficialHome";
 
@@ -169,7 +169,7 @@ export function App() {
             <Route path="/registration-portal/report" element={<T031ReportPage />} />
             <Route path="/registration-portal/certificates" element={<T031CertificatesPage />} />
             <Route path="/registration-portal/*" element={<RegistrationPortalRoute />} />
-            <Route path="/review/*" element={<SchoolReview />} />
+            <Route path="/review/*" element={<T032TeacherReviewWorkbench />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </PC05StateProvider>
