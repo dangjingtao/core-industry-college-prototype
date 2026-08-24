@@ -21,7 +21,7 @@ test("leader submits team and member accounts are resolved automatically", async
   await expect(page.getByRole("heading", { name: "录入团队成员", level: 1 })).toBeVisible();
   const sampleButtons = page.getByRole("button", { name: "加入此状态样例" });
   await sampleButtons.nth(0).click();
-  await sampleButtons.nth(1).click();
+  await sampleButtons.nth(0).click();
   await page.getByRole("button", { name: "保存成员并返回" }).click();
 
   await expect(page.getByText("已有账号，提交后绑定赛事身份", { exact: true })).toBeVisible();
