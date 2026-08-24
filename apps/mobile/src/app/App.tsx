@@ -13,6 +13,7 @@ import {
 } from "../features/public-platform/PublicPlatform";
 import { ForgotPasswordPage, LoginPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
 import { AccountSecurityPage } from "../features/auth/AccountSecurityPage";
+import { CompetitionAccountPage } from "../features/auth/CompetitionAccountPage";
 import { PhoneBindingPage } from "../features/auth/PhoneBindingPage";
 import {
   CompetitionLifecycleDetailPage,
@@ -103,6 +104,7 @@ export function App() {
               <Route path="/auth/wechat/authorize" element={<WechatAuthorizePage />} />
               <Route path="/auth/wechat/phone" element={<WechatPhonePage />} />
               <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/auth/competition-account" element={<CompetitionAccountPage />} />
               <Route path="/onboarding/profile" element={<OnboardingProfilePage />} />
               <Route path="/onboarding/survey" element={<OnboardingSurveyPage />} />
               <Route path="/onboarding/ready" element={<OnboardingReadyPage />} />
