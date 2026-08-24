@@ -5,7 +5,7 @@ import type { TaskRunStatus } from "../../state/model";
 import { competitionById } from "../public-platform/data";
 import { useWorkshopRuntime } from "./runtime";
 
-export type WorkspaceAccessState = "noIdentity" | "pending" | "rejected" | "active" | "notStarted" | "ended" | "revoked" | "permissionDenied";
+export type WorkspaceAccessState = "noIdentity" | "pending" | "qualificationPending" | "rejected" | "active" | "notStarted" | "ended" | "revoked" | "permissionDenied";
 
 export function useCompetitionAccess(competitionId?: string): WorkspaceAccessState {
   const { identityFor, getRuntime } = useWorkshopRuntime();
@@ -13,7 +13,7 @@ export function useCompetitionAccess(competitionId?: string): WorkspaceAccessSta
   const identity = identityFor(competitionId);
   const runtime = getRuntime(competitionId);
   if (!identity) return "noIdentity";
-  if (identity.identityStatus === "pending") return "pending";
+  if (identity.identityStatus === "pending") return identity.registrationStatus === "approved" ? "qualificationPending" : "pending";
   if (identity.identityStatus === "rejected") return "rejected";
   if (identity.identityStatus === "revoked") return "revoked";
   if (identity.identityStatus !== "active") return "noIdentity";
@@ -25,7 +25,8 @@ export function useCompetitionAccess(competitionId?: string): WorkspaceAccessSta
 
 const accessCopy: Record<Exclude<WorkspaceAccessState, "active" | "notStarted">, { title: string; body: string; tone: "warning" | "danger" | "neutral" }> = {
   noIdentity: { title: "当前账号没有该赛事身份", body: "赛事公开信息仍可查看；赛事工作区需要对应赛事身份。", tone: "warning" },
-  pending: { title: "报名正在审核", body: "报名已经回流 App，但审核完成前不会提前授予赛事工作区权限。", tone: "warning" },
+  pending: { title: "报名正在学校审核", body: "团队报名已经回流 App，但学校审核完成前不会提前授予赛事工作区权限。", tone: "warning" },
+  qualificationPending: { title: "学校审核已通过，等待赛事资格确认", body: "团队名单已经锁定，但外部权威赛事资格尚未确认；正式赛事工作区不会提前开放。", tone: "warning" },
   rejected: { title: "本次报名未通过审核", body: "赛事工作区未开放。可返回报名状态页查看当前结果，不在工作区内继续操作。", tone: "danger" },
   ended: { title: "赛事已经结束", body: "赛事期操作已经关闭；成绩、证书和参赛经历转入长期账号资产。", tone: "neutral" },
   revoked: { title: "赛事期权限已回收", body: "比赛结束后赛事身份可以失效，但赛后长期资产仍然保留。", tone: "neutral" },
@@ -36,10 +37,10 @@ export function WorkspaceBlocked({ competitionId, state, backTo }: { competition
   const navigate = useNavigate();
   const copy = accessCopy[state];
   const assetHandoff = state === "ended" || state === "revoked";
-  const registrationState = state === "noIdentity" || state === "pending" || state === "rejected";
+  const registrationState = state === "noIdentity" || state === "pending" || state === "qualificationPending" || state === "rejected";
   return <div className="space-y-4 px-4 py-6">
     <Card className={copy.tone === "danger" ? "border border-danger bg-danger-bg" : copy.tone === "warning" ? "border border-warning bg-warning-bg" : "border border-border-subtle"}>
-      <StatusTag tone={copy.tone}>{state === "pending" ? "审核中" : state === "rejected" ? "已拒绝" : state === "permissionDenied" ? "无权限" : "赛事状态"}</StatusTag>
+      <StatusTag tone={copy.tone}>{state === "pending" ? "学校审核中" : state === "qualificationPending" ? "资格确认中" : state === "rejected" ? "已拒绝" : state === "permissionDenied" ? "无权限" : "赛事状态"}</StatusTag>
       <h2 className="mt-3 text-lg font-semibold text-text-primary">{copy.title}</h2>
       <p className="mt-2 text-sm leading-5 text-text-secondary">{copy.body}</p>
     </Card>
