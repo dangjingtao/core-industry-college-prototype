@@ -1564,3 +1564,4 @@ F04 Decision A / C
   - 前端通过 `redeemCodeWithBackend` mock 服务模拟后端核销，不本地判定码有效；
   - 路由注册表补充 `redeem.code` 与 `redeem.result`。
 - 状态：待决策 → 中保真原型已实现（奖励数值为占位，待 F04 Decision A）。
+- 已 push 到 `origin dev`：`54ae8f8`，合并远端后最终 HEAD 为 `ed2941b`。
