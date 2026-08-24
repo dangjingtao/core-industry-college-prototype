@@ -37,7 +37,15 @@ import { T013CResultsPage } from "../features/competition-workspace/T013CResults
 import { WorkshopRuntimeProvider } from "../features/competition-workspace/runtime";
 import { LongTermAssetsProvider } from "../features/long-term-assets/store";
 import { AccountRequired } from "../features/long-term-assets/shared";
-import { CourseAchievementPage, CourseAssessmentPage, CourseCenterPage, CourseDetailPage, CourseLearnPage, CoursesPage } from "../features/long-term-assets/CoursesPages";
+import { CourseLearnPage } from "../features/long-term-assets/CoursesPages";
+import {
+  T034CertificateDetailRoute,
+  T034CourseAchievementPage,
+  T034CourseAssessmentPage,
+  T034CourseCenterPage,
+  T034CourseDetailPage,
+  T034CoursesPage,
+} from "../features/long-term-assets/T034CoursePages";
 import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, ExchangeCenterPage, ExchangeDetailPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
 import {
   AssetsHomePage,
@@ -58,7 +66,6 @@ import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import { WelfareAdPage, WelfareDetailPage, WelfareListPage } from "../features/welfare/WelfarePages";
 import {
-  CertificateDetailTrustedPage,
   CompanyDetailTrustedPage,
   ResultDetailTrustedPage,
   VerificationTrustedPage,
@@ -135,12 +142,12 @@ export function App() {
               <Route path="/companies/:companyId" element={<CompanyDetailTrustedPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:contentId" element={<NewsDetailPage />} />
-              <Route path="/courses" element={<CoursesPage />} />
-              <Route path="/courses/center" element={<CourseCenterPage />} />
-              <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+              <Route path="/courses" element={<T034CoursesPage />} />
+              <Route path="/courses/center" element={<T034CourseCenterPage />} />
+              <Route path="/courses/:courseId" element={<T034CourseDetailPage />} />
               <Route path="/courses/:courseId/learn" element={account(<CourseLearnPage />)} />
-              <Route path="/courses/:courseId/assessment" element={account(<CourseAssessmentPage />)} />
-              <Route path="/courses/:courseId/achievement" element={account(<CourseAchievementPage />)} />
+              <Route path="/courses/:courseId/assessment" element={account(<T034CourseAssessmentPage />)} />
+              <Route path="/courses/:courseId/achievement" element={account(<T034CourseAchievementPage />)} />
               <Route path="/benefits" element={<BenefitsPage />} />
               <Route path="/benefits/free" element={<FreeBenefitsPage />} />
               <Route path="/benefits/exchange" element={<ExchangeCenterPage />} />
@@ -156,7 +163,7 @@ export function App() {
               <Route path="/assets/results" element={account(<ResultsPage />)} />
               <Route path="/assets/results/:resultId" element={account(<ResultDetailTrustedPage />)} />
               <Route path="/assets/certificates" element={account(<CertificatesPage />)} />
-              <Route path="/assets/certificates/:certificateId" element={account(<CertificateDetailTrustedPage />)} />
+              <Route path="/assets/certificates/:certificateId" element={account(<T034CertificateDetailRoute />)} />
               <Route path="/assets/education-identity" element={account(<EducationIdentityPage />)} />
               <Route path="/assets/verification" element={<VerificationTrustedPage />} />
               <Route path="/stories" element={<StoriesPage />} />
