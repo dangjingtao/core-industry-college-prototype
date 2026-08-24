@@ -11,9 +11,9 @@ import {
   OpportunityDetailPage,
   PublicPlatformProvider,
 } from "../features/public-platform/PublicPlatform";
-import { ForgotPasswordPage, LoginPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
+import { ForgotPasswordPage, RegisterPage, WechatAuthorizePage, WechatPhonePage, WelcomePage } from "../features/auth/AuthPages";
 import { AccountSecurityPage } from "../features/auth/AccountSecurityPage";
-import { CompetitionAccountPage } from "../features/auth/CompetitionAccountPage";
+import { CompetitionAccountPage, CompetitionAwareLoginPage } from "../features/auth/CompetitionAccountPage";
 import { PhoneBindingPage } from "../features/auth/PhoneBindingPage";
 import {
   CompetitionLifecycleDetailPage,
@@ -99,7 +99,7 @@ export function App() {
               <Route path="/" element={<Navigate to="/welcome" replace />} />
               <Route path="/dev/routes" element={<RouteLab />} />
               <Route path="/welcome" element={<WelcomePage />} />
-              <Route path="/auth/login" element={<LoginPage />} />
+              <Route path="/auth/login" element={<CompetitionAwareLoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/auth/wechat/authorize" element={<WechatAuthorizePage />} />
               <Route path="/auth/wechat/phone" element={<WechatPhonePage />} />
@@ -187,7 +187,7 @@ export function App() {
               <Route path="/tasks/newbie" element={<NewbieTasksPage />} />
               <Route path="/apps" element={<AppCenterPage />} />
               <Route path="/redeem" element={account(<RedeemCodePage />)} />
-              <Route path="/redeem/result" element={account(<RedeemResultPage />)} />
+              <Route path="/redeem/result" element={account(<RedeemResultPage />} />
               <Route path="/welfare" element={<WelfareListPage />} />
               <Route path="/welfare/:welfareId" element={<WelfareDetailPage />} />
               <Route path="/welfare/:welfareId/ad" element={<WelfareAdPage />} />
