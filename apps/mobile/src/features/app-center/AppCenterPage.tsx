@@ -85,22 +85,20 @@ function AppGrid({ group }: { group: AppGroup }) {
 }
 
 function FeaturedInteraction() {
-  return <Section title="我的创业小店" subtitle="把日常学习与活跃包装成一间持续成长的小店">
-    <Card className="overflow-hidden p-0">
-      <div className="flex items-start gap-4 p-4">
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-[18px] bg-[#fff3dd] text-[#a96816]"><Store size={28} aria-hidden="true" /></span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-text-primary">我的创业小店</h3><StatusTag tone="neutral">敬请期待</StatusTag></div>
-          <p className="mt-1 text-sm leading-5 text-text-secondary">每个用户拥有一间虚拟小店，把“打开 App”变成“回来经营我的店”。</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">签到 / 答题 / 上课 → 进货</span>
-            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">拉新 → 客流</span>
-            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">日常活跃 → 店铺成长</span>
-            <span className="rounded-control bg-surface-subtle px-2.5 py-2 text-text-secondary">养成等级 → 权益折扣</span>
+  return <Section title="我的创业小店" subtitle="把今天在 App 里做的事，变成店里看得见的变化">
+    <Link to="/apps/startup-shop" className="block">
+      <Card interactive className="overflow-hidden p-0">
+        <div className="flex items-start gap-4 p-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-[18px] bg-[#fff3dd] text-[#a96816]"><Store size={28} aria-hidden="true" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-text-primary">我的创业小店</h3><StatusTag tone="info">概念试玩</StatusTag></div>
+            <p className="mt-1 text-sm leading-5 text-text-secondary">签到去进货，学习补货架，喊朋友带客流。先进去把今天的小店盘活。</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary"><span className="rounded-full bg-surface-subtle px-2.5 py-1">进货</span><span className="rounded-full bg-surface-subtle px-2.5 py-1">客流</span><span className="rounded-full bg-surface-subtle px-2.5 py-1">升级</span><span className="rounded-full bg-surface-subtle px-2.5 py-1">权益</span></div>
           </div>
+          <span className="pt-4 text-lg text-text-tertiary" aria-hidden="true">›</span>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </Link>
   </Section>;
 }
 
