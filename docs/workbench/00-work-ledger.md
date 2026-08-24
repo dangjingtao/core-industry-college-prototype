@@ -2218,6 +2218,7 @@ T009 / T009R1 已完成智能客服入口与浮窗形态。本次会议补的是
   - `shouldSkipSplash`：命中关键动线参数（`returnTo` / `handoff` / `competitionId` / `code` / `source`）时跳过开屏，不打断注册回流、赛事 handoff、邀请码认领。
 - 接入：`apps/mobile/src/app/App.tsx` 新增 `WelcomeSplashPage` 包裹 `WelcomePage`，`/welcome` 路由前置开屏层。
 - 素材：静态品牌全屏占位（可替换为真实广告主物料）。
+- 演示：欢迎页左下角新增「重放开屏广告」小按钮（样式与原型状态切换按钮一致，`bg-surface-subtle text-text-secondary`），可随时手动重放，不受会话记忆与动线跳过限制。
 - typecheck + `npm run build:mobile` 通过。
 - 待决策项：真实冷启动/回前台触发、每日频次上限、无填充兜底、点击落地页与外链白名单、真实广告 SDK。
 - 设计文档：见 `docs/workbench/T040-implementation-record.md`。

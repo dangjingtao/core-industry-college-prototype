@@ -63,7 +63,9 @@ export function useSplashGate(search: string) {
   }, [search]);
 
   const dismiss = () => setVisible(false);
-  return { visible, ready, dismiss };
+  /** 手动重放开屏（欢迎页左下角演示按钮），不受会话记忆与动线跳过限制 */
+  const replay = () => setVisible(true);
+  return { visible, ready, dismiss, replay };
 }
 
 export function SplashOverlay({ onDone }: { onDone: () => void }) {
