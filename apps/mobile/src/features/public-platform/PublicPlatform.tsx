@@ -24,22 +24,25 @@ function todayKey() {
 }
 
 function useTodayCheckIn() {
-  const [checkedIn, setCheckedIn] = useState(() => {
+  const [state, setState] = useState(() => {
     try {
-      return typeof localStorage !== "undefined" && localStorage.getItem("home-newbie-checkin-date") === todayKey();
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem("task-center-checkin") : null;
+      const saved = raw ? JSON.parse(raw) as { date: string; streak: number } : null;
+      return { checkedIn: saved?.date === todayKey(), streak: saved?.streak ?? 0 };
     } catch {
-      return false;
+      return { checkedIn: false, streak: 0 };
     }
   });
   const checkIn = () => {
+    const next = { date: todayKey(), streak: state.checkedIn ? state.streak : state.streak + 1 };
     try {
-      localStorage.setItem("home-newbie-checkin-date", todayKey());
+      localStorage.setItem("task-center-checkin", JSON.stringify(next));
     } catch {
       // ignore
     }
-    setCheckedIn(true);
+    setState({ checkedIn: true, streak: next.streak });
   };
-  return { checkedIn, checkIn };
+  return { ...state, checkIn };
 }
 
 type NewbieTask = {
@@ -57,7 +60,7 @@ type NewbieTask = {
 function useNewbieTasks() {
   const { session, identities } = usePublicPlatform();
   const { learning, benefitStatusFor } = useLongTermAssets();
-  const { checkedIn, checkIn } = useTodayCheckIn();
+  const { checkedIn } = useTodayCheckIn();
 
   const tasks = useMemo<NewbieTask[]>(() => {
     const loggedIn = session.loggedIn;
@@ -75,13 +78,12 @@ function useNewbieTasks() {
       {
         id: "checkin",
         label: "每日打卡",
-        description: "登录 App 完成今日打卡，养成参赛学习习惯",
+        description: "去任务中心完成今日打卡，养成参赛学习习惯",
         icon: <CalendarCheck size={18} aria-hidden="true" />,
         iconClass: "bg-[#e9f6f1] text-[#247456]",
-        to: "/home",
-        action: "打卡",
+        to: "/tasks",
+        action: "去打卡",
         completed: checkedIn,
-        onAction: checkIn,
       },
       {
         id: "newbie-course",
@@ -117,7 +119,7 @@ function useNewbieTasks() {
         completed: loggedIn && identities.length > 0,
       },
     ];
-  }, [session, identities, learning, benefitStatusFor, checkedIn, checkIn]);
+  }, [session, identities, learning, benefitStatusFor, checkedIn]);
 
   const allCompleted = useMemo(() => tasks.every(task => task.completed), [tasks]);
   return { tasks, allCompleted };

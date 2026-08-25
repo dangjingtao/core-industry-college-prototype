@@ -1,7 +1,7 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BookOpen, BriefcaseBusiness, CalendarCheck, ChevronRight, Gift, LockKeyhole, Sparkles, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, PageHeader, PublicShell, StatusTag } from "../../components/ui";
+import { Button, Card, ConfirmDialog, PageHeader, PublicShell, StatusTag } from "../../components/ui";
 import { taskById, workshopTasks } from "../competition-workspace/data";
 import { nextReadyTask, taskAvailability, useWorkshopRuntime } from "../competition-workspace/runtime";
 import { benefits, courses } from "../long-term-assets/data";
@@ -95,26 +95,97 @@ function TaskEntryCard({ entry }: { entry: TaskCenterEntry }) {
   </button>;
 }
 
+const AD_DURATION = 5;
+
+function CheckInAdDialog({ open, onComplete, onCancel }: { open: boolean; onComplete: () => void; onCancel: () => void }) {
+  const [remaining, setRemaining] = useState(AD_DURATION);
+
+  useEffect(() => {
+    if (!open) {
+      setRemaining(AD_DURATION);
+      return;
+    }
+    setRemaining(AD_DURATION);
+    const interval = setInterval(() => {
+      setRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          onComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [open, onComplete]);
+
+  if (!open) return null;
+  const progress = ((AD_DURATION - remaining) / AD_DURATION) * 100;
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black px-6 text-white">
+      <div className="absolute left-4 right-4 top-6">
+        <div className="flex items-center justify-between text-xs">
+          <span className="rounded bg-white/20 px-2 py-1">广告</span>
+          <span className="rounded bg-white/20 px-2 py-1">{remaining}s 后获得奖励</span>
+        </div>
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/20">
+          <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+      <div className="text-center">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white/10">
+          <Sparkles size={36} aria-hidden="true" />
+        </div>
+        <h3 className="mt-5 text-lg font-semibold">观看激励视频</h3>
+        <p className="mt-2 text-sm text-white/80">完成观看后即可打卡成功，获得今日学力值奖励。</p>
+      </div>
+      <button type="button" onClick={onCancel} className="absolute bottom-8 rounded-control bg-white/10 px-5 py-2 text-sm active:bg-white/20">放弃奖励</button>
+    </div>
+  );
+}
+
 function CheckInBar() {
   const { checkedIn, streak, checkIn } = useCheckIn();
+  const [showAd, setShowAd] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleStartCheckIn = () => setShowAd(true);
+  const handleAdComplete = () => {
+    setShowAd(false);
+    checkIn();
+    setShowSuccess(true);
+  };
+  const handleAdCancel = () => setShowAd(false);
+
   return (
-    <Card className="flex items-center gap-3 p-4">
-      <span className={`flex size-11 shrink-0 items-center justify-center rounded-control ${checkedIn ? "bg-success-bg text-success-text" : "bg-[#fff7df] text-[#946218]"}`}>
-        <CalendarCheck size={22} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <strong className="text-base font-semibold text-text-primary">{checkedIn ? "今日已打卡" : "今日未打卡"}</strong>
-          {streak > 0 && <StatusTag tone={checkedIn ? "success" : "warning"}>连续 {streak} 天</StatusTag>}
+    <>
+      <Card className="flex items-center gap-3 p-4">
+        <span className={`flex size-11 shrink-0 items-center justify-center rounded-control ${checkedIn ? "bg-success-bg text-success-text" : "bg-[#fff7df] text-[#946218]"}`}>
+          <CalendarCheck size={22} aria-hidden="true" />
         </span>
-        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
-          {checkedIn ? "奖励已发放（原型占位），明天继续。" : "每日签到，养成参赛学习习惯。"}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <strong className="text-base font-semibold text-text-primary">{checkedIn ? "今日已打卡" : "今日未打卡"}</strong>
+            {streak > 0 && <StatusTag tone={checkedIn ? "success" : "warning"}>连续 {streak} 天</StatusTag>}
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
+            {checkedIn ? "今日奖励已到账，明天继续。" : "每日签到，养成参赛学习习惯。"}
+          </span>
         </span>
-      </span>
-      <Button className="shrink-0 px-4" disabled={checkedIn} onClick={checkIn}>
-        {checkedIn ? "已打卡" : "打卡"}
-      </Button>
-    </Card>
+        <Button className="shrink-0 px-4" disabled={checkedIn} onClick={handleStartCheckIn}>
+          {checkedIn ? "已打卡" : "打卡"}
+        </Button>
+      </Card>
+      <CheckInAdDialog open={showAd} onComplete={handleAdComplete} onCancel={handleAdCancel} />
+      <ConfirmDialog
+        open={showSuccess}
+        title="打卡成功"
+        description="恭喜你获得 20 学力值（暂定），继续保持！"
+        confirmText="好的"
+        onCancel={() => setShowSuccess(false)}
+        onConfirm={() => setShowSuccess(false)}
+      />
+    </>
   );
 }
 
