@@ -99,21 +99,22 @@ import {
 
 const account = (page: ReactNode) => <AccountRequired>{page}</AccountRequired>;
 
-/** T040：欢迎页前置开屏广告（会话内一次；深链/回流动线跳过；左下角可手动重放演示） */
+/** T040：欢迎页前置开屏广告（会话内一次；深链/回流动线跳过；可手动重放演示） */
 function WelcomeSplashPage() {
   const location = useLocation();
   const { visible, dismiss, replay } = useSplashGate(location.search);
   return <>
-    <div className="relative">
-      <WelcomePage />
-      <button
-        type="button"
-        onClick={replay}
-        className="absolute bottom-3 left-5 z-10 min-h-touch rounded-control bg-surface-subtle px-3 text-xs font-medium text-text-secondary"
-      >
-        重放开屏广告
-      </button>
-    </div>
+    <WelcomePage
+      replayButton={
+        <button
+          type="button"
+          onClick={replay}
+          className="mt-3 min-h-touch rounded-control bg-surface-subtle px-3 text-xs font-medium text-text-secondary"
+        >
+          重放开屏广告
+        </button>
+      }
+    />
     {visible && <SplashOverlay onDone={dismiss} />}
   </>;
 }

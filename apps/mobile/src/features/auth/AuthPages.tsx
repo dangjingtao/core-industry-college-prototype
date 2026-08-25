@@ -108,14 +108,14 @@ function RecognitionScenarioLinks({ returnTo, current }: { returnTo: string; cur
   return <div className="rounded-control border border-dashed border-border px-3 py-3"><p className="text-xs font-medium text-text-tertiary">原型场景切换</p><div className="mt-2 flex flex-wrap gap-2">{cases.map(item => <Link key={item.value} to={`/auth/login?returnTo=${encodeURIComponent(returnTo)}${item.value === "default" ? "" : `&accountCase=${item.value}`}`} className={`rounded-full px-3 py-2 text-xs font-medium ${current === item.value ? "bg-primary-container text-text-brand" : "bg-surface-subtle text-text-secondary"}`}>{item.label}</Link>)}</div></div>;
 }
 
-export function WelcomePage() {
+export function WelcomePage({ replayButton }: { replayButton?: ReactNode }) {
   const navigate = useNavigate();
   const highlights = [
     { icon: Trophy, title: "参赛", description: "发现赛事，持续推进报名、团队和比赛成果" },
     { icon: UserRound, title: "就业与实习", description: "用长期简历连接企业机会与真实项目实践" },
     { icon: Sparkles, title: "长期成长", description: "课程、证书和参赛经历跟随账号长期保留" },
   ];
-  return <PublicShell showNavigation={false}><div className="space-y-8 px-5 pb-8 pt-[calc(env(safe-area-inset-top)+40px)]"><div><p className="text-sm font-medium text-text-brand">核心产业学院</p><h1 className="mt-3 text-3xl font-semibold leading-10 text-text-primary">从一次比赛，走向更长的成长路径</h1><p className="mt-3 text-base leading-7 text-text-secondary">参赛、实习与长期可信空间，都归属于同一个学生账号。</p></div><div className="space-y-3">{highlights.map(({ icon: Icon, title, description }) => <div key={title} className="flex items-start gap-3 rounded-container bg-surface p-4"><span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><div><h2 className="font-semibold text-text-primary">{title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p></div></div>)}</div><Button className="w-full" onClick={() => navigate("/auth/login")}>登录 / 注册</Button></div></PublicShell>;
+  return <PublicShell showNavigation={false}><div className="space-y-8 px-5 pb-8 pt-[calc(env(safe-area-inset-top)+40px)]"><div><p className="text-sm font-medium text-text-brand">核心产业学院</p><h1 className="mt-3 text-3xl font-semibold leading-10 text-text-primary">从一次比赛，走向更长的成长路径</h1><p className="mt-3 text-base leading-7 text-text-secondary">参赛、实习与长期可信空间，都归属于同一个学生账号。</p></div><div className="space-y-3">{highlights.map(({ icon: Icon, title, description }) => <div key={title} className="flex items-start gap-3 rounded-container bg-surface p-4"><span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Icon size={20} aria-hidden="true" /></span><div><h2 className="font-semibold text-text-primary">{title}</h2><p className="mt-1 text-sm leading-5 text-text-secondary">{description}</p></div></div>)}</div><div><Button className="w-full" onClick={() => navigate("/auth/login")}>登录 / 注册</Button>{replayButton}</div></div></PublicShell>;
 }
 
 export function LoginPage() {
