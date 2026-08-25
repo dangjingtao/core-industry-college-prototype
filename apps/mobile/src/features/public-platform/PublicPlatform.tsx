@@ -90,8 +90,11 @@ function useNewbieRewards() {
   return { rewards, claimTask, claimAllCompleted, resetRewards };
 }
 
-type NewbieTask = {
+export type GuideTaskKind = "daily" | "newbie";
+
+export type GuideTask = {
   id: string;
+  kind: GuideTaskKind;
   label: string;
   description: string;
   icon: ReactNode;
@@ -102,16 +105,17 @@ type NewbieTask = {
   onAction?: () => void;
 };
 
-function useNewbieTasks(demoMode?: "empty" | "complete") {
+export function useGuideTasks(demoMode?: "empty" | "complete") {
   const { session, identities } = usePublicPlatform();
   const { learning, benefitStatusFor } = useLongTermAssets();
-  const { checkedIn } = useTodayCheckIn();
+  const { checkedIn, checkIn } = useTodayCheckIn();
 
-  const tasks = useMemo<NewbieTask[]>(() => {
+  const tasks = useMemo<GuideTask[]>(() => {
     const loggedIn = session.loggedIn;
-    const base = [
+    const base: GuideTask[] = [
       {
         id: "profile",
+        kind: "newbie",
         label: "完善学生资料",
         description: "填写学校、专业等基础信息，解锁更多能力",
         icon: <UserCheck size={18} aria-hidden="true" />,
@@ -122,16 +126,19 @@ function useNewbieTasks(demoMode?: "empty" | "complete") {
       },
       {
         id: "checkin",
+        kind: "daily",
         label: "每日打卡",
-        description: "去任务中心完成今日打卡，养成参赛学习习惯",
+        description: "登录 App 完成今日打卡，养成参赛学习习惯",
         icon: <CalendarCheck size={18} aria-hidden="true" />,
         iconClass: "bg-[#e9f6f1] text-[#247456]",
-        to: "/tasks",
-        action: "去打卡",
+        to: "/home",
+        action: "打卡",
         completed: checkedIn,
+        onAction: checkIn,
       },
       {
         id: "newbie-course",
+        kind: "newbie",
         label: "学习新手课程",
         description: "5 分钟了解 App 使用、AI 工具与创赛报名",
         icon: <BookOpen size={18} aria-hidden="true" />,
@@ -145,6 +152,7 @@ function useNewbieTasks(demoMode?: "empty" | "complete") {
       },
       {
         id: "benefit",
+        kind: "newbie",
         label: "领取创赛福利",
         description: "领取咖啡券、出行券等学生专属福利",
         icon: <Gift size={18} aria-hidden="true" />,
@@ -155,6 +163,7 @@ function useNewbieTasks(demoMode?: "empty" | "complete") {
       },
       {
         id: "competition",
+        kind: "newbie",
         label: "发现一场赛事",
         description: "浏览正在报名的赛事，开启你的创赛之旅",
         icon: <Trophy size={18} aria-hidden="true" />,
@@ -167,13 +176,43 @@ function useNewbieTasks(demoMode?: "empty" | "complete") {
     if (demoMode === "empty") return base.map(task => ({ ...task, completed: false }));
     if (demoMode === "complete") return base.map(task => ({ ...task, completed: true }));
     return base;
-  }, [session, identities, learning, benefitStatusFor, checkedIn, demoMode]);
+  }, [session, identities, learning, benefitStatusFor, checkedIn, checkIn, demoMode]);
 
+  const newbieTasks = useMemo(() => tasks.filter(task => task.kind === "newbie"), [tasks]);
+  const dailyTasks = useMemo(() => tasks.filter(task => task.kind === "daily"), [tasks]);
+  const newbieRemaining = newbieTasks.filter(task => !task.completed).length;
+  const dailyRemaining = dailyTasks.filter(task => !task.completed).length;
   const allCompleted = useMemo(() => tasks.every(task => task.completed), [tasks]);
-  return { tasks, allCompleted };
+  return { tasks, newbieTasks, dailyTasks, newbieRemaining, dailyRemaining, allCompleted };
 }
 
-function NewbieTaskItem({ task, claimed, onClaim }: { task: NewbieTask; claimed: boolean; onClaim: () => void }) {
+export function GuideTaskList({ tasks }: { tasks: GuideTask[] }) {
+  const navigate = useNavigate();
+  return <div className="space-y-2">
+    {tasks.map(task => (
+      <button
+        key={task.id}
+        type="button"
+        aria-label={`${task.kind === "daily" ? "日常任务" : "新手任务"}：${task.label}，${task.completed ? "已完成" : task.action}`}
+        disabled={task.completed}
+        onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
+        className={`flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition ${task.completed ? "opacity-70" : "active:bg-surface-pressed"}`}
+      >
+        <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
+            {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
+        </span>
+        <span className={`shrink-0 text-xs font-medium ${task.completed ? "text-text-tertiary" : "text-text-brand"}`}>{task.completed ? "已完成" : task.action}</span>
+      </button>
+    ))}
+  </div>;
+}
+
+function NewbieTaskItem({ task, claimed, onClaim }: { task: GuideTask; claimed: boolean; onClaim: () => void }) {
   const navigate = useNavigate();
   const handleClaim = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -234,14 +273,15 @@ function NewbieDemoTools({ value, onChange }: { value?: "empty" | "complete"; on
 
 export function NewbieTasksPage() {
   const [demoMode, setDemoMode] = useState<"empty" | "complete" | undefined>(undefined);
-  const { tasks, allCompleted } = useNewbieTasks(demoMode);
+  const { newbieTasks: tasks, dailyTasks } = useGuideTasks(demoMode);
+  const allCompleted = tasks.every(task => task.completed);
   const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = Math.round((completedCount / tasks.length) * 100);
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="新手任务" subtitle="完成 5 项引导，快速熟悉平台核心能力" backTo="/home" />
+      <PageHeader title="新手任务" subtitle={`完成 ${tasks.length} 项引导，快速熟悉平台核心能力`} backTo="/home" />
       <div className="space-y-4 px-4 py-5">
         <Card className="space-y-3">
           <div className="flex items-center justify-between text-sm">
@@ -288,6 +328,10 @@ export function NewbieTasksPage() {
           <button type="button" onClick={resetRewards} className="text-xs text-text-tertiary underline active:text-text-secondary">重置奖励状态（演示用）</button>
           <NewbieDemoTools value={demoMode} onChange={setDemoMode} />
         </div>
+
+        <Section title="日常任务" subtitle="每天可重复完成的固定动作，与新手引导分开统计" action={<Link to="/tasks" className="text-sm font-medium text-text-brand">任务中心</Link>}>
+          <GuideTaskList tasks={dailyTasks} />
+        </Section>
       </div>
     </PublicShell>
   );
@@ -395,8 +439,7 @@ export function HomePage() {
   const activeCompetition = guest ? undefined : competitionById(activeIdentity?.competitionId);
   const openOpportunityCount = opportunities.filter(item => item.status === "open").length;
   const openCompetitionCount = competitions.filter(item => item.status === "registrationOpen").length;
-  const { tasks: newbieTasks } = useNewbieTasks();
-  const newbieRemaining = newbieTasks.filter(t => !t.completed).length;
+  const { newbieTasks, newbieRemaining } = useGuideTasks();
   const featuredWelfare = useMemo(() => {
     return welfareProjects.find(p => p.featured && p.status === "active") ?? welfareProjects.find(p => p.status === "active") ?? welfareProjects.find(p => p.status !== "ended");
   }, []);
@@ -405,7 +448,7 @@ export function HomePage() {
       id: "newbie",
       source: "新人",
       title: "新手任务",
-      detail: "完成 5 项引导，快速上手平台",
+      detail: `完成 ${newbieTasks.length} 项引导，快速上手平台`,
       status: newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已完成",
       tone: newbieRemaining > 0 ? "info" : "success",
       to: "/tasks/newbie",

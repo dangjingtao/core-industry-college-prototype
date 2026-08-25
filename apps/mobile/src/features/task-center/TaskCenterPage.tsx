@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BookOpen, BriefcaseBusiness, CalendarCheck, ChevronRight, Gift, LockKeyhole, Sparkles, Trophy } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button, Card, ConfirmDialog, PageHeader, PublicShell, StatusTag } from "../../components/ui";
+import { Link, useNavigate } from "react-router-dom";
+import { Button, Card, ConfirmDialog, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { taskById, workshopTasks } from "../competition-workspace/data";
 import { nextReadyTask, taskAvailability, useWorkshopRuntime } from "../competition-workspace/runtime";
 import { benefits, courses } from "../long-term-assets/data";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { competitionById, opportunities, opportunityById } from "../public-platform/data";
-import { usePublicPlatform } from "../public-platform/PublicPlatform";
+import { GuideTaskList, useGuideTasks, usePublicPlatform } from "../public-platform/PublicPlatform";
 
 type TaskCategory = "competition" | "learning" | "benefit" | "opportunity";
 type TaskStatus = "todo" | "inProgress" | "completed" | "locked";
 type StatusFilter = "all" | "todo" | "inProgress" | "completed";
+type TaskScope = "business" | "daily" | "newbie";
 
 type TaskCenterEntry = {
   id: string;
@@ -37,6 +38,12 @@ const categoryOptions: { value: "all" | TaskCategory; label: string }[] = [
 ];
 
 const statusTone = (status: TaskStatus) => status === "completed" ? "success" as const : status === "inProgress" ? "info" as const : status === "locked" ? "neutral" as const : "warning" as const;
+
+const scopeOptions: { value: TaskScope; label: string }[] = [
+  { value: "business", label: "业务进度" },
+  { value: "daily", label: "日常" },
+  { value: "newbie", label: "新手" },
+];
 
 function todayKey() {
   return new Date().toLocaleDateString("zh-CN");
@@ -205,6 +212,8 @@ export function TaskCenterPage() {
   const { session, identities, applications } = usePublicPlatform();
   const { getRuntime } = useWorkshopRuntime();
   const { learning, benefitStatusFor } = useLongTermAssets();
+  const { newbieTasks, dailyRemaining, newbieRemaining } = useGuideTasks();
+  const [scope, setScope] = useState<TaskScope>("business");
   const [category, setCategory] = useState<"all" | TaskCategory>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -293,17 +302,28 @@ export function TaskCenterPage() {
     return item.status === statusFilter;
   });
 
-  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="赛事 · 学习 · 权益 · 机会" backTo="/home" /><div className="space-y-5 px-4 py-5">
-    <CheckInBar />
+  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="日常 · 新手 · 赛事 · 学习 · 权益 · 机会" backTo="/home" /><div className="space-y-5 px-4 py-5">
+    <div role="tablist" aria-label="任务分组" className="grid grid-cols-3 gap-1 rounded-container bg-surface-subtle p-1">{scopeOptions.map(item => <button key={item.value} type="button" role="tab" aria-selected={scope === item.value} className={`min-h-touch rounded-control text-sm font-medium transition ${scope === item.value ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`} onClick={() => setScope(item.value)}>{item.label}</button>)}</div>
 
-    <div className="grid grid-cols-3 overflow-hidden rounded-container border border-border-subtle bg-surface">{[
-      { value: "todo" as const, label: "待处理", count: statusCounts.todo },
-      { value: "inProgress" as const, label: "进行中", count: statusCounts.inProgress },
-      { value: "completed" as const, label: "已完成", count: statusCounts.completed },
-    ].map(item => <button key={item.value} type="button" className={`min-h-[82px] border-r border-border-subtle px-2 text-center last:border-r-0 ${statusFilter === item.value ? "bg-primary-container" : "bg-surface"}`} onClick={() => setStatusFilter(statusFilter === item.value ? "all" : item.value)}><strong className={`block text-2xl font-semibold ${statusFilter === item.value ? "text-text-brand" : "text-text-primary"}`}>{item.count}</strong><span className="mt-1 block text-xs text-text-secondary">{item.label}</span></button>)}</div>
+    {scope === "daily" && <Section title="日常任务" subtitle={dailyRemaining > 0 ? `${dailyRemaining} 项今日待完成` : "今日已完成"}>
+      <CheckInBar />
+      <p className="text-xs leading-5 text-text-tertiary">日常任务当前只包含平台已有的每日打卡事实，奖励规则待产品确认后再补充。</p>
+    </Section>}
 
-    <div className="flex gap-2 overflow-x-auto pb-1">{categoryOptions.map(item => <button key={item.value} type="button" className={`min-h-touch shrink-0 rounded-control px-4 text-sm font-medium ${category === item.value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`} onClick={() => setCategory(item.value)}>{item.label}</button>)}</div>
+    {scope === "newbie" && <Section title="新手任务" subtitle={newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已全部完成"} action={<Link to="/tasks/newbie" className="text-sm font-medium text-text-brand">独立页</Link>}>
+      <GuideTaskList tasks={newbieTasks} />
+    </Section>}
 
-    <div className="space-y-3">{visibleEntries.length ? visibleEntries.map(entry => <TaskEntryCard key={entry.id} entry={entry} />) : <div className="rounded-container border border-border-subtle bg-surface px-4 py-10 text-center"><p className="font-semibold text-text-primary">当前没有对应事项</p><p className="mt-2 text-sm text-text-secondary">切换分类或状态查看其它内容。</p></div>}</div>
+    {scope === "business" && <>
+      <div className="grid grid-cols-3 overflow-hidden rounded-container border border-border-subtle bg-surface">{[
+        { value: "todo" as const, label: "待处理", count: statusCounts.todo },
+        { value: "inProgress" as const, label: "进行中", count: statusCounts.inProgress },
+        { value: "completed" as const, label: "已完成", count: statusCounts.completed },
+      ].map(item => <button key={item.value} type="button" className={`min-h-[82px] border-r border-border-subtle px-2 text-center last:border-r-0 ${statusFilter === item.value ? "bg-primary-container" : "bg-surface"}`} onClick={() => setStatusFilter(statusFilter === item.value ? "all" : item.value)}><strong className={`block text-2xl font-semibold ${statusFilter === item.value ? "text-text-brand" : "text-text-primary"}`}>{item.count}</strong><span className="mt-1 block text-xs text-text-secondary">{item.label}</span></button>)}</div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">{categoryOptions.map(item => <button key={item.value} type="button" className={`min-h-touch shrink-0 rounded-control px-4 text-sm font-medium ${category === item.value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`} onClick={() => setCategory(item.value)}>{item.label}</button>)}</div>
+
+      <div className="space-y-3">{visibleEntries.length ? visibleEntries.map(entry => <TaskEntryCard key={entry.id} entry={entry} />) : <div className="rounded-container border border-border-subtle bg-surface px-4 py-10 text-center"><p className="font-semibold text-text-primary">当前没有对应事项</p><p className="mt-2 text-sm text-text-secondary">切换分类或状态查看其它内容。</p></div>}</div>
+    </>}
   </div></PublicShell>;
 }
