@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { BookOpen, BriefcaseBusiness, ChevronRight, Gift, LockKeyhole, Sparkles, Trophy } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, CalendarCheck, ChevronRight, Gift, LockKeyhole, Sparkles, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader, PublicShell, StatusTag } from "../../components/ui";
+import { Button, Card, PageHeader, PublicShell, StatusTag } from "../../components/ui";
 import { taskById, workshopTasks } from "../competition-workspace/data";
 import { nextReadyTask, taskAvailability, useWorkshopRuntime } from "../competition-workspace/runtime";
 import { benefits, courses } from "../long-term-assets/data";
@@ -38,6 +38,45 @@ const categoryOptions: { value: "all" | TaskCategory; label: string }[] = [
 
 const statusTone = (status: TaskStatus) => status === "completed" ? "success" as const : status === "inProgress" ? "info" as const : status === "locked" ? "neutral" as const : "warning" as const;
 
+function todayKey() {
+  return new Date().toLocaleDateString("zh-CN");
+}
+
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toLocaleDateString("zh-CN");
+}
+
+function useCheckIn() {
+  const [state, setState] = useState(() => {
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem("task-center-checkin") : null;
+      const saved = raw ? JSON.parse(raw) as { date: string; streak: number } : null;
+      const today = todayKey();
+      const yesterday = yesterdayKey();
+      if (!saved) return { checkedIn: false, streak: 0 };
+      if (saved.date === today) return { checkedIn: true, streak: saved.streak };
+      if (saved.date === yesterday) return { checkedIn: false, streak: saved.streak };
+      return { checkedIn: false, streak: 0 };
+    } catch {
+      return { checkedIn: false, streak: 0 };
+    }
+  });
+
+  const checkIn = () => {
+    const next = { date: todayKey(), streak: state.checkedIn ? state.streak : state.streak + 1 };
+    try {
+      localStorage.setItem("task-center-checkin", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+    setState({ checkedIn: true, streak: next.streak });
+  };
+
+  return { ...state, checkIn };
+}
+
 function workshopDestination(competitionId: string, taskId: string, status: ReturnType<typeof taskAvailability>) {
   if (status === "queued" || status === "running" || status === "failed") return `/competitions/${competitionId}/workspace/workshop/tasks/${taskId}/progress`;
   if (status === "completed") {
@@ -54,6 +93,29 @@ function TaskEntryCard({ entry }: { entry: TaskCenterEntry }) {
     <span className="min-w-0 flex-1"><span className="flex items-center gap-2"><span className="text-xs font-medium text-text-secondary">{entry.source}</span><StatusTag tone={statusTone(entry.status)}>{entry.statusLabel}</StatusTag></span><strong className="mt-2 block text-base font-semibold leading-6 text-text-primary">{entry.title}</strong><span className="mt-1 block text-sm leading-5 text-text-secondary">{entry.description}</span><span className="mt-2 block text-xs text-text-tertiary">{entry.meta}</span></span>
     <span className="flex min-h-touch shrink-0 items-center gap-0.5 self-center text-xs font-medium text-text-brand">{entry.action}<ChevronRight size={16} aria-hidden="true" /></span>
   </button>;
+}
+
+function CheckInBar() {
+  const { checkedIn, streak, checkIn } = useCheckIn();
+  return (
+    <Card className="flex items-center gap-3 p-4">
+      <span className={`flex size-11 shrink-0 items-center justify-center rounded-control ${checkedIn ? "bg-success-bg text-success-text" : "bg-[#fff7df] text-[#946218]"}`}>
+        <CalendarCheck size={22} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <strong className="text-base font-semibold text-text-primary">{checkedIn ? "今日已打卡" : "今日未打卡"}</strong>
+          {streak > 0 && <StatusTag tone={checkedIn ? "success" : "warning"}>连续 {streak} 天</StatusTag>}
+        </span>
+        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">
+          {checkedIn ? "奖励已发放（原型占位），明天继续。" : "每日签到，养成参赛学习习惯。"}
+        </span>
+      </span>
+      <Button className="shrink-0 px-4" disabled={checkedIn} onClick={checkIn}>
+        {checkedIn ? "已打卡" : "打卡"}
+      </Button>
+    </Card>
+  );
 }
 
 export function TaskCenterPage() {
@@ -149,6 +211,8 @@ export function TaskCenterPage() {
   });
 
   return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="赛事 · 学习 · 权益 · 机会" backTo="/home" /><div className="space-y-5 px-4 py-5">
+    <CheckInBar />
+
     <div className="grid grid-cols-3 overflow-hidden rounded-container border border-border-subtle bg-surface">{[
       { value: "todo" as const, label: "待处理", count: statusCounts.todo },
       { value: "inProgress" as const, label: "进行中", count: statusCounts.inProgress },
