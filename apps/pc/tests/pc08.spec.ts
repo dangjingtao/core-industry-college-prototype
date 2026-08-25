@@ -31,6 +31,8 @@ test("PC08 category dictionary can reorder and enable or disable first-level cat
 
   const industry = page.getByTestId("pc08-category-row-category-industry");
   await industry.getByRole("button", { name: "停用" }).click();
+  await expect(page.getByRole("dialog", { name: "停用比赛分类？" })).toBeVisible();
+  await page.getByRole("dialog", { name: "停用比赛分类？" }).getByRole("button", { name: "确认停用" }).click();
   await expect(industry).toContainText("停用");
 });
 

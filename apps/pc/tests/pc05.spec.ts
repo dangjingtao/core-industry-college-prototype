@@ -76,8 +76,10 @@ test("PC05 student console keeps business tasks first while preserving App ident
 test("PC05 freeze is approval-gated and execution writes audit without deleting assets", async ({ page }) => {
   await page.goto("/admin/students");
   await expect(page.getByTestId("account-status")).toContainText("正常");
-  await page.getByTestId("account-governance-reason").fill("异常登录，需要暂时限制访问并保留全部历史事实。");
   await page.getByRole("button", { name: "提交冻结审批" }).click();
+  await expect(page.getByRole("dialog", { name: "申请冻结学生账号" })).toBeVisible();
+  await page.getByTestId("account-governance-reason").fill("异常登录，需要暂时限制访问并保留全部历史事实。");
+  await page.getByRole("dialog", { name: "申请冻结学生账号" }).getByRole("button", { name: "提交冻结审批" }).click();
   await expect(page.getByTestId("governance-notice")).toContainText("不会在普通运营提交时直接改变");
   await expect(page.getByTestId("account-status")).toContainText("正常");
 
@@ -86,12 +88,14 @@ test("PC05 freeze is approval-gated and execution writes audit without deleting 
   await page.getByTestId("operator-role").selectOption("superAdmin");
   await expect(page.getByTestId("execute-accountFreeze")).toBeEnabled();
   await page.getByTestId("execute-accountFreeze").click();
+  await expect(page.getByRole("dialog", { name: "批准并执行高风险操作？" })).toBeVisible();
+  await page.getByRole("dialog", { name: "批准并执行高风险操作？" }).getByRole("button", { name: "批准并执行" }).click();
   await expect(page.getByTestId("approval-action-notice")).toContainText("审批已执行");
   await expect(page.getByText("异常登录，需要暂时限制访问并保留全部历史事实。", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("link", { name: "学生", exact: true }).click();
   await expect(page.getByTestId("account-status")).toContainText("已冻结");
-  await page.getByRole("link", { name: "长期资产" }).click();
+  await page.getByRole("link", { name: "长期资产", exact: true }).click();
   for (const kind of ["Experience", "Result", "Certificate", "CourseAchievement", "VerificationRecord"]) {
     await expect(page.getByTestId(`asset-${kind}`)).toBeVisible();
   }

@@ -63,6 +63,8 @@ test("PC07 keeps provider SMS templates separate from editable platform content 
   await expect(page.getByRole("textbox", { name: "模板正文编辑器" })).toHaveValue(/核心产业学院用户协议/);
 
   await page.getByRole("button", { name: "发布模板" }).click();
+  await expect(page.getByRole("dialog", { name: "发布内容模板？" })).toBeVisible();
+  await page.getByRole("dialog", { name: "发布内容模板？" }).getByRole("button", { name: "确认发布" }).click();
   await expect(page.getByTestId("content-template-feedback")).toContainText("模板已发布到原型状态");
 });
 

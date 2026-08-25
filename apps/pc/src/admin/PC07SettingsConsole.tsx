@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { StatusTag } from "../components/ui";
+import { ConfirmDialog, StatusTag } from "../components/ui";
 
 type SmsRecordStatus = "sending" | "success" | "failed";
 type SmsBusinessType = "验证码" | "报名结果通知" | "审核结果通知" | "系统通知";
@@ -289,6 +289,7 @@ function ContentTemplates() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editorBody, setEditorBody] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const selected = templates.find(template => template.id === selectedId);
 
@@ -328,10 +329,13 @@ function ContentTemplates() {
         <div className="p-5">
           <div className="flex flex-wrap gap-2 rounded-t-control border border-b-0 border-border-subtle bg-surface-subtle p-2" aria-label="富文本工具栏"><button type="button" onClick={() => applyMarkup("**")} className="min-h-8 rounded-control border border-border-subtle bg-surface px-3 text-xs font-semibold">加粗</button><button type="button" onClick={() => applyMarkup("## ", "")} className="min-h-8 rounded-control border border-border-subtle bg-surface px-3 text-xs font-semibold">二级标题</button><button type="button" onClick={() => applyMarkup("[", "](https://example.invalid)")} className="min-h-8 rounded-control border border-border-subtle bg-surface px-3 text-xs font-semibold">插入链接</button></div>
           <textarea ref={editorRef} aria-label="模板正文编辑器" value={editorBody} onChange={event => setEditorBody(event.target.value)} className="min-h-72 w-full resize-y rounded-b-control border border-border-subtle bg-surface p-4 text-sm leading-6 outline-none focus:border-primary" />
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-text-tertiary">原型只模拟保存 / 发布状态，不扩展审批流、多人协作或 A/B Test。</p><div className="flex gap-2"><button type="button" onClick={() => persistTemplate(false)} className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border-subtle px-4 text-sm font-semibold text-text-secondary"><Save size={15} />保存草稿</button><button type="button" onClick={() => persistTemplate(true)} className="inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary"><CheckCircle2 size={15} />发布模板</button></div></div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-text-tertiary">原型只模拟保存 / 发布状态，不扩展审批流、多人协作或 A/B Test。</p><div className="flex gap-2"><button type="button" onClick={() => persistTemplate(false)} className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border-subtle px-4 text-sm font-semibold text-text-secondary"><Save size={15} />保存草稿</button><button type="button" onClick={() => setPublishConfirmOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-on-primary"><CheckCircle2 size={15} />发布模板</button></div></div>
           {feedback && <p data-testid="content-template-feedback" className="mt-3 text-xs font-medium text-success-text">{feedback}</p>}
         </div>
       </section>}
+      <ConfirmDialog open={publishConfirmOpen && Boolean(selected)} title="发布内容模板？" description={selected ? `${selected.name} · ${selected.key}` : ""} confirmText="确认发布" onCancel={() => setPublishConfirmOpen(false)} onConfirm={() => { persistTemplate(true); setPublishConfirmOpen(false); }}>
+        <p className="text-sm leading-6 text-text-secondary">发布后将成为平台对应场景使用的当前模板；稳定 template key 保持不变。</p>
+      </ConfirmDialog>
     </div>
   );
 }

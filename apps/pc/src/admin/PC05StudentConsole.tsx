@@ -1,7 +1,7 @@
 import { ArrowRight, History, LockKeyhole, UnlockKeyhole, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, StatusTag } from "../components/ui";
+import { Button, Dialog, SecondaryButton, StatusTag } from "../components/ui";
 import { competitionControlById } from "./competition-control-data";
 import { longTermAssetsSeed, studentAccountSeed } from "./pc05-data";
 import { usePC05State } from "./PC05State";
@@ -21,13 +21,14 @@ export function PC05StudentConsole() {
   const { accountStatus, approvals, requestAccountAction } = usePC05State();
   const [reason, setReason] = useState("");
   const [notice, setNotice] = useState("");
+  const [governanceOpen, setGovernanceOpen] = useState(false);
   const action = accountStatus === "active" ? "freeze" : "unfreeze";
   const pending = approvals.find(item => (item.kind === "accountFreeze" || item.kind === "accountUnfreeze") && item.status === "pending");
   const currentCompetition = competitionControlById("sanchuang-16");
   const submit = () => {
     const ok = requestAccountAction(action, reason);
     setNotice(ok ? "已进入高风险审批队列；账号状态不会在普通运营提交时直接改变。" : "请填写原因，或先处理已有同类审批。");
-    if (ok) setReason("");
+    if (ok) { setReason(""); setGovernanceOpen(false); }
   };
 
   return <div className="space-y-6">
@@ -37,7 +38,7 @@ export function PC05StudentConsole() {
         <div className="mt-4 grid gap-3 md:grid-cols-4"><PC05Fact label="资料维护">学生本人</PC05Fact><PC05Fact label="联系方式">{studentAccountSeed.phone}</PC05Fact><PC05Fact label="赛事经历">{studentAccountSeed.identities.length} 场</PC05Fact><PC05Fact label="长期成果">{longTermAssetsSeed.length} 类记录</PC05Fact></div>
         <details className="mt-4 rounded-control border border-border-subtle px-3 py-2 text-xs text-text-secondary"><summary className="cursor-pointer font-medium text-text-primary">数据与关系</summary><div className="mt-3 space-y-1"><p>账号标识：{studentAccountSeed.accountId}</p><p>个人资料来源：StudentProfile，由学生本人优先维护。</p><p>赛事身份来源：Mobile CompetitionIdentity[]。</p></div></details>
       </div>
-      <div className="rounded-container border border-warning bg-warning-bg p-5"><div className="flex gap-3">{accountStatus === "active" ? <LockKeyhole className="text-warning-text" /> : <UnlockKeyhole className="text-warning-text" />}<div className="flex-1"><h2 className="font-semibold text-warning-text">{accountStatus === "active" ? "申请冻结账号" : "申请解冻账号"}</h2><p className="mt-1 text-xs leading-5 text-warning-text">这是高风险操作。冻结只限制当前访问，不删除资料、赛事历史、成绩、证书或投递。</p><textarea data-testid="account-governance-reason" value={reason} onChange={e => setReason(e.target.value)} className="mt-3 min-h-20 w-full rounded-control border border-warning bg-surface p-2 text-sm" placeholder="填写治理原因（必填）"/><Button className="mt-3 w-full" onClick={submit}>{accountStatus === "active" ? "提交冻结审批" : "提交解冻审批"}</Button>{pending && <p className="mt-2 text-xs text-warning-text">当前已有一项账号治理申请待审批。</p>}{notice && <p data-testid="governance-notice" className="mt-2 text-xs text-warning-text">{notice}</p>}</div></div></div>
+      <div className="rounded-container border border-warning bg-warning-bg p-5"><div className="flex gap-3">{accountStatus === "active" ? <LockKeyhole className="text-warning-text" /> : <UnlockKeyhole className="text-warning-text" />}<div className="flex-1"><h2 className="font-semibold text-warning-text">{accountStatus === "active" ? "申请冻结账号" : "申请解冻账号"}</h2><p className="mt-1 text-xs leading-5 text-warning-text">这是高风险操作。冻结只限制当前访问，不删除资料、赛事历史、成绩、证书或投递。</p><Button className="mt-3 w-full" disabled={Boolean(pending)} onClick={() => { setNotice(""); setGovernanceOpen(true); }}>{accountStatus === "active" ? "提交冻结审批" : "提交解冻审批"}</Button>{pending && <p className="mt-2 text-xs text-warning-text">当前已有一项账号治理申请待审批。</p>}{notice && <p data-testid="governance-notice" className="mt-2 text-xs text-warning-text">{notice}</p>}</div></div></div>
     </section>
 
     <section className="rounded-container border border-border-subtle bg-surface">
@@ -53,5 +54,16 @@ export function PC05StudentConsole() {
     </section>
 
     <section data-testid="retention-proof" className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex gap-3"><History className="text-text-brand" /><div><h2 className="font-semibold">历史赛事结束后，成果仍然保留</h2><p className="mt-2 text-sm leading-6 text-text-secondary">第十五届三创赛已经结束，学生赛事身份也已撤销，因此赛事工作区保持关闭；参赛经历、比赛成绩、证书、课程成果和验真记录仍可长期查询。</p><Link to="/admin/assets" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-text-brand">查看长期资产 <ArrowRight size={15}/></Link><details className="mt-4 text-xs text-text-secondary"><summary className="cursor-pointer font-medium text-text-primary">技术追溯信息</summary><p className="mt-2">赛事期状态：competitionId=sanchuang-15 · ended · identityStatus=revoked。Experience 当前沿用 competitionId 作为 App 路由键，独立 experienceId 尚未接入。</p></details></div></div></section>
+    <Dialog
+      open={governanceOpen}
+      onOpenChange={setGovernanceOpen}
+      title={accountStatus === "active" ? "申请冻结学生账号" : "申请解冻学生账号"}
+      description="申请将进入高风险审批队列，普通运营提交后不会直接改变账号状态。"
+      size="sm"
+      footer={<><SecondaryButton type="button" onClick={() => setGovernanceOpen(false)}>取消</SecondaryButton><Button type="button" disabled={!reason.trim()} onClick={submit}>{accountStatus === "active" ? "提交冻结审批" : "提交解冻审批"}</Button></>}
+    >
+      <label className="block text-sm font-medium text-text-secondary">治理原因<span className="ml-1 text-danger">*</span><textarea data-testid="account-governance-reason" value={reason} onChange={e => setReason(e.target.value)} className="mt-2 min-h-24 w-full rounded-control border border-border bg-surface p-3 text-sm" placeholder="填写治理原因（必填）" /></label>
+      <p className="mt-3 rounded-control bg-warning-bg p-3 text-xs leading-5 text-warning-text">冻结或解冻都不会删除长期资料、赛事历史、成绩、证书或投递记录。</p>
+    </Dialog>
   </div>;
 }

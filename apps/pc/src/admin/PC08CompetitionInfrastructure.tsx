@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, CalendarDays, ChevronRight, Database, Tags, Trophy, UsersRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ConfirmDialog } from "../components/ui";
 import { PC02HumanCompetitionConsole } from "./PC02HumanCompetitionConsole";
 import { competitionControlById } from "./competition-control-data";
 import { pc03OrganizationById } from "./PC03State";
@@ -115,6 +116,7 @@ export function PC08CompetitionDetail() {
 
 function CategoryConsole() {
   const [categories, setCategories] = useState<CompetitionCategory[]>(() => [...competitionCategories].sort((a, b) => a.sort - b.sort));
+  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null);
 
   const moveCategory = (index: number, delta: number) => {
     setCategories(current => {
@@ -144,10 +146,15 @@ function CategoryConsole() {
             <span className="text-sm font-semibold">{category.sort}</span>
             <div><p className="text-sm font-semibold">{category.name}</p><p data-pc05-technical className="mt-1 font-mono text-xs text-text-tertiary">categoryId={category.id}</p></div>
             <span className={`w-fit rounded-full px-2 py-1 text-xs font-semibold ${category.enabled ? "bg-success-bg text-success-text" : "bg-surface-subtle text-text-tertiary"}`}>{category.enabled ? "启用" : "停用"}</span>
-            <div className="flex gap-1"><button type="button" aria-label={`上移 ${category.name}`} disabled={index === 0} onClick={() => moveCategory(index, -1)} className="rounded-control border border-border-subtle p-2 disabled:opacity-30"><ArrowUp size={15} /></button><button type="button" aria-label={`下移 ${category.name}`} disabled={index === categories.length - 1} onClick={() => moveCategory(index, 1)} className="rounded-control border border-border-subtle p-2 disabled:opacity-30"><ArrowDown size={15} /></button><button type="button" onClick={() => toggleCategory(category.id)} className="min-h-9 rounded-control bg-primary-container px-3 text-xs font-semibold text-text-brand">{category.enabled ? "停用" : "启用"}</button></div>
+            <div className="flex gap-1"><button type="button" aria-label={`上移 ${category.name}`} disabled={index === 0} onClick={() => moveCategory(index, -1)} className="rounded-control border border-border-subtle p-2 disabled:opacity-30"><ArrowUp size={15} /></button><button type="button" aria-label={`下移 ${category.name}`} disabled={index === categories.length - 1} onClick={() => moveCategory(index, 1)} className="rounded-control border border-border-subtle p-2 disabled:opacity-30"><ArrowDown size={15} /></button><button type="button" onClick={() => setPendingCategoryId(category.id)} className="min-h-9 rounded-control bg-primary-container px-3 text-xs font-semibold text-text-brand">{category.enabled ? "停用" : "启用"}</button></div>
           </div>)}
         </div>
       </section>
+      {(() => {
+        const category = categories.find(item => item.id === pendingCategoryId);
+        if (!category) return null;
+        return <ConfirmDialog open title={`${category.enabled ? "停用" : "启用"}比赛分类？`} description={`${category.name} · 只改变一级分类可用状态，不改变赛事 Track 或既有报名事实。`} confirmText={`确认${category.enabled ? "停用" : "启用"}`} danger={category.enabled} onCancel={() => setPendingCategoryId(null)} onConfirm={() => { toggleCategory(category.id); setPendingCategoryId(null); }} />;
+      })()}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { BadgeCheck, FileText, Megaphone, Newspaper, Plus, ShieldCheck, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { StatusTag } from "../components/ui";
+import { Button, ConfirmDialog, Dialog, SecondaryButton, StatusTag } from "../components/ui";
 import { pc03Organizations } from "./PC03State";
 
 type ContentStatus = "draft" | "published" | "unpublished";
@@ -65,6 +65,7 @@ function createInternalId(type: ContentType, index: number) {
 export function PC03HumanContentConsole() {
   const [items, setItems] = useState(initialContent);
   const [showCreate, setShowCreate] = useState(false);
+  const [pendingStatusId, setPendingStatusId] = useState<string | null>(null);
   const [scopeType, setScopeType] = useState<ScopeType>("全平台");
   const schoolOptions = pc03Organizations.filter(item => item.type === "学校");
 
@@ -114,9 +115,16 @@ export function PC03HumanContentConsole() {
         </div>
       </section>
 
-      {showCreate && (
-        <form onSubmit={createContent} className="rounded-container border border-border-subtle bg-surface p-5 lg:p-6">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <Dialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        title="新建内容"
+        description="新内容先保存为草稿，确认展示范围后再正式发布。"
+        size="lg"
+        footer={<><SecondaryButton type="button" onClick={() => setShowCreate(false)}>取消</SecondaryButton><Button type="submit" form="create-content-form">保存草稿</Button></>}
+      >
+        <form id="create-content-form" onSubmit={createContent}>
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-xs font-medium text-text-secondary">标题<input name="title" required className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label>
             <label className="text-xs font-medium text-text-secondary">内容类型<select name="type" className="mt-2 min-h-11 w-full rounded-control border border-border bg-surface px-3 text-sm"><option>首页 Banner</option><option>资讯</option><option>赛友内容</option><option>活动</option></select></label>
             <label className="text-xs font-medium text-text-secondary">定向范围<select aria-label="定向范围" value={scopeType} onChange={event => setScopeType(event.target.value as ScopeType)} className="mt-2 min-h-11 w-full rounded-control border border-border bg-surface px-3 text-sm"><option>全平台</option><option>赛事</option><option>学校</option><option>地区</option></select></label>
@@ -124,9 +132,9 @@ export function PC03HumanContentConsole() {
             {scopeType === "学校" && <label className="text-xs font-medium text-text-secondary">指定学校<select aria-label="指定学校" name="organizationId" className="mt-2 min-h-11 w-full rounded-control border border-border bg-surface px-3 text-sm">{schoolOptions.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
             {scopeType === "地区" && <label className="text-xs font-medium text-text-secondary">指定地区<input aria-label="指定地区" name="region" defaultValue="广州" className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label>}
           </div>
-          <div className="mt-5 flex items-center justify-between gap-3"><p className="text-xs text-text-tertiary">新内容先保存为草稿，确认后再发布。</p><button type="submit" className="min-h-11 rounded-control bg-primary-container px-4 text-sm font-semibold text-text-brand">保存草稿</button></div>
+          <p className="mt-5 text-xs text-text-tertiary">保存后不会直接发布到学生端。</p>
         </form>
-      )}
+      </Dialog>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {items.map(item => {
@@ -139,7 +147,7 @@ export function PC03HumanContentConsole() {
               <div className="mt-4 rounded-control bg-surface-subtle p-3 text-xs"><p className="text-text-tertiary">展示范围</p><p className="mt-1 font-medium text-text-primary">{scopeLabel(item.scope)}</p><p data-pc05-technical className="mt-2 font-mono text-text-tertiary">{technicalScope(item.scope)}</p></div>
               <p className="mt-3 text-xs leading-5 text-text-secondary">供稿 / 来源：{item.provider}</p>
               <p data-pc05-technical className="mt-2 font-mono text-xs text-text-tertiary">contentId={item.id}</p>
-              <button type="button" aria-label={`${item.title} ${item.status === "published" ? "下架" : "发布"}`} onClick={() => setItems(current => current.map(row => row.id === item.id ? { ...row, status: row.status === "published" ? "unpublished" : "published" } : row))} className="mt-4 min-h-10 w-full rounded-control bg-primary-container px-3 text-sm font-semibold text-text-brand">{item.status === "published" ? "下架" : "由平台运营发布"}</button>
+              <button type="button" aria-label={`${item.title} ${item.status === "published" ? "下架" : "发布"}`} onClick={() => setPendingStatusId(item.id)} className="mt-4 min-h-10 w-full rounded-control bg-primary-container px-3 text-sm font-semibold text-text-brand">{item.status === "published" ? "下架" : "由平台运营发布"}</button>
             </article>
           );
         })}
@@ -149,6 +157,21 @@ export function PC03HumanContentConsole() {
         <div className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex items-center gap-2"><ShieldCheck size={18} className="text-text-brand" /><h2 className="font-semibold">发布权限</h2></div><p className="mt-3 text-sm leading-6 text-text-secondary">企业、学校和合作方可以供稿；核心产业学院运营负责编辑、定向、正式发布与下架。首期不开放合作方直接发布。</p></div>
         <div className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex items-center gap-2"><BadgeCheck size={18} className="text-text-brand" /><h2 className="font-semibold">展示位置</h2></div><p className="mt-3 text-sm leading-6 text-text-secondary">Banner 进入首页，资讯进入资讯入口，赛友内容进入赛友内容，活动进入首页、权益或本地运营入口。</p><p data-pc05-technical className="mt-3 font-mono text-xs text-text-tertiary">/home · /news · /stories · Placement</p></div>
       </section>
+
+      {(() => {
+        const pendingItem = items.find(item => item.id === pendingStatusId);
+        if (!pendingItem) return null;
+        const unpublish = pendingItem.status === "published";
+        return <ConfirmDialog
+          open
+          title={unpublish ? "下架这条内容？" : "发布这条内容？"}
+          description={`${pendingItem.title} · ${scopeLabel(pendingItem.scope)}`}
+          confirmText={unpublish ? "确认下架" : "确认发布"}
+          danger={unpublish}
+          onCancel={() => setPendingStatusId(null)}
+          onConfirm={() => { setItems(current => current.map(row => row.id === pendingItem.id ? { ...row, status: unpublish ? "unpublished" : "published" } : row)); setPendingStatusId(null); }}
+        />;
+      })()}
     </div>
   );
 }

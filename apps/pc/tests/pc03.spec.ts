@@ -83,6 +83,7 @@ test("PC03 opportunity creation uses business fields and keeps targeting explain
   await page.goto("/admin/opportunities/intern-1");
   await showTechnical(page);
   await page.getByRole("button", { name: "新建机会" }).click();
+  await expect(page.getByRole("dialog", { name: "新建机会" })).toBeVisible();
   await expect(page.getByLabel("opportunityId")).toHaveCount(0);
   await page.getByLabel("机会名称").fill("校园运营项目实践");
   await page.getByRole("textbox", { name: "技能标签", exact: true }).fill("活动运营, 用户研究");
@@ -98,8 +99,19 @@ test("PC03 opportunity creation uses business fields and keeps targeting explain
   await expect(page.getByText("课程完成", { exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: /匿名学生 C/ }).click();
   await page.getByRole("button", { name: "确认发送范围" }).click();
+  await expect(page.getByRole("dialog", { name: "确认发送范围" })).toBeVisible();
+  await page.getByRole("dialog", { name: "确认发送范围" }).getByRole("button", { name: "确认范围" }).click();
   await expect(page.getByTestId("audience-confirmed")).toContainText("发送范围已确认");
   await expect(page.getByTestId("audience-confirmed")).toContainText("不生成 CandidateRecord");
+
+  await page.getByTestId("opportunity-toggle").click();
+  const statusDialog = page.getByRole("dialog", { name: "下架这个机会？" });
+  await expect(statusDialog).toBeVisible();
+  await statusDialog.getByRole("button", { name: "取消" }).click();
+  await expect(page.getByTestId("opportunity-toggle")).toContainText("下架机会");
+  await page.getByTestId("opportunity-toggle").click();
+  await page.getByRole("dialog", { name: "下架这个机会？" }).getByRole("button", { name: "确认下架" }).click();
+  await expect(page.getByTestId("opportunity-toggle")).toContainText("重新开放");
 });
 
 test("PC03 content creation uses business targeting while technical references remain available", async ({ page }) => {
@@ -112,6 +124,7 @@ test("PC03 content creation uses business targeting while technical references r
   await expect(page.getByText("organizationId=school-demo-gz", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "新建内容" }).click();
+  await expect(page.getByRole("dialog", { name: "新建内容" })).toBeVisible();
   await page.getByLabel("标题").fill("校园创新开放日");
   await page.getByLabel("定向范围").selectOption("学校");
   await page.getByLabel("指定学校").selectOption("school-demo-gz");
@@ -119,6 +132,11 @@ test("PC03 content creation uses business targeting while technical references r
   await expect(page.getByText("校园创新开放日", { exact: true })).toBeVisible();
   await expect(page.getByText("学校 · 广州示范高校", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("organizationId=school-demo-gz", { exact: true }).last()).toBeVisible();
+  await page.getByRole("button", { name: "校园创新开放日 发布" }).click();
+  const publishDialog = page.getByRole("dialog", { name: "发布这条内容？" });
+  await expect(publishDialog).toContainText("学校 · 广州示范高校");
+  await publishDialog.getByRole("button", { name: "确认发布" }).click();
+  await expect(page.getByRole("button", { name: "校园创新开放日 下架" })).toBeVisible();
 
   await page.getByRole("button", { name: "新建内容" }).click();
   await page.getByLabel("标题").fill("赛事节点提醒");

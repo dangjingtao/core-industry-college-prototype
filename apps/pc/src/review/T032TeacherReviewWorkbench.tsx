@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ArrowLeft, CheckCircle2, ChevronRight, ClipboardCheck, LockKeyhole, School, XCircle } from "lucide-react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
-import { Button, SecondaryButton, StatusTag } from "../components/ui";
+import { Button, ConfirmDialog, Dialog, SecondaryButton, StatusTag } from "../components/ui";
 import { ReviewProvider, useReview, type ReviewTeam, type SchoolReviewStatus } from "./model";
 
 const reviewBase = "/review";
@@ -89,14 +89,27 @@ function DetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const { teacher, teams, approveTeam, rejectTeam } = useReview();
-  const [rejecting, setRejecting] = useState(false);
+  const [decision, setDecision] = useState<"approve" | "reject" | null>(null);
   const [reason, setReason] = useState("");
   if (!teacher) return <Navigate to={`${reviewBase}/login`} replace />;
   const team = teams.find(item => item.id === teamId && item.school === teacher.school);
   if (!team) return <Shell title="无法查看该团队" back={`${reviewBase}/overview`}><Panel><p className="text-sm text-text-secondary">该团队不在当前教师的授权学校范围内。</p></Panel></Shell>;
-  const approve = () => { approveTeam(team.id); navigate(`${reviewBase}/overview`); };
-  const reject = () => { if (!reason.trim()) return; rejectTeam(team.id, reason.trim()); navigate(`${reviewBase}/overview`); };
-  return <Shell title={team.teamName} back={`${reviewBase}/overview`}><div className="space-y-5"><Panel title="团队信息" action={<StatusTag tone={statusTone[team.status]}>{statusLabel[team.status]}</StatusTag>}><div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4"><div><span className="text-text-tertiary">队长</span><p className="mt-1 font-medium text-text-primary">{team.leaderName}</p></div><div><span className="text-text-tertiary">联系电话</span><p className="mt-1 font-medium text-text-primary">{team.leaderPhone}</p></div><div><span className="text-text-tertiary">赛道</span><p className="mt-1 font-medium text-text-primary">{team.category}</p></div><div><span className="text-text-tertiary">成员人数</span><p className="mt-1 font-medium text-text-primary">{team.members.length} 人</p></div></div></Panel><Panel title="项目基础信息"><p className="text-sm leading-6 text-text-secondary">{team.projectSummary || "暂无项目摘要"}</p></Panel><Panel title="团队成员"><div className="divide-y divide-border-subtle">{team.members.map(member => <div key={`${member.name}-${member.studentId}`} className="grid gap-2 py-3 text-sm sm:grid-cols-[1fr_1fr_1fr]"><span className="font-medium text-text-primary">{member.name}</span><span className="text-text-secondary">学号 {member.studentId}</span><span className="text-text-secondary">{member.phone}</span></div>)}</div></Panel>{team.status === "pending" ? <Panel title="审核结论"><div className="space-y-4">{rejecting && <label className="block"><span className="text-sm text-text-secondary">驳回原因</span><textarea value={reason} onChange={event => setReason(event.target.value)} rows={4} placeholder="请说明需要学生修正的内容" className="mt-2 w-full rounded-control border border-border bg-surface px-3 py-2 text-sm" /></label>}<div className="flex flex-wrap justify-end gap-3">{rejecting ? <><SecondaryButton onClick={() => { setRejecting(false); setReason(""); }}>取消</SecondaryButton><Button disabled={!reason.trim()} onClick={reject}><XCircle className="mr-2 h-4 w-4" aria-hidden="true" />确认驳回</Button></> : <><SecondaryButton onClick={() => setRejecting(true)}>驳回</SecondaryButton><Button onClick={approve}><CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />审核通过</Button></>}</div></div></Panel> : <Panel title="审核记录"><p className="text-sm text-text-secondary">审核时间：{team.reviewedAt || "—"}</p>{team.status === "rejected" && <p className="mt-2 text-sm leading-6 text-danger-text">驳回原因：{team.rejectionReason}</p>}</Panel>}</div></Shell>;
+  const approve = () => { approveTeam(team.id); setDecision(null); navigate(`${reviewBase}/overview`); };
+  const reject = () => { if (!reason.trim()) return; rejectTeam(team.id, reason.trim()); setDecision(null); navigate(`${reviewBase}/overview`); };
+  return <Shell title={team.teamName} back={`${reviewBase}/overview`}>
+    <div className="space-y-5">
+      <Panel title="团队信息" action={<StatusTag tone={statusTone[team.status]}>{statusLabel[team.status]}</StatusTag>}><div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4"><div><span className="text-text-tertiary">队长</span><p className="mt-1 font-medium text-text-primary">{team.leaderName}</p></div><div><span className="text-text-tertiary">联系电话</span><p className="mt-1 font-medium text-text-primary">{team.leaderPhone}</p></div><div><span className="text-text-tertiary">赛道</span><p className="mt-1 font-medium text-text-primary">{team.category}</p></div><div><span className="text-text-tertiary">成员人数</span><p className="mt-1 font-medium text-text-primary">{team.members.length} 人</p></div></div></Panel>
+      <Panel title="项目基础信息"><p className="text-sm leading-6 text-text-secondary">{team.projectSummary || "暂无项目摘要"}</p></Panel>
+      <Panel title="团队成员"><div className="divide-y divide-border-subtle">{team.members.map(member => <div key={`${member.name}-${member.studentId}`} className="grid gap-2 py-3 text-sm sm:grid-cols-[1fr_1fr_1fr]"><span className="font-medium text-text-primary">{member.name}</span><span className="text-text-secondary">学号 {member.studentId}</span><span className="text-text-secondary">{member.phone}</span></div>)}</div></Panel>
+      {team.status === "pending" ? <Panel title="审核结论"><div className="flex flex-wrap justify-end gap-3"><SecondaryButton data-testid="review-reject-toggle" onClick={() => { setReason(""); setDecision("reject"); }}>驳回</SecondaryButton><Button data-testid="review-approve" onClick={() => setDecision("approve")}><CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />审核通过</Button></div></Panel> : <Panel title="审核记录"><p className="text-sm text-text-secondary">审核时间：{team.reviewedAt || "—"}</p>{team.status === "rejected" && <p className="mt-2 text-sm leading-6 text-danger-text">驳回原因：{team.rejectionReason}</p>}</Panel>}
+    </div>
+    <ConfirmDialog open={decision === "approve"} title="确认审核通过？" description={`${team.teamName} · 队长所在学校负责本次团队审核。`} confirmText="确认通过" onCancel={() => setDecision(null)} onConfirm={approve}>
+      <p className="text-sm leading-6 text-text-secondary">平台审核通过只代表报名真实性审核完成，不等于外部官方参赛资格已经确认。</p>
+    </ConfirmDialog>
+    <Dialog open={decision === "reject"} onOpenChange={open => { if (!open) setDecision(null); }} title="驳回团队报名" description={team.teamName} size="sm" footer={<><SecondaryButton type="button" onClick={() => setDecision(null)}>取消</SecondaryButton><Button data-testid="review-reject-submit" type="button" disabled={!reason.trim()} onClick={reject} className="bg-danger"><XCircle className="mr-2 h-4 w-4" aria-hidden="true" />确认驳回</Button></>}>
+      <label className="block text-sm text-text-secondary">驳回原因<span className="ml-1 text-danger">*</span><textarea data-testid="review-reject-reason" value={reason} onChange={event => setReason(event.target.value)} rows={4} placeholder="请说明需要学生修正的内容" className="mt-2 w-full rounded-control border border-border bg-surface px-3 py-2 text-sm" /></label>
+    </Dialog>
+  </Shell>;
 }
 
 function WorkbenchRoutes() {
