@@ -284,7 +284,7 @@ export function BenefitDetailPage() {
         open={showClaimedDialog}
         onOpenChange={setShowClaimedDialog}
         title="领取成功"
-        description={item.apiIssued && item.useInApp ? item.claimHint ?? `「${item.title}」已发放至你绑定的手机号，请在「${item.useInApp}」App 内查看/使用。` : `「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
+        description={item.apiIssued && item.useInApp ? `「${item.title}」已发放至你绑定的手机号，请在「${item.useInApp}」App 内使用相同手机号登录后查看/使用。` : `「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
         size="sm"
         footer={
           <div className="flex w-full flex-col gap-3">
