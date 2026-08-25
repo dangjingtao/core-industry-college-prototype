@@ -273,12 +273,18 @@ export function BenefitDetailPage() {
             </Card>
           )}
         </div>
-      ) : <Button className="w-full" onClick={startAdClaim}>领取权益</Button>)}{status === "claimed" && <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}<InfoFeedAdCard ad={infoFeedAd} seed={item.id} /></div>
+      ) : <Button className="w-full" onClick={startAdClaim}>领取权益</Button>)}{status === "claimed" && (item.apiIssued && item.useInApp ? (
+        <Card className="border border-info bg-info-bg">
+          <p className="text-sm leading-5 text-info-text">该权益已发放至你绑定的手机号，请在「{item.useInApp}」App 内使用相同手机号登录查看/使用。</p>
+        </Card>
+      ) : (
+        <Button className="w-full" onClick={use}>模拟兑换 / 核销</Button>
+      ))}{status === "used" && <Card className="border border-success bg-success-bg"><p className="font-semibold text-success-text">已完成使用 / 核销</p><p className="mt-1 text-sm text-success-text">记录会保留在账号长期权益中。</p></Card>}{status === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-semibold text-warning-text">当前不满足资格</p><p className="mt-1 text-sm text-warning-text">赛事身份相关资格直接读取共享 identities[]；无有效身份时不能新领取。</p></Card>}{status === "expired" && <Card><p className="font-semibold text-text-primary">权益已失效</p><p className="mt-1 text-sm text-text-secondary">历史来源与领取记录仍保留，但不能再次使用。</p></Card>}{loggedIn && <GhostButton className="w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</GhostButton>}<InfoFeedAdCard ad={infoFeedAd} seed={item.id} /></div>
       <Dialog
         open={showClaimedDialog}
         onOpenChange={setShowClaimedDialog}
         title="领取成功"
-        description={`「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
+        description={item.apiIssued && item.useInApp ? item.claimHint ?? `「${item.title}」已发放至你绑定的手机号，请在「${item.useInApp}」App 内查看/使用。` : `「${item.title}」已标记为待使用，可前往卡券查看或跳转使用。`}
         size="sm"
         footer={
           <div className="flex w-full flex-col gap-3">
