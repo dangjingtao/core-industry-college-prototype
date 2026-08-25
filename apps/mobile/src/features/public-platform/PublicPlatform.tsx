@@ -102,14 +102,14 @@ type NewbieTask = {
   onAction?: () => void;
 };
 
-function useNewbieTasks() {
+function useNewbieTasks(demoMode?: "empty" | "complete") {
   const { session, identities } = usePublicPlatform();
   const { learning, benefitStatusFor } = useLongTermAssets();
   const { checkedIn } = useTodayCheckIn();
 
   const tasks = useMemo<NewbieTask[]>(() => {
     const loggedIn = session.loggedIn;
-    return [
+    const base = [
       {
         id: "profile",
         label: "完善学生资料",
@@ -164,7 +164,10 @@ function useNewbieTasks() {
         completed: loggedIn && identities.length > 0,
       },
     ];
-  }, [session, identities, learning, benefitStatusFor, checkedIn]);
+    if (demoMode === "empty") return base.map(task => ({ ...task, completed: false }));
+    if (demoMode === "complete") return base.map(task => ({ ...task, completed: true }));
+    return base;
+  }, [session, identities, learning, benefitStatusFor, checkedIn, demoMode]);
 
   const allCompleted = useMemo(() => tasks.every(task => task.completed), [tasks]);
   return { tasks, allCompleted };
@@ -205,8 +208,33 @@ function NewbieTaskItem({ task, claimed, onClaim }: { task: NewbieTask; claimed:
   );
 }
 
+function NewbieDemoTools({ value, onChange }: { value?: "empty" | "complete"; onChange: (value?: "empty" | "complete") => void }) {
+  return (
+    <details className="ml-auto mt-2 w-fit rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
+      <summary className="cursor-pointer font-medium text-text-secondary">原型状态</summary>
+      <div className="mt-2 grid grid-cols-1 gap-1">
+        {[
+          { key: undefined, label: "一般状态" },
+          { key: "empty" as const, label: "未完成任何任务" },
+          { key: "complete" as const, label: "完成所有任务" },
+        ].map(option => (
+          <button
+            key={option.label}
+            type="button"
+            className={`min-h-8 whitespace-nowrap rounded-control px-2 text-left active:bg-surface-pressed ${value === option.key ? "bg-primary-container text-text-brand" : "text-text-brand"}`}
+            onClick={() => onChange(option.key)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function NewbieTasksPage() {
-  const { tasks, allCompleted } = useNewbieTasks();
+  const [demoMode, setDemoMode] = useState<"empty" | "complete" | undefined>(undefined);
+  const { tasks, allCompleted } = useNewbieTasks(demoMode);
   const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = Math.round((completedCount / tasks.length) * 100);
@@ -256,7 +284,10 @@ export function NewbieTasksPage() {
           </Card>
         )}
 
-        <button type="button" onClick={resetRewards} className="w-full text-center text-xs text-text-tertiary underline active:text-text-secondary">重置奖励状态（演示用）</button>
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" onClick={resetRewards} className="text-xs text-text-tertiary underline active:text-text-secondary">重置奖励状态（演示用）</button>
+          <NewbieDemoTools value={demoMode} onChange={setDemoMode} />
+        </div>
       </div>
     </PublicShell>
   );
