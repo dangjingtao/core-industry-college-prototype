@@ -74,7 +74,16 @@ function useCheckIn() {
     setState({ checkedIn: true, streak: next.streak });
   };
 
-  return { ...state, checkIn };
+  const resetCheckIn = () => {
+    try {
+      localStorage.removeItem("task-center-checkin");
+    } catch {
+      // ignore
+    }
+    setState({ checkedIn: false, streak: 0 });
+  };
+
+  return { ...state, checkIn, resetCheckIn };
 }
 
 function workshopDestination(competitionId: string, taskId: string, status: ReturnType<typeof taskAvailability>) {
@@ -145,17 +154,20 @@ function CheckInAdDialog({ open, onComplete, onCancel }: { open: boolean; onComp
 }
 
 function CheckInBar() {
-  const { checkedIn, streak, checkIn } = useCheckIn();
+  const { checkedIn, streak, checkIn, resetCheckIn } = useCheckIn();
   const [showAd, setShowAd] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleStartCheckIn = () => setShowAd(true);
   const handleAdComplete = () => {
     setShowAd(false);
     checkIn();
     setShowSuccess(true);
   };
   const handleAdCancel = () => setShowAd(false);
+  const handleButtonClick = () => {
+    if (checkedIn) resetCheckIn();
+    else setShowAd(true);
+  };
 
   return (
     <>
@@ -172,8 +184,8 @@ function CheckInBar() {
             {checkedIn ? "今日奖励已到账，明天继续。" : "每日签到，养成参赛学习习惯。"}
           </span>
         </span>
-        <Button className="shrink-0 px-4" disabled={checkedIn} onClick={handleStartCheckIn}>
-          {checkedIn ? "已打卡" : "打卡"}
+        <Button className="shrink-0 px-4" onClick={handleButtonClick}>
+          {checkedIn ? "已打卡（再点重置）" : "打卡"}
         </Button>
       </Card>
       <CheckInAdDialog open={showAd} onComplete={handleAdComplete} onCancel={handleAdCancel} />
