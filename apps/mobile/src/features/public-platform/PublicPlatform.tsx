@@ -45,6 +45,51 @@ function useTodayCheckIn() {
   return { ...state, checkIn };
 }
 
+type NewbieRewards = {
+  taskClaims: Record<string, boolean>;
+  allCompletedClaimed: boolean;
+};
+
+function useNewbieRewards() {
+  const [rewards, setRewards] = useState<NewbieRewards>(() => {
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem("newbie-task-rewards") : null;
+      const saved = raw ? JSON.parse(raw) as NewbieRewards : null;
+      return saved ?? { taskClaims: {}, allCompletedClaimed: false };
+    } catch {
+      return { taskClaims: {}, allCompletedClaimed: false };
+    }
+  });
+
+  const persist = (next: NewbieRewards) => {
+    try {
+      localStorage.setItem("newbie-task-rewards", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+    setRewards(next);
+  };
+
+  const claimTask = (taskId: string) => {
+    persist({ ...rewards, taskClaims: { ...rewards.taskClaims, [taskId]: true } });
+  };
+
+  const claimAllCompleted = () => {
+    persist({ ...rewards, allCompletedClaimed: true });
+  };
+
+  const resetRewards = () => {
+    try {
+      localStorage.removeItem("newbie-task-rewards");
+    } catch {
+      // ignore
+    }
+    setRewards({ taskClaims: {}, allCompletedClaimed: false });
+  };
+
+  return { rewards, claimTask, claimAllCompleted, resetRewards };
+}
+
 type NewbieTask = {
   id: string;
   label: string;
@@ -125,53 +170,93 @@ function useNewbieTasks() {
   return { tasks, allCompleted };
 }
 
-export function NewbieTasksPage() {
+function NewbieTaskItem({ task, claimed, onClaim }: { task: NewbieTask; claimed: boolean; onClaim: () => void }) {
   const navigate = useNavigate();
+  const handleClaim = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClaim();
+  };
+
+  return (
+    <button
+      key={task.id}
+      type="button"
+      onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
+      className="flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition active:bg-surface-pressed"
+    >
+      <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
+          {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
+        </span>
+        <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
+      </span>
+      {task.completed ? (
+        claimed ? (
+          <span className="shrink-0 text-xs font-medium text-text-tertiary">已领取</span>
+        ) : (
+          <span className="shrink-0 rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-on-primary active:bg-primary-pressed" onClick={handleClaim}>点击领取</span>
+        )
+      ) : (
+        <span className="shrink-0 text-xs font-medium text-text-tertiary">未完成</span>
+      )}
+    </button>
+  );
+}
+
+export function NewbieTasksPage() {
   const { tasks, allCompleted } = useNewbieTasks();
+  const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
+  const progressPercent = Math.round((completedCount / tasks.length) * 100);
 
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="新手任务" subtitle="完成 5 项引导，快速熟悉平台核心能力" backTo="/home" />
       <div className="space-y-4 px-4 py-5">
-        {allCompleted ? (
-          <Card className="py-8 text-center">
-            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-bg text-success-text">
-              <Check size={28} aria-hidden="true" />
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-text-primary">任务进度</span>
+            <span className="font-semibold text-text-brand">{completedCount}/{tasks.length}</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-surface-subtle">
+            <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <p className="text-xs text-text-secondary">完成全部新手任务可额外获得 20 学力值（暂定）。</p>
+        </Card>
+
+        <div className="space-y-2">
+          {tasks.map(task => (
+            <NewbieTaskItem
+              key={task.id}
+              task={task}
+              claimed={!!rewards.taskClaims[task.id]}
+              onClaim={() => claimTask(task.id)}
+            />
+          ))}
+        </div>
+
+        {allCompleted && (
+          <Card className="space-y-3 border border-primary-container bg-primary-container">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
+                <Award size={20} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm font-semibold text-text-primary">新手任务全部完成</strong>
+                <span className="mt-0.5 block text-xs text-text-secondary">恭喜！可领取额外学力值奖励。</span>
+              </span>
             </div>
-            <h2 className="mt-4 text-base font-semibold text-text-primary">新手任务已全部完成</h2>
-            <p className="mt-2 text-sm text-text-secondary">你已经熟悉了平台核心能力，去探索更多赛事与机会吧。</p>
-            <Button className="mt-5" onClick={() => navigate("/home")}>返回首页</Button>
+            {rewards.allCompletedClaimed ? (
+              <span className="block text-center text-xs font-medium text-text-tertiary">额外奖励已领取</span>
+            ) : (
+              <Button className="w-full" onClick={claimAllCompleted}>领取 20 学力值（暂定）</Button>
+            )}
           </Card>
-        ) : (
-          <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">进度</span>
-              <span className="font-medium text-text-brand">{completedCount}/{tasks.length}</span>
-            </div>
-            <div className="space-y-2">
-              {tasks.map(task => (
-                <button
-                  key={task.id}
-                  type="button"
-                  disabled={task.completed}
-                  onClick={() => (task.onAction ? task.onAction() : navigate(task.to))}
-                  className={`flex w-full items-center gap-3 rounded-container border border-border-subtle bg-surface p-3 text-left transition ${task.completed ? "opacity-70" : "active:bg-surface-pressed"}`}
-                >
-                  <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${task.iconClass}`}>{task.icon}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <strong className={`text-sm font-semibold ${task.completed ? "text-text-secondary line-through" : "text-text-primary"}`}>{task.label}</strong>
-                      {task.completed && <Check size={14} className="text-success-text" aria-hidden="true" />}
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{task.description}</span>
-                  </span>
-                  <span className={`shrink-0 text-xs font-medium ${task.completed ? "text-text-tertiary" : "text-text-brand"}`}>{task.completed ? "已完成" : task.action}</span>
-                </button>
-              ))}
-            </div>
-          </>
         )}
+
+        <button type="button" onClick={resetRewards} className="w-full text-center text-xs text-text-tertiary underline active:text-text-secondary">重置奖励状态（演示用）</button>
       </div>
     </PublicShell>
   );
