@@ -64,6 +64,7 @@ import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { BadgeDetailPage, BadgesPage } from "../features/badges/BadgePages";
+import { CourseCheckpointQuizPage } from "../features/long-term-assets/CoursesPages";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import { SplashOverlay, useSplashGate } from "../features/long-term-assets/SplashOverlay";
@@ -171,6 +172,7 @@ export function App() {
               <Route path="/courses/:courseId/learn" element={account(<CourseLearnPage />)} />
               <Route path="/courses/:courseId/assessment" element={account(<T034CourseAssessmentPage />)} />
               <Route path="/courses/:courseId/achievement" element={account(<T034CourseAchievementPage />)} />
+              <Route path="/courses/:courseId/checkpoint/:cpId" element={account(<CourseCheckpointQuizPage />)} />
               <Route path="/benefits" element={<BenefitsPage />} />
               <Route path="/benefits/free" element={<FreeBenefitsPage />} />
               <Route path="/benefits/exchange" element={<T035ExchangeCenterPage />} />

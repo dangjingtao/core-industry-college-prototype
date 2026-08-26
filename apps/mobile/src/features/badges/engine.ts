@@ -36,6 +36,8 @@ export type BadgeEvaluationContext = {
   simulationLevel: number; // 0 表示未开始
   simulationHasStock: boolean;
   simulationHasTraffic: boolean;
+  // 课程关卡小测通过：{ [courseId]: 是否所有关卡均通过 }
+  courseCheckpointPasses: Record<string, boolean>;
 };
 
 export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boolean {
@@ -60,6 +62,10 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
     }
     case "course.completedCount":
       return ctx.learning.filter(record => isCourseCompleted(record)).length >= rule.min;
+    case "course.checkpointPassed":
+      return ctx.courseCheckpointPasses[rule.courseId] === true;
+    case "course.checkpointPassedCount":
+      return Object.values(ctx.courseCheckpointPasses).filter(Boolean).length >= rule.min;
     case "competition.registered":
       return ctx.hasCompetitionIdentity;
     case "competition.ended":

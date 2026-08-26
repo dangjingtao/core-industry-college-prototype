@@ -6,6 +6,7 @@ import { useLongTermAssets } from "../long-term-assets/store";
 import { badgeCatalog } from "./catalog";
 import { evaluateAll, type BadgeEvaluationContext } from "./engine";
 import { deriveSimulationMetrics, getSimulationSnapshot } from "../app-center/StartupShopStore";
+import { courses } from "../long-term-assets/data";
 
 // 模拟经营 level 状态读取 helper
 function useSimulationMetrics() {
@@ -113,6 +114,35 @@ function useResumeEdited() {
   return edited;
 }
 
+function useCourseCheckpointPasses(): Record<string, boolean> {
+  const [passes, setPasses] = useState<Record<string, boolean>>(() => {
+    const out: Record<string, boolean> = {};
+    for (const course of courses) {
+      if (!course.checkpoints || course.checkpoints.length === 0) continue;
+      out[course.id] = course.checkpoints.every(cp => {
+        try { return localStorage.getItem(`checkpoint-passed-${course.id}-${cp.id}`) === "1"; } catch { return false; }
+      });
+    }
+    return out;
+  });
+  useEffect(() => {
+    const compute = () => {
+      const out: Record<string, boolean> = {};
+      for (const course of courses) {
+        if (!course.checkpoints || course.checkpoints.length === 0) continue;
+        out[course.id] = course.checkpoints.every(cp => {
+          try { return localStorage.getItem(`checkpoint-passed-${course.id}-${cp.id}`) === "1"; } catch { return false; }
+        });
+      }
+      setPasses(out);
+    };
+    const onStorage = () => compute();
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+  return passes;
+}
+
 export type BadgeView = {
   entry: (typeof badgeCatalog)[number];
   unlocked: boolean;
@@ -131,6 +161,7 @@ export function useBadges(): {
   const sim = useSimulationMetrics();
   const newbieCompleted = useNewbieCompleted();
   const resumeEdited = useResumeEdited();
+  const courseCheckpointPasses = useCourseCheckpointPasses();
 
   const ctx: BadgeEvaluationContext = useMemo(() => ({
     loggedIn: session.loggedIn,
@@ -148,7 +179,8 @@ export function useBadges(): {
     simulationLevel: sim.level,
     simulationHasStock: sim.stock > 0,
     simulationHasTraffic: sim.traffic > 0,
-  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted]);
+    courseCheckpointPasses,
+  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses]);
 
   const earnedIds = useMemo(() => evaluateAll(badgeCatalog, ctx), [ctx]);
 

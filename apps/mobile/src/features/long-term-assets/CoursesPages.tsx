@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Award, BookOpen, Check, Clock, Coins, GraduationCap, Lock, PlayCircle, Share2, Star, Trophy } from "lucide-react";
+import { Award, BookOpen, Check, ChevronRight, ClipboardList, Clock, Coins, GraduationCap, Lock, PlayCircle, Share2, Star, Trophy } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -351,6 +351,18 @@ export function CourseDetailPage() {
   const [showCreditDialog, setShowCreditDialog] = useState(false);
   const [showClaimSuccessDialog, setShowClaimSuccessDialog] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  // 关卡小测通过状态：当用户从关卡小测页返回时刷新
+  const [checkpointTick, setCheckpointTick] = useState(0);
+  useEffect(() => {
+    const onUpdate = () => setCheckpointTick(value => value + 1);
+    window.addEventListener("storage", onUpdate);
+    return () => window.removeEventListener("storage", onUpdate);
+  }, []);
+  const checkpointPassed = (cpId: string) => {
+    void checkpointTick;
+    if (!course) return false;
+    try { return localStorage.getItem(`checkpoint-passed-${course.id}-${cpId}`) === "1"; } catch { return false; }
+  };
 
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
@@ -553,6 +565,36 @@ export function CourseDetailPage() {
                 })}
               </Card>
             </Section>
+
+            {course.checkpoints && course.checkpoints.length > 0 && (
+              <Section title="关卡小测" subtitle="固定学习进程节点；通过后领取对应高级徽章">
+                <Card className="space-y-2 p-0">
+                  {course.checkpoints.map((cp, index) => {
+                    const unlocked = enrolled && record.progress >= cp.unlockAt * 100;
+                    const passed = checkpointPassed(cp.id);
+                    return (
+                      <button
+                        key={cp.id}
+                        type="button"
+                        disabled={!unlocked}
+                        onClick={() => navigate(`/courses/${course.id}/checkpoint/${cp.id}`)}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition first:rounded-t-container last:rounded-b-container active:bg-surface-pressed ${index ? "border-t border-border-subtle" : ""} ${!unlocked ? "opacity-60" : ""}`}
+                      >
+                        <span className={`flex size-9 shrink-0 items-center justify-center rounded-control ${passed ? "bg-success text-on-primary" : "bg-primary-container text-text-brand"}`}>
+                          {passed ? <Check size={18} aria-hidden="true" /> : <ClipboardList size={18} aria-hidden="true" />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <strong className="block text-sm font-semibold text-text-primary">{cp.title}</strong>
+                          <span className="mt-0.5 block text-xs text-text-tertiary">{passed ? "已通过" : unlocked ? `达到 ${Math.round(cp.unlockAt * 100)}% 进度可参加` : `需达到 ${Math.round(cp.unlockAt * 100)}% 进度解锁`}</span>
+                        </span>
+                        <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </Card>
+              </Section>
+            )}
+
             {enrolled && record.status !== "completed" && (
               <Button className="w-full" onClick={() => record.status === "inProgress" ? beginLearning() : beginLearning()}>
                 {record.status === "inProgress" ? "继续学习" : "开始学习"}
@@ -596,6 +638,17 @@ export function CourseDetailPage() {
                 </div>
                 <p className="text-sm leading-5 text-text-secondary">你已通过课程考试，可以领取可信教育认证电子证书。</p>
                 <Button className="w-full" onClick={claimCertificateAndShowDialog}>可领取可信教育认证电子证书</Button>
+              </Card>
+            )}
+
+            {course.finalExam && course.finalExam.status === "draft" && (
+              <Card className="border border-border-subtle bg-surface-subtle/40">
+                <div className="flex items-center gap-2">
+                  <Trophy size={20} className="text-text-tertiary" aria-hidden="true" />
+                  <h2 className="font-semibold text-text-primary">结业线上小考</h2>
+                  <span className="ml-auto rounded-full bg-surface-subtle px-2 py-1 text-[10px] font-medium text-text-tertiary">暂未开放</span>
+                </div>
+                <p className="mt-2 text-sm leading-5 text-text-secondary">结业小考将在 M3 收口，本课程已配置 {course.finalExam.totalQuestions} 道题 / 及格 {course.finalExam.passingScore} 分。</p>
               </Card>
             )}
 
@@ -777,6 +830,116 @@ export function CourseAchievementPage() {
           </Card>
         )}
         <SecondaryButton className="w-full" onClick={() => navigate("/assets/learning")}>查看我的学习成果</SecondaryButton>
+      </div>
+    </PublicShell>
+  );
+}
+
+/**
+ * 关卡小测：与 courses[*].checkpoints 对应
+ * - 中保真原型：单选，每题 1 分，及格 2/3
+ * - 通过后写 localStorage `checkpoint-passed-{courseId}-{cpId}` 并触发 storage 事件
+ *   让 CourseDetailPage 与徽章引擎一起刷新
+ */
+export function CourseCheckpointQuizPage() {
+  const navigate = useNavigate();
+  const { courseId, cpId } = useParams();
+  const course = courseById(courseId);
+  const checkpoint = course?.checkpoints?.find(item => item.id === cpId);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = useState<{ score: number; passed: boolean } | null>(null);
+
+  if (!course || !checkpoint) {
+    return (
+      <PublicShell showNavigation={false}>
+        <PageHeader title="关卡小测不存在" backTo="/courses" />
+      </PublicShell>
+    );
+  }
+
+  const total = checkpoint.questions.length;
+  const allAnswered = checkpoint.questions.every(q => answers[q.id] !== undefined);
+  const score = checkpoint.questions.reduce((sum, q) => sum + (answers[q.id] === q.answer ? 1 : 0), 0);
+  const passing = Math.ceil(total / 2); // 2/3 算通过
+
+  const submit = () => {
+    if (!allAnswered) return;
+    const passed = score >= passing;
+    if (passed) {
+      try {
+        localStorage.setItem(`checkpoint-passed-${course.id}-${checkpoint.id}`, "1");
+        window.dispatchEvent(new StorageEvent("storage", { key: `checkpoint-passed-${course.id}-${checkpoint.id}` }));
+      } catch {
+        // ignore
+      }
+    }
+    setSubmitted({ score, passed });
+  };
+
+  const retake = () => {
+    setAnswers({});
+    setSubmitted(null);
+  };
+
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader title={checkpoint.title} subtitle={`${course.title} · 关卡小测`} backTo={`/courses/${course.id}`} />
+      <div className="space-y-5 px-4 py-5">
+        <Card className="flex items-center justify-between text-sm">
+          <span className="text-text-secondary">题数 {total} · 及格 {passing} 分</span>
+          {submitted ? <span className={`font-semibold ${submitted.passed ? "text-success-text" : "text-danger-text"}`}>本次得分 {submitted.score} / {total}</span> : <span className="text-text-tertiary">未提交</span>}
+        </Card>
+
+        {checkpoint.questions.map((q, index) => (
+          <Card key={q.id} className="space-y-3">
+            <p className="text-sm font-semibold text-text-primary"><span className="mr-2 text-text-brand">{String(index + 1).padStart(2, "0")}</span>{q.prompt}</p>
+            <div className="space-y-2">
+              {q.options.map((opt, optIndex) => {
+                const isSelected = answers[q.id] === optIndex;
+                const isCorrect = submitted ? optIndex === q.answer : null;
+                return (
+                  <button
+                    key={optIndex}
+                    type="button"
+                    disabled={!!submitted}
+                    onClick={() => setAnswers(current => ({ ...current, [q.id]: optIndex }))}
+                    className={`flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-sm transition active:scale-[0.99] ${
+                      submitted
+                        ? isCorrect
+                          ? "border-success/40 bg-success-bg text-success-text"
+                          : isSelected
+                            ? "border-danger/40 bg-danger-bg text-danger-text"
+                            : "border-border-subtle text-text-secondary"
+                        : isSelected
+                          ? "border-primary bg-primary-container text-text-brand"
+                          : "border-border-subtle text-text-primary"
+                    }`}
+                  >
+                    <span className="text-xs text-text-tertiary">{String.fromCharCode(65 + optIndex)}.</span>
+                    <span className="flex-1">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        ))}
+
+        {!submitted && (
+          <Button className="w-full" disabled={!allAnswered} onClick={submit}>{allAnswered ? "提交答卷" : `已答 ${Object.keys(answers).length}/${total}`}</Button>
+        )}
+
+        {submitted && (
+          <div className="space-y-3">
+            <Card className={submitted.passed ? "border border-success bg-success-bg" : "border border-danger bg-danger-bg"}>
+              <p className={`text-sm font-semibold ${submitted.passed ? "text-success-text" : "text-danger-text"}`}>{submitted.passed ? "通过" : "未通过"}</p>
+              <p className="mt-1 text-sm text-text-secondary">{submitted.passed ? "已记录该关卡小测通过；可在徽章墙查看对应成就。" : "可以复习后重做，未通过不发放对应徽章。"}</p>
+            </Card>
+            <div className="grid grid-cols-2 gap-3">
+              <SecondaryButton onClick={retake}>再做一次</SecondaryButton>
+              <Button onClick={() => navigate(`/courses/${course.id}`)}>返回课程</Button>
+            </div>
+          </div>
+        )}
       </div>
     </PublicShell>
   );

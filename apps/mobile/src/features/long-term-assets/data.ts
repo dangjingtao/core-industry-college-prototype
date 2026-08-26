@@ -15,6 +15,24 @@ export type CourseCategory =
 
 export type CourseEntitlement = "free" | "creditRequired" | "benefitRequired";
 
+/** 关卡小测节点：固定学习进程处发放小测，通过后可触发对应高级徽章。 */
+export type CourseCheckpoint = {
+  id: string;
+  title: string;
+  /** 触发该关卡对应的学习进程比例（0-1），用于判断是否解锁。 */
+  unlockAt: number;
+  /** 简易题库：3 道题，每题 1 分，及格分 2 */
+  questions: { id: string; prompt: string; options: string[]; answer: number }[];
+};
+
+/** 结业小考占位（M2 仅提供 UI 与状态，M3 收口完整考试能力） */
+export type CourseFinalExam = {
+  id: string;
+  totalQuestions: number;
+  passingScore: number;
+  status: "draft" | "open" | "closed";
+};
+
 export type Course = {
   id: string;
   title: string;
@@ -30,6 +48,10 @@ export type Course = {
   certificateId?: string;
   category: Exclude<CourseCategory, "all">;
   cover: string;
+  /** 关卡小测节点（M2：2 门示范课程预置） */
+  checkpoints?: CourseCheckpoint[];
+  /** 结业小考占位（M2：所有 prebuilt 课程预置但状态为 draft） */
+  finalExam?: CourseFinalExam;
 };
 
 export type BenefitSource =
@@ -114,6 +136,29 @@ export const courses: Course[] = [
     certificateId: "cert-course-data-analytics",
     category: "data-analytics",
     cover: "from-[#6366f1] to-[#a855f7]",
+    checkpoints: [
+      {
+        id: "data-analytics-cp-1",
+        title: "关卡一 · 指标与问题",
+        unlockAt: 0.34,
+        questions: [
+          { id: "q1", prompt: "在电商业务中，转化率最常被定义为？", options: ["访客数 ÷ 下单数", "下单数 ÷ 访客数", "支付数 ÷ 访客数", "加购数 ÷ 访客数"], answer: 1 },
+          { id: "q2", prompt: "拆解业务问题时，下列哪个优先级最低？", options: ["北极星指标", "一级漏斗", "二级漏斗", "页面按钮颜色"], answer: 3 },
+          { id: "q3", prompt: "下面哪个指标最适合作为「复盘」切入点？", options: ["UV", "GMV", "退款率", "跳出率"], answer: 1 },
+        ],
+      },
+      {
+        id: "data-analytics-cp-2",
+        title: "关卡二 · 漏斗与复盘",
+        unlockAt: 0.67,
+        questions: [
+          { id: "q1", prompt: "漏斗分析的核心目的是？", options: ["找到最大流失环节", "看绝对数值大小", "看 ROI", "对比行业均值"], answer: 0 },
+          { id: "q2", prompt: "复盘时，下列哪种说法更可取？", options: ["凭印象总结", "用具体数字 + 假设 + 验证", "只看结果", "只挑好的一面"], answer: 1 },
+          { id: "q3", prompt: "GMV 突增后，下列哪个验证最有价值？", options: ["是不是单次活动", "看 UV 是否同步涨", "看客服投诉", "看广告占比"], answer: 0 },
+        ],
+      },
+    ],
+    finalExam: { id: "data-analytics-final", totalQuestions: 8, passingScore: 6, status: "draft" },
   },
   {
     id: "brand-ecommerce",
@@ -129,6 +174,7 @@ export const courses: Course[] = [
     certificateId: "cert-course-brand-ecommerce",
     category: "beauty-retail",
     cover: "from-[#ec4899] to-[#f97316]",
+    finalExam: { id: "brand-ecommerce-final", totalQuestions: 10, passingScore: 7, status: "draft" },
   },
   {
     id: "retail-project-lab",
@@ -144,6 +190,7 @@ export const courses: Course[] = [
     unlockBenefitId: "benefit-cloud-lab",
     category: "business-project",
     cover: "from-[#0ea5e9] to-[#14b8a6]",
+    finalExam: { id: "retail-project-lab-final", totalQuestions: 6, passingScore: 4, status: "draft" },
   },
   {
     id: "opc-methodology",
@@ -159,6 +206,7 @@ export const courses: Course[] = [
     certificateId: "cert-course-opc-methodology",
     category: "opc",
     cover: "from-[#8b5cf6] to-[#6366f1]",
+    finalExam: { id: "opc-methodology-final", totalQuestions: 8, passingScore: 5, status: "draft" },
   },
   {
     id: "rural-ecommerce",
@@ -174,6 +222,7 @@ export const courses: Course[] = [
     certificateId: "cert-course-rural-ecommerce",
     category: "rural-revitalization",
     cover: "from-[#22c55e] to-[#16a34a]",
+    finalExam: { id: "rural-ecommerce-final", totalQuestions: 8, passingScore: 5, status: "draft" },
   },
   {
     id: "ai-ecommerce-agent",
@@ -189,6 +238,7 @@ export const courses: Course[] = [
     certificateId: "cert-course-ai-ecommerce-agent",
     category: "ai-ecommerce",
     cover: "from-[#06b6d4] to-[#3b82f6]",
+    finalExam: { id: "ai-ecommerce-agent-final", totalQuestions: 10, passingScore: 6, status: "draft" },
   },
   {
     id: "newbie-essential",
@@ -204,6 +254,29 @@ export const courses: Course[] = [
     certificateId: "cert-course-newbie-essential",
     category: "onboarding",
     cover: "from-[#f59e0b] via-[#ec4899] to-[#06b6d4]",
+    checkpoints: [
+      {
+        id: "newbie-essential-cp-1",
+        title: "关卡一 · App 使用",
+        unlockAt: 0.34,
+        questions: [
+          { id: "q1", prompt: "学生主档在哪一类入口下？", options: ["首页", "赛事", "我的", "机会"], answer: 2 },
+          { id: "q2", prompt: "App 内「每日打卡」入口主要在？", options: ["首页", "赛事", "任务中心", "应用中心"], answer: 2 },
+          { id: "q3", prompt: "下面哪一项不是长期资产？", options: ["可信空间证书", "赛事身份", "长期简历", "公益助力记录"], answer: 1 },
+        ],
+      },
+      {
+        id: "newbie-essential-cp-2",
+        title: "关卡二 · AI 工具与创赛报名",
+        unlockAt: 0.67,
+        questions: [
+          { id: "q1", prompt: "创赛工坊属于？", options: ["全局 AI 工具", "具体赛事上下文能力", "第三方应用", "企业资源"], answer: 1 },
+          { id: "q2", prompt: "下列哪项描述符合「报名结果回流」？", options: ["报名后状态自动写入 identities[]", "PC 报名与 App 完全独立", "App 上有一份完整报名表", "报名只保留在 PC"], answer: 0 },
+          { id: "q3", prompt: "可信证书的可解释规则包含？", options: ["必修课程 + 多枚徽章 + 小测", "只看 AI 评分", "只看企业打分", "只看校内成绩"], answer: 0 },
+        ],
+      },
+    ],
+    finalExam: { id: "newbie-essential-final", totalQuestions: 6, passingScore: 4, status: "draft" },
   },
 ];
 

@@ -29,6 +29,8 @@ export type BadgeRule =
   // 课程
   | { type: "course.completed"; courseId: string }
   | { type: "course.completedCount"; min: number }
+  | { type: "course.checkpointPassed"; courseId: string }
+  | { type: "course.checkpointPassedCount"; min: number }
   // 赛事
   | { type: "competition.registered" }
   | { type: "competition.ended" }
@@ -159,23 +161,23 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
   {
     id: "badge.course.first",
     name: "学有所成",
-    description: "完成第 1 门课程（含考试通过）",
+    description: "通过 1 门课程的所有关卡小测",
     tier: "high",
     source: "course",
     iconColor: "bg-[#eaf5ff] text-[#2879d0]",
     iconKey: "C1",
-    rule: { type: "course.completedCount", min: 1 },
+    rule: { type: "course.checkpointPassedCount", min: 1 },
     rewardHint: "",
   },
   {
     id: "badge.course.three",
     name: "进阶学习者",
-    description: "累计完成 3 门课程",
+    description: "累计通过 3 门课程的所有关卡小测",
     tier: "high",
     source: "course",
     iconColor: "bg-[#eaf5ff] text-[#2879d0]",
     iconKey: "C3",
-    rule: { type: "course.completedCount", min: 3 },
+    rule: { type: "course.checkpointPassedCount", min: 3 },
     rewardHint: "",
   },
   {
