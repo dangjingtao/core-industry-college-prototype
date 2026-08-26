@@ -1,5 +1,6 @@
 import { ArrowLeft, Building2, Download, Plus, UsersRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ambassadorCampaignStatus, ambassadorTeamMemberCount, deriveAmbassadorMetrics, type AmbassadorIncentiveStatus } from "@core/shared";
 import { StatusTag } from "../components/ui";
@@ -11,8 +12,11 @@ const teamLabel = { forming: "待点亮", lit: "已点亮", ended: "已结束" }
 const incentiveLabel: Record<AmbassadorIncentiveStatus, string> = { unprocessed: "未处理", processed: "已处理" };
 
 function CodeBlock({ code }: { code: string }) {
-  const download = () => { const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320"><rect width="320" height="320" fill="white"/><text x="160" y="150" text-anchor="middle" font-family="monospace" font-size="24">${code}</text><text x="160" y="185" text-anchor="middle" font-family="sans-serif" font-size="14">核心大使招募码</text></svg>`; const link = document.createElement("a"); link.href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`; link.download = `${code}.svg`; link.click(); };
-  return <div className="flex items-center gap-3 rounded-control bg-surface-subtle p-3"><div className="grid size-12 grid-cols-5 gap-0.5 bg-white p-1" aria-label={`招募码 ${code}`}>{Array.from({ length: 25 }, (_, i) => <i key={i} className={(i * 7 + code.length) % 3 ? "bg-text-primary" : "bg-white"} />)}</div><div><p className="font-mono text-sm font-semibold">{code}</p><p className="text-xs text-text-tertiary">活动 + 学校绑定 · 可下载</p></div><button type="button" title="下载二维码" onClick={download} className="ml-auto rounded-control p-2 text-text-secondary hover:bg-surface"><Download size={16} /></button></div>;
+  const payload = `core://ambassadors/join?recruitmentCode=${encodeURIComponent(code)}`;
+  const [svg, setSvg] = useState("");
+  useEffect(() => { let cancelled = false; QRCode.toString(payload, { type: "svg", errorCorrectionLevel: "M", margin: 1, width: 192 }).then(value => { if (!cancelled) setSvg(value); }); return () => { cancelled = true; }; }, [payload]);
+  const download = () => { if (!svg) return; const link = document.createElement("a"); link.href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`; link.download = `${code}.svg`; link.click(); };
+  return <div className="flex items-center gap-3 rounded-control bg-surface-subtle p-3"><div data-testid={`qr-${code}`} className="size-16 overflow-hidden bg-white p-1" aria-label={`招募二维码 ${code}`} dangerouslySetInnerHTML={{ __html: svg }} /><div><p className="font-mono text-sm font-semibold">{code}</p><p className="text-xs text-text-tertiary">可扫码进入大使申请入口</p></div><button type="button" title="下载二维码" onClick={download} disabled={!svg} className="ml-auto rounded-control p-2 text-text-secondary hover:bg-surface"><Download size={16} /></button></div>;
 }
 
 function CampaignEditor({ campaignId, onDone }: { campaignId?: string; onDone: () => void }) {
