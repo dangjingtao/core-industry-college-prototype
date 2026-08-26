@@ -99,6 +99,10 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "redeem.code", path: "/redeem", context: "account", purpose: "兑换码填写与扫一扫", states: ["ready", "submitting", "empty", "error"] },
   { id: "redeem.result", path: "/redeem/result", context: "account", purpose: "兑换码结果展示", states: ["success", "alreadyRedeemed", "invalid", "expired", "exhausted", "missing"] },
   { id: "simulations.host", path: "/modules/simulations/:assignmentId", context: "public", purpose: "模拟模块宿主容器：加载独立 H5 小游戏并回传完成状态", states: ["unavailable", "ready", "running", "completed", "error"] },
+  { id: "ambassador.home", path: "/ambassadors", context: "public", purpose: "核心大使计划入口与学校招募码", states: ["ready", "joined", "invalidCode"] },
+  { id: "ambassador.apply", path: "/ambassadors/apply", context: "account", purpose: "核心大使申请与条款确认", states: ["editing", "submitted", "alreadyJoined", "invalid"] },
+  { id: "ambassador.join", path: "/ambassadors/join", context: "account", purpose: "推广伙伴使用团队招募码加入", states: ["editing", "joined", "duplicate", "invalid"] },
+  { id: "ambassador.team", path: "/ambassadors/team/:teamId", context: "account", purpose: "核心大使团队组队进度与招募码", states: ["forming", "lit", "ended", "missing"] },
 ];
 
 export const candidatePrimaryNavigation = [

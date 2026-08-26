@@ -64,6 +64,8 @@ import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { BadgeDetailPage, BadgesPage } from "../features/badges/BadgePages";
+import { AmbassadorStateProvider } from "@core/shared";
+import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorPages";
 import { CourseCheckpointQuizPage } from "../features/long-term-assets/CoursesPages";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
@@ -124,9 +126,10 @@ function WelcomeSplashPage() {
 export function App() {
   return (
     <PublicPlatformProvider>
-      <WorkshopRuntimeProvider>
-        <LongTermAssetsProvider>
-          <SupportProvider>
+      <AmbassadorStateProvider>
+        <WorkshopRuntimeProvider>
+          <LongTermAssetsProvider>
+            <SupportProvider>
             <Routes>
               <Route path="/" element={<Navigate to="/welcome" replace />} />
               <Route path="/dev/routes" element={<RouteLab />} />
@@ -230,11 +233,16 @@ export function App() {
               <Route path="/welfare/:welfareId" element={<WelfareDetailPage />} />
               <Route path="/welfare/:welfareId/ad" element={<WelfareAdPage />} />
               <Route path="/modules/simulations/:assignmentId" element={<SimulationHostPage />} />
+              <Route path="/ambassadors" element={<CampusAmbassadorLandingPage />} />
+              <Route path="/ambassadors/apply" element={<CampusAmbassadorApplyPage />} />
+              <Route path="/ambassadors/join" element={<CampusAmbassadorJoinPage />} />
+              <Route path="/ambassadors/team/:teamId" element={<CampusAmbassadorTeamPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </SupportProvider>
-        </LongTermAssetsProvider>
-      </WorkshopRuntimeProvider>
+            </SupportProvider>
+          </LongTermAssetsProvider>
+        </WorkshopRuntimeProvider>
+      </AmbassadorStateProvider>
     </PublicPlatformProvider>
   );
 }
