@@ -1,48 +1,64 @@
 # T039｜广告位②：机会板块信息流（岗位/企业列表第二卡后）｜实现记录
 
-> 状态：已完成（中保真原型）
+> 状态：已完成（中保真原型）/ 产品评审后方案基本通过
 > 日期：2026-08-24
+> 产品评审更新：2026-08-26
 > 台账卡片：`docs/workbench/00-work-ledger.md` 中的 T039
 > 产品真相源：`docs/product/19-badge-ad-and-trusted-credential-prd.md`
-> 说明：本文件保留 2026-08-24 的原型实现记录；若实现语义与产品 PRD 冲突，以 PRD 已确认规则为准。
 
-## 设计文档
+## 1. 原型落地方案
 
-- 广告组件：`apps/mobile/src/features/long-term-assets/Ads.tsx`（`ListFeedAdCard`、`useListFeedAd`）
+机会板块保留自然信息流广告：
+
+- 岗位列表；
+- 企业列表；
+- 广告随列表自然滚动；
+- 不做悬浮、贴片或遮挡主内容。
+
+当前原型采用“第 2 张真实卡片之后插入 1 张广告”作为首期布局验证，该位置可以继续保留为原型默认值。
+
+## 2. 展示约束
+
+广告卡片：
+
+- 与岗位 / 企业列表卡片同宽；
+- 视觉规格可接近内容卡，但必须明确标识「广告」；
+- 不得伪装为真实岗位或真实企业；
+- 不改变真实岗位 / 企业的排序事实；
+- 列表为空或不足插入位置时不强行展示。
+
+机会板块属于较高信任场景。平台不控制广告平台的具体素材，但后续如 SDK 支持行业 / 合规过滤，应优先启用，避免明显破坏求职与企业信息场景的广告内容。
+
+## 3. 当前实现
+
+- 广告组件：`apps/mobile/src/features/long-term-assets/Ads.tsx`
+  - `ListFeedAdCard`
+  - `useListFeedAd(seed)`
 - 接入页面：`apps/mobile/src/features/public-platform/PublicPlatform.tsx`
-  - `OpportunitiesPage` positions tab（岗位列表）
-  - `OpportunitiesPage` companies tab（企业列表）
-  - `CompaniesPage`（企业列表页）
+  - `OpportunitiesPage` positions tab
+  - `OpportunitiesPage` companies tab
+  - `CompaniesPage`
 
-## 广告位定义
+当前插入逻辑使用 `index === 1`，用于中保真原型验证。
 
-- 位置：岗位列表 / 企业列表的**第 2 张卡片之后**（`index === 1`）；
-- 形式：信息流广告卡片，与列表卡片同宽同视觉规格；
-- 高度：与岗位 / 企业列表卡片一致（复用 `Card p-3` + `space-y-3` 行结构 / 行高）；
-- 滚动：随列表自然滚动，不做悬浮或贴片。
+## 4. 后续真实接入边界
 
-## 关键实现
+后续真实广告 SDK 接入时，只需要薄场景配置承接：
 
-- `ListFeedAdCard`：与 `OpportunityCard` / 企业卡片同构的广告卡片，带「广告」角标 + 广告主 + 品牌合作标识 + 查看详情（原型占位跳转 `example.com/demo-ad`）；
-- `useListFeedAd(seed)`：按列表维度（`positions` / `companies`）确定性取示例广告物料；
-- 插入逻辑：`filtered.map((item, index) => ... {index === 1 && <ListFeedAdCard ... />})`；
-- 列表为空或只有 1 张卡片时，`index === 1` 不命中，不展示广告。
+- 场景启停；
+- 插入频率 / 位置；
+- 简单频控；
+- no-fill 时不展示；
+- 曝光 / 点击归因（如业务需要）。
 
-## 约束落实
+不在产业学院后台建设广告主、竞价、素材投放系统。
 
-- 广告与真实岗位/企业内容带「广告」标识明确区分；
-- 不改变列表排序逻辑与真实内容优先级；
-- 企业资源与品牌主体（F02）不受广告损害。
+## 5. 验收
 
-## 验收
-
+- [x] 信息流广告原型已落地
+- [x] 广告与真实内容有明确标识区分
+- [x] 不改变真实列表排序
 - [x] typecheck（`tsc --noEmit`）
 - [x] `npm run build:mobile`
-- [ ] Playwright 浏览器回归（当前环境缺少浏览器运行时，已由 dev CI 承接）
-
-## 待决策项（后续接入真实广告时）
-
-- 是否每 N 条卡片循环插入；
-- 是否按用户画像 / 岗位偏好定向；
-- 广告曝光 / 点击埋点与归因；
-- 真实广告 SDK / 物料接入。
+- [ ] 真实 SDK / Provider 接入后补充频控、no-fill 与必要埋点
+- [ ] Playwright 浏览器回归
