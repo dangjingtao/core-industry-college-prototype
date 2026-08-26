@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, Flag, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Flag, FolderCheck, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
@@ -28,8 +28,8 @@ const groups: AppGroup[] = [
     accent: "bg-[#eaf5ff] text-[#2879d0]",
     entries: [
       { label: "课程学习", to: "/courses", icon: BookOpen, description: "平台课程与学习记录" },
-      { label: "学力值", to: "/growth/score", icon: Coins, description: "学力值余额与明细" },
-      { label: "可信空间", to: "/assets", icon: Award, description: "经历、成绩与证书" },
+      { label: "成就墙", to: "/me/badges", icon: Award, description: "长期成就与可信能力证据" },
+      { label: "可信空间", to: "/assets", icon: FolderCheck, description: "经历、成绩与证书" },
     ],
   },
   {
