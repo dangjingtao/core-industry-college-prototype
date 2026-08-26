@@ -14,15 +14,19 @@
    直接核对 Google Drive 原始 Mockplus 包后的功能审计。这里特别说明“140/140 页面有去向”与“功能完全不缩水”不是一回事。
 3. [`product/02-open-decisions-and-backlog.md`](./product/02-open-decisions-and-backlog.md)  
    当前需要补回、需要产品确认、明确冻结的事项，以及建议施工顺序。
-4. [`migrations/mobile-from-com-design.md`](./migrations/mobile-from-com-design.md)  
+4. [`product/03-campus-ambassador-prd.md`](./product/03-campus-ambassador-prd.md)  
+   核心大使计划完整 PRD：学生 App、运营后台、推广归因、生命周期与前后台联动规则。
+5. [`product/04-campus-ambassador-task-cards.md`](./product/04-campus-ambassador-task-cards.md)  
+   核心大使计划 T06–T10 五张施工任务卡及最终验收链路。
+6. [`migrations/mobile-from-com-design.md`](./migrations/mobile-from-com-design.md)  
    手机端从旧 `com-design` 原型迁入本仓库的来源、边界、目录与验收要求。
-5. [`reference/history-and-review-evidence.md`](./reference/history-and-review-evidence.md)  
+7. [`reference/history-and-review-evidence.md`](./reference/history-and-review-evidence.md)  
    T01–T05 / R01–R05 的关键修复、最终 CI 和浏览器证据，以及这些评审真正解决过什么问题。
-6. [`reference/source-index.md`](./reference/source-index.md)  
+8. [`reference/source-index.md`](./reference/source-index.md)  
    Google Drive 原包、旧 GitHub 仓库、业务访谈、评审稿、旧代码提交、CI Run、Com Design 真相源的索引。
-7. [`reference/com-design-baseline.md`](./reference/com-design-baseline.md)  
+9. [`reference/com-design-baseline.md`](./reference/com-design-baseline.md)  
    手机端视觉/组件基线和已知 Core 缺陷。
-8. [`reference/legacy-page-map.tsv`](./reference/legacy-page-map.tsv)  
+10. [`reference/legacy-page-map.tsv`](./reference/legacy-page-map.tsv)  
    旧 Mockplus 140 页逐页去向表，用于追溯页面来源；不能单独作为功能完整性证明。
 
 ## 当前迁移状态
