@@ -143,6 +143,7 @@ export function CampusAmbassadorApplyPage() {
   const schoolId = params.get("schoolId") || "";
   const campaign = state.campaigns.find(item => item.id === campaignId);
   const schoolCode = state.schoolRecruitmentCodes.find(item => item.campaignId === campaignId && item.schoolId === schoolId);
+  const existingTeam = campaign && state.teams.find(item => item.campaignId === campaign.id && item.members.some(member => member.accountId === accountId && member.status === "active"));
   const fields = campaign ? ambassadorApplicationForm(campaign) : [];
   const terms = campaign && state.termsVersions.find(item => item.id === campaign.termsVersion && item.status === "published");
   const [values, setValues] = useState<Record<string, string>>({});
@@ -155,6 +156,7 @@ export function CampusAmbassadorApplyPage() {
     return <PublicShell showNavigation={false}><PageHeader title="核心大使申请" backTo="/me" /><div className="px-4 py-6"><Card><h2 className="font-semibold text-text-primary">{invalid.title}</h2><p className="mt-2 text-sm text-text-secondary">{invalid.detail}</p></Card></div></PublicShell>;
   }
   if (!session.loggedIn) return <Navigate replace to={`/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`} />;
+  if (existingTeam) return <PublicShell showNavigation={false}><PageHeader title="核心大使申请" backTo="/me" /><div className="space-y-4 px-4 py-6"><Card><CheckCircle2 className="text-text-brand" /><h2 className="mt-3 font-semibold text-text-primary">你已加入本期推广团队</h2><p className="mt-2 text-sm text-text-secondary">同一期活动只能属于一个推广团队，不能重复申请核心大使或换队。</p></Card><Button className="w-full" onClick={() => navigate(`/ambassadors/team/${encodeURIComponent(existingTeam.id)}?accountId=${encodeURIComponent(accountId)}`)}>查看我的团队</Button></div></PublicShell>;
 
   const missing = fields.some(field => field.required && !(values[field.id] || "").trim());
   const submit = () => {
