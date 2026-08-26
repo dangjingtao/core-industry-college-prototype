@@ -518,7 +518,7 @@ tests/r-final.spec.ts
 
 ### 实现边界
 
-- 团队点亮后为所有当前有效成员签发独立推广码，后续加入成员立即补发；
+- 团队点亮后为所有当前有效成员签发独立推广码并生成个人 QR SVG，后续加入成员立即补发；
 - 模拟新用户注册时保留活动、团队和推广人员归因，并在同一期活动内按新账号去重；
 - 已注册账号和团队现有成员不计入有效新增；
 - 核心大使可查看团队成果与归因明细；推广伙伴不展示成员列表、成果数字或排名；
@@ -544,5 +544,7 @@ tests/t044-campus-ambassador.spec.ts
 tests/t045-ambassador-promotion.spec.ts
 6 passed
 ```
+
+T045 Playwright 同时断言个人 QR 包含真实 SVG `path` 矩阵，且 payload 精确携带该成员的 promotionCode 并落到 `/ambassadors/promote/:promotionCode`。
 
 与同日合入的 T046 共享 seed 合并后，PC typecheck、production build 和 `tests/t046-ambassador.spec.ts` 1/1 PASS。

@@ -32,7 +32,13 @@ async function joinTeam(page: Page, accountId: string) {
 async function personalCode(page: Page, accountId: string) {
   await navigateInApp(page, `/ambassadors/team/${encodeURIComponent(teamId)}?accountId=${encodeURIComponent(accountId)}`);
   await expect(page.getByRole("heading", { name: "我的推广团队" })).toBeVisible();
-  return (await page.getByTestId("personal-promotion-code").locator("code").textContent())?.trim() ?? "";
+  const card = page.getByTestId("personal-promotion-code");
+  const code = (await card.locator("code").textContent())?.trim() ?? "";
+  const qr = card.getByTestId("personal-promotion-qr");
+  await expect(qr).toHaveAttribute("data-promotion-code", code);
+  await expect(qr).toHaveAttribute("data-payload", new RegExp(`/ambassadors/promote/${encodeURIComponent(code)}$`));
+  await expect.poll(async () => qr.innerHTML()).toContain("path");
+  return code;
 }
 
 test("T045 issues unique promotion codes only after the team is lit", async ({ page }) => {
