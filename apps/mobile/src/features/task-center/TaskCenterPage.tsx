@@ -14,7 +14,6 @@ import { badgeCatalog } from "../badges/catalog";
 type TaskCategory = "competition" | "learning" | "benefit" | "opportunity";
 type TaskStatus = "todo" | "inProgress" | "completed" | "locked";
 type StatusFilter = "all" | "todo" | "inProgress" | "completed";
-type TaskScope = "business" | "daily" | "newbie";
 
 type TaskCenterEntry = {
   id: string;
@@ -40,12 +39,6 @@ const categoryOptions: { value: "all" | TaskCategory; label: string }[] = [
 ];
 
 const statusTone = (status: TaskStatus) => status === "completed" ? "success" as const : status === "inProgress" ? "info" as const : status === "locked" ? "neutral" as const : "warning" as const;
-
-const scopeOptions: { value: TaskScope; label: string }[] = [
-  { value: "business", label: "业务进度" },
-  { value: "daily", label: "日常" },
-  { value: "newbie", label: "新手" },
-];
 
 function todayKey() {
   return new Date().toLocaleDateString("zh-CN");
@@ -258,8 +251,7 @@ export function TaskCenterPage() {
   const { session, identities, applications } = usePublicPlatform();
   const { getRuntime } = useWorkshopRuntime();
   const { learning, benefitStatusFor } = useLongTermAssets();
-  const { newbieTasks, dailyRemaining, newbieRemaining } = useGuideTasks();
-  const [scope, setScope] = useState<TaskScope>("business");
+  const { newbieTasks, newbieRemaining } = useGuideTasks();
   const [category, setCategory] = useState<"all" | TaskCategory>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -348,19 +340,19 @@ export function TaskCenterPage() {
     return item.status === statusFilter;
   });
 
-  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="日常 · 新手 · 赛事 · 学习 · 权益 · 机会" backTo="/home" /><div className="space-y-5 px-4 py-5">
-    <div role="tablist" aria-label="任务分组" className="grid grid-cols-3 gap-1 rounded-container bg-surface-subtle p-1">{scopeOptions.map(item => <button key={item.value} type="button" role="tab" aria-selected={scope === item.value} className={`min-h-touch rounded-control text-sm font-medium transition ${scope === item.value ? "bg-surface text-text-brand shadow-sm" : "text-text-secondary"}`} onClick={() => setScope(item.value)}>{item.label}</button>)}</div>
-
-    {scope === "daily" && <Section title="日常任务" subtitle={dailyRemaining > 0 ? `${dailyRemaining} 项今日待完成` : "今日已完成"}>
+  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="日常打卡 · 新手引导 · 业务进度" backTo="/home" /><div className="space-y-5 px-4 py-5">
+    {/* 日常打卡 */}
+    <Section title="日常打卡" subtitle="每日签到，养成参赛学习习惯">
       <CheckInBar />
-      <p className="text-xs leading-5 text-text-tertiary">日常任务当前只包含平台已有的每日打卡事实，奖励规则待产品确认后再补充。</p>
-    </Section>}
+    </Section>
 
-    {scope === "newbie" && <Section title="新手任务" subtitle={newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已全部完成"} action={<Link to="/tasks/newbie" className="text-sm font-medium text-text-brand">独立页</Link>}>
-      <GuideTaskList tasks={newbieTasks} />
-    </Section>}
+    {/* 新手任务入口 */}
+    <Section title="新手任务" subtitle={newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已全部完成"} action={<Link to="/tasks/newbie" className="text-sm font-medium text-text-brand">独立页</Link>}>
+      <GuideTaskList tasks={newbieTasks.slice(0, 2)} />
+    </Section>
 
-    {scope === "business" && <>
+    {/* 业务进度 */}
+    <>
       <div className="grid grid-cols-3 overflow-hidden rounded-container border border-border-subtle bg-surface">{[
         { value: "todo" as const, label: "待处理", count: statusCounts.todo },
         { value: "inProgress" as const, label: "进行中", count: statusCounts.inProgress },
@@ -370,6 +362,6 @@ export function TaskCenterPage() {
       <div className="flex gap-2 overflow-x-auto pb-1">{categoryOptions.map(item => <button key={item.value} type="button" className={`min-h-touch shrink-0 rounded-control px-4 text-sm font-medium ${category === item.value ? "bg-primary-container text-text-brand" : "bg-surface text-text-secondary"}`} onClick={() => setCategory(item.value)}>{item.label}</button>)}</div>
 
       <div className="space-y-3">{visibleEntries.length ? visibleEntries.map(entry => <TaskEntryCard key={entry.id} entry={entry} />) : <div className="rounded-container border border-border-subtle bg-surface px-4 py-10 text-center"><p className="font-semibold text-text-primary">当前没有对应事项</p><p className="mt-2 text-sm text-text-secondary">切换分类或状态查看其它内容。</p></div>}</div>
-    </>}
+    </>
   </div></PublicShell>;
 }
