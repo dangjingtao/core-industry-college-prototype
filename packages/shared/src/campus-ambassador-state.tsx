@@ -22,6 +22,7 @@ function freshSeed(): AmbassadorCampaignState {
   return {
     campaigns: campusAmbassadorSeed.campaigns.map(item => ({ ...item, schoolIds: [...item.schoolIds], applicationFields: [...item.applicationFields] })),
     schoolRecruitmentCodes: campusAmbassadorSeed.schoolRecruitmentCodes.map(item => ({ ...item })),
+    teamRecruitmentCodes: [],
     teams: [],
     promotionCodes: [],
     validAcquisitions: [],
@@ -37,24 +38,31 @@ export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
       if (!campaign || !recruitment || !isAmbassadorCodeActive(recruitment, campaign) || ambassadorCampaignStatus(campaign) !== "active" || !canJoinAmbassadorTeam(current, input.campaignId, input.accountId)) return current;
       const createdTeamId = `amb-team-${input.campaignId}-${input.accountId}`;
       const memberId = `${createdTeamId}-ambassador`;
+      const teamRecruitmentCode = {
+        id: `${createdTeamId}-recruitment-code`,
+        campaignId: input.campaignId,
+        teamId: createdTeamId,
+        code: `TEAM-${input.accountId}-${createdTeamId}`,
+        active: true,
+      };
       const team = {
         id: createdTeamId,
         campaignId: input.campaignId,
         schoolId: input.schoolId,
         coreAmbassadorAccountId: input.accountId,
         status: "forming" as const,
-        recruitmentCodeId: recruitment.id,
+        recruitmentCodeId: teamRecruitmentCode.id,
         members: [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: new Date().toISOString(), application: input.application }],
         incentiveStatus: "unprocessed" as const,
       };
-      return { ...current, teams: [...current.teams, team] };
+      return { ...current, teamRecruitmentCodes: [...current.teamRecruitmentCodes, teamRecruitmentCode], teams: [...current.teams, team] };
     });
   }, []);
   const joinAmbassadorTeam = useCallback<AmbassadorStateValue["joinAmbassadorTeam"]>((input) => {
     setState(current => {
       const campaign = current.campaigns.find(item => item.id === input.campaignId);
-      const recruitment = current.schoolRecruitmentCodes.find(item => item.campaignId === input.campaignId && item.code === input.recruitmentCode && item.active);
-      const team = recruitment && current.teams.find(item => item.recruitmentCodeId === recruitment.id);
+      const recruitment = current.teamRecruitmentCodes.find(item => item.campaignId === input.campaignId && item.code === input.recruitmentCode && item.active);
+      const team = recruitment && current.teams.find(item => item.id === recruitment.teamId && item.recruitmentCodeId === recruitment.id);
       if (!campaign || !recruitment || !isAmbassadorCodeActive(recruitment, campaign) || !team || !canRecruitPartner(campaign, team) || !canJoinAmbassadorTeam(current, input.campaignId, input.accountId)) return current;
       const member = { id: `${team.id}-partner-${team.members.length}`, teamId: team.id, accountId: input.accountId, role: "partner" as const, status: "active" as const, joinedAt: new Date().toISOString() };
       const nextTeam = { ...team, members: [...team.members, member] };

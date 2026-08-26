@@ -34,6 +34,14 @@ export type AmbassadorSchoolRecruitmentCode = {
   active: boolean;
 };
 
+export type AmbassadorTeamRecruitmentCode = {
+  id: string;
+  campaignId: string;
+  teamId: string;
+  code: string;
+  active: boolean;
+};
+
 export type AmbassadorTeamMember = {
   id: string;
   teamId: string;
@@ -78,6 +86,7 @@ export type AmbassadorValidAcquisition = {
 export type AmbassadorCampaignState = {
   campaigns: AmbassadorCampaign[];
   schoolRecruitmentCodes: AmbassadorSchoolRecruitmentCode[];
+  teamRecruitmentCodes: AmbassadorTeamRecruitmentCode[];
   teams: AmbassadorTeam[];
   promotionCodes: AmbassadorPromotionCode[];
   validAcquisitions: AmbassadorValidAcquisition[];
@@ -98,6 +107,7 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
     { id: "amb-recruit-huanan-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-huanan-commerce-college", code: "CA-HN-2026", active: true },
     { id: "amb-recruit-gdtc-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-gdtc", code: "CA-GDTC-2026", active: true },
   ],
+  teamRecruitmentCodes: [],
   teams: [],
   promotionCodes: [],
   validAcquisitions: [],
@@ -115,12 +125,14 @@ export function isAmbassadorCampaignOpen(campaign: AmbassadorCampaign, now = new
   return ambassadorCampaignStatus(campaign, now) === "active";
 }
 
-export function isAmbassadorCodeActive(code: Pick<AmbassadorSchoolRecruitmentCode | AmbassadorPromotionCode, "active">, campaign: AmbassadorCampaign, now = new Date()): boolean {
+export function isAmbassadorCodeActive(code: Pick<AmbassadorSchoolRecruitmentCode | AmbassadorTeamRecruitmentCode | AmbassadorPromotionCode, "active">, campaign: AmbassadorCampaign, now = new Date()): boolean {
   return code.active && isAmbassadorCampaignOpen(campaign, now);
 }
 
 export function ambassadorTeamIsLit(team: Pick<AmbassadorTeam, "members" | "status">): boolean {
-  return team.status === "lit" || team.members.filter(member => member.status === "active").length >= AMBASSADOR_TEAM_MIN_MEMBERS;
+  const activeAmbassadors = team.members.filter(member => member.status === "active" && member.role === "ambassador").length;
+  const activePartners = team.members.filter(member => member.status === "active" && member.role === "partner").length;
+  return activeAmbassadors === 1 && activePartners >= AMBASSADOR_PARTNER_MIN_MEMBERS;
 }
 
 export function ambassadorTeamMemberCount(team: Pick<AmbassadorTeam, "members">): number {
