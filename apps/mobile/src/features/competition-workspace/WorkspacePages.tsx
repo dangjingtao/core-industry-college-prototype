@@ -12,6 +12,13 @@ import { useBadges } from "../badges/hooks";
 const identityTone = (status: string) => status === "active" ? "success" as const : status === "pending" ? "warning" as const : status === "rejected" ? "danger" as const : "neutral" as const;
 const registrationWindowLabel = (competition: Competition) => competition.status === "registrationOpen" ? "报名中" : competition.status === "upcoming" ? "尚未开放" : competition.status === "ended" ? "已关闭" : "报名已结束";
 const lifecyclePresentation = (lifecycle: WorkshopLifecycle) => lifecycle === "ended" ? ["赛事已结束", "neutral"] as const : lifecycle === "notStarted" ? ["赛事未开始", "warning"] as const : ["赛事进行中", "info"] as const;
+const compBadgeHint = (type: string) => type === "competition.registered" ? "报名成功后获得"
+  : type === "competition.ended" ? "赛事结束后获得"
+  : type === "competition.team" ? "组建团队后获得"
+  : type === "competition.materialsReady" ? "备齐全部项目材料后获得"
+  : type === "competition.workshopTasksCompleted" ? "完成工坊全部任务后获得"
+  : type === "competition.resultsAccepted" ? "接受工坊成果后获得"
+  : undefined;
 
 export function CompetitionLifecycleDetailPage() {
   const navigate = useNavigate();
@@ -46,7 +53,7 @@ export function CompetitionLifecycleDetailPage() {
         </div>)}
         {lockedCompBadges.map(b => <div key={b.id} className="flex items-center gap-3 rounded-container border border-border-subtle bg-surface-subtle px-3 py-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-sm font-semibold text-text-tertiary">{b.iconKey}</div>
-          <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-secondary">{b.name}</p><p className="truncate text-xs text-text-tertiary">{b.rule.type === "competition.registered" ? "报名成功后获得" : b.rule.type === "competition.ended" ? "赛事结束后获得" : b.description}</p></div>
+          <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-secondary">{b.name}</p><p className="truncate text-xs text-text-tertiary">{compBadgeHint(b.rule.type) ?? b.description}</p></div>
           <StatusTag tone="neutral">未获得</StatusTag>
         </div>)}
       </div>
@@ -133,6 +140,34 @@ export function CompetitionWorkspacePage() {
     {notStarted && <Card className="border border-info bg-info-bg"><StatusTag tone="info">赛事未开始</StatusTag><h2 className="mt-3 font-semibold text-info-text">先确认团队和资料，赛事任务暂不执行</h2><p className="mt-2 text-sm text-info-text">团队与资料可以提前查看；工坊执行动作会在赛事开始后开放。</p></Card>}
     <Section title="当前最重要的下一步"><Card className="border border-border-subtle"><StatusTag tone={notStarted ? "info" : "warning"}>{notStarted ? "等待赛事开始" : "下一任务"}</StatusTag><h2 className="mt-3 text-lg font-semibold text-text-primary">{notStarted ? "确认团队与赛事资料已准备" : nextTask?.title ?? "当前没有待执行任务"}</h2><p className="mt-2 text-sm leading-5 text-text-secondary">{notStarted ? "团队与资料入口保持可用；创赛工坊执行动作将在赛事开始后开放。" : nextTask?.summary ?? "可以查看已经生成的成果。"}</p>{!notStarted && nextTask && <Button className="mt-4 w-full" onClick={() => navigate(nextTaskStatus === "queued" || nextTaskStatus === "running" || nextTaskStatus === "failed" ? `/competitions/${competitionId}/workspace/workshop/tasks/${nextTask.id}/progress` : `/competitions/${competitionId}/workspace/workshop/tasks/${nextTask.id}/answer`)}>{activeRunTask ? "继续当前任务" : "继续下一步"}</Button>}</Card></Section>
     <Section title="当前项目 / 团队"><div className="space-y-2"><button className="flex min-h-touch w-full items-center justify-between rounded-control bg-surface px-3 text-left" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop/project`)}><span><strong className="block text-sm text-text-primary">{data.project.name}</strong><span className="text-xs text-text-secondary">{data.project.currentStage}</span></span><span>›</span></button><button className="flex min-h-touch w-full items-center justify-between rounded-control bg-surface px-3 text-left" onClick={() => navigate(`/competitions/${competitionId}/workspace/team`)}><span><strong className="block text-sm text-text-primary">{data.team.name}</strong><span className="text-xs text-text-secondary">{data.team.members.length} 名成员 · 当前角色 {data.team.role}</span></span><span>›</span></button></div></Section>
+    {/* 赛事徽章进度：赛中跟踪本场赛事的徽章目标 */}
+    <Section title="赛事徽章进度" subtitle="本场赛事 · 达成后自动计入账号徽章" action={<Link to="/me/badges" className="text-sm font-medium text-text-brand">徽章墙</Link>}>
+      <Card className="border border-border-subtle"><div className="space-y-3">{(() => {
+        const materialsTotal = Object.keys(runtime.materials).length;
+        const materialsDone = Object.values(runtime.materials).filter(Boolean).length;
+        const tasksTotal = workshopTasks.length;
+        const tasksDone = workshopTasks.filter(task => runtime.taskRuns[task.id]?.status === "completed").length;
+        const resultsDone = runtime.acceptedResultIds.length;
+        const rows: { id: string; label: string; current: number; total: number; doneText: string; pendingText: string }[] = [
+          { id: "badge.competition.team", label: "并肩作战 · 组建团队", current: data.team.members.length > 0 ? 1 : 0, total: 1, doneText: `已组队 ${data.team.members.length} 人`, pendingText: "尚未组队" },
+          { id: "badge.competition.materials", label: "兵马未动 · 备齐材料", current: materialsDone, total: materialsTotal, doneText: "材料已备齐", pendingText: `已备齐 ${materialsDone} / ${materialsTotal} 项` },
+          { id: "badge.competition.workshop", label: "工坊全勤 · 完成任务", current: tasksDone, total: tasksTotal, doneText: "工坊任务全部完成", pendingText: `已完成 ${tasksDone} / ${tasksTotal} 个任务` },
+          { id: "badge.competition.results", label: "成果沉淀 · 归档成果", current: Math.min(resultsDone, 1), total: 1, doneText: `已归档 ${resultsDone} 份成果`, pendingText: "尚未归档成果" },
+        ];
+        return rows.map(row => {
+          const entry = badgeCatalog.find(b => b.id === row.id);
+          const pct = row.total > 0 ? Math.min(100, Math.round((row.current / row.total) * 100)) : 0;
+          const done = row.current >= row.total;
+          return <div key={row.id} className="flex items-center gap-3">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${done ? entry?.iconColor ?? "" : "bg-surface-subtle text-text-tertiary"}`}>{entry?.iconKey ?? "•"}</div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2"><p className={`text-sm font-medium ${done ? "text-text-primary" : "text-text-secondary"}`}>{row.label}</p><span className="shrink-0 text-xs text-text-tertiary">{done ? row.doneText : row.pendingText}</span></div>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-subtle"><div className={`h-full rounded-full ${done ? "bg-success" : "bg-primary"}`} style={{ width: `${pct}%` }} /></div>
+            </div>
+          </div>;
+        });
+      })()}</div></Card>
+    </Section>
     <Section title="赛事能力"><div className="space-y-2"><button disabled={notStarted} className="flex min-h-touch w-full items-center justify-between rounded-control bg-primary-container px-3 text-left disabled:opacity-50" onClick={() => navigate(`/competitions/${competitionId}/workspace/workshop`)}><span><strong className="block text-sm text-text-brand">创赛工坊</strong><span className="text-xs text-text-secondary">围绕当前参赛项目继续陪跑</span></span><span>›</span></button><button className="flex min-h-touch w-full items-center justify-between rounded-control bg-surface px-3 text-left" onClick={() => navigate(`/competitions/${competitionId}/workspace/resources`)}><span><strong className="block text-sm text-text-primary">赛事资料</strong><span className="text-xs text-text-secondary">规则、模板与赛道资料</span></span><span>›</span></button><button className="flex min-h-touch w-full items-center justify-between rounded-control bg-surface px-3 text-left" onClick={() => navigate(`/benefits?competition=${competitionId}`)}><span><strong className="block text-sm text-text-primary">赛事权益</strong><span className="text-xs text-text-secondary">查看当前赛事来源的可用权益</span></span><span>›</span></button></div></Section>
     <WorkspaceScenarioTools competitionId={competitionId} />
   </div></PublicShell>;

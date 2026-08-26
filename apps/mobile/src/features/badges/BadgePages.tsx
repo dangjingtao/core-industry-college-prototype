@@ -358,6 +358,10 @@ function describeRuleSimple(r: BadgeRule): string {
     case "course.checkpointPassedCount": return `累计 ${r.min} 门课程关卡全通过`;
     case "competition.registered": return "报名一场赛事";
     case "competition.ended": return "经历一场赛事至结束";
+    case "competition.team": return "在一场赛事中组建或加入完整团队";
+    case "competition.materialsReady": return "备齐一场赛事的全部项目材料";
+    case "competition.workshopTasksCompleted": return "完成一场赛事的创赛工坊全部任务";
+    case "competition.resultsAccepted": return `接受并归档 ${r.min} 份工坊成果`;
     case "simulation.level": return `小店等级达到 Lv.${r.min}`;
     case "simulation.stockAndTraffic": return "同时完成进货与拉客";
     case "benefit.claimed": return `领取 ${r.min} 份创赛福利`;
@@ -377,6 +381,7 @@ function progressDetail(r: BadgeRule, ctx: ReturnType<typeof useBadgeEvaluationC
     case "course.completedCount": return `当前已完成 ${ctx.learning.filter(rec => rec.progress >= 100 && rec.assessment === "passed").length} 门`;
     case "course.checkpointPassedCount": return `当前通过 ${Object.values(ctx.courseCheckpointPasses).filter(Boolean).length} 门`;
     case "simulation.level": return ctx.simulationLevel > 0 ? `当前 Lv.${ctx.simulationLevel}` : "尚未开始";
+    case "competition.resultsAccepted": return `当前已归档 ${ctx.workshopAcceptedResultCount} 份成果`;
     case "badge.tierCount": return `当前已获得 ${tierCounts[r.tier as "high" | "low"]} 枚`;
     default: return undefined;
   }

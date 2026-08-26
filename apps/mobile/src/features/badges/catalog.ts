@@ -35,6 +35,10 @@ export type BadgeRule =
   // 赛事
   | { type: "competition.registered" }
   | { type: "competition.ended" }
+  | { type: "competition.team" }
+  | { type: "competition.materialsReady" }
+  | { type: "competition.workshopTasksCompleted" }
+  | { type: "competition.resultsAccepted"; min: number }
   // 模拟经营
   | { type: "simulation.level"; min: number }
   | { type: "simulation.stockAndTraffic" }
@@ -356,6 +360,50 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#f3efff] text-[#6f4bc2]",
     iconKey: "🏁",
     rule: { type: "competition.ended" },
+    rewardHint: "",
+  },
+  {
+    id: "badge.competition.team",
+    name: "并肩作战",
+    description: "在一场赛事中组建或加入完整团队",
+    tier: "high",
+    source: "competition",
+    iconColor: "bg-[#f3efff] text-[#6f4bc2]",
+    iconKey: "T",
+    rule: { type: "competition.team" },
+    rewardHint: "",
+  },
+  {
+    id: "badge.competition.materials",
+    name: "兵马未动",
+    description: "把一场赛事的项目材料全部备齐",
+    tier: "high",
+    source: "competition",
+    iconColor: "bg-[#f3efff] text-[#6f4bc2]",
+    iconKey: "M",
+    rule: { type: "competition.materialsReady" },
+    rewardHint: "",
+  },
+  {
+    id: "badge.competition.workshop",
+    name: "工坊全勤",
+    description: "完成一场赛事的创赛工坊全部任务",
+    tier: "high",
+    source: "competition",
+    iconColor: "bg-[#f3efff] text-[#6f4bc2]",
+    iconKey: "W",
+    rule: { type: "competition.workshopTasksCompleted" },
+    rewardHint: "",
+  },
+  {
+    id: "badge.competition.results",
+    name: "成果沉淀",
+    description: "接受并归档至少 1 份工坊成果",
+    tier: "high",
+    source: "competition",
+    iconColor: "bg-[#f3efff] text-[#6f4bc2]",
+    iconKey: "R",
+    rule: { type: "competition.resultsAccepted", min: 1 },
     rewardHint: "",
   },
   {

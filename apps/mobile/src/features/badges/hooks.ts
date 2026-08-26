@@ -7,6 +7,8 @@ import { badgeCatalog } from "./catalog";
 import { evaluateAll, type BadgeEvaluationContext } from "./engine";
 import { deriveSimulationMetrics, getSimulationSnapshot } from "../app-center/StartupShopStore";
 import { courses } from "../long-term-assets/data";
+import { workspaceData } from "../competition-workspace/data";
+import { useWorkshopRuntime } from "../competition-workspace/runtime";
 
 // 模拟经营 level 状态读取 helper
 function useSimulationMetrics() {
@@ -189,12 +191,34 @@ export function useBadges(): {
 export function useBadgeEvaluationContext(): BadgeEvaluationContext {
   const { session, identities } = usePublicPlatform();
   const { learning, welfareParticipations, benefitStatuses } = useLongTermAssets();
+  const { getRuntime } = useWorkshopRuntime();
   const checkin = useCheckInSnapshot();
   const adWatched = useAdWatchedCount();
   const sim = useSimulationMetrics();
   const newbieCompleted = useNewbieCompleted();
   const resumeEdited = useResumeEdited();
   const courseCheckpointPasses = useCourseCheckpointPasses();
+
+  // 赛事工作区事实：遍历账号下的赛事身份，从对应 runtime 派生（不持有第二份真相源）
+  const workshopFacts = useMemo(() => {
+    let teamFormed = false;
+    let materialsReady = false;
+    let tasksAllCompleted = false;
+    let acceptedResultCount = 0;
+    for (const identity of identities) {
+      const wsData = workspaceData[identity.competitionId];
+      if (!wsData) continue;
+      // 仅统计已激活或已结束的赛事身份，避免把待审核报名算作工坊进展
+      const effective = identity.identityStatus === "active" || identity.competitionStatus === "ended";
+      if (!effective) continue;
+      const runtime = getRuntime(identity.competitionId);
+      if (wsData.team.members.length > 0) teamFormed = true;
+      if (Object.values(runtime.materials).every(Boolean)) materialsReady = true;
+      if (Object.values(runtime.taskRuns).every(run => run.status === "completed")) tasksAllCompleted = true;
+      acceptedResultCount = Math.max(acceptedResultCount, runtime.acceptedResultIds.length);
+    }
+    return { teamFormed, materialsReady, tasksAllCompleted, acceptedResultCount };
+  }, [identities, getRuntime]);
 
   return useMemo(() => ({
     loggedIn: session.loggedIn,
@@ -209,10 +233,14 @@ export function useBadgeEvaluationContext(): BadgeEvaluationContext {
     resumeFirstEdited: resumeEdited,
     hasCompetitionIdentity: identities.some(identity => ["submitted", "pending", "approved"].includes(identity.registrationStatus) || identity.identityStatus === "active"),
     hasEndedCompetitionIdentity: identities.some(identity => identity.competitionStatus === "ended"),
+    workshopTeamFormed: workshopFacts.teamFormed,
+    workshopMaterialsReady: workshopFacts.materialsReady,
+    workshopTasksAllCompleted: workshopFacts.tasksAllCompleted,
+    workshopAcceptedResultCount: workshopFacts.acceptedResultCount,
     simulationLevel: sim.level,
     simulationHasStock: sim.stock > 0,
     simulationHasTraffic: sim.traffic > 0,
     courseCheckpointPasses: courseCheckpointPasses.byCourse,
     courseCheckpointSinglePasses: courseCheckpointPasses.byCheckpoint,
-  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses.byCourse, courseCheckpointPasses.byCheckpoint]);
+  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, workshopFacts, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses.byCourse, courseCheckpointPasses.byCheckpoint]);
 }

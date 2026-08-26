@@ -32,6 +32,11 @@ export type BadgeEvaluationContext = {
   // 赛事
   hasCompetitionIdentity: boolean;
   hasEndedCompetitionIdentity: boolean;
+  // 赛事工作区（从 WorkshopRuntime 派生，任意赛事达成即算）
+  workshopTeamFormed: boolean;
+  workshopMaterialsReady: boolean;
+  workshopTasksAllCompleted: boolean;
+  workshopAcceptedResultCount: number;
   // 模拟经营
   simulationLevel: number; // 0 表示未开始
   simulationHasStock: boolean;
@@ -76,6 +81,14 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
       return ctx.hasCompetitionIdentity;
     case "competition.ended":
       return ctx.hasEndedCompetitionIdentity;
+    case "competition.team":
+      return ctx.workshopTeamFormed;
+    case "competition.materialsReady":
+      return ctx.workshopMaterialsReady;
+    case "competition.workshopTasksCompleted":
+      return ctx.workshopTasksAllCompleted;
+    case "competition.resultsAccepted":
+      return ctx.workshopAcceptedResultCount >= rule.min;
     case "simulation.level":
       return ctx.simulationLevel >= rule.min;
     case "simulation.stockAndTraffic":
