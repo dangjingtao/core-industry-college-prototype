@@ -96,7 +96,7 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
   campaigns: [{
     id: "campus-ambassador-2026-一期",
     name: "2026 核心大使计划 · 一期",
-    startsAt: "2026-09-01T00:00:00+08:00",
+    startsAt: "2026-08-26T00:00:00+08:00",
     endsAt: "2026-10-31T23:59:59+08:00",
     schoolIds: ["org-huanan-commerce-college", "org-gdtc"],
     applicationFields: ["自我介绍", "校园传播渠道", "参与动机"],
