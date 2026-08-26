@@ -279,6 +279,21 @@ export function NewbieTasksPage() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = Math.round((completedCount / tasks.length) * 100);
 
+  // 真实全部完成时（非 demo 强制）记录徽章触发点
+  useEffect(() => {
+    if (demoMode) return;
+    if (allCompleted) {
+      try {
+        if (localStorage.getItem("newbie-completed-flag") !== "1") {
+          localStorage.setItem("newbie-completed-flag", "1");
+          window.dispatchEvent(new StorageEvent("storage", { key: "newbie-completed-flag" }));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [allCompleted, demoMode]);
+
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="新手任务" subtitle={`完成 ${tasks.length} 项引导，快速熟悉平台核心能力`} backTo="/home" />

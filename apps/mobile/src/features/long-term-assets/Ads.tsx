@@ -49,6 +49,19 @@ function pickAd(ads: RewardedAdPlacement[], seed: string) {
   return ads[hash % ads.length];
 }
 
+/** 增加「已观看激励视频广告」计数（供徽章系统读取）。 */
+export function bumpAdWatchedCount(delta = 1) {
+  try {
+    const raw = localStorage.getItem("ad-watched-count");
+    const current = raw ? Number(JSON.parse(raw).count) || 0 : 0;
+    const next = { count: current + delta };
+    localStorage.setItem("ad-watched-count", JSON.stringify(next));
+    window.dispatchEvent(new StorageEvent("storage", { key: "ad-watched-count" }));
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * 广告位 A：激励视频广告（全屏覆盖层）
  * 点击「领取」后弹出，播放（模拟倒计时）完成才发放；跳过则放弃本次领取。
@@ -81,6 +94,7 @@ export function RewardedVideoAd({
           window.clearInterval(timer);
           if (!completedRef.current) {
             completedRef.current = true;
+            bumpAdWatchedCount(1);
             onComplete();
           }
           return 0;

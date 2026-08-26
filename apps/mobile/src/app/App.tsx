@@ -63,6 +63,7 @@ import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, Profi
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
+import { BadgeDetailPage, BadgesPage } from "../features/badges/BadgePages";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
 import { SplashOverlay, useSplashGate } from "../features/long-term-assets/SplashOverlay";
@@ -210,6 +211,8 @@ export function App() {
               <Route path="/me/subjects" element={account(<SubjectDecisionPage />)} />
               <Route path="/me/notifications" element={account(<NotificationsPage />)} />
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />
+              <Route path="/me/badges" element={account(<BadgesPage />)} />
+              <Route path="/me/badges/:badgeId" element={account(<BadgeDetailPage />)} />
               <Route path="/legal/user-agreement" element={<LegalPage kind="user" />} />
               <Route path="/legal/privacy" element={<LegalPage kind="privacy" />} />
               <Route path="/about" element={<AboutPage />} />

@@ -98,6 +98,17 @@ const seedLearning: LearningRecord[] = [
   { courseId: "retail-project-lab", status: "notStarted", progress: 0, assessment: "idle" },
 ];
 
+function markResumeFirstEdit() {
+  try {
+    if (localStorage.getItem("resume-first-edit-flag") !== "1") {
+      localStorage.setItem("resume-first-edit-flag", "1");
+      window.dispatchEvent(new StorageEvent("storage", { key: "resume-first-edit-flag" }));
+    }
+  } catch {
+    // ignore
+  }
+}
+
 const seedEnrolledCourseIds = ["data-analytics", "brand-ecommerce", "retail-project-lab"];
 const seedCreditBalance = 1280;
 
@@ -371,18 +382,22 @@ export function LongTermAssetsProvider({ children }: { children: ReactNode }) {
         selectedFactKeys: current.selectedFactKeys.includes(factKey) ? current.selectedFactKeys.filter(key => key !== factKey) : [...current.selectedFactKeys, factKey],
         updatedAt: "2026-08-17",
       }));
+      markResumeFirstEdit();
     },
     updateStrengths: strengths => {
       if (!session.loggedIn) return;
       setResume(current => ({ ...current, strengths, updatedAt: "2026-08-17" }));
+      markResumeFirstEdit();
     },
     updateEducation: education => {
       if (!session.loggedIn) return;
       setResume(current => ({ ...current, education, updatedAt: "2026-08-17" }));
+      markResumeFirstEdit();
     },
     updateEducationDetails: patch => {
       if (!session.loggedIn) return;
       setResume(current => ({ ...current, educationDetails: { ...current.educationDetails, ...patch }, updatedAt: "2026-08-17" }));
+      markResumeFirstEdit();
     },
     updateProfile,
     initializeNewAccount,

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, Box, Check, ChevronLeft, ClipboardCheck, PackagePlus, Sparkles, Store, UserPlus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, StatusTag } from "../../components/ui";
+import { deriveSimulationMetrics, getSimulationSnapshot, recordSimulationAction, type SimulationActionId } from "./StartupShopStore";
 
 type ShopActionId = "checkin" | "quiz" | "course" | "invite";
 
@@ -68,12 +69,9 @@ function ShopScene({ stock, traffic, level }: { stock: number; traffic: number; 
 
 export function StartupShopPage() {
   const navigate = useNavigate();
-  const [done, setDone] = useState<ShopActionId[]>([]);
+  const [done, setDone] = useState<SimulationActionId[]>(() => getSimulationSnapshot().done);
 
-  const stock = (done.includes("checkin") ? 1 : 0) + (done.includes("quiz") ? 1 : 0) + (done.includes("course") ? 2 : 0);
-  const traffic = done.includes("invite") ? 3 : 0;
-  const growth = stock * 16 + traffic * 9;
-  const level = growth >= 70 ? 3 : growth >= 35 ? 2 : 1;
+  const { stock, traffic, growth, level } = deriveSimulationMetrics(done);
   const allDone = done.length === actions.length;
 
   const shopMessage = useMemo(() => {
@@ -84,7 +82,11 @@ export function StartupShopPage() {
     return "今天还没开张。随便做一件小事，店里就会有变化。";
   }, [allDone, stock, traffic]);
 
-  const doAction = (id: ShopActionId) => setDone(current => current.includes(id) ? current : [...current, id]);
+  const doAction = (id: ShopActionId) => {
+    if (done.includes(id)) return;
+    const next = recordSimulationAction(id);
+    setDone(next.done);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-8 text-foreground">
