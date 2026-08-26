@@ -511,3 +511,38 @@ tests/r-final.spec.ts
 ```
 
 新增回归覆盖登录态 / 游客通知入口、“我的”六个可见入口，以及客服首页到客服会话的连续跳转。
+
+---
+
+## 13. 2026-08-26｜T045 专属推广码与团队推广成果
+
+### 实现边界
+
+- 团队点亮后为所有当前有效成员签发独立推广码，后续加入成员立即补发；
+- 模拟新用户注册时保留活动、团队和推广人员归因，并在同一期活动内按新账号去重；
+- 已注册账号和团队现有成员不计入有效新增；
+- 核心大使可查看团队成果与归因明细；推广伙伴不展示成员列表、成果数字或排名；
+- 不包含真实应用商店安装归因、真实注册服务和财务结算。
+
+### 本地验证
+
+```text
+Registry routes: 96
+App route declarations: 109
+Missing registry routes: 0
+RouteProbe in App: no
+Explicit 404 route: yes
+Route audit PASS
+tsc -b PASS
+vite build PASS
+```
+
+Chromium `390x844`，单 worker：
+
+```text
+tests/t044-campus-ambassador.spec.ts
+tests/t045-ambassador-promotion.spec.ts
+6 passed
+```
+
+与同日合入的 T046 共享 seed 合并后，PC typecheck、production build 和 `tests/t046-ambassador.spec.ts` 1/1 PASS。

@@ -115,18 +115,25 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
   schoolRecruitmentCodes: [
     { id: "amb-recruit-huanan-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-huanan-commerce-college", code: "CA-HN-2026", active: true },
     { id: "amb-recruit-gdtc-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-gdtc", code: "CA-GDTC-2026", active: true },
+    { id: "amb-demo-recruit-huanan", campaignId: "campus-ambassador-demo-active", schoolId: "org-huanan-commerce-college", code: "CA-DEMO-HN-2026", active: true },
+    { id: "amb-demo-recruit-gdtc", campaignId: "campus-ambassador-demo-active", schoolId: "org-gdtc", code: "CA-DEMO-GDTC-2026", active: true },
   ],
   teamRecruitmentCodes: [{ id: "amb-demo-team-code", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", code: "TEAM-DEMO-2026", active: true }],
   teams: [{
     id: "amb-demo-team", campaignId: "campus-ambassador-demo-active", schoolId: "org-huanan-commerce-college", coreAmbassadorAccountId: "account-demo-ambassador", status: "lit", recruitmentCodeId: "amb-demo-team-code", incentiveStatus: "unprocessed",
     members: [
-      { id: "amb-demo-ambassador", teamId: "amb-demo-team", accountId: "account-demo-ambassador", role: "ambassador", status: "active", joinedAt: "2026-08-03T09:00:00+08:00", application: { "自我介绍": "负责校园创新社团传播", "校园传播渠道": "校创业协会公众号", "参与动机": "连接更多同学参与实践" } },
-      { id: "amb-demo-partner-1", teamId: "amb-demo-team", accountId: "account-demo-partner-1", role: "partner", status: "active", joinedAt: "2026-08-04T09:00:00+08:00" },
-      { id: "amb-demo-partner-2", teamId: "amb-demo-team", accountId: "account-demo-partner-2", role: "partner", status: "active", joinedAt: "2026-08-05T09:00:00+08:00" },
-      { id: "amb-demo-partner-3", teamId: "amb-demo-team", accountId: "account-demo-partner-3", role: "partner", status: "active", joinedAt: "2026-08-06T09:00:00+08:00" },
+      { id: "amb-demo-ambassador", teamId: "amb-demo-team", accountId: "account-demo-ambassador", role: "ambassador", status: "active", joinedAt: "2026-08-03T09:00:00+08:00", promotionCodeId: "amb-demo-promo-1", application: { "自我介绍": "负责校园创新社团传播", "校园传播渠道": "校创业协会公众号", "参与动机": "连接更多同学参与实践" } },
+      { id: "amb-demo-partner-1", teamId: "amb-demo-team", accountId: "account-demo-partner-1", role: "partner", status: "active", joinedAt: "2026-08-04T09:00:00+08:00", promotionCodeId: "amb-demo-promo-2" },
+      { id: "amb-demo-partner-2", teamId: "amb-demo-team", accountId: "account-demo-partner-2", role: "partner", status: "active", joinedAt: "2026-08-05T09:00:00+08:00", promotionCodeId: "amb-demo-promo-3" },
+      { id: "amb-demo-partner-3", teamId: "amb-demo-team", accountId: "account-demo-partner-3", role: "partner", status: "active", joinedAt: "2026-08-06T09:00:00+08:00", promotionCodeId: "amb-demo-promo-4" },
     ],
   }],
-  promotionCodes: [],
+  promotionCodes: [
+    { id: "amb-demo-promo-1", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", accountId: "account-demo-ambassador", code: "PROMO-DEMO-AMBASSADOR", active: true },
+    { id: "amb-demo-promo-2", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", accountId: "account-demo-partner-1", code: "PROMO-DEMO-PARTNER-1", active: true },
+    { id: "amb-demo-promo-3", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", accountId: "account-demo-partner-2", code: "PROMO-DEMO-PARTNER-2", active: true },
+    { id: "amb-demo-promo-4", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", accountId: "account-demo-partner-3", code: "PROMO-DEMO-PARTNER-3", active: true },
+  ],
   validAcquisitions: [
     { id: "amb-demo-acq-1", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-1", registeredAt: "2026-08-10T12:00:00+08:00" },
     { id: "amb-demo-acq-2", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-2", registeredAt: "2026-08-11T12:00:00+08:00" },
@@ -174,6 +181,31 @@ export function canRecruitPartner(campaign: AmbassadorCampaign, team: Ambassador
 export function deriveAmbassadorTeamStatus(team: AmbassadorTeam, campaign: AmbassadorCampaign, now = new Date()): AmbassadorTeamStatus {
   if (ambassadorCampaignStatus(campaign, now) === "ended") return "ended";
   return ambassadorTeamIsLit(team) ? "lit" : "forming";
+}
+
+export function issueAmbassadorPromotionCodes(team: AmbassadorTeam, existingCodes: AmbassadorPromotionCode[]) {
+  if (team.status !== "lit") return { team, promotionCodes: existingCodes };
+  const codes = [...existingCodes];
+  const members = team.members.map(member => {
+    if (member.status !== "active" || member.promotionCodeId) return member;
+    const existingCode = codes.find(code => code.teamId === team.id && code.accountId === member.accountId);
+    if (existingCode) return { ...member, promotionCodeId: existingCode.id };
+    const promotionCode: AmbassadorPromotionCode = {
+      id: `${team.id}-promotion-${member.accountId}`,
+      campaignId: team.campaignId,
+      teamId: team.id,
+      accountId: member.accountId,
+      code: `PROMO-${member.accountId}-${team.id}`,
+      active: true,
+    };
+    codes.push(promotionCode);
+    return { ...member, promotionCodeId: promotionCode.id };
+  });
+  return { team: { ...team, members }, promotionCodes: codes };
+}
+
+export function ambassadorAcquisitionCount(state: AmbassadorCampaignState, teamId: string, promoterAccountId?: string) {
+  return state.validAcquisitions.filter(item => item.teamId === teamId && (!promoterAccountId || item.promoterAccountId === promoterAccountId)).length;
 }
 
 export function deriveAmbassadorMetrics(state: AmbassadorCampaignState, campaignId: string) {
