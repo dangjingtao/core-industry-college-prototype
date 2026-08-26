@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BookOpen, BriefcaseBusiness, CalendarCheck, ChevronRight, Gift, LockKeyhole, Sparkles, Trophy } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, CalendarCheck, ChevronRight, Gift, LockKeyhole, Sparkles, Target, Trophy } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Card, ConfirmDialog, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { taskById, workshopTasks } from "../competition-workspace/data";
@@ -8,6 +8,8 @@ import { benefits, courses } from "../long-term-assets/data";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { competitionById, opportunities, opportunityById } from "../public-platform/data";
 import { GuideTaskList, useGuideTasks, usePublicPlatform } from "../public-platform/PublicPlatform";
+import { useBadges } from "../badges/hooks";
+import { badgeCatalog } from "../badges/catalog";
 
 type TaskCategory = "competition" | "learning" | "benefit" | "opportunity";
 type TaskStatus = "todo" | "inProgress" | "completed" | "locked";
@@ -164,6 +166,11 @@ function CheckInBar() {
   const { checkedIn, streak, checkIn, resetCheckIn } = useCheckIn();
   const [showAd, setShowAd] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { earned } = useBadges();
+
+  // 打卡相关徽章
+  const checkinBadges = badgeCatalog.filter(b => b.source === "checkin");
+  const earnedCheckinBadges = earned.filter(v => v.entry.source === "checkin");
 
   const handleAdComplete = () => {
     setShowAd(false);
@@ -195,6 +202,14 @@ function CheckInBar() {
           {checkedIn ? "已打卡（再点重置）" : "打卡"}
         </Button>
       </Card>
+
+      {/* 可获得徽章提示 */}
+      <BadgeEarnHint
+        badges={checkinBadges}
+        earnedCount={earnedCheckinBadges.length}
+        hint="打卡可解锁以下徽章"
+      />
+
       <CheckInAdDialog open={showAd} onComplete={handleAdComplete} onCancel={handleAdCancel} />
       <ConfirmDialog
         open={showSuccess}
@@ -205,6 +220,37 @@ function CheckInBar() {
         onConfirm={() => setShowSuccess(false)}
       />
     </>
+  );
+}
+
+/** 行为页通用：可获得徽章提示 */
+function BadgeEarnHint({ badges, earnedCount, hint }: { badges: typeof badgeCatalog; earnedCount: number; hint: string }) {
+  if (!badges.length) return null;
+  return (
+    <Card className="border border-primary-container bg-primary-container">
+      <div className="flex items-center gap-2">
+        <Target size={14} className="text-text-brand" aria-hidden="true" />
+        <span className="text-xs font-medium text-text-brand">{hint}</span>
+        <span className="ml-auto text-xs text-text-tertiary">{earnedCount}/{badges.length} 已获得</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {badges.map(badge => {
+          const isEarned = earnedCount > 0 && badges.indexOf(badge) < earnedCount;
+          return (
+            <Link
+              key={badge.id}
+              to="/me/badges"
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition ${isEarned ? "bg-success-bg text-success-text" : "bg-surface text-text-secondary"}`}
+            >
+              <span className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${badge.iconColor}`}>
+                {badge.iconKey}
+              </span>
+              <span className="font-medium">{badge.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 

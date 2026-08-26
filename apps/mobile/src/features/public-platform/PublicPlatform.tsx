@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, Sparkles, Trophy, UserCheck, Users } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, Sparkles, Target, Trophy, UserCheck, Users } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
@@ -9,6 +9,8 @@ import { ListFeedAdCard, useListFeedAd } from "../long-term-assets/Ads";
 import { welfareProjects } from "../welfare/data";
 import { companies, companyById, competitions, competitionById, opportunities, opportunityById, type Competition, type Opportunity } from "./data";
 import { PublicPlatformProvider, usePublicPlatform, type IdentityScenario, type ListKey } from "./state";
+import { useBadges } from "../badges/hooks";
+import { badgeCatalog } from "../badges/catalog";
 
 export { PublicPlatformProvider, usePublicPlatform };
 export type { IdentityScenario };
@@ -278,6 +280,12 @@ export function NewbieTasksPage() {
   const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = Math.round((completedCount / tasks.length) * 100);
+  const { earned } = useBadges();
+
+  // 首个高级徽章引导
+  const firstHighBadge = badgeCatalog.find(b => b.id === "badge.newbie.completed");
+  const hasFirstHigh = earned.some(v => v.entry.id === "badge.newbie.completed");
+  const highBadgesEarned = earned.filter(v => v.entry.tier === "high").length;
 
   // 真实全部完成时（非 demo 强制）记录徽章触发点
   useEffect(() => {
@@ -308,6 +316,45 @@ export function NewbieTasksPage() {
           </div>
           <p className="text-xs text-text-secondary">完成全部新手任务可额外获得 20 学力值（暂定）。</p>
         </Card>
+
+        {/* 首个高级徽章引导 */}
+        {firstHighBadge && (
+          <Card className={`overflow-hidden border ${hasFirstHigh ? "border-success bg-success-bg" : "border-primary-container bg-primary-container"}`}>
+            <div className="flex items-start gap-3">
+              <span className={`flex size-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ${firstHighBadge.iconColor}`}>
+                {firstHighBadge.iconKey}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <Target size={14} className="text-text-brand" aria-hidden="true" />
+                  <span className="text-xs font-medium text-text-brand">首个高级徽章目标</span>
+                </div>
+                <h3 className="mt-1 text-sm font-bold text-text-primary">{firstHighBadge.name}</h3>
+                <p className="mt-0.5 text-xs leading-5 text-text-secondary">{firstHighBadge.description}</p>
+              </div>
+              {hasFirstHigh && <Check size={18} className="mt-1 shrink-0 text-success-text" aria-hidden="true" />}
+            </div>
+            {hasFirstHigh ? (
+              <p className="mt-3 text-xs font-medium text-success-text">已获得！继续探索更多课程和赛事徽章。</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-secondary">新手任务完成进度</span>
+                  <span className="font-semibold text-text-primary">{completedCount} / {tasks.length}</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-subtle">
+                  <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <p className="text-xs leading-5 text-text-secondary">
+                  完成全部 {tasks.length} 项新手任务即可获得「{firstHighBadge.name}」高级徽章，这是你成长路上的第一个里程碑。
+                </p>
+                {highBadgesEarned === 0 && (
+                  <p className="text-xs font-medium text-text-brand">完成新手任务后，你将解锁首个高级徽章，开启徽章收集之旅。</p>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
 
         <div className="space-y-2">
           {tasks.map(task => (

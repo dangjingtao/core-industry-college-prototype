@@ -1,10 +1,12 @@
-import { ChevronRight, HeartHandshake, Play, Users } from "lucide-react";
+import { ChevronRight, HeartHandshake, Play, Target, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, GhostButton, PageHeader, PublicShell, Section, SecondaryButton, StatusTag, StateBlock } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/state";
 import { welfareProjectById, welfareProjects, type WelfareProject, type WelfareStatus } from "./data";
+import { useBadges } from "../badges/hooks";
+import { badgeCatalog } from "../badges/catalog";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
@@ -67,8 +69,11 @@ export function WelfareListPage() {
   const returnTo = new URLSearchParams(location.search).get("returnTo") || undefined;
   const { welfareProjectStats, welfareParticipations } = useLongTermAssets();
   const [tab, setTab] = useState<"active" | "ended" | "mine">("active");
+  const { earned } = useBadges();
 
   const helpedIds = useMemo(() => new Set(welfareParticipations.map(record => record.projectId)), [welfareParticipations]);
+  const welfareBadges = badgeCatalog.filter(b => b.source === "welfare");
+  const earnedWelfareCount = earned.filter(v => v.entry.source === "welfare").length;
 
   const filtered = useMemo(() => {
     if (tab === "mine") return welfareProjects.filter(project => helpedIds.has(project.id));
@@ -81,6 +86,26 @@ export function WelfareListPage() {
       <PageHeader title="公益助力" backTo={returnTo ?? "/home"} />
       <div className="space-y-4 px-4 py-5">
         <p className="text-sm leading-5 text-text-secondary">观看公益倡导视频，为乡村教育、绿色消费等社会议题贡献一次助力。</p>
+
+        {/* 可获得徽章提示 */}
+        {welfareBadges.length > 0 && (
+          <Card className="border border-primary-container bg-primary-container">
+            <div className="flex items-center gap-2">
+              <Target size={14} className="text-text-brand" aria-hidden="true" />
+              <span className="text-xs font-medium text-text-brand">参与公益可解锁徽章</span>
+              <span className="ml-auto text-xs text-text-tertiary">{earnedWelfareCount}/{welfareBadges.length} 已获得</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {welfareBadges.map(badge => (
+                <Link key={badge.id} to="/me/badges" className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${earnedWelfareCount > 0 ? "bg-success-bg text-success-text" : "bg-surface text-text-secondary"}`}>
+                  <span className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${badge.iconColor}`}>{badge.iconKey}</span>
+                  <span className="font-medium">{badge.name}</span>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="flex gap-2">
           {[
             { key: "active", label: "进行中" },
