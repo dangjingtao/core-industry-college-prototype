@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePublicPlatform } from "../public-platform/state";
 import { useLongTermAssets } from "../long-term-assets/store";
-import { badgeCatalog } from "./catalog";
+import { badgeCatalog, isHighGrade, type BadgeGrade } from "./catalog";
 import { evaluateAll, type BadgeEvaluationContext } from "./engine";
 import { readEarnRecords, recordEarnedBadges, type BadgeEarnRecords } from "./earnRecord";
+import { trustedCertificates, evaluateCertificate, type CertificateProgress } from "./certificates";
 import { deriveSimulationMetrics, getSimulationSnapshot } from "../app-center/StartupShopStore";
 import { courses } from "../long-term-assets/data";
 import { workspaceData } from "../competition-workspace/data";
@@ -176,6 +177,14 @@ export function useBadges(): {
   locked: BadgeView[];
   totalCount: number;
   earnedCount: number;
+  /** 各品相已获得数量 */
+  gradeCounts: Record<BadgeGrade, number>;
+  /** 高品相（G3/G4）已获得数量 */
+  highGradeCount: number;
+  /** 低品相（G1/G2）已获得数量 */
+  lowGradeCount: number;
+  /** 可信证书进度列表 */
+  certificates: CertificateProgress[];
 } {
   const ctx = useBadgeEvaluationContext();
 
@@ -214,11 +223,36 @@ export function useBadges(): {
 
   const earned: BadgeView[] = [];
   const locked: BadgeView[] = [];
+  const gradeCounts: Record<BadgeGrade, number> = { G1: 0, G2: 0, G3: 0, G4: 0 };
   for (const entry of badgeCatalog) {
     const view: BadgeView = { entry, unlocked: earnedIds.has(entry.id), earnedAt: records[entry.id] };
-    if (view.unlocked) earned.push(view); else locked.push(view);
+    if (view.unlocked) {
+      earned.push(view);
+      gradeCounts[entry.grade]++;
+    } else {
+      locked.push(view);
+    }
   }
-  return { earned, locked, totalCount: badgeCatalog.length, earnedCount: earned.length };
+
+  const highGradeCount = gradeCounts.G3 + gradeCounts.G4;
+  const lowGradeCount = gradeCounts.G1 + gradeCounts.G2;
+
+  // 可信证书进度
+  const certificates = useMemo(
+    () => trustedCertificates.map(def => evaluateCertificate(def, ctx, earnedIds)),
+    [ctx, earnedIds],
+  );
+
+  return {
+    earned,
+    locked,
+    totalCount: badgeCatalog.length,
+    earnedCount: earned.length,
+    gradeCounts,
+    highGradeCount,
+    lowGradeCount,
+    certificates,
+  };
 }
 
 /** 暴露评估上下文，供徽章详情页计算子条件进度使用 */

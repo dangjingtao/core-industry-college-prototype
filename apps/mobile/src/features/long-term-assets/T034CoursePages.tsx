@@ -347,7 +347,7 @@ export function T034CourseAchievementPage() {
   const course = courseById(courseId);
   const navigate = useNavigate();
   const { learningFor, certificates, claimCertificate } = useLongTermAssets();
-  const { earned } = useBadges();
+  const { highGradeCount, lowGradeCount } = useBadges();
   const [savedStandard, setSavedStandard] = useState(false);
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
@@ -356,9 +356,9 @@ export function T034CourseAchievementPage() {
   const certificate = certificates.find(item => item.courseId === course.id);
   const passed = record.assessment === "passed";
 
-  // 统计各 tier 已获得徽章数量
-  const earnedHighCount = earned.filter(v => v.entry.tier === "high").length;
-  const earnedLowCount = earned.filter(v => v.entry.tier === "low").length;
+  // 品相计数（高品相 G3/G4，低品相 G1/G2）
+  const earnedHighCount = highGradeCount;
+  const earnedLowCount = lowGradeCount;
 
   // 可信证书兑换门槛
   const certReq = course.certBadgeRequirement;

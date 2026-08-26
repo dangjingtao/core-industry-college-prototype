@@ -63,7 +63,7 @@ import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, Profi
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
-import { BadgeDetailPage, BadgesPage } from "../features/badges/BadgePages";
+import { BadgeDetailPage, BadgesPage, CertificateDetailPage } from "../features/badges/BadgePages";
 import { AmbassadorStateProvider } from "@core/shared";
 import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorPromotionPage, CampusAmbassadorResultsPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorPages";
 import { CourseCheckpointQuizPage } from "../features/long-term-assets/CoursesPages";
@@ -223,6 +223,7 @@ export function App() {
               <Route path="/me/notifications/:notificationId" element={account(<NotificationDetailPage />)} />
               <Route path="/me/badges" element={account(<BadgesPage />)} />
               <Route path="/me/badges/:badgeId" element={account(<BadgeDetailPage />)} />
+              <Route path="/me/certificates/:certId" element={account(<CertificateDetailPage />)} />
               <Route path="/legal/user-agreement" element={<LegalPage kind="user" />} />
               <Route path="/legal/privacy" element={<LegalPage kind="privacy" />} />
               <Route path="/about" element={<AboutPage />} />

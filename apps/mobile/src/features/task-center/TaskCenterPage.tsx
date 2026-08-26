@@ -161,9 +161,9 @@ function CheckInBar() {
   const [showSuccess, setShowSuccess] = useState(false);
   const { earned } = useBadges();
 
-  // 打卡相关徽章
-  const checkinBadges = badgeCatalog.filter(b => b.source === "checkin");
-  const earnedCheckinBadges = earned.filter(v => v.entry.source === "checkin");
+  // 打卡相关徽章（sourceType=app-behavior 且规则为打卡类）
+  const checkinBadges = badgeCatalog.filter(b => b.rule.type.startsWith("checkin."));
+  const earnedCheckinBadges = earned.filter(v => v.entry.rule.type.startsWith("checkin."));
 
   const handleAdComplete = () => {
     setShowAd(false);

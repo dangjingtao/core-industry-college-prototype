@@ -72,8 +72,8 @@ export function WelfareListPage() {
   const { earned } = useBadges();
 
   const helpedIds = useMemo(() => new Set(welfareParticipations.map(record => record.projectId)), [welfareParticipations]);
-  const welfareBadges = badgeCatalog.filter(b => b.source === "welfare");
-  const earnedWelfareCount = earned.filter(v => v.entry.source === "welfare").length;
+  const welfareBadges = badgeCatalog.filter(b => b.rule.type === "welfare.helped");
+  const earnedWelfareCount = earned.filter(v => v.entry.rule.type === "welfare.helped").length;
 
   const filtered = useMemo(() => {
     if (tab === "mine") return welfareProjects.filter(project => helpedIds.has(project.id));

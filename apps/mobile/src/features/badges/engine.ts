@@ -1,5 +1,6 @@
-// 规则引擎：输入为「事件 / 派生事实」，输出为「应发放的徽章 id 集合」。
-// 注意：本模块不持有第二份 session / identities / 学力值 / 任务真相源，
+// 规则引擎：输入为「事实 / 派生事实」，输出为「应发放的徽章 id 集合」。
+// 模型已对齐 PRD 19：徽章使用 sourceType × grade 两维；可信证书独立为可信资产（见 certificates.ts）。
+// 本模块不持有第二份 session / identities / 学力值 / 任务真相源，
 // 只读取已有 store / hook 中的事实，然后做规则判定。
 
 import { isCourseCompleted } from "@core/shared";
@@ -45,8 +46,6 @@ export type BadgeEvaluationContext = {
   courseCheckpointPasses: Record<string, boolean>;
   // 课程关卡小测细粒度：{ [courseId]: { [checkpointId]: 是否通过 } }
   courseCheckpointSinglePasses: Record<string, Record<string, boolean>>;
-  // 各 tier 徽章已获得数量（第二阶段评估 cert 徽章时注入）
-  badgeTierCounts?: { high: number; low: number };
 };
 
 export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boolean {
@@ -99,35 +98,16 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
       return rule.rules.some(sub => evaluateBadge(sub, ctx));
     case "allOf":
       return rule.rules.every(sub => evaluateBadge(sub, ctx));
-    case "badge.tierCount":
-      return (ctx.badgeTierCounts?.[rule.tier as keyof NonNullable<BadgeEvaluationContext["badgeTierCounts"]>] ?? 0) >= rule.min;
     default:
       return false;
   }
 }
 
+/** 评估全部徽章（可信证书由 certificates.ts 单独判定，不混入本集合） */
 export function evaluateAll(catalog: BadgeCatalogEntry[], ctx: BadgeEvaluationContext): Set<string> {
   const result = new Set<string>();
-
-  // 第一阶段：评估非 cert 徽章（low / high）
-  const nonCert = catalog.filter(entry => entry.tier !== "cert");
-  for (const entry of nonCert) {
+  for (const entry of catalog) {
     if (evaluateBadge(entry.rule, ctx)) result.add(entry.id);
   }
-
-  // 统计各 tier 已获得数量
-  const tierCounts = { high: 0, low: 0 };
-  for (const entry of nonCert) {
-    if (result.has(entry.id) && entry.tier === "high") tierCounts.high++;
-    if (result.has(entry.id) && entry.tier === "low") tierCounts.low++;
-  }
-
-  // 第二阶段：用 tier 计数评估 cert 徽章（可信证书兑换）
-  const certEntries = catalog.filter(entry => entry.tier === "cert");
-  const ctxWithTierCounts: BadgeEvaluationContext = { ...ctx, badgeTierCounts: tierCounts };
-  for (const entry of certEntries) {
-    if (evaluateBadge(entry.rule, ctxWithTierCounts)) result.add(entry.id);
-  }
-
   return result;
 }

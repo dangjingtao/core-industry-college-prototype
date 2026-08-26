@@ -79,12 +79,12 @@ function BenefitListItem({ item, status }: { item: typeof benefits[number]; stat
 export function BenefitsPage() {
   const loggedIn = useAccountLoggedIn();
   const { benefitStatusFor } = useLongTermAssets();
-  const { earned } = useBadges();
+  const { highGradeCount, lowGradeCount } = useBadges();
   const { competitionId, query, backTo } = useBenefitSourceContext();
 
-  // 统计各 tier 徽章数量，用于大礼包门槛判断
-  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
-  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+  // 品相计数直接来自 useBadges（高品相 G3/G4，低品相 G1/G2）
+  const highBadgeCount = highGradeCount;
+  const lowBadgeCount = lowGradeCount;
 
   const eligibleBenefits = useMemo(() => benefits.filter(item => {
     if (item.isGiftPack) return false; // 大礼包单独展示
@@ -389,9 +389,9 @@ const giftPacks = benefits.filter(item => item.isGiftPack);
 
 export function GiftPacksPage() {
   const loggedIn = useAccountLoggedIn();
-  const { earned } = useBadges();
-  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
-  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+  const { highGradeCount, lowGradeCount } = useBadges();
+  const highBadgeCount = highGradeCount;
+  const lowBadgeCount = lowGradeCount;
 
   return <PublicShell showNavigation={false}>
     <PageHeader title="大礼包福利" subtitle="徽章达标即可领取，运营后台动态更新" backTo="/benefits" />
@@ -493,15 +493,15 @@ export function GiftPackDetailPage() {
   const accountAction = useAccountAction();
   const { giftPackId } = useParams();
   const pack = benefits.find(item => item.id === giftPackId && item.isGiftPack);
-  const { earned } = useBadges();
+  const { highGradeCount, lowGradeCount } = useBadges();
   const { claimBenefit, benefitStatusFor, profile } = useLongTermAssets();
   const [showClaimedDialog, setShowClaimedDialog] = useState(false);
 
   if (!pack) return <PublicShell showNavigation={false}><PageHeader title="大礼包不存在" backTo="/benefits/gift-packs" /></PublicShell>;
 
   const req = pack.badgeRequirement!;
-  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
-  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+  const highBadgeCount = highGradeCount;
+  const lowBadgeCount = lowGradeCount;
   const highMet = highBadgeCount >= req.highBadgeCount;
   const lowMet = lowBadgeCount >= req.lowBadgeCount;
   const canClaim = highMet && lowMet && loggedIn;

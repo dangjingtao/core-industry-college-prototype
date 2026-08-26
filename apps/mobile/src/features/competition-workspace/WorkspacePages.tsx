@@ -37,7 +37,7 @@ export function CompetitionLifecycleDetailPage() {
   const active = identity?.identityStatus === "active";
   const pendingOrRejected = identity?.identityStatus === "pending" || identity?.identityStatus === "rejected";
   const hasAssetHandoff = Boolean(identity) && (runtime.lifecycle === "ended" || identity?.identityStatus === "revoked");
-  const compBadges = badgeCatalog.filter(b => b.source === "competition");
+  const compBadges = badgeCatalog.filter(b => b.sourceType === "competition" || b.sourceType === "progress");
   const earnedCompBadges = compBadges.filter(b => earned.some(e => e.entry.id === b.id));
   const lockedCompBadges = compBadges.filter(b => !earned.some(e => e.entry.id === b.id));
   return <PublicShell showNavigation={false}><PageHeader title="赛事详情" subtitle="报名窗口与赛事阶段分开表达" backTo="/competitions" /><div className="space-y-6 px-4 py-5">
