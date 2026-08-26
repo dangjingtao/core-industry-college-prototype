@@ -3,6 +3,8 @@
 > 状态：已完成（中保真原型）
 > 日期：2026-08-25
 > 台账卡片：`docs/workbench/00-work-ledger.md` 中的 T041
+> 产品真相源：`docs/product/19-badge-ad-and-trusted-credential-prd.md`
+> 说明：本文件保留 2026-08-25 的原型实现记录；若实现语义与产品 PRD 冲突，以 PRD 已确认规则为准。
 
 ## 设计文档
 
