@@ -126,15 +126,14 @@ export function useGuideTasks(demoMode?: "empty" | "complete") {
       },
       {
         id: "checkin",
-        kind: "daily",
-        label: "每日打卡",
-        description: "登录 App 完成今日打卡，养成参赛学习习惯",
+        kind: "newbie",
+        label: "完成一次打卡",
+        description: "体验每日打卡，养成参赛学习的小习惯",
         icon: <CalendarCheck size={18} aria-hidden="true" />,
         iconClass: "bg-[#e9f6f1] text-[#247456]",
-        to: "/home",
-        action: "打卡",
+        to: "/tasks",
+        action: "去打卡",
         completed: checkedIn,
-        onAction: checkIn,
       },
       {
         id: "newbie-course",
@@ -179,11 +178,9 @@ export function useGuideTasks(demoMode?: "empty" | "complete") {
   }, [session, identities, learning, benefitStatusFor, checkedIn, checkIn, demoMode]);
 
   const newbieTasks = useMemo(() => tasks.filter(task => task.kind === "newbie"), [tasks]);
-  const dailyTasks = useMemo(() => tasks.filter(task => task.kind === "daily"), [tasks]);
   const newbieRemaining = newbieTasks.filter(task => !task.completed).length;
-  const dailyRemaining = dailyTasks.filter(task => !task.completed).length;
   const allCompleted = useMemo(() => tasks.every(task => task.completed), [tasks]);
-  return { tasks, newbieTasks, dailyTasks, newbieRemaining, dailyRemaining, allCompleted };
+  return { tasks, newbieTasks, newbieRemaining, allCompleted };
 }
 
 export function GuideTaskList({ tasks }: { tasks: GuideTask[] }) {
@@ -273,7 +270,7 @@ function NewbieDemoTools({ value, onChange }: { value?: "empty" | "complete"; on
 
 export function NewbieTasksPage() {
   const [demoMode, setDemoMode] = useState<"empty" | "complete" | undefined>(undefined);
-  const { newbieTasks: tasks, dailyTasks } = useGuideTasks(demoMode);
+  const { newbieTasks: tasks } = useGuideTasks(demoMode);
   const allCompleted = tasks.every(task => task.completed);
   const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
@@ -328,10 +325,6 @@ export function NewbieTasksPage() {
           <button type="button" onClick={resetRewards} className="text-xs text-text-tertiary underline active:text-text-secondary">重置奖励状态（演示用）</button>
           <NewbieDemoTools value={demoMode} onChange={setDemoMode} />
         </div>
-
-        <Section title="日常任务" subtitle="每天可重复完成的固定动作，与新手引导分开统计" action={<Link to="/tasks" className="text-sm font-medium text-text-brand">任务中心</Link>}>
-          <GuideTaskList tasks={dailyTasks} />
-        </Section>
       </div>
     </PublicShell>
   );
