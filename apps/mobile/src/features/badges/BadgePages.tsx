@@ -70,7 +70,7 @@ export function BadgesPage() {
 
   return (
     <PublicShell showNavigation={false}>
-      <PageHeader title="我的徽章" subtitle="长期成就，可作为可信能力证据" backTo="/me" />
+      <PageHeader title="徽章墙" subtitle="长期成就，可作为可信能力证据" backTo="/me" />
       <div className="space-y-5 px-4 py-5">
         <BadgeSummary earned={overriddenEarnedCount} total={totalCount} />
 

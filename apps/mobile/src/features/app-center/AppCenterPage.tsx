@@ -29,7 +29,7 @@ const groups: AppGroup[] = [
     entries: [
       { label: "课程学习", to: "/courses", icon: BookOpen, description: "平台课程与学习记录" },
       { label: "学力值", to: "/growth/score", icon: Coins, description: "学力值余额与明细" },
-      { label: "成就墙", to: "/me/badges", icon: Award, description: "长期成就与可信能力证据" },
+      { label: "徽章墙", to: "/me/badges", icon: Award, description: "长期成就与可信能力证据" },
       { label: "可信空间", to: "/assets", icon: FolderCheck, description: "经历、成绩与证书" },
     ],
   },
