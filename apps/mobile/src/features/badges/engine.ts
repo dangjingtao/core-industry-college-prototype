@@ -38,6 +38,10 @@ export type BadgeEvaluationContext = {
   simulationHasTraffic: boolean;
   // 课程关卡小测通过：{ [courseId]: 是否所有关卡均通过 }
   courseCheckpointPasses: Record<string, boolean>;
+  // 课程关卡小测细粒度：{ [courseId]: { [checkpointId]: 是否通过 } }
+  courseCheckpointSinglePasses: Record<string, Record<string, boolean>>;
+  // 各 tier 徽章已获得数量（第二阶段评估 cert 徽章时注入）
+  badgeTierCounts?: { high: number; low: number };
 };
 
 export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boolean {
@@ -66,6 +70,8 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
       return ctx.courseCheckpointPasses[rule.courseId] === true;
     case "course.checkpointPassedCount":
       return Object.values(ctx.courseCheckpointPasses).filter(Boolean).length >= rule.min;
+    case "course.checkpointSinglePassed":
+      return ctx.courseCheckpointSinglePasses[rule.courseId]?.[rule.checkpointId] === true;
     case "competition.registered":
       return ctx.hasCompetitionIdentity;
     case "competition.ended":
@@ -80,6 +86,8 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
       return rule.rules.some(sub => evaluateBadge(sub, ctx));
     case "allOf":
       return rule.rules.every(sub => evaluateBadge(sub, ctx));
+    case "badge.tierCount":
+      return (ctx.badgeTierCounts?.[rule.tier as keyof NonNullable<BadgeEvaluationContext["badgeTierCounts"]>] ?? 0) >= rule.min;
     default:
       return false;
   }
@@ -87,8 +95,26 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
 
 export function evaluateAll(catalog: BadgeCatalogEntry[], ctx: BadgeEvaluationContext): Set<string> {
   const result = new Set<string>();
-  for (const entry of catalog) {
+
+  // 第一阶段：评估非 cert 徽章（low / high）
+  const nonCert = catalog.filter(entry => entry.tier !== "cert");
+  for (const entry of nonCert) {
     if (evaluateBadge(entry.rule, ctx)) result.add(entry.id);
   }
+
+  // 统计各 tier 已获得数量
+  const tierCounts = { high: 0, low: 0 };
+  for (const entry of nonCert) {
+    if (result.has(entry.id) && entry.tier === "high") tierCounts.high++;
+    if (result.has(entry.id) && entry.tier === "low") tierCounts.low++;
+  }
+
+  // 第二阶段：用 tier 计数评估 cert 徽章（可信证书兑换）
+  const certEntries = catalog.filter(entry => entry.tier === "cert");
+  const ctxWithTierCounts: BadgeEvaluationContext = { ...ctx, badgeTierCounts: tierCounts };
+  for (const entry of certEntries) {
+    if (evaluateBadge(entry.rule, ctxWithTierCounts)) result.add(entry.id);
+  }
+
   return result;
 }

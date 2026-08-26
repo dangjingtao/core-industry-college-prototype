@@ -50,10 +50,17 @@ export type Course = {
   certificateId?: string;
   category: Exclude<CourseCategory, "all">;
   cover: string;
-  /** 关卡小测节点（M2：2 门示范课程预置） */
+  /** 关卡小测节点：每个学习节点对应一个小测，通过后获得对应高级徽章 */
   checkpoints?: CourseCheckpoint[];
-  /** 结业小考占位（M2：所有 prebuilt 课程预置但状态为 draft） */
+  /** 结业小考：学完全部内容后的综合考试，通过后获得结业高级徽章 */
   finalExam?: CourseFinalExam;
+  /** 可信证书兑换门槛：需要达到的高级/低级徽章数量 */
+  certBadgeRequirement?: {
+    /** 需要的高级徽章数量（含课程节点 + 结业，可来自任意课程） */
+    highBadgeCount: number;
+    /** 需要的低级徽章数量（可来自任意方面：签到、公益、广告等） */
+    lowBadgeCount: number;
+  };
 };
 
 export type BenefitSource =
@@ -142,21 +149,61 @@ export const courses: Course[] = [
       {
         id: "data-analytics-cp-1",
         title: "关卡一 · 指标与问题",
-        unlockAt: 0.34,
+        unlockAt: 0.17,
         questions: [
-          { id: "q1", prompt: "在电商业务中，转化率最常被定义为？", options: ["访客数 ÷ 下单数", "下单数 ÷ 访客数", "支付数 ÷ 访客数", "加购数 ÷ 访客数"], answer: 1 },
+          { id: "q1", prompt: "在电商业务中，「转化率」最常被定义为？", options: ["访客数 ÷ 下单数", "下单数 ÷ 访客数", "支付数 ÷ 访客数", "加购数 ÷ 访客数"], answer: 1 },
           { id: "q2", prompt: "拆解业务问题时，下列哪个优先级最低？", options: ["北极星指标", "一级漏斗", "二级漏斗", "页面按钮颜色"], answer: 3 },
           { id: "q3", prompt: "下面哪个指标最适合作为「复盘」切入点？", options: ["UV", "GMV", "退款率", "跳出率"], answer: 1 },
         ],
       },
       {
         id: "data-analytics-cp-2",
-        title: "关卡二 · 漏斗与复盘",
-        unlockAt: 0.67,
+        title: "关卡二 · 数据整理",
+        unlockAt: 0.34,
+        questions: [
+          { id: "q1", prompt: "数据清洗中，「去重」最核心的目的是？", options: ["减少文件体积", "避免同一用户被重复计算", "让数据更好看", "减少列数"], answer: 1 },
+          { id: "q2", prompt: "下列哪种数据源属于「行为数据」？", options: ["用户注册信息", "商品价格", "页面点击记录", "库存数量"], answer: 2 },
+          { id: "q3", prompt: "多源数据整合时，最重要的第一步是？", options: ["直接合并", "确认统一的用户标识 key", "挑最大的表做主表", "先做可视化"], answer: 1 },
+        ],
+      },
+      {
+        id: "data-analytics-cp-3",
+        title: "关卡三 · 漏斗分析",
+        unlockAt: 0.5,
         questions: [
           { id: "q1", prompt: "漏斗分析的核心目的是？", options: ["找到最大流失环节", "看绝对数值大小", "看 ROI", "对比行业均值"], answer: 0 },
-          { id: "q2", prompt: "复盘时，下列哪种说法更可取？", options: ["凭印象总结", "用具体数字 + 假设 + 验证", "只看结果", "只挑好的一面"], answer: 1 },
-          { id: "q3", prompt: "GMV 突增后，下列哪个验证最有价值？", options: ["是不是单次活动", "看 UV 是否同步涨", "看客服投诉", "看广告占比"], answer: 0 },
+          { id: "q2", prompt: "一个典型电商转化漏斗的正确顺序是？", options: ["支付 → 下单 → 加购 → 浏览", "浏览 → 加购 → 下单 → 支付", "加购 → 浏览 → 下单 → 支付", "下单 → 浏览 → 加购 → 支付"], answer: 1 },
+          { id: "q3", prompt: "某环节转化率异常低，首先应该？", options: ["立刻优化该环节 UI", "确认数据口径是否变化", "直接加大投放", "怀疑系统 bug"], answer: 1 },
+        ],
+      },
+      {
+        id: "data-analytics-cp-4",
+        title: "关卡四 · 复盘表达",
+        unlockAt: 0.67,
+        questions: [
+          { id: "q1", prompt: "复盘时，下列哪种说法更可取？", options: ["凭印象总结", "用具体数字 + 假设 + 验证", "只看结果", "只挑好的一面"], answer: 1 },
+          { id: "q2", prompt: "一份好的数据复盘报告，最重要的是？", options: ["图表多", "结论可落地行动", "页数多", "术语专业"], answer: 1 },
+          { id: "q3", prompt: "「归因」指的是？", options: ["把数据归档", "找到结果背后的关键原因", "给数据起名字", "数据备份"], answer: 1 },
+        ],
+      },
+      {
+        id: "data-analytics-cp-5",
+        title: "关卡五 · 练习与考试",
+        unlockAt: 0.84,
+        questions: [
+          { id: "q1", prompt: "GMV 突增后，下列哪个验证最有价值？", options: ["是不是单次活动", "看 UV 是否同步涨", "看客服投诉", "看广告占比"], answer: 0 },
+          { id: "q2", prompt: "A/B 实验的核心前提是？", options: ["两组用户数量完全相等", "两组用户随机分配，除变量外其他条件一致", "必须在同一天完成", "必须有 10 万以上用户"], answer: 1 },
+          { id: "q3", prompt: "下列哪个维度最适合用于「用户分层」？", options: ["用户头像颜色", "用户注册渠道 + 消费频次", "用户手机型号", "用户昵称长度"], answer: 1 },
+        ],
+      },
+      {
+        id: "data-analytics-cp-6",
+        title: "关卡六 · 成果确认",
+        unlockAt: 1.0,
+        questions: [
+          { id: "q1", prompt: "「数据驱动」最准确的理解是？", options: ["只看数字做决策", "用数据验证假设、辅助判断，而非替代思考", "数据越多越好", "只有拿到完美数据才能行动"], answer: 1 },
+          { id: "q2", prompt: "留存分析最关注的是？", options: ["新用户总量", "用户在一段时间后的回访比例", "用户地域分布", "用户设备类型"], answer: 1 },
+          { id: "q3", prompt: "课程结束后，学习成果会保存在哪里？", options: ["只在本课程内", "可信空间的长期学习记录", "本地缓存，清理就没了", "只在赛事里"], answer: 1 },
         ],
       },
     ],
@@ -175,6 +222,10 @@ export const courses: Course[] = [
         { id: "q7", prompt: "A/B 实验的核心前提是？", options: ["两组用户数量完全相等", "两组用户随机分配，除变量外其他条件一致", "必须在同一天完成", "必须有 10 万以上用户"], answer: 1 },
         { id: "q8", prompt: "「数据驱动」最准确的理解是？", options: ["只看数字做决策", "用数据验证假设、辅助判断，而非替代思考", "数据越多越好", "只有拿到完美数据才能行动"], answer: 1 },
       ],
+    },
+    certBadgeRequirement: {
+      highBadgeCount: 5,
+      lowBadgeCount: 3,
     },
   },
   {
@@ -274,22 +325,32 @@ export const courses: Course[] = [
     checkpoints: [
       {
         id: "newbie-essential-cp-1",
-        title: "关卡一 · App 使用",
+        title: "关卡一 · App 使用指南",
         unlockAt: 0.34,
         questions: [
-          { id: "q1", prompt: "学生主档在哪一类入口下？", options: ["首页", "赛事", "我的", "机会"], answer: 2 },
-          { id: "q2", prompt: "App 内「每日打卡」入口主要在？", options: ["首页", "赛事", "任务中心", "应用中心"], answer: 2 },
-          { id: "q3", prompt: "下面哪一项不是长期资产？", options: ["可信空间证书", "赛事身份", "长期简历", "公益助力记录"], answer: 1 },
+          { id: "q1", prompt: "学生主档和长期资产在 App 的哪一类入口下管理？", options: ["首页", "赛事", "我的", "机会"], answer: 2 },
+          { id: "q2", prompt: "关于创赛工坊，下列哪种说法是正确的？", options: ["它是全局 AI 工具箱，任何地方都能用", "它属于具体赛事上下文，在赛事 workspace 内使用", "它只用来做海报生成", "它可以直接替你报名比赛"], answer: 1 },
+          { id: "q3", prompt: "下列哪一项属于「长期资产」？", options: ["每日打卡记录", "赛事身份、证书、学习记录、简历", "临时购物车", "未保存的草稿"], answer: 1 },
         ],
       },
       {
         id: "newbie-essential-cp-2",
-        title: "关卡二 · AI 工具与创赛报名",
+        title: "关卡二 · AI 工具快速入门",
         unlockAt: 0.67,
         questions: [
-          { id: "q1", prompt: "创赛工坊属于？", options: ["全局 AI 工具", "具体赛事上下文能力", "第三方应用", "企业资源"], answer: 1 },
-          { id: "q2", prompt: "下列哪项描述符合「报名结果回流」？", options: ["报名后状态自动写入 identities[]", "PC 报名与 App 完全独立", "App 上有一份完整报名表", "报名只保留在 PC"], answer: 0 },
-          { id: "q3", prompt: "可信证书的可解释规则包含？", options: ["必修课程 + 多枚徽章 + 小测", "只看 AI 评分", "只看企业打分", "只看校内成绩"], answer: 0 },
+          { id: "q1", prompt: "使用 AI 辅助写作时，最关键的一步是？", options: ["让 AI 直接写完全文", "先明确自己的目标和观点，再让 AI 辅助", "完全照搬 AI 输出", "只用 AI 凑字数"], answer: 1 },
+          { id: "q2", prompt: "下列哪种场景最适合用 AI 图片生成？", options: ["需要精确品牌 logo 时", "需要手绘风格的创意草图时", "需要真实证件照时", "需要精确的工程图纸时"], answer: 1 },
+          { id: "q3", prompt: "AI 生成内容的正确态度是？", options: ["AI 说的都是对的", "AI 是辅助工具，需要人来判断和把关", "AI 可以替代所有思考", "AI 没有任何价值"], answer: 1 },
+        ],
+      },
+      {
+        id: "newbie-essential-cp-3",
+        title: "关卡三 · 报名第一场创赛",
+        unlockAt: 1.0,
+        questions: [
+          { id: "q1", prompt: "关于一个账号与多个赛事身份的关系，正确的是？", options: ["一个账号只能有一场赛事身份", "一个账号可以关联多个赛事身份，赛事结束后资产仍然保留", "赛事结束后账号就注销了", "赛事身份等同于账号本身"], answer: 1 },
+          { id: "q2", prompt: "「报名结果回流」指的是什么？", options: ["PC 报名与 App 完全独立，互不关联", "报名后状态自动写入 identities[]，App 侧可查看赛事身份", "App 上有一份完整报名表需要重新填", "报名只保留在 PC 端"], answer: 1 },
+          { id: "q3", prompt: "三创赛报名成功后，在哪里查看赛事身份？", options: ["只在 PC 端", "App「我的」→ 赛事身份 / 创赛工坊入口", "只在短信通知里", "需要联系客服查询"], answer: 1 },
         ],
       },
     ],
@@ -306,6 +367,10 @@ export const courses: Course[] = [
         { id: "q5", prompt: "关于一个账号与多个赛事身份的关系，正确的是？", options: ["一个账号只能有一场赛事身份", "一个账号可以关联多个赛事身份，赛事结束后资产仍然保留", "赛事结束后账号就注销了", "赛事身份等同于账号本身"], answer: 1 },
         { id: "q6", prompt: "「报名结果回流」指的是什么？", options: ["PC 报名与 App 完全独立，互不关联", "报名后状态自动写入 identities[]，App 侧可查看赛事身份", "App 上有一份完整报名表需要重新填", "报名只保留在 PC 端"], answer: 1 },
       ],
+    },
+    certBadgeRequirement: {
+      highBadgeCount: 3,
+      lowBadgeCount: 2,
     },
   },
 ];

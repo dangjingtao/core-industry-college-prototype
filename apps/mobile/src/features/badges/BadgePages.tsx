@@ -70,21 +70,90 @@ export function BadgesPage() {
   const byTier: Record<BadgeTier, BadgeView[]> = { high: [], low: [], cert: [] };
   for (const view of overriddenViews) byTier[view.entry.tier].push(view);
 
+  // 高级徽章进一步拆分：通用成就 vs 按课程分组的课程成就
+  const highGeneral = byTier.high.filter(view => !view.entry.courseId);
+  const highByCourse: Record<string, BadgeView[]> = {};
+  for (const view of byTier.high) {
+    if (!view.entry.courseId) continue;
+    const cid = view.entry.courseId;
+    if (!highByCourse[cid]) highByCourse[cid] = [];
+    highByCourse[cid].push(view);
+  }
+  // 课程内按 courseOrder 排序
+  for (const cid of Object.keys(highByCourse)) {
+    highByCourse[cid].sort((a, b) => (a.entry.courseOrder ?? 0) - (b.entry.courseOrder ?? 0));
+  }
+
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title="徽章墙" subtitle="长期成就，可作为可信能力证据" backTo="/me" />
       <div className="space-y-5 px-4 py-5">
         <BadgeSummary earned={overriddenEarnedCount} total={totalCount} />
 
-        {tiers.map(tier => byTier[tier].length > 0 && (
-          <Section key={tier} title={tier === "high" ? "高级徽章" : tier === "low" ? "低级徽章" : "可信证书"} subtitle={tier === "high" ? "代表真实能力，长期有效" : tier === "low" ? "高频行为与日常小任务" : "由多张徽章与必修课程组成"}>
+        {/* 高级徽章：通用成就 */}
+        {highGeneral.length > 0 && (
+          <Section title="高级徽章 · 通用成就" subtitle="代表真实能力，长期有效">
             <div className="grid grid-cols-3 gap-3">
-              {byTier[tier].map(view => (
+              {highGeneral.map(view => (
                 <BadgeCard key={view.entry.id} view={view} to={`/me/badges/${view.entry.id}`} />
               ))}
             </div>
           </Section>
-        ))}
+        )}
+
+        {/* 高级徽章：按课程分组 */}
+        {Object.keys(highByCourse).length > 0 && (
+          <Section title="高级徽章 · 课程节点" subtitle="每通过一个学习节点获得一枚">
+            <div className="space-y-4">
+              {Object.entries(highByCourse).map(([courseId, badges]) => {
+                const course = courseById(courseId);
+                const earnedInCourse = badges.filter(b => b.unlocked).length;
+                return (
+                  <div key={courseId} className="rounded-container border border-border-subtle bg-surface p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-text-primary">{course?.title ?? courseId}</h4>
+                        <p className="mt-0.5 text-xs text-text-tertiary">
+                          已获得 {earnedInCourse} / {badges.length} 枚
+                        </p>
+                      </div>
+                      <Link to={`/courses/${courseId}`} className="flex items-center gap-0.5 text-xs text-text-brand">
+                        去学习 <ChevronRight size={12} aria-hidden="true" />
+                      </Link>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {badges.map(view => (
+                        <BadgeCard key={view.entry.id} view={view} to={`/me/badges/${view.entry.id}`} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
+        {/* 低级徽章 */}
+        {byTier.low.length > 0 && (
+          <Section title="低级徽章" subtitle="高频行为与日常小任务">
+            <div className="grid grid-cols-3 gap-3">
+              {byTier.low.map(view => (
+                <BadgeCard key={view.entry.id} view={view} to={`/me/badges/${view.entry.id}`} />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* 可信证书 */}
+        {byTier.cert.length > 0 && (
+          <Section title="可信证书" subtitle="由多张徽章与必修课程组成">
+            <div className="grid grid-cols-3 gap-3">
+              {byTier.cert.map(view => (
+                <BadgeCard key={view.entry.id} view={view} to={`/me/badges/${view.entry.id}`} />
+              ))}
+            </div>
+          </Section>
+        )}
 
         <details className="ml-auto w-fit rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
           <summary className="cursor-pointer font-medium text-text-secondary">原型状态（演示用）</summary>
@@ -128,7 +197,15 @@ function BadgeDetailPage() {
   }
 
   const { entry, unlocked } = view;
-  const subConditions = flattenConditions(entry.rule, ctx);
+
+  // 统计各 tier 已获得徽章数量（用于 cert 徽章的兑换进度展示）
+  const allViews = [...earned, ...locked];
+  const tierCounts = {
+    high: allViews.filter(v => v.unlocked && v.entry.tier === "high").length,
+    low: allViews.filter(v => v.unlocked && v.entry.tier === "low").length,
+  };
+
+  const subConditions = flattenConditions(entry.rule, ctx, tierCounts);
   const completedCount = subConditions.filter(c => c.met).length;
   const progress = subConditions.length > 0 ? Math.round((completedCount / subConditions.length) * 100) : (unlocked ? 100 : 0);
   const actionInfo = getActionInfo(entry);
@@ -236,22 +313,26 @@ function BadgeDetailPage() {
 
 type SubCondition = { label: string; detail?: string; met: boolean };
 
-function flattenConditions(rule: BadgeRule, ctx: ReturnType<typeof useBadgeEvaluationContext>): SubCondition[] {
+function flattenConditions(
+  rule: BadgeRule,
+  ctx: ReturnType<typeof useBadgeEvaluationContext>,
+  tierCounts: { high: number; low: number },
+): SubCondition[] {
+  const ctxWithTier = { ...ctx, badgeTierCounts: tierCounts };
   switch (rule.type) {
     case "allOf":
-      return rule.rules.flatMap(sub => flattenConditions(sub, ctx));
+      return rule.rules.flatMap(sub => flattenConditions(sub, ctxWithTier, tierCounts));
     case "anyOf":
-      // anyOf 作为一个整体展示，内部子项不展开
       return [{
         label: rule.rules.map(r => describeRuleSimple(r)).join(" 或 "),
         detail: "满足其中任一条件即可",
-        met: evaluateBadge(rule, ctx),
+        met: evaluateBadge(rule, ctxWithTier),
       }];
     default:
       return [{
         label: describeRuleSimple(rule),
-        detail: progressDetail(rule, ctx),
-        met: evaluateBadge(rule, ctx),
+        detail: progressDetail(rule, ctx, tierCounts),
+        met: evaluateBadge(rule, ctxWithTier),
       }];
   }
 }
@@ -280,13 +361,14 @@ function describeRuleSimple(r: BadgeRule): string {
     case "simulation.level": return `小店等级达到 Lv.${r.min}`;
     case "simulation.stockAndTraffic": return "同时完成进货与拉客";
     case "benefit.claimed": return `领取 ${r.min} 份创赛福利`;
+    case "badge.tierCount": return `获得 ${r.min} 枚${r.tier === "high" ? "高级" : "低级"}徽章`;
     case "anyOf": return "满足任一条件";
     case "allOf": return "满足全部条件";
     default: return "按规则自动判定";
   }
 }
 
-function progressDetail(r: BadgeRule, ctx: ReturnType<typeof useBadgeEvaluationContext>): string | undefined {
+function progressDetail(r: BadgeRule, ctx: ReturnType<typeof useBadgeEvaluationContext>, tierCounts: { high: number; low: number }): string | undefined {
   switch (r.type) {
     case "checkin.streak": return `当前连续 ${ctx.checkinStreak} 天`;
     case "ad.watched": return `当前累计 ${ctx.adWatchedCount} 次`;
@@ -295,6 +377,7 @@ function progressDetail(r: BadgeRule, ctx: ReturnType<typeof useBadgeEvaluationC
     case "course.completedCount": return `当前已完成 ${ctx.learning.filter(rec => rec.progress >= 100 && rec.assessment === "passed").length} 门`;
     case "course.checkpointPassedCount": return `当前通过 ${Object.values(ctx.courseCheckpointPasses).filter(Boolean).length} 门`;
     case "simulation.level": return ctx.simulationLevel > 0 ? `当前 Lv.${ctx.simulationLevel}` : "尚未开始";
+    case "badge.tierCount": return `当前已获得 ${tierCounts[r.tier as "high" | "low"]} 枚`;
     default: return undefined;
   }
 }

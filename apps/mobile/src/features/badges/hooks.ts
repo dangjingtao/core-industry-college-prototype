@@ -114,33 +114,51 @@ function useResumeEdited() {
   return edited;
 }
 
-function useCourseCheckpointPasses(): Record<string, boolean> {
-  const [passes, setPasses] = useState<Record<string, boolean>>(() => {
-    const out: Record<string, boolean> = {};
-    for (const course of courses) {
-      if (!course.checkpoints || course.checkpoints.length === 0) continue;
-      out[course.id] = course.checkpoints.every(cp => {
-        try { return localStorage.getItem(`checkpoint-passed-${course.id}-${cp.id}`) === "1"; } catch { return false; }
-      });
-    }
-    return out;
-  });
+/**
+ * 读取所有课程关卡小测的通过状态：
+ * courseCheckpointSinglePasses[courseId][checkpointId] = true/false
+ * 用于支持单节点徽章判定。
+ */
+function useCourseCheckpointPasses(): {
+  /** 每门课是否所有关卡都通过（粗粒度，兼容旧规则） */
+  byCourse: Record<string, boolean>;
+  /** 每门课每个关卡是否通过（细粒度，支持单节点徽章） */
+  byCheckpoint: Record<string, Record<string, boolean>>;
+} {
+  const [state, setState] = useState(() => computeCheckpointPasses());
   useEffect(() => {
-    const compute = () => {
-      const out: Record<string, boolean> = {};
-      for (const course of courses) {
-        if (!course.checkpoints || course.checkpoints.length === 0) continue;
-        out[course.id] = course.checkpoints.every(cp => {
-          try { return localStorage.getItem(`checkpoint-passed-${course.id}-${cp.id}`) === "1"; } catch { return false; }
-        });
-      }
-      setPasses(out);
-    };
+    const compute = () => setState(computeCheckpointPasses());
     const onStorage = () => compute();
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
-  return passes;
+  return state;
+}
+
+function computeCheckpointPasses(): {
+  byCourse: Record<string, boolean>;
+  byCheckpoint: Record<string, Record<string, boolean>>;
+} {
+  const byCheckpoint: Record<string, Record<string, boolean>> = {};
+  const byCourse: Record<string, boolean> = {};
+  for (const course of courses) {
+    if (!course.checkpoints || course.checkpoints.length === 0) continue;
+    const cpMap: Record<string, boolean> = {};
+    let allPassed = true;
+    for (const cp of course.checkpoints) {
+      try {
+        const passed = localStorage.getItem(`checkpoint-passed-${course.id}-${cp.id}`) === "1";
+        cpMap[cp.id] = passed;
+        if (!passed) allPassed = false;
+      } catch {
+        cpMap[cp.id] = false;
+        allPassed = false;
+      }
+    }
+    byCheckpoint[course.id] = cpMap;
+    byCourse[course.id] = allPassed;
+  }
+  return { byCourse, byCheckpoint };
 }
 
 export type BadgeView = {
@@ -194,6 +212,7 @@ export function useBadgeEvaluationContext(): BadgeEvaluationContext {
     simulationLevel: sim.level,
     simulationHasStock: sim.stock > 0,
     simulationHasTraffic: sim.traffic > 0,
-    courseCheckpointPasses,
-  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses]);
+    courseCheckpointPasses: courseCheckpointPasses.byCourse,
+    courseCheckpointSinglePasses: courseCheckpointPasses.byCheckpoint,
+  }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses.byCourse, courseCheckpointPasses.byCheckpoint]);
 }

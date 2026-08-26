@@ -6,10 +6,11 @@ import { CertificateDetailTrustedPage } from "../trust/TrustPages";
 import { courseById, courses, type Course } from "./data";
 import { ProgressBar, SourceLine, useAccountLoggedIn } from "./shared";
 import { useLongTermAssets } from "./store";
+import { useBadges } from "../badges/hooks";
 
 type CredentialTier = "none" | "standard" | "trusted";
 
-const trustedCourseIds = new Set(["ai-ecommerce-agent"]);
+const trustedCourseIds = new Set(["ai-ecommerce-agent", "data-analytics", "newbie-essential"]);
 
 function credentialTier(course: Course): CredentialTier {
   if (trustedCourseIds.has(course.id)) return "trusted";
@@ -346,6 +347,7 @@ export function T034CourseAchievementPage() {
   const course = courseById(courseId);
   const navigate = useNavigate();
   const { learningFor, certificates, claimCertificate } = useLongTermAssets();
+  const { earned } = useBadges();
   const [savedStandard, setSavedStandard] = useState(false);
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
@@ -353,6 +355,16 @@ export function T034CourseAchievementPage() {
   const record = learningFor(course.id);
   const certificate = certificates.find(item => item.courseId === course.id);
   const passed = record.assessment === "passed";
+
+  // 统计各 tier 已获得徽章数量
+  const earnedHighCount = earned.filter(v => v.entry.tier === "high").length;
+  const earnedLowCount = earned.filter(v => v.entry.tier === "low").length;
+
+  // 可信证书兑换门槛
+  const certReq = course.certBadgeRequirement;
+  const canClaimTrusted = certReq
+    ? earnedHighCount >= certReq.highBadgeCount && earnedLowCount >= certReq.lowBadgeCount
+    : passed;
 
   return <PublicShell showNavigation={false}>
     <PageHeader title="课程成果" backTo={`/courses/${course.id}`} />
@@ -363,7 +375,74 @@ export function T034CourseAchievementPage() {
 
       {tier === "standard" && <Card className="border border-border-subtle"><div className="flex items-start gap-3"><Award size={20} className="shrink-0 text-text-secondary" aria-hidden="true" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-text-primary">普通电子结业证书</h2><StatusTag tone={passed ? "success" : "neutral"}>{passed ? "可保存" : "通过考试后生成"}</StatusTag></div><p className="mt-1 text-sm leading-5 text-text-secondary">这是课程结业证明，不提供可信验真，也不使用可信证书的强视觉与签发流程。</p>{passed && <SecondaryButton className="mt-3 w-full" onClick={() => setSavedStandard(true)}>{savedStandard ? "已保存普通电子证书" : "保存普通电子证书"}</SecondaryButton>}</div></div></Card>}
 
-      {tier === "trusted" && <Card className="border border-warning/30 bg-warning-bg/50"><div className="flex items-start gap-3"><ShieldCheck size={22} className="shrink-0 text-warning-text" aria-hidden="true" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-text-primary">可信证书</h2><StatusTag tone="warning">高价值课程</StatusTag></div><p className="mt-1 text-sm leading-5 text-text-secondary">只有通过考核后才进入签发 / 领取流程。可信证书有真实成本，因此不会覆盖所有课程。</p>{passed && certificate?.status === "claimable" && <Button className="mt-3 w-full" onClick={() => claimCertificate(certificate.id)}>领取可信证书</Button>}{passed && certificate?.status === "claimed" && <Button className="mt-3 w-full" onClick={() => navigate(`/assets/certificates/${certificate.id}`)}>查看可信证书与验真</Button>}</div></div></Card>}
+      {tier === "trusted" && certReq && (
+        <Card className="border border-warning/30 bg-warning-bg/50">
+          <div className="flex items-start gap-3">
+            <ShieldCheck size={22} className="shrink-0 text-warning-text" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-semibold text-text-primary">可信证书</h2>
+                <StatusTag tone="warning">徽章兑换</StatusTag>
+              </div>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">
+                累计获得足够数量的徽章后，即可兑换本课程的可信证书。高级徽章来自课程学习节点，低级徽章可来自日常打卡、公益助力等任意方面。
+              </p>
+
+              {/* 兑换门槛进度 */}
+              <div className="mt-3 space-y-3 rounded-control bg-white/60 p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">
+                    高级徽章 <span className="text-xs text-text-tertiary">（课程节点 / 结业等）</span>
+                  </span>
+                  <span className={`font-semibold ${earnedHighCount >= certReq.highBadgeCount ? "text-success-text" : "text-text-primary"}`}>
+                    {earnedHighCount} / {certReq.highBadgeCount}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-subtle">
+                  <div
+                    className="h-full rounded-full bg-success"
+                    style={{ width: `${Math.min(100, (earnedHighCount / certReq.highBadgeCount) * 100)}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">
+                    低级徽章 <span className="text-xs text-text-tertiary">（打卡 / 公益 / 广告等）</span>
+                  </span>
+                  <span className={`font-semibold ${earnedLowCount >= certReq.lowBadgeCount ? "text-success-text" : "text-text-primary"}`}>
+                    {earnedLowCount} / {certReq.lowBadgeCount}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-subtle">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${Math.min(100, (earnedLowCount / certReq.lowBadgeCount) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {canClaimTrusted && certificate?.status === "claimable" && (
+                <Button className="mt-3 w-full" onClick={() => claimCertificate(certificate.id)}>
+                  领取可信证书
+                </Button>
+              )}
+              {canClaimTrusted && certificate?.status === "claimed" && (
+                <Button className="mt-3 w-full" onClick={() => navigate(`/assets/certificates/${certificate.id}`)}>
+                  查看可信证书与验真
+                </Button>
+              )}
+              {!canClaimTrusted && (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <SecondaryButton onClick={() => navigate("/me/badges")}>去徽章墙看看</SecondaryButton>
+                  <Button onClick={() => navigate(`/courses/${course.id}/assessment`)} disabled={!passed && record.progress < 100}>
+                    {passed ? "继续攒徽章" : "先通过考试"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {tier !== "none" && !passed && <Button className="w-full" onClick={() => navigate(`/courses/${course.id}/assessment`)}>去参加考试</Button>}
       <SecondaryButton className="w-full" onClick={() => navigate("/assets/learning")}>查看我的学习成果</SecondaryButton>

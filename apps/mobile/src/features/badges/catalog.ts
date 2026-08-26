@@ -26,11 +26,12 @@ export type BadgeRule =
   | { type: "welfare.helped"; min: number }
   | { type: "profile.complete" }
   | { type: "resume.firstEdit" }
-  // 课程
+  // 课程学习
   | { type: "course.completed"; courseId: string }
   | { type: "course.completedCount"; min: number }
   | { type: "course.checkpointPassed"; courseId: string }
   | { type: "course.checkpointPassedCount"; min: number }
+  | { type: "course.checkpointSinglePassed"; courseId: string; checkpointId: string }
   // 赛事
   | { type: "competition.registered" }
   | { type: "competition.ended" }
@@ -41,7 +42,9 @@ export type BadgeRule =
   | { type: "benefit.claimed"; min: number }
   // 组合
   | { type: "anyOf"; rules: BadgeRule[] }
-  | { type: "allOf"; rules: BadgeRule[] };
+  | { type: "allOf"; rules: BadgeRule[] }
+  // 徽章数量门槛（用于可信证书兑换）
+  | { type: "badge.tierCount"; tier: BadgeTier; min: number };
 
 export type BadgeCatalogEntry = {
   id: string;
@@ -54,6 +57,10 @@ export type BadgeCatalogEntry = {
   rule: BadgeRule;
   /** 展示用：达成该徽章后可获得什么（标注待 F04 Decision A 暂定） */
   rewardHint: string;
+  /** 课程相关徽章：关联的课程 ID，用于在徽章墙按课程分组 */
+  courseId?: string;
+  /** 课程相关徽章：在课程内的序号（1, 2, 3...），用于排序 */
+  courseOrder?: number;
 };
 
 export const badgeCatalog: BadgeCatalogEntry[] = [
@@ -181,6 +188,154 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     rule: { type: "course.checkpointPassedCount", min: 3 },
     rewardHint: "",
   },
+
+  // -------- 数据分析基础：课程节点徽章（6 枚）+ 结业徽章（1 枚） --------
+  {
+    id: "badge.course.da.cp1",
+    name: "数据分析 · 指标与问题",
+    description: "通过「指标与问题」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D1",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-1" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 1,
+  },
+  {
+    id: "badge.course.da.cp2",
+    name: "数据分析 · 数据整理",
+    description: "通过「数据整理」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D2",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-2" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 2,
+  },
+  {
+    id: "badge.course.da.cp3",
+    name: "数据分析 · 漏斗分析",
+    description: "通过「漏斗分析」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D3",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-3" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 3,
+  },
+  {
+    id: "badge.course.da.cp4",
+    name: "数据分析 · 复盘表达",
+    description: "通过「复盘表达」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D4",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-4" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 4,
+  },
+  {
+    id: "badge.course.da.cp5",
+    name: "数据分析 · 练习与考试",
+    description: "通过「练习与考试」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D5",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-5" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 5,
+  },
+  {
+    id: "badge.course.da.cp6",
+    name: "数据分析 · 成果确认",
+    description: "通过「成果确认」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#eaf5ff] text-[#2879d0]",
+    iconKey: "D6",
+    rule: { type: "course.checkpointSinglePassed", courseId: "data-analytics", checkpointId: "data-analytics-cp-6" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 6,
+  },
+  {
+    id: "badge.course.da.final",
+    name: "数据分析 · 结业认证",
+    description: "通过「商业数据分析基础」结业小考",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#dbeafe] text-[#1d4ed8]",
+    iconKey: "DF",
+    rule: { type: "course.completed", courseId: "data-analytics" },
+    rewardHint: "",
+    courseId: "data-analytics",
+    courseOrder: 7,
+  },
+
+  // -------- 创赛新手必修课：课程节点徽章（3 枚）+ 结业徽章（1 枚） --------
+  {
+    id: "badge.course.ne.cp1",
+    name: "新手必修 · App 使用指南",
+    description: "通过「App 使用指南」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#fef3c7] text-[#92400e]",
+    iconKey: "N1",
+    rule: { type: "course.checkpointSinglePassed", courseId: "newbie-essential", checkpointId: "newbie-essential-cp-1" },
+    rewardHint: "",
+    courseId: "newbie-essential",
+    courseOrder: 1,
+  },
+  {
+    id: "badge.course.ne.cp2",
+    name: "新手必修 · AI 工具入门",
+    description: "通过「AI 工具快速入门」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#fef3c7] text-[#92400e]",
+    iconKey: "N2",
+    rule: { type: "course.checkpointSinglePassed", courseId: "newbie-essential", checkpointId: "newbie-essential-cp-2" },
+    rewardHint: "",
+    courseId: "newbie-essential",
+    courseOrder: 2,
+  },
+  {
+    id: "badge.course.ne.cp3",
+    name: "新手必修 · 报名创赛",
+    description: "通过「报名第一场创赛」关卡小测",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#fef3c7] text-[#92400e]",
+    iconKey: "N3",
+    rule: { type: "course.checkpointSinglePassed", courseId: "newbie-essential", checkpointId: "newbie-essential-cp-3" },
+    rewardHint: "",
+    courseId: "newbie-essential",
+    courseOrder: 3,
+  },
+  {
+    id: "badge.course.ne.final",
+    name: "新手必修 · 结业认证",
+    description: "通过「创赛新手必修课」结业小考",
+    tier: "high",
+    source: "course",
+    iconColor: "bg-[#fde68a] text-[#78350f]",
+    iconKey: "NF",
+    rule: { type: "course.completed", courseId: "newbie-essential" },
+    rewardHint: "",
+    courseId: "newbie-essential",
+    courseOrder: 4,
+  },
+
   {
     id: "badge.competition.registered",
     name: "赛场启程",
@@ -237,11 +392,12 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     rewardHint: "",
   },
 
-  // -------- 可信证书：多条件组合，最高等级能力证明 --------
+  // -------- 可信证书：徽章兑换机制，最高等级能力证明 --------
+  // 兑换条件：累计获得一定数量的高级徽章 + 低级徽章
   {
     id: "cert.data-analytics",
     name: "数据分析能力认证",
-    description: "通过「商业数据分析基础」结业考试，并完成所有关卡小测",
+    description: "累计获得 5 枚高级徽章 + 3 枚低级徽章，即可兑换",
     tier: "cert",
     source: "course",
     iconColor: "bg-[#fef3c7] text-[#92400e]",
@@ -249,16 +405,17 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     rule: {
       type: "allOf",
       rules: [
-        { type: "course.completed", courseId: "data-analytics" },
-        { type: "course.checkpointPassed", courseId: "data-analytics" },
+        { type: "badge.tierCount", tier: "high", min: 5 },
+        { type: "badge.tierCount", tier: "low", min: 3 },
       ],
     },
     rewardHint: "",
+    courseId: "data-analytics",
   },
   {
     id: "cert.newbie-graduate",
     name: "新手结业认证",
-    description: "通过「创赛新手必修课」结业考试，并完成全部新手任务",
+    description: "累计获得 3 枚高级徽章 + 2 枚低级徽章，即可兑换",
     tier: "cert",
     source: "course",
     iconColor: "bg-[#ede9fe] text-[#5b21b6]",
@@ -266,11 +423,12 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     rule: {
       type: "allOf",
       rules: [
-        { type: "course.completed", courseId: "newbie-essential" },
-        { type: "newbie.completed" },
+        { type: "badge.tierCount", tier: "high", min: 3 },
+        { type: "badge.tierCount", tier: "low", min: 2 },
       ],
     },
     rewardHint: "",
+    courseId: "newbie-essential",
   },
 ];
 
