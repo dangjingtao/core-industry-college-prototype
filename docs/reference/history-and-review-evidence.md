@@ -514,7 +514,81 @@ tests/r-final.spec.ts
 
 ---
 
-## 13. 2026-08-26｜T045 专属推广码与团队推广成果
+## 13. 2026-08-25｜客服会话底部输入区贴底修复
+
+### 问题
+
+`/support/chat` 底部输入区未贴视口底边，视觉上悬空约一个 header 高度。
+
+根因是高度计算叠加错误，而非样式细节：
+
+- 会话容器写死 `h-[calc(100dvh-120px)]`，属于按经验估算 header 高度的魔法值；
+- 外层 `PublicShell` 的 `main` 在 `showNavigation={false}` 时另加 `pb-8`（32px）；
+- 实际占位 = `PageHeader`（`min-h-11` + `env(safe-area-inset-top)`）+ `100dvh - 120px` + `32px`，在无安全区的浏览器下总高比视口少约 44px。
+
+### 处理方式
+
+不调整魔法值，改为让整屏会话页走真实 flex 撑满布局：
+
+- `PublicShell` 新增 `fullHeight` 可选项，开启时外壳为 `flex h-[100dvh] flex-col overflow-hidden`，`main` 为 `flex min-h-0 flex-1 flex-col`，且不再叠加 `pb-8`；
+- `PageHeader` 加 `shrink-0`，避免作为 flex item 被压缩；
+- `SupportChatPage` 容器改为 `flex min-h-0 flex-1 flex-col px-4`，滚动区补 `min-h-0`，输入区底部内边距改为 `pb-[max(0.75rem,env(safe-area-inset-bottom))]`。
+
+`fullHeight` 默认 `false`，其余页面渲染结果不变。`BenefitsPages` 与 `CoursesPages` 仍保留 `100dvh-104px` 写法，本次未一并改动。
+
+### 本地验证
+
+```text
+tsc -b PASS
+vite build PASS
+```
+
+Chromium `390x844` 布局实测（临时用例，验证后已删除）：
+
+```text
+METRICS {"viewport":844,"barBottom":844,"docScroll":0}
+```
+
+输入区底边与视口底边重合，页面无多余文档滚动。
+
+全量回归：
+
+```text
+npx playwright test
+59 passed (8.3m)
+```
+
+## 14. 2026-08-25｜T037 智能客服工单闭环（双端）
+
+台账 T037 施工，手机端会话 / 工单与 PC 端客服工单工作台一并落地，实现记录见 `docs/workbench/T037-implementation-record.md`。
+
+### 路由审计
+
+```text
+Registry routes: 90
+App route declarations: 100
+Missing registry routes: 0
+Explicit 404 route: yes
+Route audit PASS
+```
+
+新增语义路由：`support.tickets` `/support/tickets`、`support.ticketDetail` `/support/tickets/:ticketId`；`support.chat` 状态扩展为 6 态。PC 端新增 `/admin/support`、`/admin/support/:ticketId`。
+
+### 本地验证
+
+```text
+npm run typecheck        PASS (mobile tsc -b / pc tsc -b)
+npm run build:mobile     PASS (1870 modules)
+npm run build:pc         PASS (1862 modules)
+npm run verify:mobile    PASS
+npm run verify:pc        PASS
+```
+
+### 未完成项
+
+本轮未新增 T037 Playwright spec，浏览器回归交由 dev CI 承接，不在本地伪造通过结论。
+
+## 15. 2026-08-26｜T045 专属推广码与团队推广成果
 
 ### 实现边界
 

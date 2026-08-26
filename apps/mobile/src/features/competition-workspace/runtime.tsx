@@ -293,6 +293,10 @@ export function taskAvailability(runtime: CompetitionWorkshopRuntime, taskId: st
   return runtime.taskRuns[taskId]?.status ?? "ready";
 }
 
+export function isOptionalMaterialTask(taskId: string) {
+  return optionalMaterialTaskIds.has(taskId);
+}
+
 export function missingMaterials(runtime: CompetitionWorkshopRuntime, taskId: string) {
   const task = taskById(taskId);
   if (!task || optionalMaterialTaskIds.has(taskId)) return [];

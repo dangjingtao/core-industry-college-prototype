@@ -24,7 +24,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { StatusTag } from "../components/ui";
 import { adminDomains, currentOperatorContext } from "./data";
 
-const domainIcons: Record<string, LucideIcon> = {
+  const domainIcons: Record<string, LucideIcon> = {
   competitions: Trophy,
   organizations: Building2,
   resources: Boxes,
@@ -33,7 +33,7 @@ const domainIcons: Record<string, LucideIcon> = {
   content: Activity,
   workshop: Sparkles,
   basicData: Database,
-};
+  };
 
 function routeLabel(pathname: string) {
   if (pathname === "/admin") return "运营总览";
@@ -45,6 +45,7 @@ function routeLabel(pathname: string) {
   if (pathname.startsWith("/admin/pc04/benefits")) return "权益运营";
   if (pathname.startsWith("/admin/pc04/certificates")) return "可信证书";
   if (pathname.startsWith("/admin/students")) return "学生";
+  if (pathname.startsWith("/admin/support")) return "客服工单";
   if (pathname.startsWith("/admin/assets")) return "长期资产";
   if (pathname.startsWith("/admin/dev")) return "开发";
   if (pathname.startsWith("/admin/observability")) return "环境与日志";

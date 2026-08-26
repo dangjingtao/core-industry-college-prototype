@@ -21,8 +21,10 @@ export interface MobileFilterProps {
   onKeywordsChange: (next: readonly string[]) => void;
   inputPlaceholder: string;
   inputAriaLabel?: string;
+  inputId?: string;
   filterAriaLabel?: string;
   groups: readonly MobileFilterGroup[];
+  showGroupChips?: boolean;
   resultCount?: number;
   resultLabel?: string;
   className?: string;
@@ -30,24 +32,107 @@ export interface MobileFilterProps {
 
 const isActive = (value: string) => value !== "all";
 
+function useFilterSheet(groups: readonly MobileFilterGroup[]) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  const openSheet = () => {
+    setDraft(Object.fromEntries(groups.map(group => [group.key, group.value])));
+    setOpen(true);
+  };
+
+  const applyDraft = () => {
+    groups.forEach(group => {
+      const next = draft[group.key] ?? "all";
+      if (next !== group.value) group.onChange(next);
+    });
+    setOpen(false);
+  };
+
+  const resetDraft = () => setDraft(Object.fromEntries(groups.map(group => [group.key, "all"])));
+
+  return { open, setOpen, draft, setDraft, openSheet, applyDraft, resetDraft };
+}
+
+function FilterConditionsDialog({ sheet, groups }: { sheet: ReturnType<typeof useFilterSheet>; groups: readonly MobileFilterGroup[] }) {
+  return (
+    <Dialog open={sheet.open} onOpenChange={sheet.setOpen} title="筛选条件" showCloseButton={false} footer={<>
+      <GhostButton onClick={sheet.resetDraft}>重置</GhostButton>
+      <Button onClick={sheet.applyDraft}>确定</Button>
+    </>}>
+      <div className="space-y-5">
+        {groups.map(group => (
+          <fieldset key={group.key}>
+            <legend className="text-sm font-semibold text-text-primary">{group.label}</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {group.options.map(option => {
+                const selected = sheet.draft[group.key] === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => sheet.setDraft(current => ({ ...current, [group.key]: option.value }))}
+                    className={`min-h-touch rounded-control border px-3 text-sm font-medium transition active:bg-surface-pressed ${selected ? "border-primary bg-primary-container text-text-brand" : "border-transparent bg-surface-subtle text-text-secondary"}`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+        ))}
+      </div>
+    </Dialog>
+  );
+}
+
+export function FilterSheetIconButton({ groups, ariaLabel = "筛选", className = "" }: {
+  groups: readonly MobileFilterGroup[];
+  ariaLabel?: string;
+  className?: string;
+}) {
+  const sheet = useFilterSheet(groups);
+  const activeCount = groups.filter(group => isActive(group.value)).length;
+  const hasFilters = activeCount > 0;
+  return (
+    <>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={sheet.open}
+        aria-label={hasFilters ? `${ariaLabel}，已选 ${activeCount} 项条件` : ariaLabel}
+        onClick={sheet.openSheet}
+        className={`flex size-11 items-center justify-center rounded-full transition active:bg-surface-pressed ${hasFilters ? "bg-primary-container text-text-brand" : "text-text-primary"} ${className}`}
+      >
+        <SlidersHorizontal size={20} aria-hidden="true" />
+      </button>
+      <FilterConditionsDialog sheet={sheet} groups={groups} />
+    </>
+  );
+}
+
 export function MobileFilter({
   keywords,
   onKeywordsChange,
   inputPlaceholder,
   inputAriaLabel = inputPlaceholder,
+  inputId,
   filterAriaLabel = "列表筛选",
   groups,
+  showGroupChips = true,
   resultCount,
   resultLabel = "条结果",
   className = "",
 }: MobileFilterProps) {
   const [pending, setPending] = useState("");
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Record<string, string>>({});
+  const sheet = useFilterSheet(groups);
 
   const activeGroups = groups.filter(group => isActive(group.value));
   const activeCount = keywords.length + activeGroups.length;
   const hasFilters = activeCount > 0;
+  const chipGroups = showGroupChips ? activeGroups : [];
+  const hasChips = keywords.length + chipGroups.length > 0;
 
   const commitPending = () => {
     const term = pending.trim();
@@ -58,8 +143,7 @@ export function MobileFilter({
 
   const openSheet = () => {
     commitPending();
-    setDraft(Object.fromEntries(groups.map(group => [group.key, group.value])));
-    setOpen(true);
+    sheet.openSheet();
   };
 
   const resetAll = () => {
@@ -74,16 +158,6 @@ export function MobileFilter({
     }
   };
 
-  const applyDraft = () => {
-    groups.forEach(group => {
-      const next = draft[group.key] ?? "all";
-      if (next !== group.value) group.onChange(next);
-    });
-    setOpen(false);
-  };
-
-  const resetDraft = () => setDraft(Object.fromEntries(groups.map(group => [group.key, "all"])));
-
   const groupLabel = (group: MobileFilterGroup) => group.options.find(option => option.value === group.value)?.label ?? group.value;
 
   return (
@@ -93,6 +167,7 @@ export function MobileFilter({
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" size={18} aria-hidden="true" />
           <input
             type="search"
+            id={inputId}
             value={pending}
             onChange={event => setPending(event.target.value)}
             onKeyDown={handleInputKeyDown}
@@ -115,7 +190,7 @@ export function MobileFilter({
         <button
           type="button"
           aria-haspopup="dialog"
-          aria-expanded={open}
+          aria-expanded={sheet.open}
           aria-label={hasFilters ? `筛选，已选 ${activeCount} 项条件` : "筛选"}
           onClick={openSheet}
           className={`flex min-h-touch shrink-0 items-center gap-1 rounded-control border px-3 text-sm font-medium transition active:bg-surface-pressed ${hasFilters ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-primary"}`}
@@ -126,7 +201,7 @@ export function MobileFilter({
         </button>
       </div>
 
-      {hasFilters && (
+      {hasChips && (
         <div className="flex flex-wrap items-center gap-2">
           {keywords.map(term => (
             <span key={term} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-primary-container py-1 pl-2.5 pr-1 text-sm font-medium text-text-brand">
@@ -136,7 +211,7 @@ export function MobileFilter({
               </button>
             </span>
           ))}
-          {activeGroups.map(group => (
+          {chipGroups.map(group => (
             <span key={group.key} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-primary-container py-1 pl-2.5 pr-1 text-sm font-medium text-text-brand">
               {groupLabel(group)}
               <button type="button" aria-label={`移除筛选 ${groupLabel(group)}`} onClick={() => group.onChange("all")} className="flex size-6 items-center justify-center rounded-full text-text-brand active:bg-surface-pressed">
@@ -153,34 +228,7 @@ export function MobileFilter({
 
       {typeof resultCount === "number" && <p className="text-xs text-text-tertiary" role="status" aria-live="polite">共 {resultCount} {resultLabel}</p>}
 
-      <Dialog open={open} onOpenChange={setOpen} title="筛选条件" showCloseButton={false} footer={<>
-        <GhostButton onClick={resetDraft}>重置</GhostButton>
-        <Button onClick={applyDraft}>确定</Button>
-      </>}>
-        <div className="space-y-5">
-          {groups.map(group => (
-            <fieldset key={group.key}>
-              <legend className="text-sm font-semibold text-text-primary">{group.label}</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {group.options.map(option => {
-                  const selected = draft[group.key] === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => setDraft(current => ({ ...current, [group.key]: option.value }))}
-                      className={`min-h-touch rounded-control border px-3 text-sm font-medium transition active:bg-surface-pressed ${selected ? "border-primary bg-primary-container text-text-brand" : "border-transparent bg-surface-subtle text-text-secondary"}`}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-          ))}
-        </div>
-      </Dialog>
+      <FilterConditionsDialog sheet={sheet} groups={groups} />
     </section>
   );
 }

@@ -1,16 +1,14 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, Sparkles, Target, Trophy, UserCheck, Users } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarCheck, Check, ChevronRight, ClipboardList, Gift, HeartHandshake, Search, Sparkles, Trophy, UserCheck, Users, X } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Carousel } from "../../components/Carousel";
-import { MobileFilter } from "../../components/MobileFilter";
+import { FilterSheetIconButton, MobileFilter, type MobileFilterGroup, type MobileFilterOption } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { ListFeedAdCard, useListFeedAd } from "../long-term-assets/Ads";
 import { welfareProjects } from "../welfare/data";
 import { companies, companyById, competitions, competitionById, opportunities, opportunityById, type Competition, type Opportunity } from "./data";
 import { PublicPlatformProvider, usePublicPlatform, type IdentityScenario, type ListKey } from "./state";
-import { useBadges } from "../badges/hooks";
-import { badgeCatalog } from "../badges/catalog";
 
 export { PublicPlatformProvider, usePublicPlatform };
 export type { IdentityScenario };
@@ -280,27 +278,6 @@ export function NewbieTasksPage() {
   const { rewards, claimTask, claimAllCompleted, resetRewards } = useNewbieRewards();
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = Math.round((completedCount / tasks.length) * 100);
-  const { earned } = useBadges();
-
-  // 首个高级徽章引导
-  const firstHighBadge = badgeCatalog.find(b => b.id === "badge.newbie.completed");
-  const hasFirstHigh = earned.some(v => v.entry.id === "badge.newbie.completed");
-  const highBadgesEarned = earned.filter(v => v.entry.tier === "high").length;
-
-  // 真实全部完成时（非 demo 强制）记录徽章触发点
-  useEffect(() => {
-    if (demoMode) return;
-    if (allCompleted) {
-      try {
-        if (localStorage.getItem("newbie-completed-flag") !== "1") {
-          localStorage.setItem("newbie-completed-flag", "1");
-          window.dispatchEvent(new StorageEvent("storage", { key: "newbie-completed-flag" }));
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }, [allCompleted, demoMode]);
 
   return (
     <PublicShell showNavigation={false}>
@@ -316,45 +293,6 @@ export function NewbieTasksPage() {
           </div>
           <p className="text-xs text-text-secondary">完成全部新手任务可额外获得 20 学力值（暂定）。</p>
         </Card>
-
-        {/* 首个高级徽章引导 */}
-        {firstHighBadge && (
-          <Card className={`overflow-hidden border ${hasFirstHigh ? "border-success bg-success-bg" : "border-primary-container bg-primary-container"}`}>
-            <div className="flex items-start gap-3">
-              <span className={`flex size-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold ${firstHighBadge.iconColor}`}>
-                {firstHighBadge.iconKey}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Target size={14} className="text-text-brand" aria-hidden="true" />
-                  <span className="text-xs font-medium text-text-brand">首个高级徽章目标</span>
-                </div>
-                <h3 className="mt-1 text-sm font-bold text-text-primary">{firstHighBadge.name}</h3>
-                <p className="mt-0.5 text-xs leading-5 text-text-secondary">{firstHighBadge.description}</p>
-              </div>
-              {hasFirstHigh && <Check size={18} className="mt-1 shrink-0 text-success-text" aria-hidden="true" />}
-            </div>
-            {hasFirstHigh ? (
-              <p className="mt-3 text-xs font-medium text-success-text">已获得！继续探索更多课程和赛事徽章。</p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-secondary">新手任务完成进度</span>
-                  <span className="font-semibold text-text-primary">{completedCount} / {tasks.length}</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-subtle">
-                  <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                </div>
-                <p className="text-xs leading-5 text-text-secondary">
-                  完成全部 {tasks.length} 项新手任务即可获得「{firstHighBadge.name}」高级徽章，这是你成长路上的第一个里程碑。
-                </p>
-                {highBadgesEarned === 0 && (
-                  <p className="text-xs font-medium text-text-brand">完成新手任务后，你将解锁首个高级徽章，开启徽章收集之旅。</p>
-                )}
-              </div>
-            )}
-          </Card>
-        )}
 
         <div className="space-y-2">
           {tasks.map(task => (
@@ -631,6 +569,162 @@ const opportunityTabs = [
 
 type OpportunityTab = (typeof opportunityTabs)[number]["key"];
 
+const opportunityModeOptions: readonly MobileFilterOption[] = [
+  { value: "all", label: "不限" },
+  { value: "实习", label: "实习" },
+  { value: "校招", label: "校招" },
+  { value: "项目实践", label: "项目实践" },
+];
+
+const companyIndustryOptions: readonly MobileFilterOption[] = [
+  { value: "all", label: "不限" },
+  ...companyIndustries.map(industry => ({ value: industry, label: industry })),
+];
+
+const opportunitySearchInputId = "opportunity-list-search";
+const companySearchInputId = "opportunity-company-search";
+
+interface OpportunitySearch {
+  inputId: string;
+  placeholder: string;
+  keywords: readonly string[];
+  onKeywordsChange: (next: readonly string[]) => void;
+}
+
+function OpportunitiesTopNav({ activeTab, onTabChange, quickFilter, search, filterGroups, filterAriaLabel }: {
+  activeTab: OpportunityTab;
+  onTabChange: (tab: OpportunityTab) => void;
+  quickFilter?: { label: string; options: readonly MobileFilterOption[]; value: string; onChange: (value: string) => void };
+  search?: OpportunitySearch;
+  filterGroups?: readonly MobileFilterGroup[];
+  filterAriaLabel?: string;
+}) {
+  const navigate = useNavigate();
+  const guest = useGuest();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [pending, setPending] = useState("");
+  const openNotifications = () => {
+    if (guest) navigate(`/auth/login?returnTo=${encodeURIComponent("/me/notifications?from=/opportunities")}`);
+    else navigate("/me/notifications", { state: { from: "/opportunities" } });
+  };
+  const commitPending = () => {
+    if (!search) return;
+    const term = pending.trim();
+    if (!term) return;
+    setPending("");
+    if (!search.keywords.some(keyword => keyword.toLowerCase() === term.toLowerCase())) search.onKeywordsChange([...search.keywords, term]);
+  };
+  const toggleSearch = () => {
+    setSearchOpen(current => {
+      if (current) setPending("");
+      return !current;
+    });
+  };
+  const searchPanelId = search ? `${search.inputId}-panel` : undefined;
+  const keywords = search?.keywords ?? [];
+  return (
+    <header className="sticky top-0 z-20 bg-background pb-4 pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center justify-between gap-3 pl-4 pr-1 pt-2">
+        <div className="flex min-w-0 items-end gap-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="机会页内容切换">
+          {opportunityTabs.map(tab => {
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onTabChange(tab.key)}
+                className={`relative flex min-h-touch shrink-0 items-end pb-2 transition-colors duration-200 ${active ? "text-text-primary" : "text-text-tertiary active:text-text-secondary"}`}
+              >
+                <span className={`block whitespace-nowrap leading-6 transition-all duration-200 ${active ? "text-xl font-semibold" : "text-base font-medium"}`}>{tab.label}</span>
+                <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 mx-auto h-0.5 w-4 rounded-full bg-text-brand transition-opacity duration-200 ${active ? "opacity-100" : "opacity-0"}`} />
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex shrink-0 items-center">
+          {search && (
+            <button
+              type="button"
+              aria-label={keywords.length ? `搜索，已有 ${keywords.length} 个关键词` : "搜索"}
+              aria-expanded={searchOpen}
+              aria-controls={searchPanelId}
+              onClick={toggleSearch}
+              className={`flex size-11 items-center justify-center rounded-full transition active:bg-surface-pressed ${keywords.length ? "bg-primary-container text-text-brand" : "text-text-primary"}`}
+            >
+              <Search size={20} aria-hidden="true" />
+            </button>
+          )}
+          {filterGroups && filterGroups.length > 0 && <FilterSheetIconButton groups={filterGroups} ariaLabel={filterAriaLabel} />}
+          <button type="button" aria-label="消息通知" onClick={openNotifications} className="relative flex size-11 items-center justify-center rounded-full text-text-primary transition active:bg-surface-pressed">
+            <Bell size={20} aria-hidden="true" />
+            <span aria-hidden="true" className="absolute right-2.5 top-2.5 size-2 rounded-full bg-danger" />
+          </button>
+        </div>
+      </div>
+      {search && searchOpen && (
+        <div className="mt-3 px-4" id={searchPanelId}>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" size={18} aria-hidden="true" />
+            <input
+              type="search"
+              id={search.inputId}
+              autoFocus
+              value={pending}
+              onChange={event => setPending(event.target.value)}
+              onKeyDown={event => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                commitPending();
+              }}
+              placeholder={search.placeholder}
+              aria-label={search.placeholder}
+              enterKeyHint="search"
+              className="min-h-touch w-full rounded-control border border-border bg-surface py-2 pl-10 pr-10 text-sm text-text-primary outline-none transition placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary-container"
+            />
+            {pending && (
+              <button type="button" aria-label="清空搜索" onClick={() => setPending("")} className="absolute right-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-control text-text-tertiary active:bg-surface-pressed">
+                <X size={18} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {search && keywords.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 px-4">
+          {keywords.map(term => (
+            <span key={term} className="inline-flex min-h-8 items-center gap-1 rounded-full bg-primary-container py-1 pl-2.5 pr-1 text-sm font-medium text-text-brand">
+              {term}
+              <button type="button" aria-label={`移除关键词 ${term}`} onClick={() => search.onKeywordsChange(keywords.filter(keyword => keyword !== term))} className="flex size-6 items-center justify-center rounded-full text-text-brand active:bg-surface-pressed">
+                <X size={14} aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {quickFilter && (
+        <div className="mt-3 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label={quickFilter.label}>
+          {quickFilter.options.map(option => {
+            const selected = quickFilter.value === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => quickFilter.onChange(option.value)}
+                className={`flex min-h-8 shrink-0 items-center rounded-full px-3 text-sm transition ${selected ? "bg-primary-container font-semibold text-text-brand" : "bg-surface font-medium text-text-secondary active:bg-surface-pressed"}`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </header>
+  );
+}
+
 export function OpportunitiesPage() {
   useListScroll("opportunities");
   const navigate = useNavigate();
@@ -649,7 +743,21 @@ export function OpportunitiesPage() {
     const haystack = `${item.name}${item.industry}${item.summary}`.toLowerCase();
     return matchesIndustry && matchesKeywords(haystack, listView.companyKeywords);
   });
-  return <PublicShell showNavigation={true}><PageHeader title="机会" subtitle="实习、校招与企业项目实践" /><div className="flex border-b border-border-subtle bg-surface px-4" role="tablist" aria-label="机会页内容切换">{opportunityTabs.map(tab => { const active = activeTab === tab.key; return <button key={tab.key} type="button" role="tab" aria-selected={active} onClick={() => setActiveTab(tab.key)} className={`relative min-h-touch flex-1 transition-all duration-300 ease-out ${active ? "scale-[1.08] text-text-primary" : "scale-95 text-text-tertiary hover:text-text-secondary active:scale-90"}`}><span className={`block text-sm ${active ? "font-semibold" : "font-medium"}`}>{tab.label}</span><span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-text-brand transition-all duration-300 ${active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"}`} /></button>; })}</div>{activeTab === "positions" ? <div className="space-y-5 px-4 py-5"><MobileFilter keywords={listView.opportunityKeywords} onKeywordsChange={opportunityKeywords => updateListView({ opportunityKeywords: [...opportunityKeywords] })} inputPlaceholder="搜索岗位、企业或城市" groups={[{ key: "opportunityMode", label: "机会类型", options: [{ value: "all", label: "不限" }, { value: "实习", label: "实习" }, { value: "校招", label: "校招" }, { value: "项目实践", label: "项目实践" }], value: listView.opportunityMode, onChange: opportunityMode => updateListView({ opportunityMode }) }]} filterAriaLabel="机会筛选" resultCount={view === "ready" ? filtered.length : undefined} resultLabel="个机会" />{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map((item, index) => <Fragment key={item.id}><OpportunityCard item={item} />{index === 1 && <ListFeedAdCard ad={positionsAd} seed="positions" />}</Fragment>)}</div> : <StateBlock state="empty" />}</div> : activeTab === "applications" ? <div className="space-y-3 px-4 py-5">{view !== "ready" ? <StateBlock state={view} /> : !session.loggedIn ? <Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后查看投递记录</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent("/opportunities")}`)}>登录</Button></Card> : applications.length ? <div className="space-y-3">{applications.map(record => { const item = opportunityById(record.opportunityId); const company = companyById(item?.companyId); if (!item) return null; return <Card key={record.opportunityId}><Link to={`/opportunities/${record.opportunityId}`} className="block"><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-1 text-sm text-text-secondary">{company?.name}</p></div><StatusTag tone={record.status === "submitted" ? "success" : "warning"}>{record.status === "submitted" ? "已投递" : "状态待回流"}</StatusTag></div></Link><details className="mt-3 border-t border-border-subtle pt-3 text-xs text-text-secondary"><summary className="cursor-pointer">原型投递状态</summary><div className="mt-2 flex gap-2"><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "submitted")}>submitted</button><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "statusUnknown")}>statusUnknown</button></div></details></Card>; })}</div> : <Card className="py-8 text-center"><p className="font-semibold text-text-primary">还没有投递记录</p><p className="mt-2 text-sm text-text-secondary">先去看看适合你的实习与项目机会。</p><Button className="mt-4" onClick={() => setActiveTab("positions")}>去找机会</Button></Card>}</div> : <div className="space-y-4 px-4 py-5"><MobileFilter keywords={listView.companyKeywords} onKeywordsChange={companyKeywords => updateListView({ companyKeywords: [...companyKeywords] })} inputPlaceholder="搜索企业或行业" groups={[{ key: "companyIndustry", label: "所属行业", options: [{ value: "all", label: "不限" }, ...companyIndustries.map(industry => ({ value: industry, label: industry }))], value: listView.companyIndustry, onChange: companyIndustry => updateListView({ companyIndustry }) }]} filterAriaLabel="企业筛选" resultCount={view === "ready" ? filteredCompanies.length : undefined} resultLabel="家企业" />{view !== "ready" ? <StateBlock state={view} /> : filteredCompanies.length ? filteredCompanies.map((item, index) => <Fragment key={item.id}><Link to={`/companies/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.name}</h2><p className="mt-1 text-sm text-text-brand">{item.industry}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">关联 {item.resourceRelations.length} 项赛事 / 权益 / 课程 / 活动 / 岗位资源</p></Card></Link>{index === 1 && <ListFeedAdCard ad={companiesAd} seed="companies" />}</Fragment>) : <StateBlock state="empty" />}</div>}<PrototypeStateTools /></PublicShell>;
+  const quickFilter = activeTab === "positions"
+    ? { label: "机会类型", options: opportunityModeOptions, value: listView.opportunityMode, onChange: (opportunityMode: string) => updateListView({ opportunityMode }) }
+    : activeTab === "companies"
+      ? { label: "所属行业", options: companyIndustryOptions, value: listView.companyIndustry, onChange: (companyIndustry: string) => updateListView({ companyIndustry }) }
+      : undefined;
+  const opportunityFilterGroups: readonly MobileFilterGroup[] = [{ key: "opportunityMode", label: "机会类型", options: opportunityModeOptions, value: listView.opportunityMode, onChange: opportunityMode => updateListView({ opportunityMode }) }];
+  const companyFilterGroups: readonly MobileFilterGroup[] = [{ key: "companyIndustry", label: "所属行业", options: companyIndustryOptions, value: listView.companyIndustry, onChange: companyIndustry => updateListView({ companyIndustry }) }];
+  const search: OpportunitySearch | undefined = activeTab === "positions"
+    ? { inputId: opportunitySearchInputId, placeholder: "搜索岗位、企业或城市", keywords: listView.opportunityKeywords, onKeywordsChange: next => updateListView({ opportunityKeywords: [...next] }) }
+    : activeTab === "companies"
+      ? { inputId: companySearchInputId, placeholder: "搜索企业或行业", keywords: listView.companyKeywords, onKeywordsChange: next => updateListView({ companyKeywords: [...next] }) }
+      : undefined;
+  const filterGroups = activeTab === "positions" ? opportunityFilterGroups : activeTab === "companies" ? companyFilterGroups : undefined;
+  const filterAriaLabel = activeTab === "positions" ? "机会筛选" : activeTab === "companies" ? "企业筛选" : undefined;
+  return <PublicShell showNavigation={true}><OpportunitiesTopNav activeTab={activeTab} onTabChange={setActiveTab} quickFilter={quickFilter} search={search} filterGroups={filterGroups} filterAriaLabel={filterAriaLabel} />{activeTab === "positions" ? <div className="space-y-4 px-4 pb-6">{view === "ready" && <p className="text-xs text-text-tertiary" role="status" aria-live="polite">共 {filtered.length} 个机会</p>}{view !== "ready" ? <StateBlock state={view} /> : filtered.length ? <div className="space-y-3">{filtered.map((item, index) => <Fragment key={item.id}><OpportunityCard item={item} />{index === 1 && <ListFeedAdCard ad={positionsAd} seed="positions" />}</Fragment>)}</div> : <StateBlock state="empty" />}</div> : activeTab === "applications" ? <div className="space-y-3 px-4 pb-6">{view !== "ready" ? <StateBlock state={view} /> : !session.loggedIn ? <Card className="py-8 text-center"><p className="font-semibold text-text-primary">登录后查看投递记录</p><Button className="mt-4" onClick={() => navigate(`/auth/login?returnTo=${encodeURIComponent("/opportunities")}`)}>登录</Button></Card> : applications.length ? <div className="space-y-3">{applications.map(record => { const item = opportunityById(record.opportunityId); const company = companyById(item?.companyId); if (!item) return null; return <Card key={record.opportunityId}><Link to={`/opportunities/${record.opportunityId}`} className="block"><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{item.title}</h2><p className="mt-1 text-sm text-text-secondary">{company?.name}</p></div><StatusTag tone={record.status === "submitted" ? "success" : "warning"}>{record.status === "submitted" ? "已投递" : "状态待回流"}</StatusTag></div></Link><details className="mt-3 border-t border-border-subtle pt-3 text-xs text-text-secondary"><summary className="cursor-pointer">原型投递状态</summary><div className="mt-2 flex gap-2"><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "submitted")}>submitted</button><button className="min-h-touch rounded-control px-2 text-text-brand" onClick={() => setApplicationStatus(record.opportunityId, "statusUnknown")}>statusUnknown</button></div></details></Card>; })}</div> : <Card className="py-8 text-center"><p className="font-semibold text-text-primary">还没有投递记录</p><p className="mt-2 text-sm text-text-secondary">先去看看适合你的实习与项目机会。</p><Button className="mt-4" onClick={() => setActiveTab("positions")}>去找机会</Button></Card>}</div> : <div className="space-y-4 px-4 pb-6">{view === "ready" && <p className="text-xs text-text-tertiary" role="status" aria-live="polite">共 {filteredCompanies.length} 家企业</p>}{view !== "ready" ? <StateBlock state={view} /> : filteredCompanies.length ? filteredCompanies.map((item, index) => <Fragment key={item.id}><Link to={`/companies/${item.id}`} className="block"><Card interactive><h2 className="text-base font-semibold text-text-primary">{item.name}</h2><p className="mt-1 text-sm text-text-brand">{item.industry}</p><p className="mt-3 text-sm leading-5 text-text-secondary">{item.summary}</p><p className="mt-3 text-xs text-text-tertiary">关联 {item.resourceRelations.length} 项赛事 / 权益 / 课程 / 活动 / 岗位资源</p></Card></Link>{index === 1 && <ListFeedAdCard ad={companiesAd} seed="companies" />}</Fragment>) : <StateBlock state="empty" />}</div>}<PrototypeStateTools /></PublicShell>;
 }
 
 const applicationFeedbackSteps = [

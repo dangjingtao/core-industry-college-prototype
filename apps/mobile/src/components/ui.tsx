@@ -44,7 +44,7 @@ export function PageHeader({ title, backTo, right }: { title: string; backTo?: s
     else if (backTo) navigate(backTo);
   };
   return (
-    <header className="sticky top-0 z-20 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-0 z-20 shrink-0 border-b border-border-subtle bg-surface pt-[env(safe-area-inset-top)]">
       <div className="relative mx-auto flex min-h-11 w-full max-w-md items-center justify-center px-14">
         {backTo && <button type="button" aria-label="返回" className="absolute left-1 top-1/2 flex min-h-touch min-w-11 -translate-y-1/2 items-center justify-center rounded-control text-text-primary transition active:bg-surface-pressed" onClick={handleBack}><ChevronLeft aria-hidden="true" size={24} strokeWidth={2} /></button>}
         <div className="min-w-0 text-center">
@@ -64,10 +64,10 @@ const navItems = [
   { label: "我的", to: "/me", icon: UserRound },
 ];
 
-export function PublicShell({ children, showNavigation = false }: { children: ReactNode; showNavigation?: boolean }) {
+export function PublicShell({ children, showNavigation = false, fullHeight = false }: { children: ReactNode; showNavigation?: boolean; fullHeight?: boolean }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className={`mx-auto w-full max-w-md ${showNavigation ? "pb-24" : "pb-8"}`}>{children}</main>
+    <div className={`bg-background text-foreground ${fullHeight ? "flex h-[100dvh] flex-col overflow-hidden" : "min-h-screen"}`}>
+      <main className={`mx-auto w-full max-w-md ${fullHeight ? "flex min-h-0 flex-1 flex-col" : showNavigation ? "pb-24" : "pb-8"}`}>{children}</main>
       {showNavigation && <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex min-h-14 max-w-md border-t border-border-subtle bg-surface px-2 pb-[env(safe-area-inset-bottom)]">
         {navItems.map(item => {
           const Icon = item.icon;

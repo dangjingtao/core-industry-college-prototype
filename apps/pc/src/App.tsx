@@ -19,6 +19,7 @@ import { PC06ObservabilityConsole } from "./admin/PC06ObservabilityConsole";
 import { PC07SettingsConsole } from "./admin/PC07SettingsConsole";
 import { PC08CompetitionDetail, PC08CompetitionInfrastructureConsole } from "./admin/PC08CompetitionInfrastructure";
 import { PC09SanChuangOperations } from "./admin/PC09SanChuangOperations";
+import { T037SupportTicketConsole } from "./admin/T037SupportTicketConsole";
 import { currentSanChuangCompetitionId } from "./admin/pc09-data";
 import { AIBeautyCupLanding } from "./AIBeautyCupLanding";
 import { PCPublicLanding } from "./PCPublicLanding";
@@ -127,9 +128,9 @@ function AdminNotFound() {
 export function App() {
   return (
     <AmbassadorStateProvider>
-    <PC03StateProvider>
-      <PC04StateProvider>
-        <PC05StateProvider>
+      <PC03StateProvider>
+        <PC04StateProvider>
+          <PC05StateProvider>
           <Routes>
             <Route path="/" element={<PCPublicLanding />} />
             <Route path="/ai-beauty-cup" element={<AIBeautyCupLanding />} />
@@ -166,6 +167,8 @@ export function App() {
             <Route path="/admin/assets/objects/certificate-sanchuang-15/edit" element={<Navigate to="/admin/pc04/certificates/cert-sanchuang-15" replace />} />
             <Route path="/admin/students/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
             <Route path="/admin/assets/*" element={<AdminRoute><PC05Console /></AdminRoute>} />
+            <Route path="/admin/support" element={<AdminRoute><T037SupportTicketConsole /></AdminRoute>} />
+            <Route path="/admin/support/:ticketId" element={<AdminRoute><T037SupportTicketConsole /></AdminRoute>} />
             <Route path="/admin/dev" element={<AdminRoute><DevModuleConsole /></AdminRoute>} />
             <Route path="/admin/observability" element={<AdminRoute><PC06ObservabilityConsole /></AdminRoute>} />
             <Route path="/admin/settings/*" element={<AdminRoute><PC07SettingsConsole /></AdminRoute>} />
@@ -178,9 +181,9 @@ export function App() {
             <Route path="/review/*" element={<T032TeacherReviewWorkbench />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </PC05StateProvider>
-      </PC04StateProvider>
-    </PC03StateProvider>
+          </PC05StateProvider>
+        </PC04StateProvider>
+      </PC03StateProvider>
     </AmbassadorStateProvider>
   );
 }

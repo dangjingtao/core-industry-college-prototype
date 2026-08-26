@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, ThumbsDown, ThumbsUp, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { Award, Bell, Bookmark, BriefcaseBusiness, Check, ChevronRight, Coins, Headphones, Heart, ImagePlus, Info, MessageCircle, Music2, PenLine, Plus, Send, Settings, Share2, ShieldCheck, ShoppingBag, Store, ThumbsDown, ThumbsUp, Ticket, Trophy, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { Button, Card, ConfirmDialog, GhostButton, PageHeader, PrototypeStateTools, PublicShell, SecondaryButton, Section, StateBlock, StatusTag } from "../../components/ui";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { usePublicPlatform } from "../public-platform/PublicPlatform";
-import { competitionById } from "../public-platform/data";
+import { competitionById, competitions } from "../public-platform/data";
 import { workspaceData } from "../competition-workspace/data";
 
 type Notice = { id: string; title: string; body: string; read: boolean; time: string };
@@ -66,19 +66,96 @@ type ProjectPost = {
 type BoostTask = { id: string; title: string; points: number; tag: string };
 type BoostRecord = { title: string; points: number };
 
+export type SupportTicketStatus = "待处理" | "处理中" | "已回复" | "已结束";
+
+export type SupportTicketRecord = {
+  id: string;
+  role: "user" | "agent" | "system";
+  text: string;
+  time: string;
+};
+
+export type SupportTicketDraft = {
+  competitionId: string;
+  competitionName: string;
+  track: string;
+  issueType: string;
+  description: string;
+  attachments: string[];
+};
+
+export type SupportTicket = SupportTicketDraft & {
+  id: string;
+  status: SupportTicketStatus;
+  createdAt: string;
+  updatedAt: string;
+  unread: boolean;
+  records: SupportTicketRecord[];
+};
+
 type SupportState = {
   notifications: Notice[];
   bindings: string[];
   followedAlumni: string[];
   likedPosts: string[];
+  tickets: SupportTicket[];
+  unreadTicketCount: number;
   markRead: (id: string) => void;
   markAllRead: () => void;
   toggleBinding: (id: string) => void;
   toggleFollowAlumni: (id: string) => void;
   toggleLikePost: (id: string) => void;
+  createTicket: (draft: SupportTicketDraft) => string;
+  markTicketRead: (id: string) => void;
+  simulateTicketReply: (id: string) => void;
+  addTicketSupplement: (id: string, text: string) => void;
+  confirmTicketResolved: (id: string) => void;
 };
 
+function nowLabel() {
+  const date = new Date();
+  return `今天 ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+}
+
+const ticketSeed: SupportTicket[] = [
+  {
+    id: "ticket-001",
+    competitionId: "sanchuang-16",
+    competitionName: "第十六届三创赛",
+    track: "创业实践赛道",
+    issueType: "证书与成绩",
+    description: "比赛结束后在可信空间找不到证书下载入口，成绩页面显示为空。",
+    attachments: ["证书页面截图.png"],
+    status: "已回复",
+    createdAt: "8 月 22 日 10:12",
+    updatedAt: "今天 10:20",
+    unread: true,
+    records: [
+      { id: "r-001-1", role: "system", text: "智能客服已根据会话内容生成工单，并附带账号、赛事、赛道与问题类型上下文。", time: "8 月 22 日 10:12" },
+      { id: "r-001-2", role: "agent", text: "已确认你的证书由组委会在结果公示后统一发放。当前证书已补发，请在「可信空间」→「我的证书」刷新查看。", time: "今天 10:20" },
+    ],
+  },
+  {
+    id: "ticket-002",
+    competitionId: "sanchuang-16",
+    competitionName: "第十六届三创赛",
+    track: "创新创意赛道",
+    issueType: "权益与卡券",
+    description: "权益兑换时提示不可用，但卡券显示仍在有效期内。",
+    attachments: [],
+    status: "处理中",
+    createdAt: "8 月 24 日 16:40",
+    updatedAt: "昨天 16:40",
+    unread: false,
+    records: [
+      { id: "r-002-1", role: "system", text: "智能客服已根据会话内容生成工单。", time: "8 月 24 日 16:40" },
+      { id: "r-002-2", role: "agent", text: "已受理，正在与权益提供企业核对库存，请稍等。", time: "昨天 16:40" },
+    ],
+  },
+];
+
 const noticeSeed: Notice[] = [
+  { id: "notice-ticket-001", title: "工单 ticket-001 已回复", body: "人工客服已回复「证书与成绩」工单，可在「客服工单」中查看处理记录并确认是否已解决。", read: false, time: "今天 10:20" },
   { id: "notice-registration", title: "三创赛报名状态已更新", body: "你的报名材料已进入学校审核。审核完成后会在“我的赛事”同步身份状态。", read: false, time: "今天 09:20" },
   { id: "notice-course", title: "课程学习记录已保存", body: "商业数据分析基础的学习结果已进入长期学习资产。", read: true, time: "昨天 18:40" },
   { id: "notice-benefit", title: "权益即将到期", body: "一项活动权益将在近期到期，请在权益中心查看有效期。", read: false, time: "8 月 15 日" },
@@ -328,11 +405,96 @@ export function SupportProvider({ children }: { children: ReactNode }) {
   const toggleBinding = useCallback((id: string) => setBindings(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
   const toggleFollowAlumni = useCallback((id: string) => setFollowedAlumni(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
   const toggleLikePost = useCallback((id: string) => setLikedPosts(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]), []);
-  const value = useMemo(() => ({ notifications, bindings, followedAlumni, likedPosts, markRead, markAllRead, toggleBinding, toggleFollowAlumni, toggleLikePost }), [notifications, bindings, followedAlumni, likedPosts, markRead, markAllRead, toggleBinding, toggleFollowAlumni, toggleLikePost]);
+
+  const [tickets, setTickets] = useState<SupportTicket[]>(ticketSeed);
+
+  const pushNotice = useCallback((notice: Notice) => {
+    setNotifications(current => [notice, ...current.filter(item => item.id !== notice.id)]);
+  }, []);
+
+  const createTicket = useCallback((draft: SupportTicketDraft) => {
+    const id = `ticket-${Date.now().toString(36)}`;
+    const time = nowLabel();
+    setTickets(current => [
+      {
+        ...draft,
+        id,
+        status: "待处理",
+        createdAt: time,
+        updatedAt: time,
+        unread: false,
+        records: [
+          { id: `${id}-r0`, role: "system", text: "智能客服已根据会话内容生成工单，自动携带账号、赛事、赛道与问题类型上下文。", time },
+          { id: `${id}-r1`, role: "user", text: draft.description, time },
+        ],
+      },
+      ...current,
+    ]);
+    pushNotice({ id: `notice-${id}-created`, title: "工单已提交，等待人工受理", body: `「${draft.issueType}」工单已提交，人工客服受理后会在这里通知你。`, read: false, time });
+    return id;
+  }, [pushNotice]);
+
+  const markTicketRead = useCallback((id: string) => {
+    setTickets(current => current.map(item => item.id === id && item.unread ? { ...item, unread: false } : item));
+  }, []);
+
+  const simulateTicketReply = useCallback((id: string) => {
+    const time = nowLabel();
+    let replied: SupportTicket | undefined;
+    setTickets(current => current.map(item => {
+      if (item.id !== id || item.status === "已结束") return item;
+      replied = item;
+      return {
+        ...item,
+        status: "已回复",
+        updatedAt: time,
+        unread: true,
+        records: [...item.records, { id: `${id}-a-${Date.now()}`, role: "agent", text: "人工客服已处理你的问题，请查看处理说明并确认是否已解决。", time }],
+      };
+    }));
+    if (replied) pushNotice({ id: `notice-${id}-reply-${Date.now()}`, title: `工单 ${id} 已回复`, body: `人工客服已回复「${replied.issueType}」工单，可在「客服工单」中查看处理记录。`, read: false, time });
+  }, [pushNotice]);
+
+  const addTicketSupplement = useCallback((id: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const time = nowLabel();
+    setTickets(current => current.map(item => item.id === id && item.status !== "已结束"
+      ? { ...item, status: "处理中", updatedAt: time, records: [...item.records, { id: `${id}-u-${Date.now()}`, role: "user", text: trimmed, time }] }
+      : item));
+  }, []);
+
+  const confirmTicketResolved = useCallback((id: string) => {
+    const time = nowLabel();
+    setTickets(current => current.map(item => item.id === id
+      ? { ...item, status: "已结束", updatedAt: time, unread: false, records: [...item.records, { id: `${id}-c-${Date.now()}`, role: "user", text: "用户确认问题已解决，工单结束。", time }] }
+      : item));
+  }, []);
+
+  const unreadTicketCount = useMemo(() => tickets.filter(item => item.unread).length, [tickets]);
+
+  const value = useMemo(() => ({
+    notifications,
+    bindings,
+    followedAlumni,
+    likedPosts,
+    tickets,
+    unreadTicketCount,
+    markRead,
+    markAllRead,
+    toggleBinding,
+    toggleFollowAlumni,
+    toggleLikePost,
+    createTicket,
+    markTicketRead,
+    simulateTicketReply,
+    addTicketSupplement,
+    confirmTicketResolved,
+  }), [notifications, bindings, followedAlumni, likedPosts, tickets, unreadTicketCount, markRead, markAllRead, toggleBinding, toggleFollowAlumni, toggleLikePost, createTicket, markTicketRead, simulateTicketReply, addTicketSupplement, confirmTicketResolved]);
   return <SupportContext.Provider value={value}>{children}</SupportContext.Provider>;
 }
 
-function useSupport() {
+export function useSupport() {
   const value = useContext(SupportContext);
   if (!value) throw new Error("SupportProvider missing");
   return value;
@@ -713,6 +875,7 @@ const supportFaqs: { q: string; a: string; category: Exclude<FaqCategory, "热�
 
 export function SupportHomePage() {
   const [activeCategory, setActiveCategory] = useState<FaqCategory>("热门");
+  const { tickets, unreadTicketCount } = useSupport();
 
   const filtered = useMemo(() => {
     if (activeCategory === "热门") return supportFaqs.filter(item => item.hot);
@@ -721,8 +884,30 @@ export function SupportHomePage() {
 
   return (
     <PublicShell>
-      <PageHeader title="帮助中心" subtitle="先自助定位，再进入客服会话" backTo="/me" />
+      <PageHeader title="帮助中心" backTo="/me" />
       <div className="space-y-6 px-4 py-5">
+        <Link
+          to="/support/tickets"
+          data-testid="support-home-tickets"
+          className="flex min-h-touch items-center gap-3 rounded-container border border-border-subtle bg-surface px-4 py-3"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand">
+            <Ticket size={18} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-text-primary">我的客服工单</span>
+            <span className="mt-0.5 block text-xs text-text-secondary">
+              {tickets.length === 0
+                ? "暂无工单，可在智能客服中提交"
+                : unreadTicketCount > 0
+                  ? `${tickets.length} 个工单 · ${unreadTicketCount} 条未读回复`
+                  : `${tickets.length} 个工单 · 暂无未读回复`}
+            </span>
+          </span>
+          {unreadTicketCount > 0 && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-danger" />}
+          <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-text-tertiary" />
+        </Link>
+
         <Section title="常见问题">
           <div className="-mx-1 mb-3 overflow-x-auto px-1 pb-1">
             <div className="flex gap-2" role="tablist" aria-label="常见问题分类">
@@ -762,8 +947,8 @@ export function SupportHomePage() {
             </span>
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-semibold text-text-primary">仍需要帮助？</h2>
-              <p className="mt-1 text-sm leading-5 text-text-secondary">工作日 9:00-18:00，企业微信福利官在线。</p>
-              <Link to="/support/chat" className="mt-3 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">联系人工客服</Link>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">智能客服先用知识库分流，无法解决时可转企业微信、人工排队或提交工单。</p>
+              <Link to="/support/chat" className="mt-3 block min-h-touch rounded-control bg-primary px-4 py-3 text-center text-sm font-medium text-on-primary">进入智能客服</Link>
             </div>
           </div>
         </Card>
@@ -824,17 +1009,48 @@ function formatChatTime(timestamp: number) {
   return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 }
 
+const supportTracks = ["创业实践赛道", "创新创意赛道", "电子商务赛道", "乡村振兴赛道", "不确定 / 无赛道"];
+
+const supportIssueTypes = ["报名与审核", "赛事身份与团队", "赛事任务与材料", "证书与成绩", "权益与卡券", "课程与学习记录", "投递与简历", "账号与登录", "其他问题"];
+
+const queueSnapshot = { waiting: 8, minutes: 15 };
+
+export function ticketStatusTone(status: SupportTicketStatus): "info" | "success" | "warning" | "neutral" {
+  if (status === "待处理") return "warning";
+  if (status === "处理中") return "info";
+  if (status === "已回复") return "success";
+  return "neutral";
+}
+
 export function SupportChatPage() {
+  const navigate = useNavigate();
+  const { identities } = usePublicPlatform();
+  const { createTicket, tickets } = useSupport();
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手。我可以帮你解答报名、赛事、课程、权益、可信空间和投递相关的问题。", createdAt: Date.now() },
+    { id: "welcome", role: "assistant", text: "你好，我是智能客服助手（AI，非人工客服）。我可以先用平台知识库帮你解答报名、赛事、课程、权益、可信空间和投递相关的问题。", createdAt: Date.now() },
   ]);
-  const [showHumanModal, setShowHumanModal] = useState(false);
   const [showHotQuestions, setShowHotQuestions] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [unresolvedCount, setUnresolvedCount] = useState(0);
+  const [escalationOpen, setEscalationOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const openHumanModal = () => setShowHumanModal(true);
+
+  const identityCompetitions = useMemo(() => {
+    const owned = identities.map(identity => competitionById(identity.competitionId)).filter((item): item is NonNullable<typeof item> => Boolean(item));
+    return owned.length > 0 ? owned : competitions.filter(item => item.id === "sanchuang-16");
+  }, [identities]);
+
+  const [step, setStep] = useState<"context" | "channel" | "queue" | "ticket">("context");
+  const [competitionId, setCompetitionId] = useState(identityCompetitions[0]?.id ?? "sanchuang-16");
+  const [track, setTrack] = useState(supportTracks[0]);
+  const [issueType, setIssueType] = useState(supportIssueTypes[0]);
+  const [ticketDescription, setTicketDescription] = useState("");
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const [showWeComModal, setShowWeComModal] = useState(false);
+
+  const latestQuestion = useMemo(() => [...messages].reverse().find(item => item.role === "user")?.text ?? "", [messages]);
+  const unreadTickets = tickets.filter(item => item.unread).length;
 
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -844,6 +1060,11 @@ export function SupportChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
+
+  const openEscalation = useCallback(() => {
+    setStep("context");
+    setEscalationOpen(true);
+  }, []);
 
   const send = useCallback((text: string, isManual = false) => {
     const trimmed = text.trim();
@@ -865,7 +1086,7 @@ export function SupportChatPage() {
           const next = prev + 1;
           if (next >= 2) {
             setTimeout(() => {
-              setMessages(curr => [...curr, { id: `system-${Date.now()}`, role: "assistant", text: "连续两次没有匹配到答案，建议你联系人工客服获取更精准的帮助。", createdAt: Date.now() }]);
+              setMessages(curr => [...curr, { id: `system-${Date.now()}`, role: "assistant", text: "连续两次没有在知识库匹配到答案。我可以先收集你的赛事、赛道和问题类型，再转给人工客服处理。", createdAt: Date.now() }]);
             }, 400);
           }
           return next;
@@ -878,10 +1099,40 @@ export function SupportChatPage() {
     setMessages(current => current.map(item => item.id === messageId ? { ...item, feedback } : item));
   }, []);
 
-  return <PublicShell showNavigation={false}>
-    <PageHeader title="智能客服" backTo="/support" right={<button aria-label="人工客服" onClick={openHumanModal} className="flex size-9 items-center justify-center rounded-full bg-surface text-text-primary"><Headphones size={20} aria-hidden="true" /></button>} />
-    <div className="flex h-[calc(100dvh-120px)] flex-col px-4 pb-4">
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4">
+  const submitTicket = () => {
+    const competition = competitionById(competitionId);
+    const description = ticketDescription.trim() || latestQuestion || "用户在智能客服会话中未获得有效答案。";
+    const id = createTicket({
+      competitionId,
+      competitionName: competition?.name ?? "未关联赛事",
+      track,
+      issueType,
+      description,
+      attachments,
+    });
+    setEscalationOpen(false);
+    setTicketDescription("");
+    setAttachments([]);
+    setStep("context");
+    navigate(`/support/tickets/${id}`, { state: { from: "/support/chat" } });
+  };
+
+  const contextSummary = `${competitionById(competitionId)?.name ?? "未关联赛事"} · ${track} · ${issueType}`;
+
+  return <PublicShell showNavigation={false} fullHeight>
+    <PageHeader
+      title="智能客服"
+      backTo="/support"
+      right={<div className="flex items-center gap-2">
+        <Link to="/support/tickets" aria-label={unreadTickets > 0 ? `我的工单，有 ${unreadTickets} 条未读回复` : "我的工单"} className="relative flex size-9 items-center justify-center rounded-full bg-surface text-text-primary">
+          <Ticket size={20} aria-hidden="true" />
+          {unreadTickets > 0 && <span aria-hidden="true" className="absolute right-0.5 top-0.5 size-2.5 rounded-full border-2 border-surface bg-danger" />}
+        </Link>
+        <button aria-label="转人工客服" onClick={openEscalation} className="flex size-9 items-center justify-center rounded-full bg-surface text-text-primary"><Headphones size={20} aria-hidden="true" /></button>
+      </div>}
+    />
+    <div className="flex min-h-0 flex-1 flex-col px-4">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4">
         {messages.map((item, index) => {
           const showTime = index === 0 || item.createdAt - messages[index - 1].createdAt > 5 * 60 * 1000;
           return (
@@ -910,6 +1161,13 @@ export function SupportChatPage() {
             </div>
           </div>
         )}
+        {unresolvedCount >= 2 && !escalationOpen && (
+          <Card className="border border-border-subtle" data-testid="support-escalation-hint">
+            <p className="text-sm font-semibold text-text-primary">知识库没能解决你的问题</p>
+            <p className="mt-1 text-xs leading-5 text-text-secondary">我会先收集赛事、赛道与问题类型，再由你选择人工渠道。</p>
+            <Button className="mt-3 w-full" onClick={openEscalation}>转人工客服</Button>
+          </Card>
+        )}
         <div className={`overflow-hidden transition-all duration-300 ease-out ${showHotQuestions ? "max-h-60 translate-x-0 opacity-100" : "max-h-0 -translate-x-full opacity-0"}`}>
           <div className="space-y-2 pb-1">
             <p className="text-xs text-text-tertiary">热门问题，点击直接提问：</p>
@@ -920,12 +1178,136 @@ export function SupportChatPage() {
           <button onClick={() => setShowHotQuestions(true)} className="text-xs font-medium text-text-brand">查看热门问题</button>
         )}
       </div>
-      <div className="shrink-0 space-y-3 border-t border-border-subtle pt-3">
+      <div className="shrink-0 space-y-3 border-t border-border-subtle pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         <div className="flex items-end gap-2"><input value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(draft, true); } }} className="min-h-touch flex-1 rounded-control border border-border bg-surface px-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary" placeholder="输入你的问题" /><button aria-label="发送" disabled={!draft.trim() || isTyping} onClick={() => send(draft, true)} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition active:scale-95 disabled:opacity-40"><Send size={18} aria-hidden="true" /></button></div>
-        <div className="flex items-center justify-between gap-3"><button onClick={openHumanModal} className="text-xs font-medium text-text-brand">请求人工客服</button><Link to="/support" className="text-xs text-text-tertiary">查看帮助中心</Link></div>
+        <div className="flex items-center justify-between gap-3"><button data-testid="support-escalate" onClick={openEscalation} className="text-xs font-medium text-text-brand">仍未解决，转人工</button><Link to="/support" className="text-xs text-text-tertiary">查看帮助中心</Link></div>
       </div>
     </div>
-    {showHumanModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={event => { if (event.target === event.currentTarget) setShowHumanModal(false); }}><div className="w-full max-w-[320px] rounded-container bg-surface p-5 text-center shadow-floating"><div className="flex items-center justify-between"><h2 className="text-base font-semibold text-text-primary">人工客服</h2><button aria-label="关闭" onClick={() => setShowHumanModal(false)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button></div><div className="mt-4 flex justify-center"><MockQRCode label="企业微信客服二维码" /></div><p className="mt-4 text-sm font-medium text-text-primary">人工渠道：企业微信福利官</p><p className="mt-2 text-xs leading-5 text-text-secondary">工作日 9:00-18:00 在线；正式二维码由运营配置。</p><a href="https://work.weixin.qq.com/" target="_blank" rel="noreferrer" className="mt-4 flex min-h-touch w-full items-center justify-center rounded-control bg-[var(--color-secondary)] px-4 text-sm font-medium text-text-brand active:bg-[var(--color-secondary-hover)]">打开企业微信入口</a><SecondaryButton className="mt-3 w-full" onClick={() => setShowHumanModal(false)}>知道了</SecondaryButton></div></div>}
+
+    {escalationOpen && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={event => { if (event.target === event.currentTarget) setEscalationOpen(false); }}>
+        <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-container bg-surface-subtle pb-[max(1rem,env(safe-area-inset-bottom))]" data-testid="support-escalation-sheet">
+          <div className="sticky top-0 flex items-center justify-between border-b border-border-subtle bg-surface px-4 py-3">
+            <h2 className="text-base font-semibold text-text-primary">{step === "context" ? "确认问题上下文" : step === "channel" ? "选择人工渠道" : step === "queue" ? "排队等待人工" : "提交工单"}</h2>
+            <button aria-label="关闭" onClick={() => setEscalationOpen(false)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button>
+          </div>
+
+          {step === "context" && (
+            <div className="space-y-4 px-4 py-4">
+              <p className="text-xs leading-5 text-text-secondary">以下上下文会随人工会话或工单一起提交，人工客服无需你重复描述。</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-text-primary">赛事</p>
+                <div className="space-y-2">
+                  {identityCompetitions.map(item => (
+                    <button key={item.id} onClick={() => setCompetitionId(item.id)} aria-pressed={competitionId === item.id} className={`w-full rounded-control border px-3 py-3 text-left text-sm transition ${competitionId === item.id ? "border-primary bg-primary-container text-text-brand" : "border-border-subtle bg-surface text-text-primary"}`}>
+                      {item.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-text-primary">赛道</p>
+                <div className="flex flex-wrap gap-2">
+                  {supportTracks.map(item => (
+                    <button key={item} onClick={() => setTrack(item)} aria-pressed={track === item} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${track === item ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{item}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-text-primary">问题类型</p>
+                <div className="flex flex-wrap gap-2">
+                  {supportIssueTypes.map(item => (
+                    <button key={item} onClick={() => setIssueType(item)} aria-pressed={issueType === item} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${issueType === item ? "bg-primary text-on-primary" : "bg-surface text-text-secondary"}`}>{item}</button>
+                  ))}
+                </div>
+              </div>
+              <Button className="w-full" data-testid="support-context-next" onClick={() => setStep("channel")}>下一步：选择人工渠道</Button>
+            </div>
+          )}
+
+          {step === "channel" && (
+            <div className="space-y-3 px-4 py-4">
+              <Card className="border border-border-subtle">
+                <p className="text-xs text-text-tertiary">已收集上下文</p>
+                <p className="mt-1 text-sm font-medium text-text-primary">{contextSummary}</p>
+                <button onClick={() => setStep("context")} className="mt-2 text-xs font-medium text-text-brand">修改</button>
+              </Card>
+              <button data-testid="support-channel-wecom" onClick={() => setShowWeComModal(true)} className="flex w-full items-center gap-3 rounded-control border border-border-subtle bg-surface p-4 text-left transition active:bg-surface-pressed">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><MessageCircle size={20} aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-text-primary">添加企业微信福利官</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-text-secondary">适合需要持续沟通的问题，工作日 9:00-18:00 在线。</span>
+                </span>
+                <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+              </button>
+              <button data-testid="support-channel-queue" onClick={() => setStep("queue")} className="flex w-full items-center gap-3 rounded-control border border-border-subtle bg-surface p-4 text-left transition active:bg-surface-pressed">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Users size={20} aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-text-primary">排队等待在线人工</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-text-secondary">当前等待 {queueSnapshot.waiting} 人，预计 {queueSnapshot.minutes} 分钟。</span>
+                </span>
+                <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+              </button>
+              <button data-testid="support-channel-ticket" onClick={() => { setTicketDescription(latestQuestion); setStep("ticket"); }} className="flex w-full items-center gap-3 rounded-control border border-border-subtle bg-surface p-4 text-left transition active:bg-surface-pressed">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-container text-text-brand"><Ticket size={20} aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-text-primary">提交工单，稍后回复</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-text-secondary">由智能客服整理问题生成工单，回复会在消息通知中提醒。</span>
+                </span>
+                <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          {step === "queue" && (
+            <div className="space-y-4 px-4 py-4" data-testid="support-queue-state">
+              <Card className="border border-border-subtle text-center">
+                <p className="text-sm font-semibold text-text-primary">已进入人工队列</p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight text-text-brand">{queueSnapshot.waiting}</p>
+                <p className="mt-1 text-xs text-text-secondary">前面还有 {queueSnapshot.waiting} 人，预计等待 {queueSnapshot.minutes} 分钟</p>
+                <p className="mt-3 text-xs leading-5 text-text-tertiary">排队仅在工作日 9:00-18:00 有效。不想等待时可以直接转成工单，人工客服会在处理后回复。</p>
+              </Card>
+              <Button className="w-full" data-testid="support-queue-to-ticket" onClick={() => { setTicketDescription(latestQuestion); setStep("ticket"); }}>不等了，转为工单</Button>
+              <SecondaryButton className="w-full" onClick={() => setShowWeComModal(true)}>改用企业微信</SecondaryButton>
+              <GhostButton className="w-full" onClick={() => setStep("channel")}>返回渠道选择</GhostButton>
+            </div>
+          )}
+
+          {step === "ticket" && (
+            <div className="space-y-4 px-4 py-4">
+              <Card className="border border-border-subtle">
+                <p className="text-xs text-text-tertiary">工单自动携带上下文</p>
+                <p className="mt-1 text-sm font-medium text-text-primary">{contextSummary}</p>
+                <p className="mt-1 text-xs text-text-secondary">账号信息由平台自动附带，无需手填。</p>
+              </Card>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-text-primary">问题描述</span>
+                <textarea value={ticketDescription} onChange={event => setTicketDescription(event.target.value)} data-testid="support-ticket-description" className="min-h-28 w-full rounded-control border border-border bg-surface p-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-primary" placeholder="请补充你的问题细节，智能客服已带入会话中的最后一次提问。" />
+              </label>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-text-primary">截图附件（可选）</p>
+                <div className="flex flex-wrap gap-2">
+                  {attachments.map(item => (
+                    <span key={item} className="flex items-center gap-1 rounded-control bg-surface px-3 py-2 text-xs text-text-secondary">
+                      {item}
+                      <button aria-label={`移除 ${item}`} onClick={() => setAttachments(current => current.filter(file => file !== item))} className="text-text-tertiary"><X size={12} aria-hidden="true" /></button>
+                    </span>
+                  ))}
+                  <button data-testid="support-ticket-attach" onClick={() => setAttachments(current => current.length >= 3 ? current : [...current, `截图-${current.length + 1}.png`])} className="flex items-center gap-1 rounded-control border border-dashed border-border px-3 py-2 text-xs font-medium text-text-brand">
+                    <ImagePlus size={14} aria-hidden="true" />添加截图
+                  </button>
+                </div>
+                <p className="text-xs text-text-tertiary">最多 3 张，原型中为模拟上传。</p>
+              </div>
+              <Button className="w-full" data-testid="support-ticket-submit" onClick={submitTicket}>提交工单</Button>
+              <GhostButton className="w-full" onClick={() => setStep("channel")}>返回渠道选择</GhostButton>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {showWeComModal && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={event => { if (event.target === event.currentTarget) setShowWeComModal(false); }}><div className="w-full max-w-[320px] rounded-container bg-surface p-5 text-center shadow-floating"><div className="flex items-center justify-between"><h2 className="text-base font-semibold text-text-primary">人工客服</h2><button aria-label="关闭" onClick={() => setShowWeComModal(false)} className="flex size-8 items-center justify-center rounded-full text-text-tertiary"><X size={18} aria-hidden="true" /></button></div><div className="mt-4 flex justify-center"><MockQRCode label="企业微信客服二维码" /></div><p className="mt-4 text-sm font-medium text-text-primary">人工渠道：企业微信福利官</p><p className="mt-2 text-xs leading-5 text-text-secondary">工作日 9:00-18:00 在线；正式二维码由运营配置。</p><a href="https://work.weixin.qq.com/" target="_blank" rel="noreferrer" className="mt-4 flex min-h-touch w-full items-center justify-center rounded-control bg-[var(--color-secondary)] px-4 text-sm font-medium text-text-brand active:bg-[var(--color-secondary-hover)]">打开企业微信入口</a><SecondaryButton className="mt-3 w-full" onClick={() => setShowWeComModal(false)}>知道了</SecondaryButton></div></div>}
   </PublicShell>;
 }
 

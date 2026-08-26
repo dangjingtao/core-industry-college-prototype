@@ -100,6 +100,7 @@ import {
   SupportHomePage,
   SupportProvider,
 } from "../features/platform-support/SupportPages";
+import { SupportTicketDetailPage, SupportTicketsPage } from "../features/platform-support/SupportTicketPages";
 
 const account = (page: ReactNode) => <AccountRequired>{page}</AccountRequired>;
 
@@ -202,6 +203,8 @@ export function App() {
               <Route path="/stories/submit" element={account(<StorySubmitPage />)} />
               <Route path="/support" element={<SupportHomePage />} />
               <Route path="/support/chat" element={account(<SupportChatPage />)} />
+              <Route path="/support/tickets" element={account(<SupportTicketsPage />)} />
+              <Route path="/support/tickets/:ticketId" element={account(<SupportTicketDetailPage />)} />
               <Route path="/me" element={account(<MyPage />)} />
               <Route path="/me/profile" element={account(<ProfilePage />)} />
               <Route path="/me/resume" element={account(<ResumePage />)} />
