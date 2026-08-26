@@ -9,6 +9,7 @@ test("T046 ambassador operations flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "华南商贸职业学院" })).toBeVisible();
   const qr = page.getByTestId("qr-CA-DEMO-HN-2026");
   await expect(qr).toBeVisible();
+  await expect(qr).toHaveAttribute("data-payload", /\/ambassadors\?code=CA-DEMO-HN-2026/);
   await expect.poll(async () => qr.innerHTML()).toContain("path");
   await expect(page.getByText("account-demo-ambassador")).toBeVisible();
 });

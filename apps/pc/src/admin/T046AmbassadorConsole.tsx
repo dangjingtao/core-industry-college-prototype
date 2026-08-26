@@ -12,11 +12,12 @@ const teamLabel = { forming: "待点亮", lit: "已点亮", ended: "已结束" }
 const incentiveLabel: Record<AmbassadorIncentiveStatus, string> = { unprocessed: "未处理", processed: "已处理" };
 
 function CodeBlock({ code }: { code: string }) {
-  const payload = `core://ambassadors/join?recruitmentCode=${encodeURIComponent(code)}`;
+  const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL ?? window.location.origin;
+  const payload = `${publicSiteUrl}/ambassadors?code=${encodeURIComponent(code)}`;
   const [svg, setSvg] = useState("");
   useEffect(() => { let cancelled = false; QRCode.toString(payload, { type: "svg", errorCorrectionLevel: "M", margin: 1, width: 192 }).then(value => { if (!cancelled) setSvg(value); }); return () => { cancelled = true; }; }, [payload]);
   const download = () => { if (!svg) return; const link = document.createElement("a"); link.href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`; link.download = `${code}.svg`; link.click(); };
-  return <div className="flex items-center gap-3 rounded-control bg-surface-subtle p-3"><div data-testid={`qr-${code}`} className="size-16 overflow-hidden bg-white p-1" aria-label={`招募二维码 ${code}`} dangerouslySetInnerHTML={{ __html: svg }} /><div><p className="font-mono text-sm font-semibold">{code}</p><p className="text-xs text-text-tertiary">可扫码进入大使申请入口</p></div><button type="button" title="下载二维码" onClick={download} disabled={!svg} className="ml-auto rounded-control p-2 text-text-secondary hover:bg-surface"><Download size={16} /></button></div>;
+  return <div className="flex items-center gap-3 rounded-control bg-surface-subtle p-3"><div data-testid={`qr-${code}`} data-payload={payload} className="size-16 overflow-hidden bg-white p-1" aria-label={`招募二维码 ${code}`} dangerouslySetInnerHTML={{ __html: svg }} /><div><p className="font-mono text-sm font-semibold">{code}</p><p className="text-xs text-text-tertiary">可扫码进入大使申请入口</p></div><button type="button" title="下载二维码" onClick={download} disabled={!svg} className="ml-auto rounded-control p-2 text-text-secondary hover:bg-surface"><Download size={16} /></button></div>;
 }
 
 function CampaignEditor({ campaignId, onDone }: { campaignId?: string; onDone: () => void }) {
