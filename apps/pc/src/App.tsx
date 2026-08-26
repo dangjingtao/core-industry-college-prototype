@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext } from "@core/shared";
+import { AmbassadorStateProvider, buildRegistrationReturnUrl, parseRegistrationHandoff, type RegistrationHandoffContext, useAmbassadorState } from "@core/shared";
 import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { AdminControlPlaneShell } from "./admin/AdminControlPlaneShell";
 import { BasicDataConsole } from "./admin/BasicDataConsole";
@@ -30,11 +30,11 @@ import { readRegistrationPortalCallbackStatus } from "./registration-portal/mode
 import { T032TeacherReviewWorkbench } from "./review/T032TeacherReviewWorkbench";
 import { SanChuangMockLogin } from "./sanchuang-official/SanChuangMockLogin";
 import { SanChuangOfficialHome } from "./sanchuang-official/SanChuangOfficialHome";
-import { AmbassadorStateProvider } from "@core/shared";
 import { T046AmbassadorConsole } from "./admin/T046AmbassadorConsole";
 
 const handoffStorageKey = "core.registration-portal.handoff";
 const handoffTtlMs = 60 * 60 * 1000;
+const ambassadorDemoStorageKey = "core.ambassador.demo-state.v2";
 
 type StoredHandoff = {
   context: RegistrationHandoffContext;
@@ -125,9 +125,23 @@ function AdminNotFound() {
   );
 }
 
+function AmbassadorDemoBridgeLauncher() {
+  const location = useLocation();
+  const { demoBridgeConnected } = useAmbassadorState();
+  if (!location.pathname.startsWith("/admin/ambassadors")) return null;
+  const mobileSiteUrl = (import.meta.env.VITE_MOBILE_SITE_URL || "https://dev.core-industry-college-mobile.pages.dev").replace(/\/$/, "");
+  const openMobile = () => window.open(`${mobileSiteUrl}/me?ambassadorBridge=1`, "core-ambassador-mobile-demo", "popup,width=430,height=860");
+  return <button type="button" data-testid="ambassador-demo-bridge-launcher" onClick={openMobile} className="fixed bottom-5 right-5 z-50 rounded-control border border-primary/20 bg-surface px-4 py-3 text-left shadow-floating">
+    <span className="block text-xs font-semibold text-text-brand">中保真联动预演</span>
+    <span className="mt-1 block text-xs text-text-secondary">{demoBridgeConnected ? "PC ↔ Mobile 已连接" : "打开 Mobile 并同步当前活动状态"}</span>
+  </button>;
+}
+
 export function App() {
+  const mobileOrigin = import.meta.env.VITE_MOBILE_SITE_URL || "https://dev.core-industry-college-mobile.pages.dev";
   return (
-    <AmbassadorStateProvider>
+    <AmbassadorStateProvider storageKey={ambassadorDemoStorageKey} bridge={{ role: "host", peerOrigin: mobileOrigin }}>
+      <AmbassadorDemoBridgeLauncher />
       <PC03StateProvider>
         <PC04StateProvider>
           <PC05StateProvider>

@@ -2,7 +2,7 @@ import { BarChart3, CheckCircle2, Clipboard, QrCode, ShieldCheck, UserPlus, User
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import QRCode from "qrcode";
-import { ambassadorApplicationForm, useAmbassadorState } from "@core/shared";
+import { ambassadorApplicationForm, ambassadorCampaignStatus, isAmbassadorCodeActive, useAmbassadorState } from "@core/shared";
 import { Button, Card, PageHeader, PublicShell, Section, SecondaryButton, StatusTag } from "../../components/ui";
 import { usePublicPlatform } from "../public-platform/state";
 
@@ -221,13 +221,14 @@ export function CampusAmbassadorTeamPage() {
 
 export function CampusAmbassadorResultsPage() {
   const location = useLocation();
+  const { session } = usePublicPlatform();
   const { teamId } = useParams<{ teamId: string }>();
   const { teams, campaigns, validAcquisitions } = useAmbassadorState();
   const accountId = accountIdFrom(location.search);
   const team = teams.find(item => item.id === teamId);
   const campaign = team ? campaigns.find(item => item.id === team.campaignId) : undefined;
   const currentMember = team?.members.find(member => member.accountId === accountId && member.status === "active");
-  if (!team || !campaign || currentMember?.role !== "ambassador") return <PublicShell showNavigation={false}><PageHeader title="团队推广成果" backTo={teamId ? `/ambassadors/team/${teamId}?accountId=${encodeURIComponent(accountId)}` : "/ambassadors"} /><div className="px-4 py-6"><Card className="border border-danger bg-danger-bg text-center"><p className="font-semibold text-danger-text">仅核心大使可查看团队推广成果</p><p className="mt-2 text-sm text-danger-text">推广伙伴不会看到个人、团队或其他成员的成果数字。</p></Card></div></PublicShell>;
+  if (!session.loggedIn || !team || !campaign || currentMember?.role !== "ambassador") return <PublicShell showNavigation={false}><PageHeader title="团队推广成果" backTo={teamId ? `/ambassadors/team/${teamId}?accountId=${encodeURIComponent(accountId)}` : "/ambassadors"} /><div className="px-4 py-6"><Card className="border border-danger bg-danger-bg text-center"><p className="font-semibold text-danger-text">仅核心大使可查看团队推广成果</p><p className="mt-2 text-sm text-danger-text">推广伙伴不会看到个人、团队或其他成员的成果数字。</p></Card></div></PublicShell>;
   const acquisitions = validAcquisitions.filter(item => item.teamId === team.id);
   const activeMembers = team.members.filter(member => member.status === "active");
   return <PublicShell showNavigation={false}><PageHeader title="团队推广成果" backTo={`/ambassadors/team/${team.id}?accountId=${encodeURIComponent(accountId)}`} /><div className="space-y-5 px-4 py-5">
@@ -246,37 +247,41 @@ export function CampusAmbassadorPromotionPage() {
   const team = promotionCode ? teams.find(item => item.id === promotionCode.teamId) : undefined;
   const [newAccountId, setNewAccountId] = useState("new-user-001");
   const [message, setMessage] = useState("");
-  const [pendingAccountId, setPendingAccountId] = useState<string>();
 
-  useEffect(() => {
-    if (!pendingAccountId) return;
-    if (validAcquisitions.some(item => item.campaignId === promotionCode?.campaignId && item.newAccountId === pendingAccountId)) {
-      setMessage("注册成功，已形成 1 个有效新增");
-      setPendingAccountId(undefined);
-    }
-  }, [pendingAccountId, promotionCode?.campaignId, validAcquisitions]);
+  const campaignStatus = campaign ? ambassadorCampaignStatus(campaign) : undefined;
+  const codeActive = Boolean(promotionCode && campaign && isAmbassadorCodeActive(promotionCode, campaign));
+  if (!promotionCode || !campaign || !team || team.status !== "lit" || !codeActive) {
+    const title = campaignStatus === "ended" ? "活动已结束，推广码已失效" : campaignStatus === "upcoming" ? "活动尚未开始" : "推广码无效或团队尚未点亮";
+    const detail = campaignStatus === "ended" ? "历史团队和既有推广成果会保留，但不会再形成新的有效新增。" : campaignStatus === "upcoming" ? "请在活动开始后再使用本推广码。" : "未点亮团队不会开放推广归因，请返回后重新确认二维码。";
+    return <PublicShell showNavigation={false}><PageHeader title="核心大使专属邀请" backTo="/me" /><div className="px-4 py-6"><Card className="text-center"><p className="font-semibold">{title}</p><p className="mt-2 text-sm text-text-secondary">{detail}</p></Card></div></PublicShell>;
+  }
 
-  if (!promotionCode || !campaign || !team || team.status !== "lit") return <PublicShell showNavigation={false}><PageHeader title="核心大使专属邀请" backTo="/ambassadors" /><div className="px-4 py-6"><Card className="text-center"><p className="font-semibold">推广码无效或团队尚未点亮</p><p className="mt-2 text-sm text-text-secondary">未点亮团队不会开放推广归因。</p></Card></div></PublicShell>;
+  const showRegistrationResult = (result: ReturnType<typeof recordPromotionRegistration>) => {
+    const messageByResult = {
+      recorded: "注册成功，已形成 1 个有效新增",
+      duplicate: "该用户已在本期计入，有效新增不重复增加",
+      "already-registered": "已注册用户继续访问，不计入有效新增",
+      "campaign-member": "该账号已参与本期核心大使团队，不计入有效新增",
+      inactive: "当前推广码已失效，请重新获取有效二维码",
+    } as const;
+    setMessage(messageByResult[result]);
+  };
+
   const simulateNewRegistration = () => {
     const id = newAccountId.trim();
     if (!id) {
       setMessage("请输入模拟新用户账号");
       return;
     }
-    if (validAcquisitions.some(item => item.campaignId === campaign.id && item.newAccountId === id)) {
-      setMessage("该用户已在本期计入，有效新增不重复增加");
-      return;
-    }
-    if (team.members.some(member => member.accountId === id)) {
-      setMessage("该账号已经注册，不计入有效新增");
-      return;
-    }
-    recordPromotionRegistration({ promotionCode: promotionCode.code, newAccountId: id, wasRegistered: false });
-    setPendingAccountId(id);
+    showRegistrationResult(recordPromotionRegistration({ promotionCode: promotionCode.code, newAccountId: id, wasRegistered: false }));
   };
+  const simulateExistingRegistration = () => {
+    showRegistrationResult(recordPromotionRegistration({ promotionCode: promotionCode.code, newAccountId: newAccountId.trim() || "existing-user", wasRegistered: true }));
+  };
+
   return <PublicShell showNavigation={false}><PageHeader title="核心大使专属邀请" backTo={`/ambassadors/team/${team.id}?accountId=${encodeURIComponent(promotionCode.accountId)}`} /><div className="space-y-5 px-4 py-5">
     <Card className="border border-primary/20 bg-primary-container"><StatusTag tone="success">团队已点亮</StatusTag><h1 className="mt-3 text-xl font-semibold">通过专属推广码加入核心产业学院</h1><p className="mt-2 text-sm text-text-secondary">推广来源会保留到新用户完成注册；中保真原型不模拟应用商店安装服务。</p></Card>
     <Card className="space-y-3"><p className="text-xs text-text-tertiary">推广码</p><code className="block overflow-wrap-anywhere rounded-control bg-surface-subtle px-3 py-3 text-xs">{promotionCode.code}</code><p className="text-xs text-text-secondary">归因推广人员：{promotionCode.accountId}</p></Card>
-    <Card className="space-y-4"><label className="block text-sm font-medium">模拟注册账号<input value={newAccountId} onChange={event => { setNewAccountId(event.target.value); setMessage(""); }} className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label><Button className="w-full" disabled={Boolean(pendingAccountId)} onClick={simulateNewRegistration}>模拟新用户注册成功</Button><SecondaryButton className="w-full" onClick={() => { recordPromotionRegistration({ promotionCode: promotionCode.code, newAccountId: newAccountId.trim() || "existing-user", wasRegistered: true }); setMessage("已注册用户继续访问，不计入有效新增"); }}>模拟已注册用户继续</SecondaryButton>{message && <p className="rounded-control bg-info-bg px-3 py-2 text-sm text-info-text" data-testid="promotion-message">{message}</p>}</Card>
+    <Card className="space-y-4"><label className="block text-sm font-medium">模拟注册账号<input value={newAccountId} onChange={event => { setNewAccountId(event.target.value); setMessage(""); }} className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label><Button className="w-full" onClick={simulateNewRegistration}>模拟新用户注册成功</Button><SecondaryButton className="w-full" onClick={simulateExistingRegistration}>模拟已注册用户继续</SecondaryButton>{message && <p className="rounded-control bg-info-bg px-3 py-2 text-sm text-info-text" data-testid="promotion-message">{message}</p>}</Card>
   </div></PublicShell>;
 }

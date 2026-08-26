@@ -104,6 +104,7 @@ import {
 import { SupportTicketDetailPage, SupportTicketsPage } from "../features/platform-support/SupportTicketPages";
 
 const account = (page: ReactNode) => <AccountRequired>{page}</AccountRequired>;
+const ambassadorDemoStorageKey = "core.ambassador.demo-state.v2";
 
 /** T040：欢迎页前置开屏广告（会话内一次；深链/回流动线跳过；可手动重放演示） */
 function WelcomeSplashPage() {
@@ -126,9 +127,10 @@ function WelcomeSplashPage() {
 }
 
 export function App() {
+  const pcOrigin = import.meta.env.VITE_REGISTRATION_PORTAL_URL || "https://dev.core-industry-college-pc.pages.dev";
   return (
     <PublicPlatformProvider>
-      <AmbassadorStateProvider>
+      <AmbassadorStateProvider storageKey={ambassadorDemoStorageKey} bridge={{ role: "client", peerOrigin: pcOrigin }}>
         <WorkshopRuntimeProvider>
           <LongTermAssetsProvider>
             <SupportProvider>
