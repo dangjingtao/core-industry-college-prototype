@@ -6,6 +6,8 @@ import { competitionById, type Competition } from "../public-platform/data";
 import { resourceById, workshopTasks, workspaceData, type WorkshopLifecycle } from "./data";
 import { nextReadyTask, taskAvailability, useWorkshopRuntime } from "./runtime";
 import { CompetitionContextLine, RequireCompetitionAccess, useCompetitionAccess, WorkspaceBlocked, WorkspaceScenarioTools } from "./shared";
+import { badgeCatalog } from "../badges/catalog";
+import { useBadges } from "../badges/hooks";
 
 const identityTone = (status: string) => status === "active" ? "success" as const : status === "pending" ? "warning" as const : status === "rejected" ? "danger" as const : "neutral" as const;
 const registrationWindowLabel = (competition: Competition) => competition.status === "registrationOpen" ? "报名中" : competition.status === "upcoming" ? "尚未开放" : competition.status === "ended" ? "已关闭" : "报名已结束";
@@ -16,6 +18,7 @@ export function CompetitionLifecycleDetailPage() {
   const { competitionId } = useParams();
   const { session } = usePublicPlatform();
   const { identityFor, getRuntime } = useWorkshopRuntime();
+  const { earned } = useBadges();
   if (!competitionId) return null;
   const competition = competitionById(competitionId);
   if (!competition) return <PublicShell showNavigation={false}><PageHeader title="赛事不存在" backTo="/competitions" /><div className="px-4 py-6"><Card><p className="text-text-secondary">未找到对应赛事。</p></Card></div></PublicShell>;
@@ -27,9 +30,27 @@ export function CompetitionLifecycleDetailPage() {
   const active = identity?.identityStatus === "active";
   const pendingOrRejected = identity?.identityStatus === "pending" || identity?.identityStatus === "rejected";
   const hasAssetHandoff = Boolean(identity) && (runtime.lifecycle === "ended" || identity?.identityStatus === "revoked");
+  const compBadges = badgeCatalog.filter(b => b.source === "competition");
+  const earnedCompBadges = compBadges.filter(b => earned.some(e => e.entry.id === b.id));
+  const lockedCompBadges = compBadges.filter(b => !earned.some(e => e.entry.id === b.id));
   return <PublicShell showNavigation={false}><PageHeader title="赛事详情" subtitle="报名窗口与赛事阶段分开表达" backTo="/competitions" /><div className="space-y-6 px-4 py-5">
     <div><StatusTag tone={lifecycleTone}>{lifecycleLabel}</StatusTag><h1 className="mt-3 text-2xl font-semibold leading-8 text-text-primary">{competition.name}</h1><p className="mt-2 text-sm text-text-secondary">{competition.organizer}</p><p className="mt-4 text-base leading-6 text-text-secondary">{competition.summary}</p></div>
     <Section title="当前账号与赛事"><Card><div className="space-y-3 text-sm"><div className="flex justify-between gap-4"><span className="text-text-secondary">报名窗口</span><span className="font-medium text-text-primary">{competition.registrationEnds ?? registrationWindowLabel(competition)}</span></div><div className="flex justify-between gap-4"><span className="text-text-secondary">赛事阶段</span><span className="font-medium text-text-primary">{lifecycleLabel}</span></div><div className="flex justify-between gap-4"><span className="text-text-secondary">赛事身份</span><span className="font-medium text-text-primary">{guest ? "登录后查看" : identity?.identityStatus ?? "暂无"}</span></div><div className="flex justify-between gap-4"><span className="text-text-secondary">报名状态</span><span className="font-medium text-text-primary">{guest ? "登录后查看" : identity?.registrationStatus ?? "未报名"}</span></div></div></Card></Section>
+    {/* 赛事徽章 */}
+    {!guest && <Section title="赛事徽章" subtitle={`${earnedCompBadges.length} / ${compBadges.length} 已获得`} action={<Link to="/me/badges" className="text-sm font-medium text-text-brand">徽章墙</Link>}>
+      <div className="space-y-2">
+        {earnedCompBadges.map(b => <div key={b.id} className="flex items-center gap-3 rounded-container border border-border-subtle bg-surface px-3 py-2.5">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${b.iconColor}`}>{b.iconKey}</div>
+          <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-primary">{b.name}</p><p className="truncate text-xs text-text-secondary">{b.description}</p></div>
+          <StatusTag tone="success">已获得</StatusTag>
+        </div>)}
+        {lockedCompBadges.map(b => <div key={b.id} className="flex items-center gap-3 rounded-container border border-border-subtle bg-surface-subtle px-3 py-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-sm font-semibold text-text-tertiary">{b.iconKey}</div>
+          <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-secondary">{b.name}</p><p className="truncate text-xs text-text-tertiary">{b.rule.type === "competition.registered" ? "报名成功后获得" : b.rule.type === "competition.ended" ? "赛事结束后获得" : b.description}</p></div>
+          <StatusTag tone="neutral">未获得</StatusTag>
+        </div>)}
+      </div>
+    </Section>}
     {competition.eligibility === "ineligible" && <Card className="border border-warning bg-warning-bg"><p className="font-medium text-warning-text">当前条件暂不满足报名资格</p><p className="mt-2 text-sm text-warning-text">平台只展示当前资格结果，不在这里自行推断完整资格规则。</p></Card>}
     {runtime.lifecycle === "ended" && <Card className="border border-border-subtle"><p className="font-medium text-text-primary">赛事期操作已经结束</p><p className="mt-2 text-sm text-text-secondary">赛事期权限关闭后，拥有历史赛事身份的账号仍可进入长期资产查看经历、成绩和证书。</p></Card>}
     <div className="space-y-2">{guest ? runtime.lifecycle === "ended" ? <Button className="w-full" disabled>赛事已结束</Button> : <Button className="w-full" onClick={() => navigate(`/auth/login?returnTo=/competitions/${competitionId}/registration`)}>登录后报名</Button> : runtime.lifecycle === "ended" ? hasAssetHandoff ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>查看赛后出口</Button> : <Button className="w-full" disabled>赛事已结束</Button> : active ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>进入赛事工作区</Button> : pendingOrRejected ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/registration`)}>查看报名 / 审核状态</Button> : identity?.identityStatus === "revoked" ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/workspace`)}>查看赛后出口</Button> : canRegister ? <Button className="w-full" onClick={() => navigate(`/competitions/${competitionId}/registration`)}>进入报名</Button> : <Button className="w-full" disabled>{competition.status === "upcoming" ? "报名尚未开始" : "暂不可报名"}</Button>}<SecondaryButton className="w-full" onClick={() => guest ? navigate("/auth/login?returnTo=/competitions/mine") : navigate("/competitions/mine")}>查看我的赛事</SecondaryButton></div>
