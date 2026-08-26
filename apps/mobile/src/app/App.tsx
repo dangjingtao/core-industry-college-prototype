@@ -46,7 +46,7 @@ import {
   T034CourseDetailPage,
   T034CoursesPage,
 } from "../features/long-term-assets/T034CoursePages";
-import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, FreeBenefitsPage } from "../features/long-term-assets/BenefitsPages";
+import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, FreeBenefitsPage, GiftPackDetailPage, GiftPacksPage } from "../features/long-term-assets/BenefitsPages";
 import { T035ExchangeCenterPage, T035ExchangeDetailPage } from "../features/long-term-assets/T035ExchangePages";
 import {
   AssetsHomePage,
@@ -179,6 +179,8 @@ export function App() {
               <Route path="/benefits/exchange/:exchangeId" element={<T035ExchangeDetailPage />} />
               <Route path="/benefits/credits" element={<CreditDetailsPage />} />
               <Route path="/benefits/wallet" element={account(<BenefitsWalletPage />)} />
+              <Route path="/benefits/gift-packs" element={<GiftPacksPage />} />
+              <Route path="/benefits/gift-packs/:giftPackId" element={<GiftPackDetailPage />} />
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
               <Route path="/growth/score" element={account(<GrowthScorePage />)} />
               <Route path="/assets" element={account(<AssetsHomePage />)} />

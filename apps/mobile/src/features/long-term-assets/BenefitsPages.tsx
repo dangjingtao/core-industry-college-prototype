@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Coins, Info, Phone, Search, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
+import { ChevronRight, Coins, Gift, Info, Phone, Search, ShoppingBag, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Dialog } from "@core/shared";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
 import { benefitById, benefits, exchangeItemById, exchangeItems, learningCreditRecords, type BenefitStatus } from "./data";
 import { InfoFeedAdCard, mockRewardedAds, RewardedVideoAd, useInfoFeedAd } from "./Ads";
 import { SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
 import { useLongTermAssets } from "./store";
+import { useBadges } from "../badges/hooks";
 
 const benefitLabel: Record<BenefitStatus, string> = {
   eligible: "可领取",
@@ -78,13 +79,74 @@ function BenefitListItem({ item, status }: { item: typeof benefits[number]; stat
 export function BenefitsPage() {
   const loggedIn = useAccountLoggedIn();
   const { benefitStatusFor } = useLongTermAssets();
+  const { earned } = useBadges();
   const { competitionId, query, backTo } = useBenefitSourceContext();
+
+  // 统计各 tier 徽章数量，用于大礼包门槛判断
+  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
+  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+
   const eligibleBenefits = useMemo(() => benefits.filter(item => {
+    if (item.isGiftPack) return false; // 大礼包单独展示
     if (competitionId && (item.source.type !== "competition" || item.source.competitionId !== competitionId)) return false;
     return loggedIn ? ["eligible", "claimed"].includes(benefitStatusFor(item.id)) : true;
   }).slice(0, 2), [benefitStatusFor, competitionId, loggedIn]);
+
+  const giftPacks = useMemo(() => benefits.filter(item => item.isGiftPack), []);
   const recommendedExchange = exchangeItems.filter(item => item.status !== "outOfStock").slice(0, 2);
+
   return <PublicShell><PageHeader title={competitionId ? "赛事福利" : "创赛福利"} subtitle="学力值、免费福利与兑换中心" backTo={backTo ?? "/home"} /><div className="space-y-5 px-4 py-5">{loggedIn && <PhoneBindingBanner returnTo={`/benefits${query}`} />}<CreditCard />
+
+    {/* 大礼包福利栏目 */}
+    <Section
+      title="大礼包福利"
+      subtitle="徽章达标即可领取，运营后台动态更新"
+      action={<Link to="/benefits/gift-packs" className="text-sm font-medium text-text-brand">查看全部</Link>}
+    >
+      <div className="space-y-3">
+        {giftPacks.map(pack => {
+          const req = pack.badgeRequirement!;
+          const highMet = highBadgeCount >= req.highBadgeCount;
+          const lowMet = lowBadgeCount >= req.lowBadgeCount;
+          const canClaim = highMet && lowMet && loggedIn;
+          return (
+            <Link key={pack.id} to={`/benefits/gift-packs/${pack.id}`} className="block">
+              <Card interactive className={`overflow-hidden bg-gradient-to-r ${pack.giftPackCover ?? "from-primary to-[#7569ff]"} p-0 text-on-primary`}>
+                <div className="flex items-center justify-between px-4 pt-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Gift size={16} aria-hidden="true" />
+                      <span className="text-xs font-medium opacity-90">运营大礼包</span>
+                    </div>
+                    <h3 className="mt-1 text-base font-bold">{pack.title}</h3>
+                  </div>
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+                    {canClaim ? "可领取" : "未达标"}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-90">高级徽章</span>
+                    <span className="font-semibold">{highBadgeCount} / {req.highBadgeCount}</span>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, (highBadgeCount / req.highBadgeCount) * 100)}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-90">低级徽章</span>
+                    <span className="font-semibold">{lowBadgeCount} / {req.lowBadgeCount}</span>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, (lowBadgeCount / req.lowBadgeCount) * 100)}%` }} />
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+    </Section>
+
     <Section title="推荐免费福利" action={<Link to="/benefits/free" className="text-sm font-medium text-text-brand">查看全部</Link>}><div className="space-y-3">{eligibleBenefits.length ? eligibleBenefits.map(item => <BenefitListItem key={item.id} item={item} status={loggedIn ? benefitStatusFor(item.id) : undefined} />) : <Card><p className="text-sm text-text-secondary">当前没有可领取的免费福利。</p></Card>}</div></Section>
     <Section title="推荐兑换" action={<Link to="/benefits/exchange" className="text-sm font-medium text-text-brand">兑换中心</Link>}><div className="grid grid-cols-2 gap-3">{recommendedExchange.map(item => <Link key={item.id} to={`/benefits/exchange/${item.id}`} className="block"><Card interactive className="flex h-full flex-col"><div className="flex size-9 items-center justify-center rounded-[14px] bg-primary-container text-text-brand"><ShoppingBag size={18} aria-hidden="true" /></div><h3 className="mt-3 line-clamp-2 text-sm font-semibold text-text-primary">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs text-text-secondary">{item.summary}</p><div className="mt-auto flex items-center gap-1 pt-3 text-sm font-semibold text-text-brand"><Coins size={14} aria-hidden="true" />{item.cost}</div></Card></Link>)}</div></Section>
     <Card className="border border-border-subtle"><p className="text-sm leading-5 text-text-secondary">福利板块展示平台、赛事、企业与活动来源的权益与兑换内容。学力值数额与经济规则为原型占位，正式规则由 F04 产品决策后替换。</p></Card>
@@ -319,4 +381,268 @@ export function BenefitsWalletPage() {
   const { benefitStatusFor } = useLongTermAssets();
   const grouped = benefits.map(item => ({ item, status: benefitStatusFor(item.id) }));
   return <PublicShell showNavigation={false}><PageHeader title="我的卡券" backTo="/me" /><div className="space-y-6 px-4 py-5"><div><h2 className="text-base font-semibold text-text-primary">可使用</h2><div className="mt-3 space-y-3">{grouped.filter(entry => entry.status === "claimed").length ? grouped.filter(entry => entry.status === "claimed").map(({ item, status }) => <Link key={item.id} to={`/benefits/${item.id}`} className="block"><Card interactive><div className="flex items-center justify-between gap-3"><div><h3 className="font-semibold text-text-primary">{item.title}</h3><p className="mt-1 text-xs text-text-secondary">{item.source.label}</p></div><StatusTag tone="info">{benefitLabel[status]}</StatusTag></div></Card></Link>) : <Card><p className="text-sm text-text-secondary">当前没有待使用权益。</p></Card>}</div></div><div><h2 className="text-base font-semibold text-text-primary">历史记录</h2><div className="mt-3 space-y-3">{grouped.filter(entry => ["used","expired"].includes(entry.status)).map(({ item, status }) => <Card key={item.id}><div className="flex items-center justify-between gap-3"><div><h3 className="font-medium text-text-primary">{item.title}</h3><p className="mt-1 text-xs text-text-secondary">{item.source.label}</p></div><StatusTag tone="neutral">{benefitLabel[status]}</StatusTag></div></Card>)}</div></div><SecondaryButton className="w-full" onClick={() => navigate("/benefits")}>返回权益中心</SecondaryButton></div></PublicShell>;
+}
+
+// -------- 大礼包福利：列表页 + 详情页 --------
+
+const giftPacks = benefits.filter(item => item.isGiftPack);
+
+export function GiftPacksPage() {
+  const loggedIn = useAccountLoggedIn();
+  const { earned } = useBadges();
+  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
+  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+
+  return <PublicShell showNavigation={false}>
+    <PageHeader title="大礼包福利" subtitle="徽章达标即可领取，运营后台动态更新" backTo="/benefits" />
+    <div className="space-y-5 px-4 py-5">
+      <Card className="border border-info bg-info-bg">
+        <div className="flex items-start gap-3">
+          <Gift size={20} className="mt-0.5 shrink-0 text-info-text" aria-hidden="true" />
+          <div>
+            <h2 className="text-sm font-semibold text-info-text">徽章成就兑换大礼包</h2>
+            <p className="mt-1 text-sm leading-5 text-info-text">
+              持续学习、完成日常任务即可获得徽章，累计达到门槛就能兑换专属大礼包。大礼包内容由运营后台动态更新。
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {loggedIn && (
+        <Card>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-text-primary">我的徽章进度</span>
+            <Link to="/me/badges" className="text-sm font-medium text-text-brand">去徽章墙</Link>
+          </div>
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">高级徽章</span>
+              <span className="font-semibold text-text-primary">{highBadgeCount} 枚</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-subtle">
+              <div className="h-full rounded-full bg-success" style={{ width: `${Math.min(100, (highBadgeCount / 10) * 100)}%` }} />
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">低级徽章</span>
+              <span className="font-semibold text-text-primary">{lowBadgeCount} 枚</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-subtle">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (lowBadgeCount / 8) * 100)}%` }} />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-text-primary">全部大礼包</h2>
+        {giftPacks.map(pack => {
+          const req = pack.badgeRequirement!;
+          const highMet = highBadgeCount >= req.highBadgeCount;
+          const lowMet = lowBadgeCount >= req.lowBadgeCount;
+          const canClaim = highMet && lowMet && loggedIn;
+          return (
+            <Link key={pack.id} to={`/benefits/gift-packs/${pack.id}`} className="block">
+              <Card interactive className={`overflow-hidden bg-gradient-to-r ${pack.giftPackCover ?? "from-primary to-[#7569ff]"} p-0 text-on-primary`}>
+                <div className="flex items-center justify-between px-4 pt-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Gift size={16} aria-hidden="true" />
+                      <span className="text-xs font-medium opacity-90">运营大礼包</span>
+                    </div>
+                    <h3 className="mt-1 text-lg font-bold">{pack.title}</h3>
+                    <p className="mt-1 text-xs opacity-90">{pack.summary}</p>
+                  </div>
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+                    {canClaim ? "可领取" : "未达标"}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-90">高级徽章</span>
+                    <span className="font-semibold">{highBadgeCount} / {req.highBadgeCount}</span>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, (highBadgeCount / req.highBadgeCount) * 100)}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-90">低级徽章</span>
+                    <span className="font-semibold">{lowBadgeCount} / {req.lowBadgeCount}</span>
+                  </div>
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, (lowBadgeCount / req.lowBadgeCount) * 100)}%` }} />
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      <Card className="border border-border-subtle">
+        <p className="text-sm leading-5 text-text-secondary">
+          大礼包福利由运营后台动态配置，徽章门槛、礼包内容、有效期均可能调整。已领取的大礼包权益会保留在你的卡券中。
+        </p>
+      </Card>
+    </div>
+  </PublicShell>;
+}
+
+export function GiftPackDetailPage() {
+  const navigate = useNavigate();
+  const loggedIn = useAccountLoggedIn();
+  const accountAction = useAccountAction();
+  const { giftPackId } = useParams();
+  const pack = benefits.find(item => item.id === giftPackId && item.isGiftPack);
+  const { earned } = useBadges();
+  const { claimBenefit, benefitStatusFor, profile } = useLongTermAssets();
+  const [showClaimedDialog, setShowClaimedDialog] = useState(false);
+
+  if (!pack) return <PublicShell showNavigation={false}><PageHeader title="大礼包不存在" backTo="/benefits/gift-packs" /></PublicShell>;
+
+  const req = pack.badgeRequirement!;
+  const highBadgeCount = earned.filter(v => v.entry.tier === "high").length;
+  const lowBadgeCount = earned.filter(v => v.entry.tier === "low").length;
+  const highMet = highBadgeCount >= req.highBadgeCount;
+  const lowMet = lowBadgeCount >= req.lowBadgeCount;
+  const canClaim = highMet && lowMet && loggedIn;
+  const status = loggedIn ? benefitStatusFor(pack.id) : undefined;
+  const phoneReady = Boolean(profile.phone && profile.phoneVerified === "verified");
+  const maskedPhone = profile.phone ? `${profile.phone.slice(0, 3)} **** ${profile.phone.slice(7)}` : "未绑定手机号";
+
+  const handleClaim = () => {
+    if (!canClaim || !pack.bindPhone || !phoneReady) return;
+    claimBenefit(pack.id);
+    setShowClaimedDialog(true);
+  };
+
+  return <PublicShell showNavigation={false}>
+    <PageHeader title="大礼包详情" backTo="/benefits/gift-packs" />
+    <div className="space-y-5 px-4 py-5">
+      {/* 封面 */}
+      <div className={`overflow-hidden rounded-container bg-gradient-to-r ${pack.giftPackCover ?? "from-primary to-[#7569ff]"} p-6 text-on-primary`}>
+        <div className="flex items-center gap-2">
+          <Gift size={18} aria-hidden="true" />
+          <span className="text-sm font-medium opacity-90">运营大礼包</span>
+        </div>
+        <h1 className="mt-2 text-2xl font-bold">{pack.title}</h1>
+        <p className="mt-2 text-sm opacity-90">{pack.summary}</p>
+        <div className="mt-5 flex items-center gap-3">
+          <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium text-white">
+            {canClaim ? "可领取" : "未达标"}
+          </span>
+          {pack.expiresAt && <span className="text-xs opacity-80">有效期至 {pack.expiresAt}</span>}
+        </div>
+      </div>
+
+      {/* 徽章门槛进度 */}
+      <Card>
+        <h2 className="text-sm font-semibold text-text-primary">领取门槛</h2>
+        <p className="mt-1 text-xs text-text-tertiary">累计获得以下数量徽章即可领取大礼包</p>
+        <div className="mt-4 space-y-4">
+          <div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">高级徽章</span>
+              <span className={`font-semibold ${highMet ? "text-success-text" : "text-text-primary"}`}>{highBadgeCount} / {req.highBadgeCount}</span>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-subtle">
+              <div className="h-full rounded-full bg-success" style={{ width: `${Math.min(100, (highBadgeCount / req.highBadgeCount) * 100)}%` }} />
+            </div>
+            <p className="mt-1 text-xs text-text-tertiary">课程学习节点、结业考试、赛事、模拟经营等</p>
+          </div>
+          <div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">低级徽章</span>
+              <span className={`font-semibold ${lowMet ? "text-success-text" : "text-text-primary"}`}>{lowBadgeCount} / {req.lowBadgeCount}</span>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-subtle">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (lowBadgeCount / req.lowBadgeCount) * 100)}%` }} />
+            </div>
+            <p className="mt-1 text-xs text-text-tertiary">每日打卡、公益助力、激励视频、完善资料等</p>
+          </div>
+        </div>
+        {!canClaim && loggedIn && (
+          <button type="button" onClick={() => navigate("/me/badges")} className="mt-4 flex w-full items-center justify-center gap-1 text-sm font-medium text-text-brand">
+            去徽章墙看看怎么获得 <ChevronRight size={14} aria-hidden="true" />
+          </button>
+        )}
+      </Card>
+
+      {/* 礼包内容 */}
+      {pack.giftPackContent && pack.giftPackContent.length > 0 && (
+        <Card>
+          <h2 className="text-sm font-semibold text-text-primary">礼包内容</h2>
+          <ul className="mt-3 space-y-2">
+            {pack.giftPackContent.map((item, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-text-secondary">
+                <Gift size={14} className="mt-0.5 shrink-0 text-text-brand" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* 领取说明 */}
+      <Card>
+        <h2 className="text-sm font-semibold text-text-primary">领取说明</h2>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">{pack.reason}</p>
+        {pack.claimHint && <p className="mt-3 text-sm text-text-secondary">{pack.claimHint}</p>}
+      </Card>
+
+      {/* 领取按钮 */}
+      {!loggedIn ? (
+        <Button className="w-full" onClick={() => accountAction(() => undefined)}>登录后查看并领取</Button>
+      ) : status === "claimed" ? (
+        <Card className="border border-success bg-success-bg">
+          <p className="font-semibold text-success-text">已领取</p>
+          <p className="mt-1 text-sm text-success-text">大礼包权益已发放至你的卡券，请前往查看。</p>
+          <Button className="mt-3 w-full" onClick={() => navigate("/benefits/wallet")}>查看我的卡券</Button>
+        </Card>
+      ) : canClaim ? (
+        pack.bindPhone && !phoneReady ? (
+          <Card className="border border-warning bg-warning-bg">
+            <div className="flex items-start gap-3">
+              <Gift size={20} className="mt-0.5 shrink-0 text-warning-text" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-warning-text">领取前请绑定手机号</p>
+                <p className="mt-1 text-sm leading-5 text-warning-text">大礼包权益将发放到已验证手机号，绑定后无需重复输入。</p>
+                <Link to={`/me/profile?returnTo=${encodeURIComponent(`/benefits/gift-packs/${pack.id}`)}`} className="mt-3 inline-block text-sm font-medium text-text-brand">去绑定手机号</Link>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {pack.bindPhone && phoneReady && (
+              <Card className="flex items-center gap-3 bg-surface">
+                <Phone size={18} className="text-text-brand" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{maskedPhone}</p>
+                  <p className="text-xs text-text-tertiary">大礼包权益将发放至此手机号</p>
+                </div>
+              </Card>
+            )}
+            <Button className="w-full" onClick={handleClaim}>一键领取大礼包</Button>
+          </div>
+        )
+      ) : (
+        <Button className="w-full" disabled>徽章未达标，继续加油</Button>
+      )}
+
+      <SecondaryButton className="w-full" onClick={() => navigate("/benefits/gift-packs")}>返回大礼包列表</SecondaryButton>
+    </div>
+
+    <Dialog
+      open={showClaimedDialog}
+      onOpenChange={setShowClaimedDialog}
+      title="领取成功"
+      description={`「${pack.title}」已发放至你绑定的手机号，礼包内各项权益可在「我的卡券」中查看。`}
+      size="sm"
+      footer={
+        <div className="flex w-full flex-col gap-3">
+          <Button className="w-full" onClick={() => { setShowClaimedDialog(false); navigate("/benefits/wallet"); }}>查看我的卡券</Button>
+          <SecondaryButton className="w-full" onClick={() => setShowClaimedDialog(false)}>关闭</SecondaryButton>
+        </div>
+      }
+    />
+  </PublicShell>;
 }

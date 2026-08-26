@@ -92,6 +92,17 @@ export type Benefit = {
   couponValidityDays?: number;
   /** 同一账号/手机号每天限领次数 */
   dailyClaimLimit?: number;
+  /** 是否为徽章门槛大礼包（运营后台动态配置） */
+  isGiftPack?: boolean;
+  /** 徽章门槛：需要的高级 / 低级徽章数量 */
+  badgeRequirement?: {
+    highBadgeCount: number;
+    lowBadgeCount: number;
+  };
+  /** 大礼包内容描述（运营配置的福利明细） */
+  giftPackContent?: string[];
+  /** 大礼包封面色（渐变 from-to） */
+  giftPackCover?: string;
 };
 
 export type CertificateRecord = {
@@ -492,6 +503,49 @@ export const benefits: Benefit[] = [
     expiresAt: "2025-09-01",
     initialStatus: "expired",
     requiresCompetitionId: "sanchuang-15",
+  },
+
+  // -------- 大礼包福利（徽章门槛，运营后台动态配置） --------
+  {
+    id: "giftpack-student-deluxe",
+    title: "学生豪华大礼包",
+    summary: "咖啡券 + 视频会员 + 出行券 + 数据分析课程，徽章达标的学生专属。",
+    source: { type: "platform", label: "运营大礼包" },
+    reason: "平台运营大礼包：徽章达标即可领取，鼓励持续学习与日常活跃。",
+    expiresAt: "2026-12-31",
+    initialStatus: "eligible",
+    isGiftPack: true,
+    badgeRequirement: { highBadgeCount: 4, lowBadgeCount: 3 },
+    giftPackContent: [
+      "瑞幸咖啡饮品券 × 2",
+      "校园视频会员月卡 × 1",
+      "腾讯地图出行打车券 × 3",
+      "商业数据分析基础课程兑换码 × 1",
+      "专属成长档案徽章标识",
+    ],
+    giftPackCover: "from-[#f59e0b] to-[#ef4444]",
+    claimHint: "徽章达标后即可一键领取，券码将发放至你绑定的手机号。",
+    bindPhone: true,
+  },
+  {
+    id: "giftpack-newcomer-welcome",
+    title: "新人欢迎大礼包",
+    summary: "新人专享：咖啡券 + 外卖券 + 新手必修课程，低门槛快速上手。",
+    source: { type: "platform", label: "运营大礼包" },
+    reason: "面向新用户的第一份大礼包，帮助快速建立平台使用习惯。",
+    expiresAt: "2026-12-31",
+    initialStatus: "eligible",
+    isGiftPack: true,
+    badgeRequirement: { highBadgeCount: 1, lowBadgeCount: 2 },
+    giftPackContent: [
+      "库迪咖啡饮品券 × 1",
+      "淘宝闪购外卖券 × 2",
+      "创赛新手必修课学习资格 × 1",
+      "新手任务加速卡",
+    ],
+    giftPackCover: "from-[#8b5cf6] to-[#06b6d4]",
+    claimHint: "完成新手任务和日常打卡即可快速达标，领取后券码发放至绑定手机号。",
+    bindPhone: true,
   },
 ];
 

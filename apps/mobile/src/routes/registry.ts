@@ -55,6 +55,8 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "benefits.exchange", path: "/benefits/exchange", context: "public", purpose: "兑换中心", states: ["available", "outOfStock", "exchanged", "empty"] },
   { id: "benefits.exchangeDetail", path: "/benefits/exchange/:exchangeId", context: "public", purpose: "兑换详情", states: ["available", "outOfStock", "exchanged"] },
   { id: "benefits.credits", path: "/benefits/credits", context: "public", purpose: "学力值明细", states: ["active", "empty"] },
+  { id: "benefits.giftPacks", path: "/benefits/gift-packs", context: "public", purpose: "大礼包福利（徽章门槛）", states: ["eligible", "ineligible", "claimed"] },
+  { id: "benefits.giftPackDetail", path: "/benefits/gift-packs/:giftPackId", context: "public", purpose: "大礼包详情", states: ["eligible", "ineligible", "claimed", "phoneNotBound"] },
   { id: "benefits.detail", path: "/benefits/:benefitId", context: "public", purpose: "权益详情", states: ["eligible", "ineligible", "claimed", "expired"] },
   { id: "benefits.wallet", path: "/benefits/wallet", context: "account", purpose: "我的权益/卡包", states: ["empty", "active", "used", "expired"] },
   { id: "growth.score", path: "/growth/score", context: "account", purpose: "学力值（原成长概览，占位口径）", states: ["ready", "empty"] },
