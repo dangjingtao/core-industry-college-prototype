@@ -65,7 +65,7 @@ import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { BadgeDetailPage, BadgesPage } from "../features/badges/BadgePages";
 import { AmbassadorStateProvider } from "@core/shared";
-import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorPages";
+import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorPromotionPage, CampusAmbassadorResultsPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorPages";
 import { CourseCheckpointQuizPage } from "../features/long-term-assets/CoursesPages";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
@@ -237,6 +237,8 @@ export function App() {
               <Route path="/ambassadors/apply" element={<CampusAmbassadorApplyPage />} />
               <Route path="/ambassadors/join" element={<CampusAmbassadorJoinPage />} />
               <Route path="/ambassadors/team/:teamId" element={<CampusAmbassadorTeamPage />} />
+              <Route path="/ambassadors/team/:teamId/results" element={<CampusAmbassadorResultsPage />} />
+              <Route path="/ambassadors/promote/:promotionCode" element={<CampusAmbassadorPromotionPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
             </SupportProvider>

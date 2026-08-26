@@ -51,6 +51,8 @@ test("T044 third partner lights team and fourth/fifth can still join", async ({ 
   }
   await expect(page.getByText("已点亮", { exact: true })).toBeVisible();
   await expect(page.getByText("6 人", { exact: true })).toBeVisible();
+  await navigateInApp(page, `/ambassadors/team/${encodeURIComponent(teamId)}?accountId=account-demo`);
+  await expect(page.getByRole("heading", { name: "我的推广团队" })).toBeVisible();
   await expect(page.getByTestId("ambassador-member")).toHaveCount(6);
   await expect(page.getByText("退出团队")).toHaveCount(0);
   await expect(page.getByText("更换团队")).toHaveCount(0);

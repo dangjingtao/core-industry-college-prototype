@@ -103,6 +103,8 @@ export const routeDefinitions: RouteDefinition[] = [
   { id: "ambassador.apply", path: "/ambassadors/apply", context: "account", purpose: "核心大使申请与条款确认", states: ["editing", "submitted", "alreadyJoined", "invalid"] },
   { id: "ambassador.join", path: "/ambassadors/join", context: "account", purpose: "推广伙伴使用团队招募码加入", states: ["editing", "joined", "duplicate", "invalid"] },
   { id: "ambassador.team", path: "/ambassadors/team/:teamId", context: "account", purpose: "核心大使团队组队进度与招募码", states: ["forming", "lit", "ended", "missing"] },
+  { id: "ambassador.results", path: "/ambassadors/team/:teamId/results", context: "account", purpose: "核心大使查看团队与成员推广成果", states: ["ready", "empty", "forbidden", "missing"] },
+  { id: "ambassador.promote", path: "/ambassadors/promote/:promotionCode", context: "public", purpose: "专属推广码模拟注册归因", states: ["ready", "registered", "duplicate", "existing", "invalid"] },
 ];
 
 export const candidatePrimaryNavigation = [

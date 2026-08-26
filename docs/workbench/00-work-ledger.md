@@ -88,6 +88,7 @@
 | T042 | 徽章系统（分级徽章 + 可信证书门槛 + 运营大礼包门槛） | 产品决策 / 设计 | 待确认（设计文档已产出，见 `docs/workbench/T042-徽章系统.md`） | F04 Decision A、D03、T011、T024、T034、T008、T017 |
 | T043 | 核心大使计划共享业务模型与活动状态 | 产品决策 / 施工准备 | 已完成（`@core/shared` 共享模型 + 双端 provider；build/typecheck 通过） | T015、T028、PC01、PC-BD01 |
 | T044 | 核心大使申请、组队与点亮 | 施工 | 已完成（App 中保真；route audit / typecheck / build / Chromium 3/3） | T043、T015、T028 |
+| T045 | 专属推广码与团队推广成果 | 施工 | 已完成（App 中保真；唯一发码、模拟注册归因与伙伴权限隔离；T044 + T045 Chromium 6/6） | T043、T044 |
 | PC01 | PC 控制面总壳 + APP 数据接入地图 | 施工 | PASS | 无 |
 | PC02 | 赛事控制台 + 报名资格 + 学校审核 + Workshop | 施工 | PASS | PC01 |
 | PC03 | Organization + 机会 + 内容运营 | 施工 | PASS | PC01 |

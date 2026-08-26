@@ -5,7 +5,9 @@ import {
   canRecruitPartner,
   campusAmbassadorSeed,
   deriveAmbassadorTeamStatus,
+  issueAmbassadorPromotionCodes,
   isAmbassadorCodeActive,
+  recordValidAcquisition,
   type AmbassadorCampaignState,
   type AmbassadorIncentiveStatus,
 } from "./campus-ambassador";
@@ -15,6 +17,7 @@ type AmbassadorStateValue = AmbassadorCampaignState & {
   updateAmbassadorCampaign: (campaignId: string, input: Partial<Pick<AmbassadorCampaignState["campaigns"][number], "name" | "startsAt" | "endsAt" | "schoolIds" | "applicationFields" | "termsVersion">>) => void;
   applyAsCoreAmbassador: (input: { campaignId: string; schoolId: string; accountId: string; application: Record<string, string> }) => void;
   joinAmbassadorTeam: (input: { campaignId: string; recruitmentCode: string; accountId: string }) => void;
+  recordPromotionRegistration: (input: { promotionCode: string; newAccountId: string; wasRegistered: boolean }) => void;
   setTeamIncentiveStatus: (teamId: string, status: AmbassadorIncentiveStatus) => void;
 };
 
@@ -90,13 +93,33 @@ export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
       const member = { id: `${team.id}-partner-${team.members.length}`, teamId: team.id, accountId: input.accountId, role: "partner" as const, status: "active" as const, joinedAt: new Date().toISOString() };
       const nextTeam = { ...team, members: [...team.members, member] };
       nextTeam.status = deriveAmbassadorTeamStatus(nextTeam, campaign);
-      return { ...current, teams: current.teams.map(item => item.id === team.id ? nextTeam : item) };
+      const issued = issueAmbassadorPromotionCodes(nextTeam, current.promotionCodes);
+      return { ...current, teams: current.teams.map(item => item.id === team.id ? issued.team : item), promotionCodes: issued.promotionCodes };
+    });
+  }, []);
+  const recordPromotionRegistration = useCallback<AmbassadorStateValue["recordPromotionRegistration"]>((input) => {
+    setState(current => {
+      const newAccountId = input.newAccountId.trim();
+      const promotionCode = current.promotionCodes.find(item => item.code.toUpperCase() === input.promotionCode.trim().toUpperCase() && item.active);
+      const campaign = promotionCode ? current.campaigns.find(item => item.id === promotionCode.campaignId) : undefined;
+      const team = promotionCode ? current.teams.find(item => item.id === promotionCode.teamId) : undefined;
+      const knownAccount = current.teams.some(item => item.campaignId === promotionCode?.campaignId && item.members.some(member => member.accountId === newAccountId));
+      if (!newAccountId || !promotionCode || !campaign || !team || team.status !== "lit" || !isAmbassadorCodeActive(promotionCode, campaign) || input.wasRegistered || knownAccount) return current;
+      return recordValidAcquisition(current, {
+        id: `${promotionCode.campaignId}-${newAccountId}`,
+        campaignId: promotionCode.campaignId,
+        teamId: promotionCode.teamId,
+        promotionCodeId: promotionCode.id,
+        promoterAccountId: promotionCode.accountId,
+        newAccountId,
+        registeredAt: new Date().toISOString(),
+      });
     });
   }, []);
   const setTeamIncentiveStatus = useCallback((teamId: string, status: AmbassadorIncentiveStatus) => {
     setState(current => ({ ...current, teams: current.teams.map(team => team.id === teamId ? { ...team, incentiveStatus: status } : team) }));
   }, []);
-  const value = useMemo<AmbassadorStateValue>(() => ({ ...state, createAmbassadorCampaign, updateAmbassadorCampaign, applyAsCoreAmbassador, joinAmbassadorTeam, setTeamIncentiveStatus }), [state, createAmbassadorCampaign, updateAmbassadorCampaign, applyAsCoreAmbassador, joinAmbassadorTeam, setTeamIncentiveStatus]);
+  const value = useMemo<AmbassadorStateValue>(() => ({ ...state, createAmbassadorCampaign, updateAmbassadorCampaign, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setTeamIncentiveStatus }), [state, createAmbassadorCampaign, updateAmbassadorCampaign, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setTeamIncentiveStatus]);
   return <AmbassadorStateContext.Provider value={value}>{children}</AmbassadorStateContext.Provider>;
 }
 
