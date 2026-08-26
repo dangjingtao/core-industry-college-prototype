@@ -5,6 +5,7 @@ import { PageHeader, PublicShell, Section, StatusTag } from "../../components/ui
 import { badgeCatalog, type BadgeCatalogEntry, type BadgeRule, type BadgeTier } from "./catalog";
 import { useBadges, useBadgeEvaluationContext, type BadgeView } from "./hooks";
 import { evaluateBadge } from "./engine";
+import { formatEarnedAt } from "./earnRecord";
 import { courseById } from "../long-term-assets/data";
 
 type BadgeDemoOverride = "all" | "none" | "mixed";
@@ -210,6 +211,9 @@ function BadgeDetailPage() {
   const progress = subConditions.length > 0 ? Math.round((completedCount / subConditions.length) * 100) : (unlocked ? 100 : 0);
   const actionInfo = getActionInfo(entry);
 
+  // 当前事实是否仍满足徽章规则（徽章可由历史记录保留，事实已回退时不影响已获得状态）
+  const stillDerived = evaluateBadge(entry.rule, { ...ctx, badgeTierCounts: tierCounts });
+
   return (
     <PublicShell showNavigation={false}>
       <PageHeader title={entry.name} backTo="/me/badges" />
@@ -272,9 +276,14 @@ function BadgeDetailPage() {
         {/* 状态卡片 */}
         <div className={`rounded-container border p-4 ${unlocked ? "border-success/30 bg-success-bg" : "border-border-subtle bg-surface"}`}>
           <h3 className="text-sm font-semibold text-text-primary">{unlocked ? "已获得" : "尚未获得"}</h3>
+          {unlocked && view.earnedAt && (
+            <p className="mt-1 text-xs font-medium text-success-text">获得于 {formatEarnedAt(view.earnedAt)}</p>
+          )}
           <p className="mt-2 text-sm text-text-secondary">
             {unlocked
-              ? "按你当前的事实记录，这枚徽章已经达成，可在简历与可信证书中作为能力证明。"
+              ? stillDerived
+                ? "按你当前的事实记录，这枚徽章已经达成，可在简历与可信证书中作为能力证明。"
+                : "这枚徽章获得后长期保留。当前对应的行为记录已重置，重新开始可以冲击更高目标。"
               : "继续按上方条件完成，达成后徽章会自动解锁。"}
           </p>
         </div>

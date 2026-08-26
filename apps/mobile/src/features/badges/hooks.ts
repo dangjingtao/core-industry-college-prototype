@@ -5,6 +5,7 @@ import { usePublicPlatform } from "../public-platform/state";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { badgeCatalog } from "./catalog";
 import { evaluateAll, type BadgeEvaluationContext } from "./engine";
+import { readEarnRecords, recordEarnedBadges, type BadgeEarnRecords } from "./earnRecord";
 import { deriveSimulationMetrics, getSimulationSnapshot } from "../app-center/StartupShopStore";
 import { courses } from "../long-term-assets/data";
 import { workspaceData } from "../competition-workspace/data";
@@ -166,6 +167,8 @@ function computeCheckpointPasses(): {
 export type BadgeView = {
   entry: (typeof badgeCatalog)[number];
   unlocked: boolean;
+  /** 历史获得记录中的获得时间（ISO）；仅在持久层有记录时存在 */
+  earnedAt?: string;
 };
 
 export function useBadges(): {
@@ -176,12 +179,43 @@ export function useBadges(): {
 } {
   const ctx = useBadgeEvaluationContext();
 
-  const earnedIds = useMemo(() => evaluateAll(badgeCatalog, ctx), [ctx]);
+  // 当前事实推导出的徽章集合（会随事实回退，例如断签）
+  const derivedIds = useMemo(() => evaluateAll(badgeCatalog, ctx), [ctx]);
+
+  // 历史获得记录：只增不减，断签 / 身份回退不删除
+  const [records, setRecords] = useState<BadgeEarnRecords>(() => readEarnRecords());
+
+  useEffect(() => {
+    // 把新推导出的徽章写入持久层（幂等，已存在保留最早时间）
+    const updated = recordEarnedBadges(derivedIds);
+    setRecords(prev => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(updated);
+      if (prevKeys.length !== nextKeys.length) return updated;
+      return nextKeys.every(key => prev[key] === updated[key]) ? prev : updated;
+    });
+  }, [derivedIds]);
+
+  // 跨 tab 同步获得记录
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "badge-earn-records") setRecords(readEarnRecords());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // 展示集合 = 历史记录 ∪ 当前推导（推导兜底，历史不丢）
+  const earnedIds = useMemo(() => {
+    const ids = new Set<string>(derivedIds);
+    for (const id of Object.keys(records)) ids.add(id);
+    return ids;
+  }, [derivedIds, records]);
 
   const earned: BadgeView[] = [];
   const locked: BadgeView[] = [];
   for (const entry of badgeCatalog) {
-    const view: BadgeView = { entry, unlocked: earnedIds.has(entry.id) };
+    const view: BadgeView = { entry, unlocked: earnedIds.has(entry.id), earnedAt: records[entry.id] };
     if (view.unlocked) earned.push(view); else locked.push(view);
   }
   return { earned, locked, totalCount: badgeCatalog.length, earnedCount: earned.length };
