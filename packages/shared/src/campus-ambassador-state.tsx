@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ambassadorCampaignStatus,
   canJoinAmbassadorTeam,
@@ -13,8 +13,11 @@ import {
 } from "./campus-ambassador";
 
 type CampaignInput = Pick<AmbassadorCampaignState["campaigns"][number], "name" | "startsAt" | "endsAt" | "schoolIds" | "applicationFields" | "applicationForm" | "termsVersion">;
+export type AmbassadorPromotionRegistrationResult = "recorded" | "duplicate" | "already-registered" | "campaign-member" | "inactive";
+export type AmbassadorDemoBridgeConfig = { role: "host" | "client"; peerOrigin: string };
 
 type AmbassadorStateValue = AmbassadorCampaignState & {
+  demoBridgeConnected: boolean;
   createAmbassadorCampaign: (input: CampaignInput) => void;
   updateAmbassadorCampaign: (campaignId: string, input: Partial<CampaignInput>) => void;
   createAmbassadorTermsDraft: (input: { title: string; contentHtml: string; basedOnId?: string }) => void;
@@ -22,31 +25,133 @@ type AmbassadorStateValue = AmbassadorCampaignState & {
   publishAmbassadorTermsVersion: (termsId: string) => void;
   applyAsCoreAmbassador: (input: { campaignId: string; schoolId: string; accountId: string; application: Record<string, string> }) => void;
   joinAmbassadorTeam: (input: { campaignId: string; recruitmentCode: string; accountId: string }) => void;
-  recordPromotionRegistration: (input: { promotionCode: string; newAccountId: string; wasRegistered: boolean }) => void;
+  recordPromotionRegistration: (input: { promotionCode: string; newAccountId: string; wasRegistered: boolean }) => AmbassadorPromotionRegistrationResult;
   setTeamIncentiveStatus: (teamId: string, status: AmbassadorIncentiveStatus) => void;
+};
+
+type AmbassadorStateProviderProps = {
+  children: ReactNode;
+  storageKey?: string;
+  bridge?: AmbassadorDemoBridgeConfig;
+};
+
+type AmbassadorBridgeMessage = {
+  source: "core-ambassador-demo";
+  type: "ready" | "state";
+  state?: AmbassadorCampaignState;
 };
 
 const AmbassadorStateContext = createContext<AmbassadorStateValue | null>(null);
 
-function freshSeed(): AmbassadorCampaignState {
+function cloneState(source: AmbassadorCampaignState): AmbassadorCampaignState {
   return {
-    campaigns: campusAmbassadorSeed.campaigns.map(item => ({
+    campaigns: source.campaigns.map(item => ({
       ...item,
       schoolIds: [...item.schoolIds],
       applicationFields: [...item.applicationFields],
       applicationForm: item.applicationForm?.map(field => ({ ...field, options: field.options ? [...field.options] : undefined })),
     })),
-    termsVersions: campusAmbassadorSeed.termsVersions.map(item => ({ ...item })),
-    schoolRecruitmentCodes: campusAmbassadorSeed.schoolRecruitmentCodes.map(item => ({ ...item })),
-    teamRecruitmentCodes: campusAmbassadorSeed.teamRecruitmentCodes.map(item => ({ ...item })),
-    teams: campusAmbassadorSeed.teams.map(item => ({ ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) })),
-    promotionCodes: campusAmbassadorSeed.promotionCodes.map(item => ({ ...item })),
-    validAcquisitions: campusAmbassadorSeed.validAcquisitions.map(item => ({ ...item })),
+    termsVersions: source.termsVersions.map(item => ({ ...item })),
+    schoolRecruitmentCodes: source.schoolRecruitmentCodes.map(item => ({ ...item })),
+    teamRecruitmentCodes: source.teamRecruitmentCodes.map(item => ({ ...item })),
+    teams: source.teams.map(item => ({ ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) })),
+    promotionCodes: source.promotionCodes.map(item => ({ ...item })),
+    validAcquisitions: source.validAcquisitions.map(item => ({ ...item })),
   };
 }
 
-export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AmbassadorCampaignState>(freshSeed);
+function freshSeed() {
+  return cloneState(campusAmbassadorSeed);
+}
+
+function looksLikeState(value: unknown): value is AmbassadorCampaignState {
+  if (!value || typeof value !== "object") return false;
+  const state = value as Partial<AmbassadorCampaignState>;
+  return [state.campaigns, state.termsVersions, state.schoolRecruitmentCodes, state.teamRecruitmentCodes, state.teams, state.promotionCodes, state.validAcquisitions].every(Array.isArray);
+}
+
+function readPersistedState(storageKey?: string): AmbassadorCampaignState {
+  if (!storageKey || typeof window === "undefined") return freshSeed();
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return freshSeed();
+    const parsed = JSON.parse(raw) as unknown;
+    return looksLikeState(parsed) ? cloneState(parsed) : freshSeed();
+  } catch {
+    return freshSeed();
+  }
+}
+
+function stateFingerprint(state: AmbassadorCampaignState) {
+  return JSON.stringify(state);
+}
+
+function effectiveState(state: AmbassadorCampaignState): AmbassadorCampaignState {
+  const campaignsById = new Map(state.campaigns.map(campaign => [campaign.id, campaign]));
+  return {
+    ...state,
+    teams: state.teams.map(team => {
+      const campaign = campaignsById.get(team.campaignId);
+      return campaign ? { ...team, status: deriveAmbassadorTeamStatus(team, campaign) } : team;
+    }),
+  };
+}
+
+export function AmbassadorStateProvider({ children, storageKey, bridge }: AmbassadorStateProviderProps) {
+  const [state, setState] = useState<AmbassadorCampaignState>(() => readPersistedState(storageKey));
+  const [demoBridgeConnected, setDemoBridgeConnected] = useState(false);
+  const stateRef = useRef(state);
+  const peerWindowRef = useRef<Window | null>(null);
+  const clientHydratedRef = useRef(bridge?.role !== "client");
+
+  useEffect(() => {
+    stateRef.current = state;
+    if (!storageKey || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch {
+      // Persistence is a demo convenience; the feature remains usable in memory.
+    }
+  }, [state, storageKey]);
+
+  useEffect(() => {
+    if (!bridge || typeof window === "undefined") return;
+    const receive = (event: MessageEvent<AmbassadorBridgeMessage>) => {
+      if (event.origin !== bridge.peerOrigin || !event.data || event.data.source !== "core-ambassador-demo") return;
+      if (event.data.type === "ready" && bridge.role === "host") {
+        peerWindowRef.current = event.source as Window | null;
+        setDemoBridgeConnected(Boolean(peerWindowRef.current));
+        peerWindowRef.current?.postMessage({ source: "core-ambassador-demo", type: "state", state: stateRef.current } satisfies AmbassadorBridgeMessage, bridge.peerOrigin);
+        return;
+      }
+      if (event.data.type !== "state" || !looksLikeState(event.data.state)) return;
+      peerWindowRef.current = event.source as Window | null;
+      clientHydratedRef.current = true;
+      setDemoBridgeConnected(Boolean(peerWindowRef.current));
+      const incoming = cloneState(event.data.state);
+      if (stateFingerprint(incoming) !== stateFingerprint(stateRef.current)) {
+        stateRef.current = incoming;
+        setState(incoming);
+      }
+    };
+    window.addEventListener("message", receive);
+
+    if (bridge.role === "client" && new URLSearchParams(window.location.search).get("ambassadorBridge") === "1" && window.opener) {
+      peerWindowRef.current = window.opener;
+      window.opener.postMessage({ source: "core-ambassador-demo", type: "ready" } satisfies AmbassadorBridgeMessage, bridge.peerOrigin);
+    }
+    return () => window.removeEventListener("message", receive);
+  }, [bridge]);
+
+  useEffect(() => {
+    if (!bridge || !peerWindowRef.current || !clientHydratedRef.current) return;
+    try {
+      peerWindowRef.current.postMessage({ source: "core-ambassador-demo", type: "state", state } satisfies AmbassadorBridgeMessage, bridge.peerOrigin);
+    } catch {
+      setDemoBridgeConnected(false);
+      peerWindowRef.current = null;
+    }
+  }, [bridge, state]);
 
   const applyAsCoreAmbassador = useCallback<AmbassadorStateValue["applyAsCoreAmbassador"]>((input) => {
     setState(current => {
@@ -161,31 +266,37 @@ export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const recordPromotionRegistration = useCallback<AmbassadorStateValue["recordPromotionRegistration"]>((input) => {
-    setState(current => {
-      const newAccountId = input.newAccountId.trim();
-      const promotionCode = current.promotionCodes.find(item => item.code.toUpperCase() === input.promotionCode.trim().toUpperCase() && item.active);
-      const campaign = promotionCode ? current.campaigns.find(item => item.id === promotionCode.campaignId) : undefined;
-      const team = promotionCode ? current.teams.find(item => item.id === promotionCode.teamId) : undefined;
-      const knownAccount = current.teams.some(item => item.campaignId === promotionCode?.campaignId && item.members.some(member => member.accountId === newAccountId));
-      if (!newAccountId || !promotionCode || !campaign || !team || team.status !== "lit" || !isAmbassadorCodeActive(promotionCode, campaign) || input.wasRegistered || knownAccount) return current;
-      return recordValidAcquisition(current, {
-        id: `${promotionCode.campaignId}-${newAccountId}`,
-        campaignId: promotionCode.campaignId,
-        teamId: promotionCode.teamId,
-        promotionCodeId: promotionCode.id,
-        promoterAccountId: promotionCode.accountId,
-        newAccountId,
-        registeredAt: new Date().toISOString(),
-      });
+    const current = stateRef.current;
+    const newAccountId = input.newAccountId.trim();
+    const promotionCode = current.promotionCodes.find(item => item.code.toUpperCase() === input.promotionCode.trim().toUpperCase() && item.active);
+    const campaign = promotionCode ? current.campaigns.find(item => item.id === promotionCode.campaignId) : undefined;
+    const team = promotionCode ? current.teams.find(item => item.id === promotionCode.teamId) : undefined;
+    if (!newAccountId || !promotionCode || !campaign || !team || !isAmbassadorCodeActive(promotionCode, campaign) || deriveAmbassadorTeamStatus(team, campaign) !== "lit") return "inactive";
+    if (input.wasRegistered) return "already-registered";
+    if (current.validAcquisitions.some(item => item.campaignId === campaign.id && item.newAccountId === newAccountId)) return "duplicate";
+    if (current.teams.some(item => item.campaignId === campaign.id && item.members.some(member => member.accountId === newAccountId))) return "campaign-member";
+    const next = recordValidAcquisition(current, {
+      id: `${promotionCode.campaignId}-${newAccountId}`,
+      campaignId: promotionCode.campaignId,
+      teamId: promotionCode.teamId,
+      promotionCodeId: promotionCode.id,
+      promoterAccountId: promotionCode.accountId,
+      newAccountId,
+      registeredAt: new Date().toISOString(),
     });
+    stateRef.current = next;
+    setState(next);
+    return "recorded";
   }, []);
 
   const setTeamIncentiveStatus = useCallback((teamId: string, status: AmbassadorIncentiveStatus) => {
     setState(current => ({ ...current, teams: current.teams.map(team => team.id === teamId ? { ...team, incentiveStatus: status } : team) }));
   }, []);
 
+  const visibleState = useMemo(() => effectiveState(state), [state]);
   const value = useMemo<AmbassadorStateValue>(() => ({
-    ...state,
+    ...visibleState,
+    demoBridgeConnected,
     createAmbassadorCampaign,
     updateAmbassadorCampaign,
     createAmbassadorTermsDraft,
@@ -195,7 +306,7 @@ export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
     joinAmbassadorTeam,
     recordPromotionRegistration,
     setTeamIncentiveStatus,
-  }), [state, createAmbassadorCampaign, updateAmbassadorCampaign, createAmbassadorTermsDraft, updateAmbassadorTermsDraft, publishAmbassadorTermsVersion, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setTeamIncentiveStatus]);
+  }), [visibleState, demoBridgeConnected, createAmbassadorCampaign, updateAmbassadorCampaign, createAmbassadorTermsDraft, updateAmbassadorTermsDraft, publishAmbassadorTermsVersion, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setTeamIncentiveStatus]);
 
   return <AmbassadorStateContext.Provider value={value}>{children}</AmbassadorStateContext.Provider>;
 }
