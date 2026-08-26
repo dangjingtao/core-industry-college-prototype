@@ -102,15 +102,35 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
     applicationFields: ["自我介绍", "校园传播渠道", "参与动机"],
     termsVersion: "campus-ambassador-terms-v1",
     status: "upcoming",
+  }, {
+    id: "campus-ambassador-demo-active",
+    name: "核心大使计划 · 演示活动",
+    startsAt: "2026-08-01T00:00:00+08:00",
+    endsAt: "2026-12-31T23:59:59+08:00",
+    schoolIds: ["org-huanan-commerce-college", "org-gdtc"],
+    applicationFields: ["自我介绍", "校园传播渠道", "参与动机"],
+    termsVersion: "campus-ambassador-terms-v1",
+    status: "active",
   }],
   schoolRecruitmentCodes: [
     { id: "amb-recruit-huanan-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-huanan-commerce-college", code: "CA-HN-2026", active: true },
     { id: "amb-recruit-gdtc-2026", campaignId: "campus-ambassador-2026-一期", schoolId: "org-gdtc", code: "CA-GDTC-2026", active: true },
   ],
-  teamRecruitmentCodes: [],
-  teams: [],
+  teamRecruitmentCodes: [{ id: "amb-demo-team-code", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", code: "TEAM-DEMO-2026", active: true }],
+  teams: [{
+    id: "amb-demo-team", campaignId: "campus-ambassador-demo-active", schoolId: "org-huanan-commerce-college", coreAmbassadorAccountId: "account-demo-ambassador", status: "lit", recruitmentCodeId: "amb-demo-team-code", incentiveStatus: "unprocessed",
+    members: [
+      { id: "amb-demo-ambassador", teamId: "amb-demo-team", accountId: "account-demo-ambassador", role: "ambassador", status: "active", joinedAt: "2026-08-03T09:00:00+08:00", application: { "自我介绍": "负责校园创新社团传播", "校园传播渠道": "校创业协会公众号", "参与动机": "连接更多同学参与实践" } },
+      { id: "amb-demo-partner-1", teamId: "amb-demo-team", accountId: "account-demo-partner-1", role: "partner", status: "active", joinedAt: "2026-08-04T09:00:00+08:00" },
+      { id: "amb-demo-partner-2", teamId: "amb-demo-team", accountId: "account-demo-partner-2", role: "partner", status: "active", joinedAt: "2026-08-05T09:00:00+08:00" },
+      { id: "amb-demo-partner-3", teamId: "amb-demo-team", accountId: "account-demo-partner-3", role: "partner", status: "active", joinedAt: "2026-08-06T09:00:00+08:00" },
+    ],
+  }],
   promotionCodes: [],
-  validAcquisitions: [],
+  validAcquisitions: [
+    { id: "amb-demo-acq-1", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-1", registeredAt: "2026-08-10T12:00:00+08:00" },
+    { id: "amb-demo-acq-2", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-2", registeredAt: "2026-08-11T12:00:00+08:00" },
+  ],
 };
 
 export function ambassadorCampaignStatus(campaign: AmbassadorCampaign, now = new Date()): AmbassadorCampaignStatus {
@@ -161,7 +181,7 @@ export function deriveAmbassadorMetrics(state: AmbassadorCampaignState, campaign
   const teamIds = new Set(teams.map(team => team.id));
   const acquisitions = state.validAcquisitions.filter(item => item.campaignId === campaignId && teamIds.has(item.teamId));
   return {
-    schoolCount: new Set(teams.map(team => team.schoolId)).size,
+    schoolCount: state.campaigns.find(campaign => campaign.id === campaignId)?.schoolIds.length ?? new Set(teams.map(team => team.schoolId)).size,
     coreAmbassadorCount: teams.length,
     litTeamCount: teams.filter(team => team.status === "lit").length,
     partnerCount: teams.reduce((total, team) => total + ambassadorTeamPartnerCount(team), 0),

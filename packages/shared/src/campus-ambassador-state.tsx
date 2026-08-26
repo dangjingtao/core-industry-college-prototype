@@ -24,10 +24,10 @@ function freshSeed(): AmbassadorCampaignState {
   return {
     campaigns: campusAmbassadorSeed.campaigns.map(item => ({ ...item, schoolIds: [...item.schoolIds], applicationFields: [...item.applicationFields] })),
     schoolRecruitmentCodes: campusAmbassadorSeed.schoolRecruitmentCodes.map(item => ({ ...item })),
-    teamRecruitmentCodes: [],
-    teams: [],
-    promotionCodes: [],
-    validAcquisitions: [],
+    teamRecruitmentCodes: campusAmbassadorSeed.teamRecruitmentCodes.map(item => ({ ...item })),
+    teams: campusAmbassadorSeed.teams.map(item => ({ ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) })),
+    promotionCodes: campusAmbassadorSeed.promotionCodes.map(item => ({ ...item })),
+    validAcquisitions: campusAmbassadorSeed.validAcquisitions.map(item => ({ ...item })),
   };
 }
 
@@ -63,13 +63,23 @@ export function AmbassadorStateProvider({ children }: { children: ReactNode }) {
   const createAmbassadorCampaign = useCallback<AmbassadorStateValue["createAmbassadorCampaign"]>((input) => {
     setState(current => {
       const id = `campus-ambassador-${Date.now()}`;
-      const campaign = { ...input, id, status: "draft" as const };
+      const campaign = { ...input, id, status: "upcoming" as const };
       const schoolRecruitmentCodes = input.schoolIds.map(schoolId => ({ id: `${id}-${schoolId}-code`, campaignId: id, schoolId, code: `CA-${schoolId}-${Date.now().toString(36).toUpperCase()}`, active: true }));
       return { ...current, campaigns: [...current.campaigns, campaign], schoolRecruitmentCodes: [...current.schoolRecruitmentCodes, ...schoolRecruitmentCodes] };
     });
   }, []);
   const updateAmbassadorCampaign = useCallback<AmbassadorStateValue["updateAmbassadorCampaign"]>((campaignId, input) => {
-    setState(current => ({ ...current, campaigns: current.campaigns.map(campaign => campaign.id === campaignId ? { ...campaign, ...input } : campaign) }));
+    setState(current => {
+      const campaign = current.campaigns.find(item => item.id === campaignId);
+      if (!campaign) return current;
+      const next = { ...campaign, ...input };
+      const nextSchoolIds = new Set(next.schoolIds);
+      const existingCodes = current.schoolRecruitmentCodes.filter(code => code.campaignId === campaignId);
+      const retained = existingCodes.filter(code => nextSchoolIds.has(code.schoolId)).map(code => ({ ...code, active: true }));
+      const added = next.schoolIds.filter(schoolId => !existingCodes.some(code => code.schoolId === schoolId)).map(schoolId => ({ id: `${campaignId}-${schoolId}-code`, campaignId, schoolId, code: `CA-${schoolId}-${Date.now().toString(36).toUpperCase()}`, active: true }));
+      const others = current.schoolRecruitmentCodes.filter(code => code.campaignId !== campaignId);
+      return { ...current, campaigns: current.campaigns.map(item => item.id === campaignId ? next : item), schoolRecruitmentCodes: [...others, ...retained, ...added] };
+    });
   }, []);
   const joinAmbassadorTeam = useCallback<AmbassadorStateValue["joinAmbassadorTeam"]>((input) => {
     setState(current => {
