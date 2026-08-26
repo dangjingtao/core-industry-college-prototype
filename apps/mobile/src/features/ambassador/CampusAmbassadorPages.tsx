@@ -2,7 +2,7 @@ import { BarChart3, CheckCircle2, Clipboard, QrCode, ShieldCheck, UserPlus, User
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import QRCode from "qrcode";
-import { useAmbassadorState } from "@core/shared";
+import { ambassadorApplicationForm, useAmbassadorState } from "@core/shared";
 import { Button, Card, PageHeader, PublicShell, Section, SecondaryButton, StatusTag } from "../../components/ui";
 import { usePublicPlatform } from "../public-platform/state";
 
@@ -89,9 +89,8 @@ export function CampusAmbassadorApplyPage() {
   const campaign = campaigns.find(item => item.id === campaignId);
   const recruitment = schoolRecruitmentCodes.find(item => item.campaignId === campaignId && item.schoolId === schoolId);
   const existingTeam = teams.find(team => team.campaignId === campaignId && team.members.some(member => member.accountId === accountId && member.status === "active"));
-  const [intro, setIntro] = useState("");
-  const [channel, setChannel] = useState("");
-  const [motivation, setMotivation] = useState("");
+  const form = campaign ? ambassadorApplicationForm(campaign) : [];
+  const [applicationValues, setApplicationValues] = useState<Record<string, string>>({});
   const [accepted, setAccepted] = useState(false);
   const [submittedTeamId, setSubmittedTeamId] = useState<string>();
   const [error, setError] = useState("");
@@ -105,22 +104,30 @@ export function CampusAmbassadorApplyPage() {
   if (!campaign || !recruitment) return <PublicShell showNavigation={false}><PageHeader title="核心大使申请" backTo="/ambassadors" /><div className="px-4 py-6"><Card className="text-center"><p className="font-semibold">招募入口无效</p><p className="mt-2 text-sm text-text-secondary">请使用有效的学校大使招募码。</p></Card></div></PublicShell>;
   if (existingTeam) return <PublicShell showNavigation={false}><PageHeader title="核心大使申请" backTo="/ambassadors" /><div className="space-y-4 px-4 py-6"><Card className="border border-warning/30 bg-warning-bg"><p className="font-semibold text-warning-text">你已绑定本期团队</p><p className="mt-2 text-sm text-warning-text">同一期活动只能属于一个团队，不能重复申请或换队。</p></Card><Button className="w-full" onClick={() => navigate(`/ambassadors/team/${existingTeam.id}?accountId=${encodeURIComponent(accountId)}`)}>查看当前团队</Button></div></PublicShell>;
 
+  const setValue = (fieldId: string, value: string) => {
+    setApplicationValues(current => ({ ...current, [fieldId]: value }));
+    setError("");
+  };
+  const toggleMultiChoice = (fieldId: string, option: string) => {
+    const selected = (applicationValues[fieldId] ?? "").split("、").filter(Boolean);
+    setValue(fieldId, selected.includes(option) ? selected.filter(item => item !== option).join("、") : [...selected, option].join("、"));
+  };
   const submit = () => {
-    if (!intro.trim() || !channel.trim() || !motivation.trim() || !accepted) {
-      setError("请完整填写申请信息并同意活动条款");
+    if (form.some(field => field.required && !applicationValues[field.id]?.trim()) || !accepted) {
+      setError("请完整填写必填申请信息并同意活动条款");
       return;
     }
     const teamId = `amb-team-${campaignId}-${accountId}`;
-    applyAsCoreAmbassador({ campaignId, schoolId, accountId, application: { intro: intro.trim(), channel: channel.trim(), motivation: motivation.trim(), termsVersion: campaign.termsVersion } });
+    applyAsCoreAmbassador({ campaignId, schoolId, accountId, application: { ...applicationValues, termsVersion: campaign.termsVersion } });
     setSubmittedTeamId(teamId);
   };
 
   return <PublicShell showNavigation={false}><PageHeader title="申请核心大使" backTo="/ambassadors" /><div className="space-y-5 px-4 py-5">
     <Card><StatusTag tone="info">{campaign.name}</StatusTag><h1 className="mt-3 text-lg font-semibold">核心大使申请</h1><p className="mt-2 text-sm leading-6 text-text-secondary">提交后直接获得“核心大使 · 待点亮”身份，并生成你的团队招募码。</p></Card>
     <Section title="申请信息" subtitle="用于运营了解校园传播计划，不增加人工审核"><Card className="space-y-4">
-      <label className="block text-sm font-medium">自我介绍<textarea value={intro} onChange={event => setIntro(event.target.value)} rows={3} className="mt-2 w-full rounded-control border border-border px-3 py-2 text-sm" /></label>
-      <label className="block text-sm font-medium">校园传播渠道<textarea value={channel} onChange={event => setChannel(event.target.value)} rows={3} className="mt-2 w-full rounded-control border border-border px-3 py-2 text-sm" /></label>
-      <label className="block text-sm font-medium">参与动机<textarea value={motivation} onChange={event => setMotivation(event.target.value)} rows={3} className="mt-2 w-full rounded-control border border-border px-3 py-2 text-sm" /></label>
+      {form.map(field => <div key={field.id}>
+        {field.type === "textarea" ? <label className="block text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}<textarea value={applicationValues[field.id] ?? ""} onChange={event => setValue(field.id, event.target.value)} rows={3} className="mt-2 w-full rounded-control border border-border px-3 py-2 text-sm" /></label> : field.type === "text" ? <label className="block text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}<input value={applicationValues[field.id] ?? ""} onChange={event => setValue(field.id, event.target.value)} className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label> : <fieldset><legend className="text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}</legend><div className="mt-2 space-y-2">{(field.options ?? []).map(option => field.type === "single-choice" ? <label key={option} className="flex items-center gap-2 text-sm"><input type="radio" name={field.id} checked={applicationValues[field.id] === option} onChange={() => setValue(field.id, option)} />{option}</label> : <label key={option} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={(applicationValues[field.id] ?? "").split("、").filter(Boolean).includes(option)} onChange={() => toggleMultiChoice(field.id, option)} />{option}</label>)}</div></fieldset>}
+      </div>)}
     </Card></Section>
     <label className="flex items-start gap-3 rounded-control border border-border bg-surface p-4 text-sm leading-6 text-text-secondary"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} className="mt-1" /><span>我已阅读并同意本期核心大使计划条款（{campaign.termsVersion}）。</span></label>
     {error && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">{error}</p>}
