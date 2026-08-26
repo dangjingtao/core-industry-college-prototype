@@ -92,7 +92,7 @@ export function BenefitsPage() {
     return loggedIn ? ["eligible", "claimed"].includes(benefitStatusFor(item.id)) : true;
   }).slice(0, 2), [benefitStatusFor, competitionId, loggedIn]);
 
-  const giftPacks = useMemo(() => benefits.filter(item => item.isGiftPack), []);
+  const giftPacks = useMemo(() => benefits.filter(item => item.isGiftPack).slice(0, 1), []);
   const recommendedExchange = exchangeItems.filter(item => item.status !== "outOfStock").slice(0, 2);
 
   return <PublicShell><PageHeader title={competitionId ? "赛事福利" : "创赛福利"} subtitle="学力值、免费福利与兑换中心" backTo={backTo ?? "/home"} /><div className="space-y-5 px-4 py-5">{loggedIn && <PhoneBindingBanner returnTo={`/benefits${query}`} />}<CreditCard />
