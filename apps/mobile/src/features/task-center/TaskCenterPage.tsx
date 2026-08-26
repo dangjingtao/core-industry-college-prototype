@@ -7,7 +7,7 @@ import { nextReadyTask, taskAvailability, useWorkshopRuntime } from "../competit
 import { benefits, courses } from "../long-term-assets/data";
 import { useLongTermAssets } from "../long-term-assets/store";
 import { competitionById, opportunities, opportunityById } from "../public-platform/data";
-import { GuideTaskList, useGuideTasks, usePublicPlatform } from "../public-platform/PublicPlatform";
+import { usePublicPlatform } from "../public-platform/PublicPlatform";
 import { useBadges } from "../badges/hooks";
 import { badgeCatalog } from "../badges/catalog";
 
@@ -251,7 +251,6 @@ export function TaskCenterPage() {
   const { session, identities, applications } = usePublicPlatform();
   const { getRuntime } = useWorkshopRuntime();
   const { learning, benefitStatusFor } = useLongTermAssets();
-  const { newbieTasks, newbieRemaining } = useGuideTasks();
   const [category, setCategory] = useState<"all" | TaskCategory>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
@@ -340,15 +339,10 @@ export function TaskCenterPage() {
     return item.status === statusFilter;
   });
 
-  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="日常打卡 · 新手引导 · 业务进度" backTo="/home" /><div className="space-y-5 px-4 py-5">
+  return <PublicShell showNavigation={false}><PageHeader title="任务中心" subtitle="日常打卡 · 业务进度" backTo="/home" /><div className="space-y-5 px-4 py-5">
     {/* 日常打卡 */}
     <Section title="日常打卡" subtitle="每日签到，养成参赛学习习惯">
       <CheckInBar />
-    </Section>
-
-    {/* 新手任务入口 */}
-    <Section title="新手任务" subtitle={newbieRemaining > 0 ? `${newbieRemaining} 项待完成` : "已全部完成"} action={<Link to="/tasks/newbie" className="text-sm font-medium text-text-brand">独立页</Link>}>
-      <GuideTaskList tasks={newbieTasks.slice(0, 2)} />
     </Section>
 
     {/* 业务进度 */}
