@@ -25,12 +25,14 @@ export type CourseCheckpoint = {
   questions: { id: string; prompt: string; options: string[]; answer: number }[];
 };
 
-/** 结业小考占位（M2 仅提供 UI 与状态，M3 收口完整考试能力） */
+/** 结业小考：学完全部内容后的综合考试，通过后可获得证书类徽章。 */
 export type CourseFinalExam = {
   id: string;
   totalQuestions: number;
   passingScore: number;
   status: "draft" | "open" | "closed";
+  /** 真实题库：单选，每题 1 分 */
+  questions?: { id: string; prompt: string; options: string[]; answer: number }[];
 };
 
 export type Course = {
@@ -158,7 +160,22 @@ export const courses: Course[] = [
         ],
       },
     ],
-    finalExam: { id: "data-analytics-final", totalQuestions: 8, passingScore: 6, status: "draft" },
+    finalExam: {
+      id: "data-analytics-final",
+      totalQuestions: 8,
+      passingScore: 6,
+      status: "open",
+      questions: [
+        { id: "q1", prompt: "在电商业务漏斗分析中，「转化率」最核心的定义是？", options: ["支付用户数 ÷ 访客数", "下单用户数 ÷ 访客数", "加购用户数 ÷ 访客数", "收藏用户数 ÷ 访客数"], answer: 1 },
+        { id: "q2", prompt: "拆解业务问题时，以下哪个指标通常作为「北极星指标」？", options: ["页面浏览量 PV", "总成交额 GMV", "按钮点击率 CTR", "页面加载时长"], answer: 1 },
+        { id: "q3", prompt: "留存分析最关注的是？", options: ["新用户总量", "用户在一段时间后的回访比例", "用户地域分布", "用户设备类型"], answer: 1 },
+        { id: "q4", prompt: "做数据复盘时，下列哪种做法最稳妥？", options: ["只看结果数字，凭经验总结", "用数据 + 假设 + 验证三步法", "只挑增长的指标汇报", "直接归因到单一因素"], answer: 1 },
+        { id: "q5", prompt: "GMV 突然下降，第一步应该做什么？", options: ["立刻加大广告投放", "拆解 GMV = 流量 × 转化 × 客单价，看哪段掉最多", "直接换产品", "怀疑数据出错"], answer: 1 },
+        { id: "q6", prompt: "下列哪个维度最适合用于「用户分层」？", options: ["用户头像颜色", "用户注册渠道 + 消费频次", "用户手机型号", "用户昵称长度"], answer: 1 },
+        { id: "q7", prompt: "A/B 实验的核心前提是？", options: ["两组用户数量完全相等", "两组用户随机分配，除变量外其他条件一致", "必须在同一天完成", "必须有 10 万以上用户"], answer: 1 },
+        { id: "q8", prompt: "「数据驱动」最准确的理解是？", options: ["只看数字做决策", "用数据验证假设、辅助判断，而非替代思考", "数据越多越好", "只有拿到完美数据才能行动"], answer: 1 },
+      ],
+    },
   },
   {
     id: "brand-ecommerce",
@@ -276,7 +293,20 @@ export const courses: Course[] = [
         ],
       },
     ],
-    finalExam: { id: "newbie-essential-final", totalQuestions: 6, passingScore: 4, status: "draft" },
+    finalExam: {
+      id: "newbie-essential-final",
+      totalQuestions: 6,
+      passingScore: 4,
+      status: "open",
+      questions: [
+        { id: "q1", prompt: "学生主档和长期资产在 App 的哪一类入口下管理？", options: ["首页", "赛事", "我的", "机会"], answer: 2 },
+        { id: "q2", prompt: "关于创赛工坊，下列哪种说法是正确的？", options: ["它是全局 AI 工具箱，任何地方都能用", "它属于具体赛事上下文，在赛事 workspace 内使用", "它只用来做海报生成", "它可以直接替你报名比赛"], answer: 1 },
+        { id: "q3", prompt: "下列哪一项属于「长期资产」？", options: ["每日打卡记录", "赛事身份、证书、学习记录、简历", "临时购物车", "未保存的草稿"], answer: 1 },
+        { id: "q4", prompt: "可信证书的可解释规则包含以下哪些要素？", options: ["只看 AI 综合评分", "必修课程 + 多枚徽章 + 小测通过", "只看校内成绩", "只看企业打分"], answer: 1 },
+        { id: "q5", prompt: "关于一个账号与多个赛事身份的关系，正确的是？", options: ["一个账号只能有一场赛事身份", "一个账号可以关联多个赛事身份，赛事结束后资产仍然保留", "赛事结束后账号就注销了", "赛事身份等同于账号本身"], answer: 1 },
+        { id: "q6", prompt: "「报名结果回流」指的是什么？", options: ["PC 报名与 App 完全独立，互不关联", "报名后状态自动写入 identities[]，App 侧可查看赛事身份", "App 上有一份完整报名表需要重新填", "报名只保留在 PC 端"], answer: 1 },
+      ],
+    },
   },
 ];
 

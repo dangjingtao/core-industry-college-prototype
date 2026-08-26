@@ -179,33 +179,164 @@ export function T034CourseAssessmentPage() {
   const course = courseById(courseId);
   const navigate = useNavigate();
   const { learningFor, enrolledFor, submitAssessment, completeCourse } = useLongTermAssets();
-  const [answer, setAnswer] = useState<"" | "a" | "b">("");
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
   const [usedAttempts, setUsedAttempts] = useState(() => initialAttemptCount(courseId ?? ""));
+
   if (!course) return <PublicShell showNavigation={false}><PageHeader title="课程不存在" backTo="/courses" /></PublicShell>;
 
   const tier = credentialTier(course);
   const record = learningFor(course.id);
   const enrolled = enrolledFor(course.id);
   const remaining = Math.max(0, 2 - usedAttempts);
+  const exam = course.finalExam;
+  const hasRealExam = exam && exam.status === "open" && exam.questions && exam.questions.length > 0;
 
   if (tier === "none") return <PublicShell showNavigation={false}><PageHeader title="课程成果" backTo={`/courses/${course.id}`} /><div className="space-y-4 px-4 py-5"><Card><h2 className="font-semibold text-text-primary">这门课不需要为了发证再考一次</h2><p className="mt-2 text-sm leading-6 text-text-secondary">完成课程内容即可形成学习记录，不发电子证书，也不消耗可信证书签发成本。</p><Button className="mt-4 w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看学习成果</Button></Card></div></PublicShell>;
 
-  const submit = () => {
-    if (!answer || !enrolled || remaining <= 0 || record.assessment === "passed") return;
+  // 未配置真实题库：显示占位
+  if (!hasRealExam) {
+    return (
+      <PublicShell showNavigation={false}>
+        <PageHeader title="课程结业小考" backTo={`/courses/${course.id}`} />
+        <div className="space-y-5 px-4 py-5">
+          <Card className="border border-border-subtle bg-surface-subtle/40">
+            <div className="flex items-start gap-3">
+              <Sparkles size={20} className="mt-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
+              <div>
+                <h2 className="font-semibold text-text-primary">结业小考筹备中</h2>
+                <p className="mt-1 text-sm leading-5 text-text-secondary">
+                  本课程结业小考已规划 {exam?.totalQuestions ?? 0} 道题 / 及格 {exam?.passingScore ?? 0} 分，将在后续版本开放。
+                </p>
+              </div>
+            </div>
+          </Card>
+          <SecondaryButton className="w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>返回学习成果</SecondaryButton>
+        </div>
+      </PublicShell>
+    );
+  }
+
+  const questions = exam!.questions!;
+  const total = questions.length;
+  const passing = exam!.passingScore;
+  const allAnswered = questions.every(q => answers[q.id] !== undefined);
+
+  const handleSubmit = () => {
+    if (!allAnswered || !enrolled || remaining <= 0 || record.assessment === "passed") return;
+    const score = questions.reduce((sum, q) => sum + (answers[q.id] === q.answer ? 1 : 0), 0);
+    const passed = score >= passing;
     const nextUsed = Math.min(2, usedAttempts + 1);
     setUsedAttempts(nextUsed);
     window.sessionStorage.setItem(attemptStorageKey(course.id), String(nextUsed));
-    completeCourse(course.id);
-    submitAssessment(course.id, answer === "b");
+    if (passed) completeCourse(course.id);
+    submitAssessment(course.id, passed);
+    setResult({ score, passed });
+    setSubmitted(true);
+  };
+
+  const handleRetake = () => {
+    setAnswers({});
+    setResult(null);
+    setSubmitted(false);
   };
 
   return <PublicShell showNavigation={false}>
-    <PageHeader title="课程考试" backTo={`/courses/${course.id}`} />
+    <PageHeader title="课程结业小考" subtitle={`${course.title} · ${credentialLabel(tier)}`} backTo={`/courses/${course.id}`} />
     <div className="space-y-5 px-4 py-5">
-      <Card className="border border-info bg-info-bg"><div className="flex items-start gap-3"><Clock size={20} className="mt-0.5 shrink-0 text-info-text" aria-hidden="true" /><div><h2 className="font-semibold text-info-text">考试前先把次数说清楚</h2><p className="mt-1 text-sm leading-5 text-info-text">当前原型采用会议示例：每门课程每月 2 次考试机会。你本月还剩 <b>{remaining}</b> 次。</p></div></div></Card>
-      <Card><p className="text-sm font-medium text-text-primary">示例题：一次业务复盘最先应该确认什么？</p><div className="mt-4 space-y-2">{[["a", "先扩大投放"], ["b", "先确认目标、口径与真实数据"]].map(([value, label]) => <button key={value} type="button" onClick={() => setAnswer(value as "a" | "b")} className={`min-h-touch w-full rounded-control border px-3 text-left text-sm ${answer === value ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-primary"}`}>{label}</button>)}</div></Card>
-      {record.assessment !== "idle" && <Card className={record.assessment === "passed" ? "border border-success bg-success-bg" : "border border-danger bg-danger-bg"}><p className={record.assessment === "passed" ? "font-semibold text-success-text" : "font-semibold text-danger-text"}>{record.assessment === "passed" ? "考试通过" : remaining > 0 ? `本次未通过，本月还可再考 ${remaining} 次` : "本月考试次数已用完"}</p></Card>}
-      {record.assessment === "passed" ? <Button className="w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看{credentialLabel(tier)}</Button> : <Button className="w-full" disabled={!answer || !enrolled || remaining <= 0} onClick={submit}>{remaining > 0 ? `提交答案 · 剩余 ${remaining} 次` : "本月暂无考试机会"}</Button>}
+      <Card className="border border-info bg-info-bg">
+        <div className="flex items-start gap-3">
+          <Clock size={20} className="mt-0.5 shrink-0 text-info-text" aria-hidden="true" />
+          <div>
+            <h2 className="font-semibold text-info-text">考试前先把次数说清楚</h2>
+            <p className="mt-1 text-sm leading-5 text-info-text">当前原型采用会议示例：每门课程每月 2 次考试机会。你本月还剩 <b>{remaining}</b> 次。</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="flex items-center justify-between text-sm">
+        <span className="text-text-secondary">共 {total} 题 · 及格 {passing} 分</span>
+        {submitted && result ? (
+          <span className={`font-semibold ${result.passed ? "text-success-text" : "text-danger-text"}`}>得分 {result.score} / {total}</span>
+        ) : (
+          <span className="text-text-tertiary">已答 {Object.keys(answers).length}/{total}</span>
+        )}
+      </Card>
+
+      {questions.map((q, index) => {
+        const userAnswer = answers[q.id];
+        const isCorrect = submitted ? userAnswer === q.answer : null;
+        return (
+          <Card key={q.id} className="space-y-3">
+            <p className="text-sm font-semibold text-text-primary">
+              <span className="mr-2 text-text-brand">{String(index + 1).padStart(2, "0")}</span>
+              {q.prompt}
+            </p>
+            <div className="space-y-2">
+              {q.options.map((opt, optIndex) => {
+                const selected = userAnswer === optIndex;
+                const correctOption = submitted ? optIndex === q.answer : null;
+                return (
+                  <button
+                    key={optIndex}
+                    type="button"
+                    disabled={submitted || !enrolled || remaining <= 0}
+                    onClick={() => setAnswers(current => ({ ...current, [q.id]: optIndex }))}
+                    className={`flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-sm transition active:scale-[0.99] ${
+                      submitted
+                        ? correctOption
+                          ? "border-success/40 bg-success-bg text-success-text"
+                          : selected
+                            ? "border-danger/40 bg-danger-bg text-danger-text"
+                            : "border-border-subtle text-text-secondary"
+                        : selected
+                          ? "border-primary bg-primary-container text-text-brand"
+                          : "border-border-subtle text-text-primary"
+                    }`}
+                  >
+                    <span className="text-xs text-text-tertiary">{String.fromCharCode(65 + optIndex)}.</span>
+                    <span className="flex-1">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {submitted && isCorrect === false && (
+              <p className="text-xs text-text-tertiary">正确答案：{String.fromCharCode(65 + q.answer)}</p>
+            )}
+          </Card>
+        );
+      })}
+
+      {submitted && result && (
+        <Card className={result.passed ? "border border-success bg-success-bg" : "border border-danger bg-danger-bg"}>
+          <p className={`text-sm font-semibold ${result.passed ? "text-success-text" : "text-danger-text"}`}>
+            {result.passed ? "考试通过" : remaining > 0 ? `本次未通过，本月还可再考 ${remaining} 次` : "本月考试次数已用完"}
+          </p>
+          {result.passed && <p className="mt-1 text-sm text-text-secondary">恭喜通过！{credentialLabel(tier)}已可领取，对应证书类徽章已发放。</p>}
+        </Card>
+      )}
+
+      {!submitted && record.assessment !== "idle" && (
+        <Card className={record.assessment === "passed" ? "border border-success bg-success-bg" : "border border-warning bg-warning-bg"}>
+          <p className={record.assessment === "passed" ? "text-sm font-semibold text-success-text" : "text-sm font-semibold text-warning-text"}>
+            {record.assessment === "passed" ? "你已通过本课程考试" : "上次考试未通过，可重新作答"}
+          </p>
+        </Card>
+      )}
+
+      {record.assessment === "passed" ? (
+        <Button className="w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看{credentialLabel(tier)}</Button>
+      ) : submitted && result && !result.passed && remaining > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          <SecondaryButton onClick={handleRetake}>重新考试</SecondaryButton>
+          <Button onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看学习成果</Button>
+        </div>
+      ) : (
+        <Button className="w-full" disabled={!allAnswered || !enrolled || remaining <= 0} onClick={handleSubmit}>
+          {remaining > 0 ? `提交答卷 · 剩余 ${remaining} 次` : "本月暂无考试机会"}
+        </Button>
+      )}
     </div>
   </PublicShell>;
 }

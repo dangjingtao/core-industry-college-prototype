@@ -78,6 +78,8 @@ export function evaluateBadge(rule: BadgeRule, ctx: BadgeEvaluationContext): boo
       return ctx.benefitClaimedCount >= rule.min;
     case "anyOf":
       return rule.rules.some(sub => evaluateBadge(sub, ctx));
+    case "allOf":
+      return rule.rules.every(sub => evaluateBadge(sub, ctx));
     default:
       return false;
   }

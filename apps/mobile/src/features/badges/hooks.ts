@@ -154,6 +154,21 @@ export function useBadges(): {
   totalCount: number;
   earnedCount: number;
 } {
+  const ctx = useBadgeEvaluationContext();
+
+  const earnedIds = useMemo(() => evaluateAll(badgeCatalog, ctx), [ctx]);
+
+  const earned: BadgeView[] = [];
+  const locked: BadgeView[] = [];
+  for (const entry of badgeCatalog) {
+    const view: BadgeView = { entry, unlocked: earnedIds.has(entry.id) };
+    if (view.unlocked) earned.push(view); else locked.push(view);
+  }
+  return { earned, locked, totalCount: badgeCatalog.length, earnedCount: earned.length };
+}
+
+/** 暴露评估上下文，供徽章详情页计算子条件进度使用 */
+export function useBadgeEvaluationContext(): BadgeEvaluationContext {
   const { session, identities } = usePublicPlatform();
   const { learning, welfareParticipations, benefitStatuses } = useLongTermAssets();
   const checkin = useCheckInSnapshot();
@@ -163,7 +178,7 @@ export function useBadges(): {
   const resumeEdited = useResumeEdited();
   const courseCheckpointPasses = useCourseCheckpointPasses();
 
-  const ctx: BadgeEvaluationContext = useMemo(() => ({
+  return useMemo(() => ({
     loggedIn: session.loggedIn,
     profileComplete: session.loggedIn && session.profileComplete,
     learning,
@@ -181,14 +196,4 @@ export function useBadges(): {
     simulationHasTraffic: sim.traffic > 0,
     courseCheckpointPasses,
   }), [session, learning, checkin, adWatched, welfareParticipations.length, benefitStatuses, resumeEdited, identities, sim.level, sim.stock, sim.traffic, newbieCompleted, courseCheckpointPasses]);
-
-  const earnedIds = useMemo(() => evaluateAll(badgeCatalog, ctx), [ctx]);
-
-  const earned: BadgeView[] = [];
-  const locked: BadgeView[] = [];
-  for (const entry of badgeCatalog) {
-    const view: BadgeView = { entry, unlocked: earnedIds.has(entry.id) };
-    if (view.unlocked) earned.push(view); else locked.push(view);
-  }
-  return { earned, locked, totalCount: badgeCatalog.length, earnedCount: earned.length };
 }

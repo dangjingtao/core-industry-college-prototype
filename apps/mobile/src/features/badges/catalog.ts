@@ -40,7 +40,8 @@ export type BadgeRule =
   // 权益
   | { type: "benefit.claimed"; min: number }
   // 组合
-  | { type: "anyOf"; rules: BadgeRule[] };
+  | { type: "anyOf"; rules: BadgeRule[] }
+  | { type: "allOf"; rules: BadgeRule[] };
 
 export type BadgeCatalogEntry = {
   id: string;
@@ -233,6 +234,42 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "↻",
     rule: { type: "simulation.stockAndTraffic" },
+    rewardHint: "",
+  },
+
+  // -------- 可信证书：多条件组合，最高等级能力证明 --------
+  {
+    id: "cert.data-analytics",
+    name: "数据分析能力认证",
+    description: "通过「商业数据分析基础」结业考试，并完成所有关卡小测",
+    tier: "cert",
+    source: "course",
+    iconColor: "bg-[#fef3c7] text-[#92400e]",
+    iconKey: "DA",
+    rule: {
+      type: "allOf",
+      rules: [
+        { type: "course.completed", courseId: "data-analytics" },
+        { type: "course.checkpointPassed", courseId: "data-analytics" },
+      ],
+    },
+    rewardHint: "",
+  },
+  {
+    id: "cert.newbie-graduate",
+    name: "新手结业认证",
+    description: "通过「创赛新手必修课」结业考试，并完成全部新手任务",
+    tier: "cert",
+    source: "course",
+    iconColor: "bg-[#ede9fe] text-[#5b21b6]",
+    iconKey: "NG",
+    rule: {
+      type: "allOf",
+      rules: [
+        { type: "course.completed", courseId: "newbie-essential" },
+        { type: "newbie.completed" },
+      ],
+    },
     rewardHint: "",
   },
 ];

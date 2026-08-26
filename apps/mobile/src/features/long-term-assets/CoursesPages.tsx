@@ -746,41 +746,149 @@ export function CourseAssessmentPage() {
   const { courseId } = useParams();
   const course = courseById(courseId);
   const { learningFor, submitAssessment, enrolledFor } = useLongTermAssets();
-  const [answer, setAnswer] = useState<"" | "a" | "b">("");
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
+
   if (!course) return null;
   const record = learningFor(course.id);
   const enrolled = enrolledFor(course.id);
-  const submit = () => { const passed = answer === "b"; submitAssessment(course.id, passed); };
-  return (
-    <PublicShell showNavigation={false}>
-      <PageHeader title="课程考试" backTo={`/courses/${course.id}`} />
-      <div className="space-y-5 px-4 py-5">
-        {!enrolled && <Card className="border border-warning bg-warning-bg"><p className="text-sm text-warning-text">你尚未报名本课程，考试成绩不会保存。</p></Card>}
-        <Card>
-          <p className="text-sm font-medium text-text-primary">示例题：一次业务复盘最先应该确认什么？</p>
-          <div className="mt-4 space-y-2">
-            {[["a", "先扩大投放"], ["b", "先确认目标、口径与真实数据"]].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setAnswer(value as "a" | "b")}
-                className={`min-h-touch w-full rounded-control border px-3 text-left text-sm ${answer === value ? "border-primary bg-primary-container text-text-brand" : "border-border bg-surface text-text-primary"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </Card>
-        {record.assessment !== "idle" && (
-          <Card className={record.assessment === "passed" ? "border border-success bg-success-bg" : "border border-danger bg-danger-bg"}>
-            <p className={record.assessment === "passed" ? "font-semibold text-success-text" : "font-semibold text-danger-text"}>
-              {record.assessment === "passed" ? "考试通过，课程成果已写入长期学习记录" : "本次未通过，可重新作答"}
+  const exam = course.finalExam;
+
+  // 未配置题库或仍为 draft：显示占位
+  if (!exam || !exam.questions || exam.questions.length === 0 || exam.status === "draft") {
+    return (
+      <PublicShell showNavigation={false}>
+        <PageHeader title="课程结业小考" backTo={`/courses/${course.id}`} />
+        <div className="space-y-5 px-4 py-5">
+          {!enrolled && <Card className="border border-warning bg-warning-bg"><p className="text-sm text-warning-text">你尚未报名本课程，考试成绩不会保存。</p></Card>}
+          <Card className="border border-border-subtle bg-surface-subtle/40">
+            <div className="flex items-center gap-2">
+              <Trophy size={20} className="text-text-tertiary" aria-hidden="true" />
+              <h2 className="font-semibold text-text-primary">结业小考暂未开放</h2>
+            </div>
+            <p className="mt-2 text-sm leading-5 text-text-secondary">
+              本课程结业小考已配置 {exam?.totalQuestions ?? 0} 道题 / 及格 {exam?.passingScore ?? 0} 分，将在后续版本开放。
             </p>
           </Card>
+          <SecondaryButton className="w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>返回学习成果</SecondaryButton>
+        </div>
+      </PublicShell>
+    );
+  }
+
+  const total = exam.questions.length;
+  const passing = exam.passingScore;
+  const allAnswered = exam.questions.every(q => answers[q.id] !== undefined);
+
+  const handleSubmit = () => {
+    if (!allAnswered || !enrolled) return;
+    const score = exam.questions!.reduce((sum, q) => sum + (answers[q.id] === q.answer ? 1 : 0), 0);
+    const passed = score >= passing;
+    submitAssessment(course.id, passed);
+    setResult({ score, passed });
+    setSubmitted(true);
+  };
+
+  const handleRetake = () => {
+    setAnswers({});
+    setResult(null);
+    setSubmitted(false);
+  };
+
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader title="课程结业小考" subtitle={`${course.title} · 综合考试`} backTo={`/courses/${course.id}`} />
+      <div className="space-y-5 px-4 py-5">
+        {!enrolled && <Card className="border border-warning bg-warning-bg"><p className="text-sm text-warning-text">你尚未报名本课程，考试成绩不会保存。</p></Card>}
+
+        <Card className="flex items-center justify-between text-sm">
+          <span className="text-text-secondary">共 {total} 题 · 及格 {passing} 分</span>
+          {submitted && result ? (
+            <span className={`font-semibold ${result.passed ? "text-success-text" : "text-danger-text"}`}>
+              得分 {result.score} / {total}
+            </span>
+          ) : (
+            <span className="text-text-tertiary">已答 {Object.keys(answers).length}/{total}</span>
+          )}
+        </Card>
+
+        {exam.questions.map((q, index) => {
+          const isSelected = answers[q.id] !== undefined;
+          const userAnswer = answers[q.id];
+          const isCorrect = submitted ? userAnswer === q.answer : null;
+          return (
+            <Card key={q.id} className="space-y-3">
+              <p className="text-sm font-semibold text-text-primary">
+                <span className="mr-2 text-text-brand">{String(index + 1).padStart(2, "0")}</span>
+                {q.prompt}
+              </p>
+              <div className="space-y-2">
+                {q.options.map((opt, optIndex) => {
+                  const selected = userAnswer === optIndex;
+                  const correctOption = submitted ? optIndex === q.answer : null;
+                  return (
+                    <button
+                      key={optIndex}
+                      type="button"
+                      disabled={submitted || !enrolled}
+                      onClick={() => setAnswers(current => ({ ...current, [q.id]: optIndex }))}
+                      className={`flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-sm transition active:scale-[0.99] ${
+                        submitted
+                          ? correctOption
+                            ? "border-success/40 bg-success-bg text-success-text"
+                            : selected
+                              ? "border-danger/40 bg-danger-bg text-danger-text"
+                              : "border-border-subtle text-text-secondary"
+                          : selected
+                            ? "border-primary bg-primary-container text-text-brand"
+                            : "border-border-subtle text-text-primary"
+                      }`}
+                    >
+                      <span className="text-xs text-text-tertiary">{String.fromCharCode(65 + optIndex)}.</span>
+                      <span className="flex-1">{opt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {submitted && isCorrect === false && (
+                <p className="text-xs text-text-tertiary">正确答案：{String.fromCharCode(65 + q.answer)}</p>
+              )}
+            </Card>
+          );
+        })}
+
+        {!submitted && (
+          <Button className="w-full" disabled={!allAnswered || !enrolled} onClick={handleSubmit}>
+            {allAnswered ? "提交答卷" : `已答 ${Object.keys(answers).length}/${total}`}
+          </Button>
         )}
-        {record.assessment === "passed" ? (
-          <Button className="w-full" onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看成绩与证书</Button>
-        ) : (
-          <Button className="w-full" disabled={!answer || !enrolled} onClick={submit}>提交答案</Button>
+
+        {submitted && result && (
+          <div className="space-y-3">
+            <Card className={result.passed ? "border border-success bg-success-bg" : "border border-danger bg-danger-bg"}>
+              <p className={`text-sm font-semibold ${result.passed ? "text-success-text" : "text-danger-text"}`}>
+                {result.passed ? "考试通过" : "未通过"}
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {result.passed
+                  ? "恭喜！你已通过结业小考，课程证书可领取，对应证书类徽章已发放。"
+                  : `本次得分 ${result.score} 分，及格线 ${passing} 分，可以复习后重新考试。`}
+              </p>
+            </Card>
+            <div className="grid grid-cols-2 gap-3">
+              {!result.passed && <SecondaryButton onClick={handleRetake}>重新考试</SecondaryButton>}
+              <Button onClick={() => navigate(`/courses/${course.id}/achievement`)}>查看学习成果</Button>
+            </div>
+          </div>
+        )}
+
+        {record.assessment !== "idle" && !submitted && (
+          <Card className={record.assessment === "passed" ? "border border-success bg-success-bg" : "border border-warning bg-warning-bg"}>
+            <p className={record.assessment === "passed" ? "text-sm font-semibold text-success-text" : "text-sm font-semibold text-warning-text"}>
+              {record.assessment === "passed" ? "你已通过本课程考试" : "上次考试未通过，可重新作答"}
+            </p>
+          </Card>
         )}
       </div>
     </PublicShell>
