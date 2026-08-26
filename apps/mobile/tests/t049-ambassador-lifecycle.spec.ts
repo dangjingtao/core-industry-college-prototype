@@ -37,6 +37,26 @@ async function lightTeam(page: Page) {
   await expect(page.getByText("已点亮", { exact: true })).toBeVisible();
 }
 
+test("T049 universal scanner keeps the existing welfare redemption flow", async ({ page }) => {
+  await page.goto("/me");
+  await page.getByRole("button", { name: "扫一扫" }).click();
+  await expect(page.getByTestId("ambassador-scan-simulator")).toBeVisible();
+  await page.getByRole("button", { name: /模拟扫描福利兑换码/ }).click();
+  await expect(page).toHaveURL(/\/redeem\/result\?code=/);
+});
+
+test("T049 existing campaign members cannot submit a second ambassador application", async ({ page }) => {
+  await applyAsAmbassador(page);
+  await joinTeam(page, "partner-1");
+
+  await page.goto("/ambassadors?code=CA-HN-2026&accountId=partner-1");
+  await expect(page).toHaveURL(/\/ambassadors\/apply/);
+  await expect(page.getByText("你已加入本期推广团队", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交申请，获得团队招募码" })).toHaveCount(0);
+  await page.getByRole("button", { name: "查看我的团队" }).click();
+  await expect(page).toHaveURL(new RegExp(`/ambassadors/team/${encodeURIComponent(teamId)}\\?accountId=partner-1`));
+});
+
 test("T049 ended campaign disables all codes, keeps history and allows a later campaign", async ({ page }) => {
   await lightTeam(page);
   const promotionCode = (await page.getByTestId("personal-promotion-code").locator("code").textContent())?.trim() ?? "";
