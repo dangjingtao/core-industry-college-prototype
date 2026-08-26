@@ -17,6 +17,7 @@ import {
   Target,
   Trophy,
   UsersRound,
+  Megaphone,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
@@ -82,6 +83,7 @@ function GlobalNavigation({ mobile = false }: { mobile?: boolean }) {
       </div>;
     })}
     <NavLink data-testid="pc09-primary-nav" to="/admin/sanchuang" className={() => itemClass(location.pathname.startsWith("/admin/sanchuang"))}><Trophy size={18} aria-hidden="true" />三创赛运营</NavLink>
+    <NavLink data-testid="t046-primary-nav" to="/admin/ambassadors" className={() => itemClass(location.pathname.startsWith("/admin/ambassadors"))}><Megaphone size={18} aria-hidden="true" />核心大使计划</NavLink>
     <div>
       <NavLink to="/admin/dev" className={() => itemClass(location.pathname.startsWith("/admin/dev") || location.pathname.startsWith("/admin/observability") || location.pathname.startsWith("/admin/governance"))}><SquareTerminal size={18} aria-hidden="true" />开发</NavLink>
       {!mobile && <><NavLink to="/admin/observability" className={() => subItemClass(location.pathname.startsWith("/admin/observability"))}><Gauge size={13} />环境与日志</NavLink><NavLink to="/admin/governance" className={() => subItemClass(location.pathname.startsWith("/admin/governance"))}><ShieldCheck size={13} />权限与审计</NavLink></>}

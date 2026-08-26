@@ -29,6 +29,8 @@ import { readRegistrationPortalCallbackStatus } from "./registration-portal/mode
 import { T032TeacherReviewWorkbench } from "./review/T032TeacherReviewWorkbench";
 import { SanChuangMockLogin } from "./sanchuang-official/SanChuangMockLogin";
 import { SanChuangOfficialHome } from "./sanchuang-official/SanChuangOfficialHome";
+import { AmbassadorStateProvider } from "@core/shared";
+import { T046AmbassadorConsole } from "./admin/T046AmbassadorConsole";
 
 const handoffStorageKey = "core.registration-portal.handoff";
 const handoffTtlMs = 60 * 60 * 1000;
@@ -124,6 +126,7 @@ function AdminNotFound() {
 
 export function App() {
   return (
+    <AmbassadorStateProvider>
     <PC03StateProvider>
       <PC04StateProvider>
         <PC05StateProvider>
@@ -140,6 +143,9 @@ export function App() {
             <Route path="/admin/sanchuang" element={<Navigate to={`/admin/sanchuang/${currentSanChuangCompetitionId}`} replace />} />
             <Route path="/admin/sanchuang/:competitionId" element={<AdminRoute><PC09SanChuangOperations view="overview" /></AdminRoute>} />
             <Route path="/admin/sanchuang/:competitionId/performance" element={<AdminRoute><PC09SanChuangOperations view="performance" /></AdminRoute>} />
+            <Route path="/admin/ambassadors" element={<AdminRoute><T046AmbassadorConsole /></AdminRoute>} />
+            <Route path="/admin/ambassadors/:campaignId" element={<AdminRoute><T046AmbassadorConsole /></AdminRoute>} />
+            <Route path="/admin/ambassadors/:campaignId/teams/:teamId" element={<AdminRoute><T046AmbassadorConsole /></AdminRoute>} />
             <Route path="/admin/resources" element={<AdminRoute><PC01OperationsConsole section="resources" /></AdminRoute>} />
             <Route path="/admin/workshop" element={<AdminRoute><PC01OperationsConsole section="workshop" /></AdminRoute>} />
             <Route path="/admin/competitions/objects/:competitionId" element={<AdminRoute><PC08CompetitionDetail /></AdminRoute>} />
@@ -175,5 +181,6 @@ export function App() {
         </PC05StateProvider>
       </PC04StateProvider>
     </PC03StateProvider>
+    </AmbassadorStateProvider>
   );
 }
