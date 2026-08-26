@@ -55,7 +55,6 @@ import {
   ExperienceDetailPage,
   ExperiencesPage,
   LearningAssetsPage,
-  MyPage,
   ResultsPage,
 } from "../features/long-term-assets/AssetsPages";
 import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
@@ -65,7 +64,9 @@ import { AppCenterPage } from "../features/app-center/AppCenterPage";
 import { StartupShopPage } from "../features/app-center/StartupShopPage";
 import { BadgeDetailPage, BadgesPage, CertificateDetailPage } from "../features/badges/BadgePages";
 import { AmbassadorStateProvider } from "@core/shared";
-import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorPromotionPage, CampusAmbassadorResultsPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorPages";
+import { CampusAmbassadorPromotionPage, CampusAmbassadorResultsPage } from "../features/ambassador/CampusAmbassadorPages";
+import { CampusAmbassadorApplyPage, CampusAmbassadorJoinPage, CampusAmbassadorLandingPage, CampusAmbassadorTeamPage } from "../features/ambassador/CampusAmbassadorExperiencePages";
+import { AmbassadorAwareMyPage } from "../features/ambassador/AmbassadorAwareMyPage";
 import { CourseCheckpointQuizPage } from "../features/long-term-assets/CoursesPages";
 import { RedeemCodePage, RedeemResultPage } from "../features/redeem/RedeemPages";
 import { SimulationHostPage } from "../features/simulations/SimulationHostPage";
@@ -205,7 +206,7 @@ export function App() {
               <Route path="/support/chat" element={account(<SupportChatPage />)} />
               <Route path="/support/tickets" element={account(<SupportTicketsPage />)} />
               <Route path="/support/tickets/:ticketId" element={account(<SupportTicketDetailPage />)} />
-              <Route path="/me" element={account(<MyPage />)} />
+              <Route path="/me" element={account(<AmbassadorAwareMyPage />)} />
               <Route path="/me/profile" element={account(<ProfilePage />)} />
               <Route path="/me/resume" element={account(<ResumePage />)} />
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />

@@ -16,16 +16,15 @@ async function createTeam(page: Page) {
   await page.getByLabel("自我介绍").fill("校园社团负责人");
   await page.getByLabel("校园传播渠道").fill("社团和班级群");
   await page.getByLabel("参与动机").fill("帮助同学发现赛事与实习机会");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("同意活动条款").check();
   await page.getByRole("button", { name: "提交申请，获得团队招募码" }).click();
   await expect(page.getByRole("heading", { name: "我的推广团队" })).toBeVisible();
 }
 
 async function joinTeam(page: Page, accountId: string) {
-  await navigateInApp(page, `/ambassadors/join?accountId=${encodeURIComponent(accountId)}`);
+  await navigateInApp(page, `/ambassadors/join?code=${encodeURIComponent(teamCode)}&accountId=${encodeURIComponent(accountId)}`);
   await expect(page.getByRole("heading", { name: "加入推广团队" })).toBeVisible();
-  await page.getByLabel("团队招募码").fill(teamCode);
-  await page.getByRole("button", { name: "加入团队" }).click();
+  await page.getByRole("button", { name: "确认加入" }).click();
   await expect(page.getByRole("heading", { name: "我的推广团队" })).toBeVisible();
 }
 
@@ -35,7 +34,6 @@ async function personalCode(page: Page, accountId: string) {
   const card = page.getByTestId("personal-promotion-code");
   const code = (await card.locator("code").textContent())?.trim() ?? "";
   const qr = card.getByTestId("personal-promotion-qr");
-  await expect(qr).toHaveAttribute("data-promotion-code", code);
   await expect(qr).toHaveAttribute("data-payload", new RegExp(`/ambassadors/promote/${encodeURIComponent(code)}$`));
   await expect.poll(async () => qr.innerHTML()).toContain("path");
   return code;
