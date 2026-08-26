@@ -64,7 +64,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "✓",
     rule: { type: "checkin.today" },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.checkin.streak3",
@@ -75,7 +75,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "3",
     rule: { type: "checkin.streak", min: 3 },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.checkin.streak7",
@@ -86,7 +86,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "7",
     rule: { type: "checkin.streak", min: 7 },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.ad.watched1",
@@ -97,7 +97,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff7df] text-[#946218]",
     iconKey: "▶",
     rule: { type: "ad.watched", min: 1 },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.profile.complete",
@@ -108,7 +108,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#eaf5ff] text-[#2879d0]",
     iconKey: "ID",
     rule: { type: "profile.complete" },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.welfare.helped1",
@@ -119,7 +119,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#ffe9e9] text-[#c0392b]",
     iconKey: "♥",
     rule: { type: "welfare.helped", min: 1 },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.benefit.claimed1",
@@ -130,7 +130,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff7df] text-[#946218]",
     iconKey: "★",
     rule: { type: "benefit.claimed", min: 1 },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.resume.firstEdit",
@@ -141,7 +141,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#f3efff] text-[#6f4bc2]",
     iconKey: "✎",
     rule: { type: "resume.firstEdit" },
-    rewardHint: "20 学力值（暂定）",
+    rewardHint: "",
   },
 
   // -------- 高级徽章：课程 / 赛事 / 模拟经营（深度能力证明） --------
@@ -154,7 +154,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#e9f6f1] text-[#247456]",
     iconKey: "★",
     rule: { type: "newbie.completed" },
-    rewardHint: "50 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.course.first",
@@ -165,7 +165,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#eaf5ff] text-[#2879d0]",
     iconKey: "C1",
     rule: { type: "course.completedCount", min: 1 },
-    rewardHint: "50 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.course.three",
@@ -176,7 +176,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#eaf5ff] text-[#2879d0]",
     iconKey: "C3",
     rule: { type: "course.completedCount", min: 3 },
-    rewardHint: "80 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.competition.registered",
@@ -187,7 +187,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#f3efff] text-[#6f4bc2]",
     iconKey: "S",
     rule: { type: "competition.registered" },
-    rewardHint: "50 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.competition.ended",
@@ -198,7 +198,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#f3efff] text-[#6f4bc2]",
     iconKey: "🏁",
     rule: { type: "competition.ended" },
-    rewardHint: "80 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.simulation.level2",
@@ -209,7 +209,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "Lv2",
     rule: { type: "simulation.level", min: 2 },
-    rewardHint: "50 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.simulation.level3",
@@ -220,7 +220,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "Lv3",
     rule: { type: "simulation.level", min: 3 },
-    rewardHint: "100 学力值（暂定）",
+    rewardHint: "",
   },
   {
     id: "badge.simulation.stockAndTraffic",
@@ -231,7 +231,7 @@ export const badgeCatalog: BadgeCatalogEntry[] = [
     iconColor: "bg-[#fff2e8] text-[#c45b1b]",
     iconKey: "↻",
     rule: { type: "simulation.stockAndTraffic" },
-    rewardHint: "50 学力值（暂定）",
+    rewardHint: "",
   },
 ];
 

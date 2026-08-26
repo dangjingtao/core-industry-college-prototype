@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronRight, Lock } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
+import { PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { badgeCatalog, type BadgeCatalogEntry, type BadgeTier } from "./catalog";
 import { useBadges, type BadgeView } from "./hooks";
 
@@ -13,46 +13,37 @@ const tierLabel: Record<BadgeTier, string> = {
   cert: "可信证书",
 };
 
+/** GitHub 风格的徽章卡：圆形色块 + 名称 + 描述；未得变灰带锁。 */
 function BadgeCard({ view, to }: { view: BadgeView; to: string }) {
   const { entry, unlocked } = view;
   return (
     <Link
       to={to}
-      className={`flex min-h-[124px] flex-col rounded-container border p-3 transition active:scale-[0.99] ${unlocked ? "border-border-subtle bg-surface" : "border-dashed border-border-subtle bg-surface-subtle/40"}`}
+      className={`group flex flex-col items-center gap-2 rounded-container border p-3 text-center transition active:scale-[0.99] ${unlocked ? "border-border-subtle bg-surface" : "border-dashed border-border-subtle bg-surface-subtle/40"}`}
     >
-      <div className="flex items-start gap-2">
-        <span className={`flex size-10 shrink-0 items-center justify-center rounded-control text-sm font-semibold ${unlocked ? entry.iconColor : "bg-surface-subtle text-text-tertiary"}`}>
-          {unlocked ? entry.iconKey : <Lock size={16} aria-hidden="true" />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <strong className={`block text-sm font-semibold ${unlocked ? "text-text-primary" : "text-text-tertiary"}`}>{entry.name}</strong>
-          <span className="mt-0.5 block text-[11px] text-text-tertiary">{tierLabel[entry.tier]} · 奖励 {entry.rewardHint}</span>
-        </span>
-      </div>
-      <p className={`mt-2 line-clamp-2 text-xs leading-5 ${unlocked ? "text-text-secondary" : "text-text-tertiary"}`}>{entry.description}</p>
+      <span
+        className={`flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${unlocked ? entry.iconColor : "bg-surface-subtle text-text-tertiary"}`}
+      >
+        {unlocked ? entry.iconKey : <Lock size={20} aria-hidden="true" />}
+      </span>
+      <strong className={`line-clamp-1 text-xs font-semibold ${unlocked ? "text-text-primary" : "text-text-tertiary"}`}>{entry.name}</strong>
+      <p className={`line-clamp-2 text-[11px] leading-4 ${unlocked ? "text-text-tertiary" : "text-text-tertiary/80"}`}>{entry.description}</p>
     </Link>
   );
 }
 
 function BadgeSummary({ earned, total }: { earned: number; total: number }) {
-  const percent = total === 0 ? 0 : Math.round((earned / total) * 100);
   return (
-    <Card className="overflow-hidden">
-      <div className="-mx-4 -mt-4 h-20 bg-gradient-to-br from-primary to-primary-pressed" />
-      <div className="px-1">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-medium text-text-brand">我的徽章</p>
-            <h2 className="mt-1 text-xl font-semibold text-text-primary">{earned}<span className="ml-1 text-sm font-normal text-text-tertiary">/ {total}</span></h2>
-          </div>
-          <StatusTag tone="info">完成度 {percent}%</StatusTag>
-        </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle">
-          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${percent}%` }} />
-        </div>
-        <p className="mt-3 text-xs text-text-secondary">徽章来自课程、赛事、APP 行为、模拟经营等场景；达成规则透明可解释，奖励待 F04 决策确认。</p>
+    <div className="flex items-center justify-between px-1">
+      <div>
+        <p className="text-xs font-medium text-text-brand">徽章</p>
+        <h2 className="mt-0.5 text-base font-semibold text-text-primary">
+          已得 <span className="text-text-primary">{earned}</span>
+          <span className="ml-1 text-sm font-normal text-text-tertiary">/ {total}</span>
+        </h2>
       </div>
-    </Card>
+      <StatusTag tone="neutral">{earned} 枚</StatusTag>
+    </div>
   );
 }
 
@@ -85,15 +76,13 @@ export function BadgesPage() {
 
         {tiers.map(tier => byTier[tier].length > 0 && (
           <Section key={tier} title={tier === "high" ? "高级徽章" : tier === "low" ? "低级徽章" : "可信证书"} subtitle={tier === "high" ? "代表真实能力，长期有效" : tier === "low" ? "高频行为与日常小任务" : "由多张徽章与必修课程组成"}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {byTier[tier].map(view => (
                 <BadgeCard key={view.entry.id} view={view} to={`/me/badges/${view.entry.id}`} />
               ))}
             </div>
           </Section>
         ))}
-
-        <p className="text-center text-[11px] text-text-tertiary">共 {badgeCatalog.length} 枚徽章 · 已获得 {overriddenEarnedCount} 枚</p>
 
         <details className="ml-auto w-fit rounded-control border border-border-subtle bg-surface p-2 text-xs shadow-floating">
           <summary className="cursor-pointer font-medium text-text-secondary">原型状态（演示用）</summary>
@@ -128,7 +117,7 @@ function BadgeDetailPage() {
     return (
       <PublicShell showNavigation={false}>
         <PageHeader title="徽章详情" backTo="/me/badges" />
-        <div className="px-4 py-6"><Card><p className="text-sm text-text-secondary">徽章不存在或已下架。</p></Card></div>
+        <div className="px-4 py-6"><p className="text-sm text-text-secondary">徽章不存在或已下架。</p></div>
       </PublicShell>
     );
   }
@@ -137,7 +126,7 @@ function BadgeDetailPage() {
     <PublicShell showNavigation={false}>
       <PageHeader title={entry.name} backTo="/me/badges" />
       <div className="space-y-4 px-4 py-5">
-        <Card className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center">
           <span className={`flex size-20 items-center justify-center rounded-full text-2xl font-semibold ${unlocked ? entry.iconColor : "bg-surface-subtle text-text-tertiary"}`}>
             {unlocked ? entry.iconKey : <Lock size={28} aria-hidden="true" />}
           </span>
@@ -147,23 +136,17 @@ function BadgeDetailPage() {
             <StatusTag tone={entry.tier === "high" ? "success" : entry.tier === "cert" ? "warning" : "neutral"}>{tierLabel[entry.tier]}</StatusTag>
             <StatusTag tone="info">来源 · {entry.source}</StatusTag>
           </div>
-        </Card>
+        </div>
 
-        <Card>
+        <div className="rounded-container border border-border-subtle bg-surface p-4">
           <h3 className="text-sm font-semibold text-text-primary">达成条件</h3>
           <p className="mt-2 text-sm leading-6 text-text-secondary">{ruleDescription(entry)}</p>
-        </Card>
+        </div>
 
-        <Card>
-          <h3 className="text-sm font-semibold text-text-primary">奖励</h3>
-          <p className="mt-2 text-sm text-text-secondary">{entry.rewardHint}</p>
-          <p className="mt-2 text-[11px] text-text-tertiary">具体发放与额度需等 F04 Decision A（学力值经济）确认。</p>
-        </Card>
-
-        <Card className={unlocked ? "border-success/30 bg-success-bg" : ""}>
+        <div className={`rounded-container border p-4 ${unlocked ? "border-success/30 bg-success-bg" : "border-border-subtle bg-surface"}`}>
           <h3 className="text-sm font-semibold text-text-primary">{unlocked ? "已获得" : "未获得"}</h3>
-          <p className="mt-2 text-sm text-text-secondary">{unlocked ? "恭喜！按你当前的事实记录，这枚徽章已经达成。" : "继续按上方条件努力，获得后会自动出现在这里。"}</p>
-        </Card>
+          <p className="mt-2 text-sm text-text-secondary">{unlocked ? "按你当前的事实记录，这枚徽章已经达成。" : "继续按上方条件努力，获得后会自动出现在这里。"}</p>
+        </div>
 
         <Link to="/me/badges" className="flex min-h-touch items-center justify-center gap-1 text-sm text-text-brand active:opacity-70"><ChevronRight size={16} aria-hidden="true" className="rotate-180" /><span>返回徽章墙</span></Link>
       </div>
