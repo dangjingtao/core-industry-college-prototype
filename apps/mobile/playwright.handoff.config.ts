@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "registration-handoff-cross-app.spec.ts",
+  testMatch: ["registration-handoff-cross-app.spec.ts", "t049-ambassador-bridge-cross-app.spec.ts"],
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
@@ -29,6 +29,9 @@ export default defineConfig({
       url: "http://127.0.0.1:5174",
       reuseExistingServer: false,
       timeout: 120_000,
+      env: {
+        VITE_MOBILE_SITE_URL: "http://127.0.0.1:5173",
+      },
     },
   ],
 });
