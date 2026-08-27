@@ -42,7 +42,7 @@ test("T044 school code routes directly into application and creates a team recru
 
   await expect(page).toHaveURL(new RegExp(encodedTeamPath));
   await expect(page.getByText("待点亮", { exact: true })).toBeVisible();
-  await expect(page.getByText("还需 3 位推广伙伴", { exact: true })).toBeVisible();
+  await expect(page.getByText("还需 3 位校园推荐官", { exact: true })).toBeVisible();
   const qr = page.getByTestId("team-recruitment-qr");
   await expect(qr).toHaveAttribute("data-payload", new RegExp(`/ambassadors/join\\?code=${encodeURIComponent(teamCode)}$`));
   await expect.poll(async () => qr.innerHTML()).toContain("path");
