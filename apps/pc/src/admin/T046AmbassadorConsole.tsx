@@ -317,7 +317,7 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
 
   const handleExportAll = () => {
     const headers = [
-      "活动", "周期起止", "团队名", "学校", "校园大使", "团队状态", "团队人数",
+      "活动", "周期起止", "团队名", "团队ID", "学校", "校园大使", "团队状态", "团队人数",
       "本周有效新增", "累计有效新增", "成员身份", "成员标识", "成员本周有效新增",
       "成员累计有效新增", "新用户标识", "注册时间", "归因成员",
     ];
@@ -334,7 +334,7 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
         const roleLabel = c.role === "ambassador" ? "校园大使" : "校园推荐官";
         if (weekAcqs.length === 0) {
           rows.push([
-            campaign.name, weekLabel, ambassadorTeamDisplayName(team),
+            campaign.name, weekLabel, ambassadorTeamDisplayName(team), team.id,
             schools[team.schoolId] ?? team.schoolId,
             ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
             teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
@@ -346,8 +346,8 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
           const memberAcqs = weekAcqs.filter(a => a.promoterAccountId === c.accountId);
           if (memberAcqs.length === 0) {
             rows.push([
-              campaign.name, weekLabel, ambassadorTeamDisplayName(team),
-              schools[team.schoolId] ?? team.schoolId,
+              campaign.name, weekLabel, ambassadorTeamDisplayName(team), team.id,
+            schools[team.schoolId] ?? team.schoolId,
               ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
               teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
               String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
@@ -357,8 +357,8 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
           } else {
             for (const acq of memberAcqs) {
               rows.push([
-                campaign.name, weekLabel, ambassadorTeamDisplayName(team),
-                schools[team.schoolId] ?? team.schoolId,
+                campaign.name, weekLabel, ambassadorTeamDisplayName(team), team.id,
+            schools[team.schoolId] ?? team.schoolId,
                 ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
                 teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
                 String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
@@ -570,7 +570,7 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
 
   const handleExportTeam = () => {
     const headers = [
-      "活动", "周期起止", "团队名", "学校", "校园大使", "团队状态", "团队人数",
+      "活动", "周期起止", "团队名", "团队ID", "学校", "校园大使", "团队状态", "团队人数",
       "本周有效新增", "累计有效新增", "成员身份", "成员标识", "成员本周有效新增",
       "成员累计有效新增", "新用户标识", "注册时间", "归因成员",
     ];
@@ -583,8 +583,8 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
       const memberAcqs = weekAcqs.filter(a => a.promoterAccountId === c.accountId);
       if (memberAcqs.length === 0) {
         rows.push([
-          campaign.name, weekLabel, resolvedTeamName,
-          schools[team.schoolId] ?? team.schoolId, ambassadorName,
+          campaign.name, weekLabel, resolvedTeamName, team.id,
+            schools[team.schoolId] ?? team.schoolId, ambassadorName,
           teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
           String(teamWeek?.weekAcquisitions ?? 0), String(teamWeek?.totalAcquisitions ?? 0),
           roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
@@ -593,7 +593,7 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
       } else {
         for (const acq of memberAcqs) {
           rows.push([
-            campaign.name, weekLabel, resolvedTeamName,
+            campaign.name, weekLabel, resolvedTeamName, team.id,
             schools[team.schoolId] ?? team.schoolId, ambassadorName,
             teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
             String(teamWeek?.weekAcquisitions ?? 0), String(teamWeek?.totalAcquisitions ?? 0),
@@ -636,6 +636,10 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
         <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">周环比</p><p className="mt-2 text-lg font-semibold"><TrendBadge trend={teamWeek?.trend ?? "flat"} delta={teamWeek?.trendDelta ?? 0} /></p></div>
         <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">累计有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{teamWeek?.totalAcquisitions ?? 0}</p></div>
         <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队激励状态</p><p className="mt-2 text-lg font-semibold">{incentiveLabel[team.incentiveStatus]}</p></div>
+      </div>
+<h3 className="mt-6 text-sm font-semibold">本周每日新增分布</h3>
+      <div className="mt-3">
+        <DailyDistribution weekAcqs={weekAcqs} weekStart={weekStart} />
       </div>
       <h3 className="mt-6 text-sm font-semibold">成员本周贡献</h3>
       <div className="mt-3 overflow-x-auto">
@@ -691,6 +695,37 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
     </section>
     <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {totalAcquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div></section>
   </div>;
+}
+
+
+function DailyDistribution({ weekAcqs, weekStart }: { weekAcqs: { registeredAt: string }[]; weekStart: string }) {
+  const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const distribution = weekDays.map((label, i) => {
+    const dayStart = new Date(weekStart);
+    dayStart.setDate(dayStart.getDate() + i);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const count = weekAcqs.filter(a => {
+      const t = Date.parse(a.registeredAt);
+      return t >= dayStart.getTime() && t < dayEnd.getTime();
+    }).length;
+    return { label, count };
+  });
+  const max = Math.max(...distribution.map(d => d.count), 1);
+  return (
+    <div className="flex items-end gap-2 h-32">
+      {distribution.map(d => (
+        <div key={d.label} className="flex flex-1 flex-col items-center gap-1">
+          <span className="text-xs font-semibold tabular-nums text-text-primary">{d.count || ""}</span>
+          <div
+            className="w-full rounded-t bg-primary/70 transition-all"
+            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count > 0 ? 4 : 0 }}
+          />
+          <span className="text-[11px] text-text-tertiary">{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function T046AmbassadorConsole() {
