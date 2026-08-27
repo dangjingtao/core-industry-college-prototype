@@ -13,3 +13,17 @@ export * from "./Dialog";
 export * from "./campus-ambassador";
 export * from "./campus-ambassador-week";
 export * from "./campus-ambassador-state";
+
+// T054: keep the original T052 public function names, but explicitly resolve
+// them to the same UTC+8 natural-week implementation used by Mobile T053.
+// Explicit exports take precedence over the legacy star-exported helpers.
+export {
+  weekStartOf,
+  weekEndOf,
+  formatWeekLabel,
+  previousWeek,
+  nextWeek,
+  deriveCampaignWeekMetrics,
+  deriveTeamWeekContributions,
+  getTeamWeekAcquisitions,
+} from "./campus-ambassador-week-ops";
