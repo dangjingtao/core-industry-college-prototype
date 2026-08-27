@@ -15,14 +15,17 @@ import QRCode from "qrcode";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ambassadorApplicationForm,
+  ambassadorApplicationSubmittedAt,
   ambassadorCampaignStatus,
   ambassadorTeamDisplayName,
   ambassadorTeamMemberCount,
   deriveAmbassadorMetrics,
   readableAmbassadorTerms,
+  resolveAmbassadorAnswerForm,
   type AmbassadorApplicationField,
   type AmbassadorApplicationFieldType,
   type AmbassadorIncentiveStatus,
+  type AmbassadorTeamMember,
   type AmbassadorTermsVersion,
   useAmbassadorState,
 } from "@core/shared";
@@ -299,6 +302,82 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
   </div>;
 }
 
+function QuestionnaireAnswerView({
+  ambassador,
+  campaign,
+  teamName,
+  schoolName,
+}: {
+  ambassador: AmbassadorTeamMember;
+  campaign: { id: string; name: string; applicationForm?: AmbassadorApplicationField[]; applicationFields: string[]; termsVersion: string };
+  teamName: string;
+  schoolName: string;
+}) {
+  const { termsVersions } = useAmbassadorState();
+  const { fields, fromSnapshot } = resolveAmbassadorAnswerForm(ambassador, campaign);
+  const submittedAt = ambassadorApplicationSubmittedAt(ambassador);
+  const termsId = ambassador.application?.termsVersion ?? campaign.termsVersion;
+  const terms = termsVersions.find(item => item.id === termsId);
+  const applicantName = ambassador.application?.__applicantName ?? ambassador.accountId;
+
+  const renderAnswer = (field: AmbassadorApplicationField) => {
+    const raw = ambassador.application?.[field.id] ?? ambassador.application?.[field.label];
+    const isUnfilled = !raw || raw.trim().length === 0;
+
+    if (isUnfilled) {
+      return <p className="text-sm italic text-text-tertiary">未填写</p>;
+    }
+
+    switch (field.type) {
+      case "textarea":
+        return <p className="whitespace-pre-wrap text-sm leading-7 text-text-primary">{raw}</p>;
+      case "single-choice":
+        return <div className="flex items-center gap-2"><span className="inline-flex size-4 items-center justify-center rounded-full border border-text-brand"><span className="size-2 rounded-full bg-text-brand" /></span><span className="text-sm">{raw}</span></div>;
+      case "multi-choice": {
+        const selected = raw.split(/[,，、]/).map(item => item.trim()).filter(Boolean);
+        return <div className="flex flex-wrap gap-2">{selected.length === 0 ? <p className="text-sm italic text-text-tertiary">未填写</p> : selected.map(option => <span key={option} className="inline-flex items-center gap-1.5 rounded-full bg-surface-subtle px-3 py-1 text-xs"><span>☑</span>{option}</span>)}</div>;
+      }
+      case "text":
+      default:
+        return <p className="text-sm text-text-primary">{raw}</p>;
+    }
+  };
+
+  return <section className="rounded-container border border-border-subtle bg-surface" data-testid="ambassador-questionnaire-answers">
+    <div className="border-b border-border-subtle p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">校园大使申请问卷</p>
+          <h2 className="mt-2 text-lg font-semibold">{campaign.name} · 申请答案</h2>
+        </div>
+        {!fromSnapshot && <StatusTag tone="warning">使用当前表单配置</StatusTag>}
+        {fromSnapshot && <StatusTag tone="success">提交时版本</StatusTag>}
+      </div>
+      <div className="mt-4 grid gap-4 text-sm md:grid-cols-3">
+        <div><p className="text-xs text-text-tertiary">所属活动</p><p className="mt-1 font-medium">{campaign.name}</p></div>
+        <div><p className="text-xs text-text-tertiary">学校</p><p className="mt-1 font-medium">{schoolName}</p></div>
+        <div><p className="text-xs text-text-tertiary">团队</p><p className="mt-1 font-medium">{teamName}</p></div>
+        <div><p className="text-xs text-text-tertiary">校园大使</p><p className="mt-1 font-medium">{applicantName}</p></div>
+        <div><p className="text-xs text-text-tertiary">提交时间</p><p className="mt-1 font-medium">{submittedAt.slice(0, 19).replace("T", " ")}</p></div>
+        <div><p className="text-xs text-text-tertiary">同意条款</p><p className="mt-1 font-medium">{terms ? readableAmbassadorTerms(terms) : termsId}</p></div>
+      </div>
+      {!fromSnapshot && <p className="mt-4 rounded-control bg-warning-bg p-3 text-xs text-warning-text">提示：该申请提交时未保存表单版本，当前使用活动最新配置展示答案。如后续修改了问卷字段，历史答案可能出现字段错位。</p>}
+    </div>
+    <div className="divide-y divide-border-subtle">
+      {fields.map((field, index) => <div key={field.id} className="p-5" data-testid={`answer-field-${field.id}`}>
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs font-semibold text-text-tertiary">Q{index + 1}</span>
+          <p className="font-medium">{field.label}{field.required && <span className="ml-1 text-danger">*</span>}</p>
+          <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-[11px] text-text-tertiary">{fieldTypeLabel[field.type]}</span>
+        </div>
+        <div className="mt-3 pl-6">
+          {renderAnswer(field)}
+        </div>
+      </div>)}
+    </div>
+  </section>;
+}
+
 function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string }) {
   const { campaigns, teams, validAcquisitions, setAmbassadorTeamName, setTeamIncentiveStatus } = useAmbassadorState();
   const campaign = campaigns.find(item => item.id === campaignId);
@@ -313,8 +392,14 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
   return <div className="space-y-6">
     <Link to={`/admin/ambassadors/${campaignId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-text-brand"><ArrowLeft size={16} />返回活动详情</Link>
     <section className="rounded-container border border-border-subtle bg-surface p-6"><p className="text-xs text-text-tertiary">团队详情 · {campaign.name}</p><h1 className="mt-2 text-2xl font-semibold">{resolvedTeamName}</h1><div className="mt-4 flex flex-wrap gap-2"><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{teamLabel[team.status]}</StatusTag><span className="rounded-control bg-surface-subtle px-3 py-1.5 text-xs">{schools[team.schoolId] ?? team.schoolId}</span><span className="rounded-control bg-surface-subtle px-3 py-1.5 text-xs">{ambassadorTeamMemberCount(team)} 人</span></div><div className="mt-5 rounded-control bg-surface-subtle p-4"><label className="text-sm font-medium">后台团队名<div className="mt-2 flex flex-col gap-2 sm:flex-row"><input value={teamNameDraft} onChange={event => setTeamNameDraft(event.target.value)} placeholder={resolvedTeamName} className="min-h-10 min-w-0 flex-1 rounded-control border border-border-subtle bg-surface px-3 text-sm" /><Button type="button" onClick={() => setAmbassadorTeamName(team.id, teamNameDraft)}>保存团队名</Button></div></label><p className="mt-2 text-xs text-text-tertiary">仅供后台识别、运营分析与后续导出使用；App 暂不展示。清空保存时会恢复稳定兜底名称。</p></div></section>
-    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">校园大使申请信息</h2><div className="mt-4 grid gap-3 md:grid-cols-3">{form.map(field => <div key={field.id} className="rounded-control bg-surface-subtle p-3"><p className="text-xs text-text-tertiary">{field.label}</p><p className="mt-2 text-sm">{ambassador?.application?.[field.id] ?? ambassador?.application?.[field.label] ?? "未填写"}</p></div>)}</div></section>
-    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员与有效新增</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {acquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div><h3 className="mt-6 text-sm font-semibold">推广明细</h3>{acquisitions.length ? <div className="mt-2 space-y-2 text-xs text-text-secondary">{acquisitions.map(item => <p key={item.id}>{item.registeredAt.slice(0, 10)} · {item.promoterAccountId} 带来新用户 {item.newAccountId}</p>)}</div> : <p className="mt-2 text-sm text-text-tertiary">暂无有效新增记录。</p>}<div className="mt-6 flex items-center gap-3"><span className="text-sm font-semibold">团队激励：{incentiveLabel[team.incentiveStatus]}</span><button type="button" onClick={() => setTeamIncentiveStatus(team.id, team.incentiveStatus === "processed" ? "unprocessed" : "processed")} className="rounded-control border border-border-subtle px-3 py-2 text-xs font-semibold">标记为{team.incentiveStatus === "processed" ? "未处理" : "已处理"}</button></div></section>
+    {ambassador && ambassador.application && <QuestionnaireAnswerView
+      ambassador={ambassador}
+      campaign={campaign}
+      teamName={resolvedTeamName}
+      schoolName={schools[team.schoolId] ?? team.schoolId}
+    />}
+    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {acquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div></section>
+    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">拉新与运营成果</h2><div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队有效新增</p><p className="mt-2 text-2xl font-semibold">{acquisitions.length}</p></div><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">校园大使贡献</p><p className="mt-2 text-2xl font-semibold">{acquisitions.filter(item => item.promoterAccountId === ambassador?.accountId).length}</p></div><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队激励状态</p><p className="mt-2 text-lg font-semibold">{incentiveLabel[team.incentiveStatus]}</p></div></div><h3 className="mt-6 text-sm font-semibold">推广明细</h3>{acquisitions.length ? <div className="mt-2 space-y-2 text-xs text-text-secondary">{acquisitions.map(item => <p key={item.id}>{item.registeredAt.slice(0, 10)} · {item.promoterAccountId} 带来新用户 {item.newAccountId}</p>)}</div> : <p className="mt-2 text-sm text-text-tertiary">暂无有效新增记录。</p>}<div className="mt-6 flex items-center gap-3"><button type="button" onClick={() => setTeamIncentiveStatus(team.id, team.incentiveStatus === "processed" ? "unprocessed" : "processed")} className="rounded-control border border-border-subtle px-3 py-2 text-xs font-semibold">标记为{team.incentiveStatus === "processed" ? "未处理" : "已处理"}</button></div></section>
   </div>;
 }
 

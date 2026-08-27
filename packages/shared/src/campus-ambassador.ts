@@ -74,7 +74,28 @@ export type AmbassadorTeamMember = {
   role: AmbassadorMemberRole;
   status: AmbassadorMemberStatus;
   joinedAt: string;
+  /**
+   * Application answers keyed by field id. May also contain metadata keys
+   * such as `termsVersion` and `__applicantName` used by older consumers.
+   */
   application?: Record<string, string>;
+  /**
+   * Timestamp when the ambassador application was submitted. For partners
+   * this field is absent because they do not fill out the application form.
+   * Falls back to `joinedAt` for seed data written before this field existed.
+   */
+  applicationSubmittedAt?: string;
+  /**
+   * Snapshot of the application form schema at the time of submission.
+   * Ensures historical answers remain correctly readable even after the
+   * campaign's application form is later edited.
+   *
+   * When present, the answer view should use this snapshot rather than the
+   * campaign's current `applicationForm` to avoid field misalignment.
+   * When absent (legacy data), fall back to the campaign form and mark
+   * potential drift in the UI if field count mismatches.
+   */
+  applicationFormSnapshot?: AmbassadorApplicationField[];
   promotionCodeId?: string;
 };
 
@@ -153,6 +174,35 @@ export function ambassadorApplicationForm(campaign: Pick<AmbassadorCampaign, "ap
   return campaign.applicationFields.map((label, index) => ({ id: `legacy-${index}`, label, type: "textarea" as const, required: true }));
 }
 
+/**
+ * Resolve the form schema to use when displaying an ambassador's application answers.
+ *
+ * Priority:
+ * 1. `member.applicationFormSnapshot` — the schema at submission time, most accurate
+ * 2. `campaign.applicationForm` — current campaign form (may have drifted)
+ * 3. Legacy `campaign.applicationFields` — fallback for very old data
+ *
+ * Returns both the fields and a flag indicating whether we're using a snapshot
+ * vs. the live campaign form, so the UI can indicate potential drift.
+ */
+export function resolveAmbassadorAnswerForm(
+  member: Pick<AmbassadorTeamMember, "applicationFormSnapshot" | "application">,
+  campaign: Pick<AmbassadorCampaign, "applicationForm" | "applicationFields">,
+): { fields: AmbassadorApplicationField[]; fromSnapshot: boolean } {
+  if (member.applicationFormSnapshot?.length) {
+    return { fields: member.applicationFormSnapshot, fromSnapshot: true };
+  }
+  return { fields: ambassadorApplicationForm(campaign), fromSnapshot: false };
+}
+
+/**
+ * Get the effective submission timestamp for an ambassador application.
+ * Uses `applicationSubmittedAt` when available, falls back to `joinedAt`.
+ */
+export function ambassadorApplicationSubmittedAt(member: Pick<AmbassadorTeamMember, "applicationSubmittedAt" | "joinedAt">): string {
+  return member.applicationSubmittedAt ?? member.joinedAt;
+}
+
 function ambassadorTeamShortSerial(teamId: string) {
   let hash = 2166136261;
   for (let index = 0; index < teamId.length; index += 1) {
@@ -212,7 +262,7 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
   teams: [{
     id: "amb-demo-team", campaignId: "campus-ambassador-demo-active", schoolId: "org-huanan-commerce-college", coreAmbassadorAccountId: "account-demo-ambassador", teamName: "华南商贸 · 校园大使 01", status: "lit", recruitmentCodeId: "amb-demo-team-code", incentiveStatus: "unprocessed",
     members: [
-      { id: "amb-demo-ambassador", teamId: "amb-demo-team", accountId: "account-demo-ambassador", role: "ambassador", status: "active", joinedAt: "2026-08-03T09:00:00+08:00", promotionCodeId: "amb-demo-promo-1", application: { intro: "负责校园创新社团传播", channel: "校创业协会公众号", motivation: "连接更多同学参与实践", termsVersion: "campus-ambassador-terms-v1" } },
+      { id: "amb-demo-ambassador", teamId: "amb-demo-team", accountId: "account-demo-ambassador", role: "ambassador", status: "active", joinedAt: "2026-08-03T09:00:00+08:00", applicationSubmittedAt: "2026-08-03T09:00:00+08:00", promotionCodeId: "amb-demo-promo-1", application: { intro: "负责校园创新社团传播，擅长公众号运营和线下活动组织。", channel: "校创业协会公众号、班级群、社团朋友圈", motivation: "希望通过实践积累运营经验，连接更多同学参与创新创业活动，同时提升自己的组织能力。", termsVersion: "campus-ambassador-terms-v1", __applicantName: "林大使" }, applicationFormSnapshot: defaultAmbassadorApplicationForm.map(field => ({ ...field })) },
       { id: "amb-demo-partner-1", teamId: "amb-demo-team", accountId: "account-demo-partner-1", role: "partner", status: "active", joinedAt: "2026-08-04T09:00:00+08:00", promotionCodeId: "amb-demo-promo-2" },
       { id: "amb-demo-partner-2", teamId: "amb-demo-team", accountId: "account-demo-partner-2", role: "partner", status: "active", joinedAt: "2026-08-05T09:00:00+08:00", promotionCodeId: "amb-demo-promo-3" },
       { id: "amb-demo-partner-3", teamId: "amb-demo-team", accountId: "account-demo-partner-3", role: "partner", status: "active", joinedAt: "2026-08-06T09:00:00+08:00", promotionCodeId: "amb-demo-promo-4" },

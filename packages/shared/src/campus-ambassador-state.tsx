@@ -173,7 +173,9 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
         code: `TEAM-${input.accountId}-${createdTeamId}`,
         active: true,
       };
-      const members = [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: new Date().toISOString(), application: input.application }];
+      const submittedAt = new Date().toISOString();
+      const formSnapshot = campaign.applicationForm?.map(field => ({ ...field, options: field.options ? [...field.options] : undefined }));
+      const members = [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: submittedAt, applicationSubmittedAt: submittedAt, application: input.application, applicationFormSnapshot: formSnapshot }];
       const team = {
         id: createdTeamId,
         campaignId: input.campaignId,
