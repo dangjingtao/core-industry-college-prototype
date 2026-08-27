@@ -7,8 +7,12 @@ import {
   ambassadorCampaignStatus,
   ambassadorTeamMemberCount,
   ambassadorTeamPartnerCount,
+  deriveAmbassadorWeeklyAcquisitionMetrics,
   isAmbassadorCodeActive,
   readableAmbassadorTerms,
+  type AmbassadorTeam,
+  type AmbassadorTeamMember,
+  type AmbassadorValidAcquisition,
   useAmbassadorState,
 } from "@core/shared";
 import { Button, Card, Dialog, PageHeader, PublicShell, SecondaryButton, StatusTag } from "../../components/ui";
@@ -19,6 +23,10 @@ const SCHOOL_LABELS: Record<string, string> = {
   "org-huanan-commerce-college": "华南商贸职业学院",
   "org-gdtc": "广东技术职业学院",
 };
+
+const BUSINESS_TIME_ZONE = "Asia/Shanghai";
+const businessDateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" });
+const businessTimeFormatter = new Intl.DateTimeFormat("zh-CN", { timeZone: BUSINESS_TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false });
 
 function schoolLabel(schoolId: string) {
   return SCHOOL_LABELS[schoolId] ?? "参与学校";
@@ -36,6 +44,23 @@ function qrPayload(path: string) {
 
 function svgDataUrl(svg: string) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function ambassadorMemberDisplayName(team: AmbassadorTeam, member: AmbassadorTeamMember) {
+  if (member.role === "ambassador") return member.application?.__applicantName?.trim() || "校园大使";
+  const partners = team.members.filter(item => item.status === "active" && item.role === "partner");
+  const ordinal = partners.findIndex(item => item.id === member.id) + 1;
+  return `校园推荐官 ${Math.max(1, ordinal)}`;
+}
+
+function recentAcquisitionTime(registeredAt: string) {
+  const timestamp = new Date(registeredAt);
+  if (Number.isNaN(timestamp.getTime())) return "时间未知";
+  const today = businessDateFormatter.format(new Date());
+  const yesterday = businessDateFormatter.format(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const date = businessDateFormatter.format(timestamp);
+  const dayLabel = date === today ? "今天" : date === yesterday ? "昨天" : date.replace(/-/g, "/");
+  return `${dayLabel} ${businessTimeFormatter.format(timestamp)}`;
 }
 
 function TeamRecruitmentQr({ code, teamId }: { code: string; teamId: string }) {
@@ -233,15 +258,29 @@ export function CampusAmbassadorTeamPage() {
   const promotionActive = Boolean(promotionCode && isAmbassadorCodeActive(promotionCode, campaign));
   const statusTone = team.status === "lit" ? "success" : ended ? "neutral" : "warning";
   const statusText = team.status === "lit" ? "已点亮" : ended ? "已结束" : "待点亮";
+  const activeMembers = team.members.filter(item => item.status === "active");
+  const teamAcquisitions = state.validAcquisitions.filter(item => item.teamId === team.id);
+  const weeklyReference = ended ? new Date(campaign.endsAt) : new Date();
+  const weekly = deriveAmbassadorWeeklyAcquisitionMetrics(teamAcquisitions, weeklyReference);
+  const recentAcquisitions = [...teamAcquisitions].sort((a, b) => Date.parse(b.registeredAt) - Date.parse(a.registeredAt)).slice(0, 5);
+  const trendText = weekly.delta > 0 ? `较上周 +${weekly.delta}` : weekly.delta < 0 ? `较上周 ${weekly.delta}` : "与上周持平";
+  const memberContribution = (target: AmbassadorTeamMember) => weekly.currentAcquisitions.filter(item => item.promoterAccountId === target.accountId).length;
+  const promoterName = (acquisition: AmbassadorValidAcquisition) => {
+    const promoter = activeMembers.find(item => item.accountId === acquisition.promoterAccountId);
+    return promoter ? ambassadorMemberDisplayName(team, promoter) : "团队成员";
+  };
 
   return <PublicShell showNavigation={false}><PageHeader title="我的推广团队" backTo={`/me?accountId=${encodeURIComponent(accountId)}`} /><div className="space-y-4 px-4 py-5">
     <Card className={team.status === "lit" ? "border border-primary bg-primary-container" : ended ? "border border-border-subtle bg-surface-subtle" : "border border-warning-border bg-warning-bg"}><div className="flex items-start justify-between gap-3"><div><StatusTag tone={statusTone}>{statusText}</StatusTag><h1 className="mt-3 text-lg font-semibold text-text-primary">核心大使计划 · 推广团队</h1><p className="mt-1 text-sm text-text-secondary">{campaign.name}</p></div><Users className="text-text-brand" /></div></Card>
+    {isAmbassador && (team.status === "lit" || ended) && <Card data-testid="ambassador-operations-overview" className="border border-primary/20 bg-primary-container"><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-text-primary">{ended ? "往期经营概览" : "本周经营概览"}</h2><p className="mt-1 text-xs text-text-secondary">{ended ? "活动最后一周" : "自然周"} · {weekly.currentWeek.label}</p></div><StatusTag tone={weekly.trend === "up" ? "success" : weekly.trend === "down" ? "warning" : "neutral"}>{trendText}</StatusTag></div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-control bg-surface p-3"><p className="text-xs text-text-tertiary">本周有效新增</p><strong data-testid="t053-weekly-count" className="mt-1 block text-2xl text-text-primary">{weekly.currentCount}</strong></div><div className="rounded-control bg-surface p-3"><p className="text-xs text-text-tertiary">累计有效新增</p><strong data-testid="t053-total-count" className="mt-1 block text-2xl text-text-primary">{teamAcquisitions.length}</strong></div><div className="rounded-control bg-surface p-3"><p className="text-xs text-text-tertiary">上周有效新增</p><strong data-testid="t053-previous-count" className="mt-1 block text-2xl text-text-primary">{weekly.previousCount}</strong></div><div className="rounded-control bg-surface p-3"><p className="text-xs text-text-tertiary">团队人数</p><strong data-testid="t053-member-count" className="mt-1 block text-2xl text-text-primary">{memberCount}</strong></div></div></Card>}
     <Card><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">团队人数</span><strong className="text-text-primary">{memberCount} 人</strong></div>{!ended && <><div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, memberCount / 4 * 100)}%` }} /></div><p className="mt-3 text-xs leading-5 text-text-secondary">点亮条件：1 位校园大使 + 至少 3 位校园推荐官。点亮后仍可继续加入。</p>{remaining > 0 && <p className="mt-2 rounded-control bg-warning-bg px-3 py-2 text-sm text-warning-text">还需 {remaining} 位校园推荐官</p>}</>}</Card>
     {ended && <Card data-testid="ambassador-history-state" className="border border-border-subtle bg-surface-subtle"><h2 className="font-semibold text-text-primary">本期活动已结束</h2><p className="mt-2 text-sm leading-5 text-text-secondary">团队关系与既有推广成果作为往期记录保留；团队招募码和专属推广码均已停止生效。</p></Card>}
     {!ended && isAmbassador && recruitment && recruitmentActive && <TeamRecruitmentQr code={recruitment.code} teamId={team.id} />}
     {team.status === "forming" && <Card className="bg-warning-bg"><h2 className="font-semibold text-warning-text">团队点亮后开放专属推广码</h2><p className="mt-1 text-xs text-text-secondary">当前阶段继续邀请校园推荐官，不会提前产生推广归因。</p></Card>}
     {team.status === "lit" && promotionCode && promotionActive && <PersonalPromotionQr code={promotionCode.code} />}
-    {isAmbassador && <Card><div className="flex items-center justify-between"><h2 className="font-semibold text-text-primary">{ended ? "往期成员" : "当前成员"}</h2><span className="text-sm text-text-secondary">{memberCount} 人</span></div><div className="mt-3 divide-y divide-border-subtle">{team.members.filter(item => item.status === "active").map((item, index) => <div key={item.id} data-testid="ambassador-member" className="flex min-h-14 items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{item.role === "ambassador" ? (item.application?.__applicantName || "校园大使") : `校园推荐官 ${index}`}</p><p className="mt-0.5 text-xs text-text-tertiary">{item.role === "ambassador" ? "校园大使" : "校园推荐官"}</p></div>{item.role === "ambassador" && <StatusTag tone="info">负责人</StatusTag>}</div>)}</div></Card>}
+    {isAmbassador && (team.status === "lit" || ended) && <Card data-testid="ambassador-member-contributions"><div className="flex items-center justify-between"><div><h2 className="font-semibold text-text-primary">成员本周贡献</h2><p className="mt-1 text-xs text-text-secondary">按有效新增注册时间实时派生，不单独保存周统计。</p></div><span className="text-xs text-text-tertiary">{weekly.currentWeek.startDate.slice(5)} — {weekly.currentWeek.endDate.slice(5)}</span></div><div className="mt-3 divide-y divide-border-subtle">{activeMembers.map(item => <div key={item.id} data-testid="t053-member-contribution" className="flex min-h-14 items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{ambassadorMemberDisplayName(team, item)}</p><p className="mt-0.5 text-xs text-text-tertiary">{item.role === "ambassador" ? "校园大使" : "校园推荐官"}</p></div><strong className="text-sm text-text-primary">{memberContribution(item)} 个</strong></div>)}</div></Card>}
+    {isAmbassador && (team.status === "lit" || ended) && <Card data-testid="ambassador-recent-acquisitions"><div><h2 className="font-semibold text-text-primary">最近拉新</h2><p className="mt-1 text-xs text-text-secondary">只展示已形成的有效新增归因事实。</p></div>{recentAcquisitions.length === 0 ? <p className="mt-4 rounded-control bg-surface-subtle px-3 py-4 text-center text-sm text-text-secondary">暂无有效新增</p> : <div className="mt-3 divide-y divide-border-subtle">{recentAcquisitions.map(item => <div key={item.id} data-testid="t053-recent-acquisition" className="py-3"><p className="text-sm font-medium text-text-primary">{recentAcquisitionTime(item.registeredAt)} · {promoterName(item)} · +1 有效新增</p></div>)}</div>}</Card>}
+    {isAmbassador && <Card><div className="flex items-center justify-between"><h2 className="font-semibold text-text-primary">{ended ? "往期成员" : "当前成员"}</h2><span className="text-sm text-text-secondary">{memberCount} 人</span></div><div className="mt-3 divide-y divide-border-subtle">{activeMembers.map(item => <div key={item.id} data-testid="ambassador-member" className="flex min-h-14 items-center justify-between gap-3"><div><p className="text-sm font-medium text-text-primary">{ambassadorMemberDisplayName(team, item)}</p><p className="mt-0.5 text-xs text-text-tertiary">{item.role === "ambassador" ? "校园大使" : "校园推荐官"}</p></div>{item.role === "ambassador" && <StatusTag tone="info">负责人</StatusTag>}</div>)}</div></Card>}
     {isAmbassador && (team.status === "lit" || ended) && <Button className="w-full" onClick={() => navigate(`/ambassadors/team/${encodeURIComponent(team.id)}/results?accountId=${encodeURIComponent(accountId)}`)}>查看团队推广成果</Button>}
     {!isAmbassador && <Card><div className="flex items-start gap-2"><ShieldCheck size={18} className="mt-0.5 text-text-brand" /><p className="text-sm leading-5 text-text-secondary">校园推荐官只查看团队状态{ended ? "和往期参与记录" : "和自己的专属推广码"}，不展示个人、成员或团队推广成果数字。</p></div></Card>}
   </div></PublicShell>;
