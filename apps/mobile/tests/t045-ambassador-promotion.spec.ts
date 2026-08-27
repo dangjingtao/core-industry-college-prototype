@@ -69,7 +69,7 @@ test("T045 attributes one new registration and rejects duplicate or existing use
   const promoterCode = await personalCode(page, "partner-1");
 
   await navigateInApp(page, `/ambassadors/promote/${encodeURIComponent(promoterCode)}`);
-  await expect(page.getByRole("heading", { name: "核心大使专属邀请" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "校园大使专属邀请" })).toBeVisible();
   await page.getByLabel("模拟注册账号").fill("new-user-001");
   await page.getByRole("button", { name: "模拟新用户注册成功" }).click();
   await expect(page.getByTestId("promotion-message")).toHaveText("注册成功，已形成 1 个有效新增");
@@ -99,7 +99,7 @@ test("T045 keeps promotion results hidden from partners", async ({ page }) => {
   await expect(page.getByText(/有效新增/)).toHaveCount(0);
 
   await navigateInApp(page, `/ambassadors/team/${encodeURIComponent(teamId)}/results?accountId=partner-1`);
-  await expect(page.getByText("仅核心大使可查看团队推广成果", { exact: true })).toBeVisible();
+  await expect(page.getByText("仅校园大使可查看团队推广成果", { exact: true })).toBeVisible();
   await expect(page.getByTestId("result-total")).toHaveCount(0);
   await expect(page.getByTestId("member-result")).toHaveCount(0);
   await expect(page.getByText(/个有效新增/)).toHaveCount(0);
