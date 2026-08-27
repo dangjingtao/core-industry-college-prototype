@@ -2,172 +2,170 @@
 
 ## 项目定位
 
-本仓库是“产业核心学院”的双端可交互原型项目，目标范围包括手机端和电脑端。
+这是由 Com Design Prototype Seed 生成的双端可交互产品原型。目标是快速验证产品结构、状态、动线和业务规则，而不是直接建设生产级系统。
 
-产品不是单一“三创赛 App”，而是面向创新创业学生的长期平台；学生侧第一层主轴是：
+作者：Tomz <dangjingtao@gmail.com> & Mira <mira@tomz.io>
 
-1. 参赛；
-2. 就业 / 实习。
+## 开工前必须读
 
-## 开工前必须阅读
+按顺序读取：
 
-任何涉及产品结构、手机端迁移、功能补齐或状态模型的线程，先读：
+1. `prototype.config.json`
+2. `VERSION`
+3. `docs/product/00-product-brief.md`
+4. `docs/workbench/00-work-ledger.md`
+5. `docs/governance/contributors.md`
+6. `docs/ai/skills.md`
+7. 当前任务卡（如存在）
+8. `docs/guide/ai-collaboration-manual.md`
 
-1. `docs/README.md`
-2. `docs/product/00-product-master-context.md`
-3. `docs/product/01-legacy-mockplus-audit.md`
-4. `docs/product/02-open-decisions-and-backlog.md`
-5. 与任务直接相关的 migration / reference 文档
+不要只看页面代码自行推导产品模型。
 
-不要只看当前页面代码就自行推导产品模型。
-
-## 当前事实边界
-
-- `dev` 是日常整合与验证分支；`prod` 是已验收版本分支。
-- 本仓库已经有双端 npm workspaces 脚手架、根级 `package-lock.json` 和 Cloudflare Pages 预览配置。
-- 手机端来源项目是 `dangjingtao/com-design` 的 `core-industry-college-refactor` 分支，旧可交互原型目录为 `prototype/core-industry-college/`。
-- 手机端可交互原型已迁入 `apps/mobile`，迁移基线为 `31c7badbf3a890ad07d3fe8b1bbcefda92f50f47`；本仓库已重新通过 route audit、build 和 Chromium 7/7，但旧功能完整性仍以 legacy audit 与 backlog 为准。
-- PC 端三创赛报名系统已迁入 `apps/pc`，迁移基线为 `1bf3a38bcbd2c822d3248916ddbf8aeea903c547`；这不代表电脑端其他业务已经迁移。
-- Google Drive 原始 Mockplus ZIP 是旧功能、字段、按钮和页面是否真实存在的历史真相源。
-- PC 端与手机端可以共享业务语义，但不能为了复用而强行共用不适合的交互布局。
-
-## 产品不可破坏原则
-
-1. App 账号长期存在；赛事身份按赛事生命周期存在。
-2. 一个账号可关联多个赛事身份。
-3. 无赛事身份用户仍可正常使用公共平台。
-4. 当前赛事上下文不等于账号只有一场赛事。
-5. 三创赛是首个强入口，不得把平台写死成三创赛专属。
-6. 赛事结束后，经历、成绩、证书、课程成果等长期资产继续存在。
-7. 创赛工坊属于具体赛事上下文，不是全局 AI 工具箱。
-8. 企业首先是赛事 / 权益 / 课程 / 活动 / 机会的资源与品牌主体，不只是招聘公司。
-9. 学校老师属于 Web / 运营后台角色，不塞进学生 App。
-10. 不构造对学生不透明的 AI 人才评分。
-11. 允许合并页面，但旧功能不能无理由缩水。
-12. 路由覆盖不是功能完整性的充分证明；涉及旧功能时必须查 `legacy Mockplus audit`。
-
-## 共享状态约束
-
-手机端迁移时优先保持旧重构已经验证过的状态边界。
-
-### 长期账号 / Public Platform
-
-唯一维护：
-
-- session；
-- identities[]；
-- applications；
-- followedCompanies；
-- 公共列表视图状态。
-
-### Competition / Workshop Runtime
-
-唯一维护：
-
-- competition lifecycle；
-- workspace permission；
-- taskRuns；
-- workshop results；
-- 赛事局部材料和 runtime。
-
-不得再持有第二份 session / identities[]。
-
-### Long-term Assets
-
-维护：
-
-- course learning records；
-- benefits long-term records；
-- certificates / results；
-- profile；
-- resume presentation。
-
-通过稳定 ID 引用 competition / project / opportunity / company / result，不复制对象形成第二真相源。
-
-## 明确禁止自行决定的业务
-
-### D03 任务体系（聚合层已确认）
-
-平台任务、赛事任务、企业任务、权益任务、创赛工坊 Task Runtime 与学力值奖励之间的关系未定义。
-
-2026-08-17 已确认：
-
-- `/tasks` 可以作为派生聚合页，读取现有赛事身份、Workshop Runtime、课程记录、权益记录和投递记录；
-- 聚合页只归一展示状态和跳转，不持有第二份 task 真相源；
-- 创赛工坊任务必须保留 `competitionId` 并回到赛事上下文执行。
-
-仍然禁止：
-
-- 不把旧日常/核心/企业任务直接抄回；
-- 不把工坊 task 改造成全局对象；
-- 不自行定义统一奖励或学力值关系。
-
-### D08 主体管理
-
-旧原型存在学校/企业主体、标准代码、地区和扫码绑定，但真实业务关系未确认。
-
-在产品确认前 `/me/subjects` 继续 blocked。
-
-### 学力值经济模型
-
-旧 Mockplus 的学力值是有余额、收入/消耗、任务奖励和课程兑换的积分；旧重构后来把它改成成长分数。
-
-这属于业务模型冲突，施工线程不得自行选择恢复哪一种。
+如果 `docs/ai/skills.md` 状态为 `PENDING`，在首次实质性施工前执行“AI Skill Interview”，通过与用户的交互式问答确认本项目需要的 AI 技能、项目身份、GitHub 仓库和 contributors，再把结果写回该文件。不要擅自替用户预设技能组合或 GitHub 身份。
 
 ## 工作原则
 
-1. 修改前先检查目标端、当前 branch HEAD、相关文档和现有实现。
-2. 需求未说明手机端还是 PC 端，且从上下文无法确定时再询问；不要把两端修改混在一起。
-3. 涉及旧手机端能力时，先查 `docs/reference/legacy-page-map.tsv` 和 `docs/product/01-legacy-mockplus-audit.md`。
-4. 发现“页面已有但功能缺失”时，先记录功能差异，不以“路由已覆盖”结束审查。
-5. 不修改 Com Design Core 来迁就业务页面；产品侧只做必要 Pattern / consumer 适配。
-6. 不为原型引入不必要的后端、鉴权或大型状态框架。
-7. 中保真优先结构、层级、状态、动线、可维护性，不为装饰牺牲产品清晰度。
-8. 关键按钮不能是假按钮；外部系统尚未接通时可模拟 handoff，但要保留真实产品出口。
-9. 无法真实 build / browser verify 时必须明确说明，不伪造通过。
+1. **事实 / 推断 / 判断分离**：产品事实、代码观察、推断和建议不要混写成同一种确定性。
+2. **先理解再施工**：涉及产品规则、跨端逻辑或既有实现时，先读足够上下文；信息足够时不要重复提问。
+3. **产品变化先留痕**：新增或改变产品事实时，先更新 Product Brief / 决策记录 / 任务卡中的至少一个真相源，再施工。
+4. **PC / Mobile 共享语义，不强行共享布局**：可共享业务语义、类型、Token 与无端侧偏好的能力，不为了复用制造端侧妥协。
+5. **关键按钮不能是假按钮**：后端未接通时使用可追踪的 mock / handoff，并明确当前验证边界。
+6. **关键状态必须可验证**：ready / loading / empty / error / permission 等状态应能通过 Prototype Runtime 或明确 mock 触发。
+7. **修改前检查分支与并行工作**：避免覆盖他人或其他 Agent 的未合并工作。
+8. **验证结果不得伪造**：无法真实 typecheck / build / browser verify 时明确说明。
+9. **CI 通过不等于产品验收通过**：构建、类型检查、自动测试只能作为证据，不能单独把任务标记为 `PASS`。
+10. **最小必要改动**：原型阶段不主动引入生产级后端、复杂状态框架、鉴权体系或与当前验证目标无关的基础设施。
+11. **身份不得猜测**：Git name/email 不等于 GitHub account；只有可验证的 GitHub login 才能作为账号归属。
 
-## 手机端迁移验收
+## Design System
 
-旧来源仓库曾通过 route audit、build 和 Chromium 7/7，但新仓库必须重新验证。
+- 设计底座：Com Design。
+- Token 从 `@prototype/design-system/tokens.css` 消费。
+- Icon 从 `@prototype/icons` 使用语义名称，不在业务代码中散落自定义 SVG。
+- mobile-first、compact-first、flat-first；普通 Card 不默认使用重阴影。
+- 页面 edge inset 默认 16px；触控目标保持移动端可点击尺寸。
+- 如果实际产品有主题、品牌或端侧特殊约束，先记录在 Product Brief / AI Skill Profile，再覆盖默认值。
 
-迁移完成至少要求：
+## Prototype Runtime
 
-- `apps/mobile` 不再是占位页；
-- 旧 66 semantic route 等价承接；
-- explicit 404；
-- clean install / typecheck / build；
-- 五条母动线浏览器回归；
-- pending / rejected / ended / revoked / permissionDenied 等关键状态；
-- `docs/product/01-legacy-mockplus-audit.md` 中 P0/P1 缺口有明确状态；
-- README、迁移文档、评审证据同步更新。
+所有关键页面应考虑并尽量可触发：
 
-当前代码迁移、route audit、构建和五条母动线已完成；legacy audit 中仍未关闭的 P0/P1 产品差异不得因代码迁入而自动标记完成。
+- ready
+- loading
+- empty
+- error
+- permission
 
-## Git 约定
+开发阶段允许用 URL query `?view=` 或 PrototypePanel 切换状态。
 
-- `dev`：日常整合与验证。
-- `prod`：经过验收的版本。
-- 不把未验证的迁移直接标为 prod-ready。
-- 多线程施工时先看 branch HEAD，避免以旧 commit 覆盖别人已合入的修改。
-- 文档和代码如果并行修改同一路径，优先解决冲突后再提交，不强推覆盖。
+## Git / Repository / Contributors / 版本控制
 
-## 技术与目录约定
+详细规则见：
 
-- 使用 npm workspaces。
-- PC：`apps/pc`。
-- 手机：`apps/mobile`。
-- 跨端共享：`packages/shared`，只放真正无端侧偏好的类型、常量和能力。
-- React + TypeScript + Vite + React Router + Tailwind CSS。
-- 图标统一使用 `lucide-react`；优先直接导入具体图标。
-- 两端保持独立构建产物，支持分别部署 Cloudflare Pages。
-- 新增客户端路由必须保留 SPA fallback，并验证深层刷新不 404。
+- `docs/governance/version-control.md`
+- `docs/governance/contributors.md`
 
-## 文档维护
+### 业务项目长期分支
 
-- 新产品决策：更新 `docs/product/`。
-- 新旧原型功能差异：更新 `01-legacy-mockplus-audit.md` 与 backlog。
-- 迁移来源 / SHA / 验证：更新 `docs/migrations/mobile-from-com-design.md`。
-- build / E2E / CI 证据：更新 `docs/reference/history-and-review-evidence.md`。
-- 设计系统来源变化：更新 `docs/reference/com-design-baseline.md`。
+只有两条：
 
-历史结论若被新决策覆盖，标记“已被后续决策覆盖”，不要无痕改写历史。
+- `dev`：日常整合、持续验证、预览部署
+- `prod`：经过明确验收后用于正式预览 / 发布
+
+**生成后的业务项目不使用 `main` 作为工作、集成或发布分支。**
+
+短生命周期 `task/*` / `fix/*` 分支可以存在，但最终合回 `dev`；正式发布从 `prod` 产生。
+
+### GitHub repository
+
+`prototype.config.json.repository.url` 可以初始为空。
+
+如果为空且项目需要 GitHub，AI 应在 Skill Interview 中询问用户；用户可以直接在对话中粘贴 repository URL。
+
+拿到 URL 后：
+
+1. 校验 URL 指向正确仓库。
+2. 写入 `prototype.config.json.repository.url`。
+3. 只有用户已授权 Git 写操作时，才设置或更新 `origin`。
+4. 不因为 GitHub 默认分支习惯而额外引入 `main` 产品工作流。
+
+### Contributor identity
+
+`prototype.config.json.contributors` 是项目身份合同。
+
+- human contributor 的 GitHub 归属优先使用实际 GitHub API / Connector 返回的 login 验证。
+- 只有与 `contributors[].github.login` 匹配且 verified 的账号，才写成 `Name (@login)`。
+- 只能拿到 Git name/email 时，标记 `unverified Git identity`。
+- bot / automation 不得归给 human contributor。
+- Mira 当前是 AI collaborator，没有 GitHub account；不得伪造 Mira GitHub identity。
+
+### 版本规则
+
+- 使用 SemVer：`MAJOR.MINOR.PATCH`
+- `VERSION` 是项目版本的人类可读基线
+- `package.json.version` 必须与 `VERSION` 保持一致
+- 发布版本使用 Git tag：`vX.Y.Z`
+- 任何版本变化都要更新 `CHANGELOG.md`
+- 不直接在 `prod` 上做日常施工
+
+建议 commit 前缀：`feat:` / `fix:` / `docs:` / `refactor:` / `test:` / `chore:`。
+
+## 台账规则
+
+工作入口：`docs/workbench/00-work-ledger.md`。
+
+- 可执行工作使用稳定编号，如 `T001`；编号一旦创建不复用、不因重排而改变。
+- 简单任务可只在总台账记录；涉及跨端、多步骤、产品决策、风险或验收标准时，必须在 `docs/workbench/tasks/` 建独立任务卡。
+- 默认状态：`TODO → DOING → REVIEW → PASS`；任何执行态都可进入 `BLOCKED`；取消使用 `CANCELLED`，不删除历史。
+- AI 可以把任务推进到 `REVIEW`，但除非用户明确授权自动验收，否则不得自行把任务从 `REVIEW` 改成 `PASS`。
+- 每次状态变化至少留下一个可追踪证据：commit / PR / 页面路径 / 截图说明 / CI run / 明确评审结论之一。
+- 需求变化不得覆盖旧结论；保留变更记录并指出替代关系。
+
+## Daily Report Skill
+
+规则见 `docs/ai/skills/daily-report.md`。
+
+当用户要求“日报 / 今日项目总结 / 今日实际改动”时：
+
+1. 读取当天 `dev` commit；如 `prod` 当天有发布，也读取 `prod`。
+2. 读取 repository、contributors、总台账与当天涉及的任务卡。
+3. 对账 commit ↔ task card ↔ contributor，不把任务卡文字本身当完成证据。
+4. 优先用实际 GitHub login 归属改动；无法验证时标记 `unverified Git identity`。
+5. 把没有任务卡归属的 commit 标为“未归档改动”。
+6. 把任务卡声称完成但缺乏证据的项目标为“状态待核验”。
+7. 输出或更新 `docs/reports/daily/YYYY-MM-DD.md`。
+8. 未明确授权时，只生成日报，不自动改 PASS、不升级版本、不部署、不 commit / push。
+
+## Daily Report Review Skill
+
+规则见 `docs/ai/skills/daily-report-review.md`。
+
+当用户要求“查收日报 / 审日报 / 看日报有没有漏”时：
+
+1. 读取当天日报。
+2. 回查实际 GitHub commits / PR / CI、contributors、台账和任务卡。
+3. 检查完整性、真实性、台账一致性、Contributor 归属和发布状态。
+4. 只给出 `ACCEPTED` / `ACCEPTED_WITH_NOTES` / `NEEDS_CORRECTION` 三种结论。
+5. 默认在对话里给负责人查收摘要；没有明确授权时不静默修改原日报。
+6. 需要落档时，优先把 Review 结果追加到同一天原日报，不创建第二套日报文件。
+
+## AI Skill Interview
+
+当 `docs/ai/skills.md` 为 `PENDING` 时：
+
+1. 先告诉用户需要为当前项目确认 AI 协作技能。
+2. 采用自然的交互式问答，不一次丢出长表单；每轮优先确认 1–2 个关键问题。
+3. 首先确认 project name / title 是否正确。
+4. 如果使用 GitHub，允许用户直接粘贴 repository URL；没有仓库也不阻塞初始化。
+5. 确认 human contributors 与其 GitHub login/profile；实际校验后才能标记 verified。
+6. 至少确认：
+   - AI 在本项目承担哪些角色（产品 / UI / 前端 / 测试 / Review / 文档 / 发布等）
+   - 允许使用哪些工具与外部连接（GitHub、浏览器、设计工具、部署平台等）
+   - 是否允许 AI 直接改代码、提交、开 PR、更新台账、部署
+   - 是否启用 `daily-report` 和 `daily-report-review`
+   - 日报是否允许自动 commit / push，查收结果是否允许写回日报
+   - 当前产品最重要的验证目标与禁止越界事项
+   - 是否需要其他项目专属技能或领域知识
+7. 根据答案给出建议技能清单，明确区分“用户已确认”和“AI 建议”。
+8. 用户确认后把 `docs/ai/skills.md` 改为 `CONFIRMED`，记录日期、适用范围、项目身份、contributors、技能、权限和限制。
+9. 后续需求明显改变协作边界时，把状态改为 `REVIEW_REQUIRED`，重新通过问答确认，不静默扩权。

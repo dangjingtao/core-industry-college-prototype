@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, Flag, FolderCheck, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Award, Bell, BookOpen, BriefcaseBusiness, Building2, ClipboardList, Coins, FileUser, Flag, FolderCheck, Gift, Headphones, HeartHandshake, Link2, Newspaper, QrCode, RefreshCw, ShieldCheck, Sparkles, Store, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { competitionById } from "../public-platform/data";
@@ -31,6 +31,7 @@ const groups: AppGroup[] = [
       { label: "学力值", to: "/growth/score", icon: Coins, description: "学力值余额与明细" },
       { label: "徽章墙", to: "/me/badges", icon: Award, description: "长期成就与可信能力证据" },
       { label: "可信空间", to: "/assets", icon: FolderCheck, description: "经历、成绩与证书" },
+      { label: "个人成长档案", to: "/me/resume", icon: FileUser, description: "长期简历与可信经历" },
     ],
   },
   {
