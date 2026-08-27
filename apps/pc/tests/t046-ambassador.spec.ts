@@ -11,5 +11,5 @@ test("T046 ambassador operations flow", async ({ page }) => {
   await expect(qr).toBeVisible();
   await expect(qr).toHaveAttribute("data-payload", /\/ambassadors\?code=CA-DEMO-HN-2026/);
   await expect.poll(async () => qr.innerHTML()).toContain("path");
-  await expect(page.getByText("account-demo-ambassador")).toBeVisible();
+  await expect(page.getByText("华南商贸 · 校园大使 01", { exact: true })).toBeVisible();
 });
