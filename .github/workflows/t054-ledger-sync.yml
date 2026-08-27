@@ -1,0 +1,50 @@
+name: T054 Ledger Sync
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - ".github/workflows/t054-ledger-sync.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+      - name: Patch canonical work ledger
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("docs/workbench/00-work-ledger.md")
+          text = path.read_text(encoding="utf-8")
+          marker = "| T049 | 核心大使计划前后台联动、生命周期与最终验收 | 施工 / 收口 / 验收 | PASS（PR #20 已合并；dev Quality Gate 全绿） | T043、T044、T045、T046、T047、T048 |"
+          rows = """| T050 | 校园大使 V1.1 展示名与团队名模型 | 产品收口 / 施工 | PASS | T049 |
+          | T051 | PC 校园大使申请问卷详情视角 | PC 运营 / 问卷详情 / 施工 | PASS（legacy snapshot 与 focused regressions 已复验） | T050 |
+          | T052 | PC 校园大使周度团队运营与数据导出 | PC 运营分析 / 导出 / 施工 | PASS（UTC+8 自然周；指定团队 / 全部团队 CSV 已复验） | T050 |
+          | T053 | App 校园大使团队经营视角 | App 经营视角 / 施工 | PASS | T050 |
+          | T054 | 校园大使 V1.1 前后台联动与最终验收 | 联动 / 收口 / 验收 | PASS（PR #21；Quality Gate + 双端 dev 部署全绿） | T050、T051、T052、T053 |"""
+
+          if "| T054 | 校园大使 V1.1 前后台联动与最终验收" not in text:
+              if marker not in text:
+                  raise SystemExit("T049 ledger marker not found; refuse broad rewrite")
+              text = text.replace(marker, marker + "\n" + rows, 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+      - name: Commit ledger and remove one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/t054-ledger-sync.yml
+          git add docs/workbench/00-work-ledger.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "docs: sync T050-T054 canonical ledger"
+          git push origin HEAD:dev
