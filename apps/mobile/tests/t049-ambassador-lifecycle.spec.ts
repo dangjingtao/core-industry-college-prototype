@@ -120,7 +120,7 @@ test("T049 campaign-wide member rejection is readable, reversible and never incr
   await page.getByLabel("模拟注册账号").fill("other-amb");
   const submit = page.getByRole("button", { name: "模拟新用户注册成功" });
   await submit.click();
-  await expect(page.getByTestId("promotion-message")).toHaveText("该账号已参与本期核心大使团队，不计入有效新增");
+  await expect(page.getByTestId("promotion-message")).toHaveText("该账号已参与本期校园大使推广团队，不计入有效新增");
   await expect(submit).toBeEnabled();
 
   await navigateInApp(page, `/ambassadors/team/${encodeURIComponent(teamId)}/results?accountId=account-demo`);
