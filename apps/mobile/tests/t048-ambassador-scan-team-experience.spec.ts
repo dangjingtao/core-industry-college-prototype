@@ -35,7 +35,7 @@ test("T048 school QR routes directly to application and official terms are reada
 test("T048 application adds ambassador identity and My Team entry, scanner can switch prototype users", async ({ page }) => {
   await applyAsAmbassador(page);
   await navigateInApp(page, "/me");
-  await expect(page.getByTestId("core-ambassador-badge")).toHaveText("核心大使");
+  await expect(page.getByTestId("core-ambassador-badge")).toHaveText("校园大使");
   await expect(page.getByRole("link", { name: "我的团队" })).toBeVisible();
 
   await page.getByRole("button", { name: "扫一扫" }).click();
