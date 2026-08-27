@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  ambassadorApplicationForm,
   ambassadorCampaignStatus,
   ambassadorTeamDisplayName,
   canJoinAmbassadorTeam,
@@ -57,7 +58,14 @@ function cloneState(source: AmbassadorCampaignState): AmbassadorCampaignState {
     schoolRecruitmentCodes: source.schoolRecruitmentCodes.map(item => ({ ...item })),
     teamRecruitmentCodes: source.teamRecruitmentCodes.map(item => ({ ...item })),
     teams: source.teams.map(item => {
-      const team = { ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) };
+      const team = {
+        ...item,
+        members: item.members.map(member => ({
+          ...member,
+          application: member.application ? { ...member.application } : undefined,
+          applicationFormSnapshot: member.applicationFormSnapshot?.map(field => ({ ...field, options: field.options ? [...field.options] : undefined })),
+        })),
+      };
       return { ...team, teamName: ambassadorTeamDisplayName(team) };
     }),
     promotionCodes: source.promotionCodes.map(item => ({ ...item })),
@@ -174,7 +182,7 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
         active: true,
       };
       const submittedAt = new Date().toISOString();
-      const formSnapshot = campaign.applicationForm?.map(field => ({ ...field, options: field.options ? [...field.options] : undefined }));
+      const formSnapshot = ambassadorApplicationForm(campaign).map(field => ({ ...field, options: field.options ? [...field.options] : undefined }));
       const members = [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: submittedAt, applicationSubmittedAt: submittedAt, application: input.application, applicationFormSnapshot: formSnapshot }];
       const team = {
         id: createdTeamId,
