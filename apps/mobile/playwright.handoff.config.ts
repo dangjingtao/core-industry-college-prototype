@@ -2,7 +2,11 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: ["registration-handoff-cross-app.spec.ts", "t049-ambassador-bridge-cross-app.spec.ts"],
+  testMatch: [
+    "registration-handoff-cross-app.spec.ts",
+    "t049-ambassador-bridge-cross-app.spec.ts",
+    "t054-ambassador-v11-cross-app.spec.ts",
+  ],
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
