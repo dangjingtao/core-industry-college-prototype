@@ -1,11 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const storageKey = "core.ambassador.demo-state.v2";
 const campaignId = "campus-ambassador-demo-active";
 const teamId = "amb-demo-team";
 const recruitmentCode = "TEAM-DEMO-2026";
 
-async function storedTeamSnapshot(page: Parameters<typeof test>[0] extends never ? never : any) {
+async function storedTeamSnapshot(page: Page) {
   return page.evaluate(({ key, targetTeamId }) => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
