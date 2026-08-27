@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ambassadorCampaignStatus,
+  ambassadorTeamDisplayName,
   canJoinAmbassadorTeam,
   canRecruitPartner,
   campusAmbassadorSeed,
@@ -26,6 +27,7 @@ type AmbassadorStateValue = AmbassadorCampaignState & {
   applyAsCoreAmbassador: (input: { campaignId: string; schoolId: string; accountId: string; application: Record<string, string> }) => void;
   joinAmbassadorTeam: (input: { campaignId: string; recruitmentCode: string; accountId: string }) => void;
   recordPromotionRegistration: (input: { promotionCode: string; newAccountId: string; wasRegistered: boolean }) => AmbassadorPromotionRegistrationResult;
+  setAmbassadorTeamName: (teamId: string, teamName: string) => void;
   setTeamIncentiveStatus: (teamId: string, status: AmbassadorIncentiveStatus) => void;
 };
 
@@ -54,7 +56,10 @@ function cloneState(source: AmbassadorCampaignState): AmbassadorCampaignState {
     termsVersions: source.termsVersions.map(item => ({ ...item })),
     schoolRecruitmentCodes: source.schoolRecruitmentCodes.map(item => ({ ...item })),
     teamRecruitmentCodes: source.teamRecruitmentCodes.map(item => ({ ...item })),
-    teams: source.teams.map(item => ({ ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) })),
+    teams: source.teams.map(item => {
+      const team = { ...item, members: item.members.map(member => ({ ...member, application: member.application ? { ...member.application } : undefined })) };
+      return { ...team, teamName: ambassadorTeamDisplayName(team) };
+    }),
     promotionCodes: source.promotionCodes.map(item => ({ ...item })),
     validAcquisitions: source.validAcquisitions.map(item => ({ ...item })),
   };
@@ -92,7 +97,8 @@ function effectiveState(state: AmbassadorCampaignState): AmbassadorCampaignState
     ...state,
     teams: state.teams.map(team => {
       const campaign = campaignsById.get(team.campaignId);
-      return campaign ? { ...team, status: deriveAmbassadorTeamStatus(team, campaign) } : team;
+      const withName = { ...team, teamName: ambassadorTeamDisplayName(team) };
+      return campaign ? { ...withName, status: deriveAmbassadorTeamStatus(withName, campaign) } : withName;
     }),
   };
 }
@@ -167,6 +173,7 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
         code: `TEAM-${input.accountId}-${createdTeamId}`,
         active: true,
       };
+      const members = [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: new Date().toISOString(), application: input.application }];
       const team = {
         id: createdTeamId,
         campaignId: input.campaignId,
@@ -174,10 +181,11 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
         coreAmbassadorAccountId: input.accountId,
         status: "forming" as const,
         recruitmentCodeId: teamRecruitmentCode.id,
-        members: [{ id: memberId, teamId: createdTeamId, accountId: input.accountId, role: "ambassador" as const, status: "active" as const, joinedAt: new Date().toISOString(), application: input.application }],
+        members,
         incentiveStatus: "unprocessed" as const,
       };
-      return { ...current, teamRecruitmentCodes: [...current.teamRecruitmentCodes, teamRecruitmentCode], teams: [...current.teams, team] };
+      const namedTeam = { ...team, teamName: ambassadorTeamDisplayName(team) };
+      return { ...current, teamRecruitmentCodes: [...current.teamRecruitmentCodes, teamRecruitmentCode], teams: [...current.teams, namedTeam] };
     });
   }, []);
 
@@ -289,6 +297,17 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
     return "recorded";
   }, []);
 
+  const setAmbassadorTeamName = useCallback<AmbassadorStateValue["setAmbassadorTeamName"]>((teamId, teamName) => {
+    setState(current => ({
+      ...current,
+      teams: current.teams.map(team => {
+        if (team.id !== teamId) return team;
+        const nextTeam = { ...team, teamName: teamName.trim() || undefined };
+        return { ...nextTeam, teamName: ambassadorTeamDisplayName(nextTeam) };
+      }),
+    }));
+  }, []);
+
   const setTeamIncentiveStatus = useCallback((teamId: string, status: AmbassadorIncentiveStatus) => {
     setState(current => ({ ...current, teams: current.teams.map(team => team.id === teamId ? { ...team, incentiveStatus: status } : team) }));
   }, []);
@@ -305,8 +324,9 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
     applyAsCoreAmbassador,
     joinAmbassadorTeam,
     recordPromotionRegistration,
+    setAmbassadorTeamName,
     setTeamIncentiveStatus,
-  }), [visibleState, demoBridgeConnected, createAmbassadorCampaign, updateAmbassadorCampaign, createAmbassadorTermsDraft, updateAmbassadorTermsDraft, publishAmbassadorTermsVersion, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setTeamIncentiveStatus]);
+  }), [visibleState, demoBridgeConnected, createAmbassadorCampaign, updateAmbassadorCampaign, createAmbassadorTermsDraft, updateAmbassadorTermsDraft, publishAmbassadorTermsVersion, applyAsCoreAmbassador, joinAmbassadorTeam, recordPromotionRegistration, setAmbassadorTeamName, setTeamIncentiveStatus]);
 
   return <AmbassadorStateContext.Provider value={value}>{children}</AmbassadorStateContext.Provider>;
 }
