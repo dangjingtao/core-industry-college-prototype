@@ -53,6 +53,7 @@ jobs:
           tests/t048-ambassador-scan-team-experience.spec.ts
           tests/t049-ambassador-lifecycle.spec.ts
           tests/t050-ambassador-display-names.spec.ts
+          tests/t053-ambassador-team-operations.spec.ts
 
       - name: Run real Mobile-PC-Mobile handoff (soft gate)
         id: mobile-pc-handoff
