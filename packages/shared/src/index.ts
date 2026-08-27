@@ -11,4 +11,5 @@ export * from "./course-learning";
 export * from "./registration-handoff";
 export * from "./Dialog";
 export * from "./campus-ambassador";
+export * from "./campus-ambassador-week";
 export * from "./campus-ambassador-state";
