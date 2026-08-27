@@ -36,6 +36,6 @@ test("T049 PC campaign state hydrates Mobile and Mobile application returns to P
   await expect(mobile.getByRole("heading", { name: "我的推广团队" })).toBeVisible();
 
   await page.getByRole("button", { name: "T049 联动活动" }).click();
-  await expect(page.getByText("account-demo", { exact: true })).toBeVisible();
+  await expect(page.getByText(/林晓团队 · [0-9A-Z]+/)).toBeVisible();
   await expect(page.getByText("待点亮", { exact: true })).toBeVisible();
 });
