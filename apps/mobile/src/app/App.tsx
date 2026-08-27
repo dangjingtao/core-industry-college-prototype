@@ -57,7 +57,7 @@ import {
   LearningAssetsPage,
   ResultsPage,
 } from "../features/long-term-assets/AssetsPages";
-import { ResumeEducationPage, ResumePage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
+import { ResumeEducationPage, ResumePage, ResumePreviewPage, ResumeStrengthsPage } from "../features/long-term-assets/ResumePages";
 import { OnboardingProfilePage, OnboardingReadyPage, OnboardingSurveyPage, ProfilePage } from "../features/long-term-assets/StudentProfilePages";
 import { TaskCenterPage } from "../features/task-center/TaskCenterPage";
 import { AppCenterPage } from "../features/app-center/AppCenterPage";
@@ -213,6 +213,7 @@ export function App() {
               <Route path="/me/resume" element={account(<ResumePage />)} />
               <Route path="/me/resume/strengths" element={account(<ResumeStrengthsPage />)} />
               <Route path="/me/resume/education" element={account(<ResumeEducationPage />)} />
+              <Route path="/me/resume/preview" element={account(<ResumePreviewPage />)} />
               <Route path="/me/accounts" element={account(<AccountSecurityPage />)} />
               <Route path="/me/accounts/phone" element={account(<PhoneBindingPage />)} />
               <Route path="/me/accounts/platforms" element={account(<AccountsPage />)} />
