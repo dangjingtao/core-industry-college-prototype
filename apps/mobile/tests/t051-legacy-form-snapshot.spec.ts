@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const storageKey = "core.ambassador.demo-state.v2";
 const campaignId = "campus-ambassador-t051-legacy";
 const accountId = "t051-legacy-user";
 
-async function seedLegacyCampaign(page: Parameters<typeof test>[0] extends never ? never : any) {
+async function seedLegacyCampaign(page: Page) {
   await page.goto("/welcome");
   await expect.poll(async () => page.evaluate(key => Boolean(window.localStorage.getItem(key)), storageKey)).toBe(true);
 
