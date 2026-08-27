@@ -275,8 +275,22 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
     { id: "amb-demo-promo-4", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", accountId: "account-demo-partner-3", code: "PROMO-DEMO-PARTNER-3", active: true },
   ],
   validAcquisitions: [
+    // Week of 2026-08-10 ~ 2026-08-16 (W33) - 早期数据
     { id: "amb-demo-acq-1", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-1", registeredAt: "2026-08-10T12:00:00+08:00" },
     { id: "amb-demo-acq-2", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-2", registeredAt: "2026-08-11T12:00:00+08:00" },
+    { id: "amb-demo-acq-3", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-3", registeredAt: "2026-08-12T14:30:00+08:00" },
+    { id: "amb-demo-acq-4", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-3", promoterAccountId: "account-demo-partner-2", newAccountId: "account-demo-new-4", registeredAt: "2026-08-13T09:15:00+08:00" },
+    { id: "amb-demo-acq-5", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-5", registeredAt: "2026-08-15T16:45:00+08:00" },
+    // Week of 2026-08-17 ~ 2026-08-23 (W34) - 上一周
+    { id: "amb-demo-acq-6", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-6", registeredAt: "2026-08-18T10:00:00+08:00" },
+    { id: "amb-demo-acq-7", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-7", registeredAt: "2026-08-19T11:30:00+08:00" },
+    { id: "amb-demo-acq-8", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-4", promoterAccountId: "account-demo-partner-3", newAccountId: "account-demo-new-8", registeredAt: "2026-08-20T15:20:00+08:00" },
+    // Week of 2026-08-24 ~ 2026-08-30 (W35) - 当前周（假设今天在这一周内）
+    { id: "amb-demo-acq-9", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-9", registeredAt: "2026-08-25T09:00:00+08:00" },
+    { id: "amb-demo-acq-10", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-2", promoterAccountId: "account-demo-partner-1", newAccountId: "account-demo-new-10", registeredAt: "2026-08-25T14:00:00+08:00" },
+    { id: "amb-demo-acq-11", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-3", promoterAccountId: "account-demo-partner-2", newAccountId: "account-demo-new-11", registeredAt: "2026-08-26T10:30:00+08:00" },
+    { id: "amb-demo-acq-12", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-1", promoterAccountId: "account-demo-ambassador", newAccountId: "account-demo-new-12", registeredAt: "2026-08-26T16:00:00+08:00" },
+    { id: "amb-demo-acq-13", campaignId: "campus-ambassador-demo-active", teamId: "amb-demo-team", promotionCodeId: "amb-demo-promo-4", promoterAccountId: "account-demo-partner-3", newAccountId: "account-demo-new-13", registeredAt: "2026-08-27T08:30:00+08:00" },
   ],
 };
 
@@ -364,4 +378,168 @@ export function deriveAmbassadorMetrics(state: AmbassadorCampaignState, campaign
 export function recordValidAcquisition(state: AmbassadorCampaignState, acquisition: AmbassadorValidAcquisition): AmbassadorCampaignState {
   if (state.validAcquisitions.some(item => item.newAccountId === acquisition.newAccountId && item.campaignId === acquisition.campaignId)) return state;
   return { ...state, validAcquisitions: [...state.validAcquisitions, acquisition] };
+}
+
+// ---------- Week utilities ----------
+
+/**
+ * 自然周：周一为一周起始，周日结束。
+ * 返回该周周一 00:00:00 的 ISO 字符串（本地时区）。
+ */
+export function weekStartOf(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : new Date(date);
+  const day = d.getDay(); // 0=Sun, 1=Mon, ...
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString();
+}
+
+/** 该自然周周日 23:59:59.999 的 ISO 字符串。 */
+export function weekEndOf(date: Date | string): string {
+  const start = new Date(weekStartOf(date));
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end.toISOString();
+}
+
+/** 格式化自然周标签，如 "2026-08-03 ~ 2026-08-09"。 */
+/** 按本地时区格式化日期为 YYYY-MM-DD。 */
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function formatWeekLabel(weekStartIso: string): string {
+  const start = new Date(weekStartIso);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return `${formatLocalDate(start)} ~ ${formatLocalDate(end)}`;
+}
+
+/** 获取上一周的周一 ISO 字符串。 */
+export function previousWeek(weekStartIso: string): string {
+  const d = new Date(weekStartIso);
+  d.setDate(d.getDate() - 7);
+  return d.toISOString();
+}
+
+/** 获取下一周的周一 ISO 字符串。 */
+export function nextWeek(weekStartIso: string): string {
+  const d = new Date(weekStartIso);
+  d.setDate(d.getDate() + 7);
+  return d.toISOString();
+}
+
+export type WeekTrend = "up" | "down" | "flat" | "first";
+
+export interface TeamWeekMetrics {
+  teamId: string;
+  weekStart: string;
+  weekAcquisitions: number;
+  previousWeekAcquisitions: number;
+  totalAcquisitions: number;
+  trend: WeekTrend;
+  trendDelta: number;
+}
+
+export interface MemberWeekContribution {
+  accountId: string;
+  role: "ambassador" | "partner";
+  weekAcquisitions: number;
+  totalAcquisitions: number;
+}
+
+/**
+ * 按自然周聚合某个活动下所有团队的有效新增。
+ * 统计事实以 validAcquisitions.registeredAt 为准，不建立第二份真相源。
+ */
+export function deriveCampaignWeekMetrics(
+  state: AmbassadorCampaignState,
+  campaignId: string,
+  weekStartIso: string,
+): TeamWeekMetrics[] {
+  const teams = state.teams.filter(team => team.campaignId === campaignId);
+  const weekEnd = weekEndOf(weekStartIso);
+  const prevWeekStart = previousWeek(weekStartIso);
+  const prevWeekEnd = weekEndOf(prevWeekStart);
+
+  return teams.map(team => {
+    const teamAcquisitions = state.validAcquisitions.filter(item => item.teamId === team.id);
+    const weekAcq = teamAcquisitions.filter(item => {
+      const t = Date.parse(item.registeredAt);
+      return t >= Date.parse(weekStartIso) && t <= Date.parse(weekEnd);
+    }).length;
+    const prevWeekAcq = teamAcquisitions.filter(item => {
+      const t = Date.parse(item.registeredAt);
+      return t >= Date.parse(prevWeekStart) && t <= Date.parse(prevWeekEnd);
+    }).length;
+    const totalAcq = teamAcquisitions.length;
+    const trendDelta = weekAcq - prevWeekAcq;
+    let trend: WeekTrend;
+    if (prevWeekAcq === 0 && totalAcq === weekAcq && weekAcq > 0) {
+      trend = "first";
+    } else if (trendDelta > 0) {
+      trend = "up";
+    } else if (trendDelta < 0) {
+      trend = "down";
+    } else {
+      trend = "flat";
+    }
+    return {
+      teamId: team.id,
+      weekStart: weekStartIso,
+      weekAcquisitions: weekAcq,
+      previousWeekAcquisitions: prevWeekAcq,
+      totalAcquisitions: totalAcq,
+      trend,
+      trendDelta,
+    };
+  });
+}
+
+/** 某个团队在指定周内按成员拆分的贡献。 */
+export function deriveTeamWeekContributions(
+  state: AmbassadorCampaignState,
+  teamId: string,
+  weekStartIso: string,
+): MemberWeekContribution[] {
+  const team = state.teams.find(item => item.id === teamId);
+  if (!team) return [];
+  const weekEnd = weekEndOf(weekStartIso);
+  const weekAcqList = state.validAcquisitions.filter(item =>
+    item.teamId === teamId &&
+    Date.parse(item.registeredAt) >= Date.parse(weekStartIso) &&
+    Date.parse(item.registeredAt) <= Date.parse(weekEnd),
+  );
+  return team.members.map(member => {
+    const weekAcq = weekAcqList.filter(item => item.promoterAccountId === member.accountId).length;
+    const totalAcq = state.validAcquisitions.filter(item => item.teamId === teamId && item.promoterAccountId === member.accountId).length;
+    return {
+      accountId: member.accountId,
+      role: member.role,
+      weekAcquisitions: weekAcq,
+      totalAcquisitions: totalAcq,
+    };
+  });
+}
+
+/** 获取某个团队在指定周内的有效新增明细。 */
+export function getTeamWeekAcquisitions(
+  state: AmbassadorCampaignState,
+  teamId: string,
+  weekStartIso: string,
+): AmbassadorValidAcquisition[] {
+  const weekEnd = weekEndOf(weekStartIso);
+  return state.validAcquisitions
+    .filter(item =>
+      item.teamId === teamId &&
+      Date.parse(item.registeredAt) >= Date.parse(weekStartIso) &&
+      Date.parse(item.registeredAt) <= Date.parse(weekEnd),
+    )
+    .sort((a, b) => Date.parse(a.registeredAt) - Date.parse(b.registeredAt));
 }

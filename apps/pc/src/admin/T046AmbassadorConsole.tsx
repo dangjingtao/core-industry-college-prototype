@@ -1,9 +1,12 @@
 import {
   ArrowDown,
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   Plus,
@@ -20,6 +23,12 @@ import {
   ambassadorTeamDisplayName,
   ambassadorTeamMemberCount,
   deriveAmbassadorMetrics,
+  deriveCampaignWeekMetrics,
+  deriveTeamWeekContributions,
+  formatWeekLabel,
+  getTeamWeekAcquisitions,
+  nextWeek,
+  previousWeek,
   readableAmbassadorTerms,
   resolveAmbassadorAnswerForm,
   type AmbassadorApplicationField,
@@ -27,7 +36,9 @@ import {
   type AmbassadorIncentiveStatus,
   type AmbassadorTeamMember,
   type AmbassadorTermsVersion,
+  type WeekTrend,
   useAmbassadorState,
+  weekStartOf,
 } from "@core/shared";
 import { Button, Dialog, SecondaryButton, StatusTag } from "../components/ui";
 
@@ -288,18 +299,179 @@ function CampaignList() {
 }
 
 function CampaignDetail({ campaignId }: { campaignId: string }) {
-  const { campaigns, schoolRecruitmentCodes, teams, validAcquisitions } = useAmbassadorState();
+  const { campaigns, schoolRecruitmentCodes, teams, validAcquisitions, termsVersions, teamRecruitmentCodes, promotionCodes } = useAmbassadorState();
   const campaign = campaigns.find(item => item.id === campaignId);
   const [filter, setFilter] = useState("all");
+  const [weekStart, setWeekStart] = useState(() => weekStartOf(new Date()));
   if (!campaign) return <CampaignList />;
-  const metrics = deriveAmbassadorMetrics({ campaigns, teams, validAcquisitions, termsVersions: [], schoolRecruitmentCodes, teamRecruitmentCodes: [], promotionCodes: [] }, campaignId);
+
+  const state = { campaigns, teams, validAcquisitions, termsVersions, schoolRecruitmentCodes, teamRecruitmentCodes, promotionCodes };
+  const metrics = deriveAmbassadorMetrics(state, campaignId);
+  const weekMetrics = deriveCampaignWeekMetrics(state, campaignId, weekStart);
+  const weekMetricsMap = new Map(weekMetrics.map(item => [item.teamId, item]));
   const filteredTeams = teams.filter(team => team.campaignId === campaignId && (filter === "all" || team.status === filter));
+
+  const weekTotal = weekMetrics.reduce((sum, item) => sum + item.weekAcquisitions, 0);
+  const prevWeekTotal = weekMetrics.reduce((sum, item) => sum + item.previousWeekAcquisitions, 0);
+  const weekDelta = weekTotal - prevWeekTotal;
+
+  const handleExportAll = () => {
+    const headers = [
+      "活动", "周期起止", "团队名", "学校", "校园大使", "团队状态", "团队人数",
+      "本周有效新增", "累计有效新增", "成员身份", "成员标识", "成员本周有效新增",
+      "成员累计有效新增", "新用户标识", "注册时间", "归因成员",
+    ];
+    const rows: string[][] = [];
+    const weekLabel = formatWeekLabel(weekStart);
+
+    for (const team of teams.filter(t => t.campaignId === campaignId)) {
+      const tm = weekMetricsMap.get(team.id);
+      const ambassador = team.members.find(m => m.role === "ambassador");
+      const contributions = deriveTeamWeekContributions(state, team.id, weekStart);
+      const weekAcqs = getTeamWeekAcquisitions(state, team.id, weekStart);
+
+      for (const c of contributions) {
+        const roleLabel = c.role === "ambassador" ? "校园大使" : "校园推荐官";
+        if (weekAcqs.length === 0) {
+          rows.push([
+            campaign.name, weekLabel, ambassadorTeamDisplayName(team),
+            schools[team.schoolId] ?? team.schoolId,
+            ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
+            teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
+            String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
+            roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
+            "", "", "",
+          ]);
+        } else {
+          const memberAcqs = weekAcqs.filter(a => a.promoterAccountId === c.accountId);
+          if (memberAcqs.length === 0) {
+            rows.push([
+              campaign.name, weekLabel, ambassadorTeamDisplayName(team),
+              schools[team.schoolId] ?? team.schoolId,
+              ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
+              teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
+              String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
+              roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
+              "", "", "",
+            ]);
+          } else {
+            for (const acq of memberAcqs) {
+              rows.push([
+                campaign.name, weekLabel, ambassadorTeamDisplayName(team),
+                schools[team.schoolId] ?? team.schoolId,
+                ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
+                teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
+                String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
+                roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
+                acq.newAccountId, acq.registeredAt.replace("T", " ").slice(0, 19), acq.promoterAccountId,
+              ]);
+            }
+          }
+        }
+      }
+    }
+    downloadCsv(headers, rows, `核心大使计划_${campaign.name}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_全部团队运营数据.csv`);
+  };
+
   return <div className="space-y-6">
     <Link to="/admin/ambassadors" className="inline-flex items-center gap-2 text-sm font-semibold text-text-brand"><ArrowLeft size={16} />返回活动列表</Link>
-    <section className="rounded-container border border-border-subtle bg-surface p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-text-tertiary">核心大使计划</p><h1 className="mt-2 text-2xl font-semibold">{campaign.name}</h1><p className="mt-2 font-mono text-xs text-text-tertiary">campaignId={campaign.id}</p></div><StatusTag tone="info">{statusLabel[ambassadorCampaignStatus(campaign)]}</StatusTag></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["覆盖学校", metrics.schoolCount], ["校园大使", metrics.coreAmbassadorCount], ["已点亮团队", metrics.litTeamCount], ["校园推荐官", metrics.partnerCount], ["有效新增", metrics.validAcquisitionCount]].map(([label, value]) => <div key={label} className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div></section>
+    <section className="rounded-container border border-border-subtle bg-surface p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-text-tertiary">核心大使计划</p><h1 className="mt-2 text-2xl font-semibold">{campaign.name}</h1><p className="mt-2 font-mono text-xs text-text-tertiary">campaignId={campaign.id}</p></div><StatusTag tone="info">{statusLabel[ambassadorCampaignStatus(campaign)]}</StatusTag></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["覆盖学校", metrics.schoolCount], ["校园大使", metrics.coreAmbassadorCount], ["已点亮团队", metrics.litTeamCount], ["校园推荐官", metrics.partnerCount], ["累计有效新增", metrics.validAcquisitionCount]].map(([label, value]) => <div key={label} className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div></section>
     <section className="grid gap-4 lg:grid-cols-2">{campaign.schoolIds.map(schoolId => <article key={schoolId} className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex items-center gap-2"><Building2 size={18} className="text-text-brand" /><h2 className="font-semibold">{schools[schoolId] ?? schoolId}</h2></div><div className="mt-4">{schoolRecruitmentCodes.filter(code => code.campaignId === campaignId && code.schoolId === schoolId).map(code => <SchoolRecruitmentCodeCard key={code.id} code={code.code} schoolName={schools[schoolId] ?? schoolId} campaignName={campaign.name} />)}</div></article>)}</section>
-    <section className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">团队列表</h2><select value={filter} onChange={event => setFilter(event.target.value)} className="min-h-10 rounded-control border border-border-subtle px-3 text-sm"><option value="all">全部状态</option><option value="forming">待点亮</option><option value="lit">已点亮</option><option value="ended">已结束</option></select></div><div className="mt-4 divide-y divide-border-subtle">{filteredTeams.length === 0 ? <p className="py-8 text-center text-sm text-text-tertiary">暂时还没有团队，等待 App 产生校园大使申请。</p> : filteredTeams.map(team => <Link key={team.id} to={`/admin/ambassadors/${campaignId}/teams/${team.id}`} className="flex flex-wrap items-center gap-4 py-4 hover:bg-surface-subtle"><UsersRound size={18} className="text-text-brand" /><span className="min-w-48 font-semibold">{ambassadorTeamDisplayName(team)}</span><span>{schools[team.schoolId] ?? team.schoolId}</span><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{teamLabel[team.status]}</StatusTag><span>{ambassadorTeamMemberCount(team)} 人</span><span className="ml-auto text-xs">有效新增 {validAcquisitions.filter(item => item.teamId === team.id).length} · 激励 {incentiveLabel[team.incentiveStatus]}</span></Link>)}</div></section>
+    <section className="rounded-container border border-border-subtle bg-surface p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold">团队列表 · 周度运营</h2>
+          <p className="mt-1 text-xs text-text-tertiary">按自然周查看各团队拉新效果，数据由有效新增记录实时派生。</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center rounded-control border border-border-subtle">
+            <button type="button" onClick={() => setWeekStart(previousWeek(weekStart))} className="flex h-10 items-center gap-1 px-3 text-sm hover:bg-surface-subtle" aria-label="上一周"><ChevronLeft size={16} />上一周</button>
+            <span className="px-2 text-sm font-medium tabular-nums">{formatWeekLabel(weekStart)}</span>
+            <button type="button" onClick={() => setWeekStart(nextWeek(weekStart))} className="flex h-10 items-center gap-1 px-3 text-sm hover:bg-surface-subtle" aria-label="下一周">下一周<ChevronRight size={16} /></button>
+          </div>
+          <button type="button" onClick={() => setWeekStart(weekStartOf(new Date()))} className="h-10 rounded-control border border-border-subtle px-3 text-sm hover:bg-surface-subtle">本周</button>
+          <select value={filter} onChange={event => setFilter(event.target.value)} className="min-h-10 rounded-control border border-border-subtle px-3 text-sm">
+            <option value="all">全部状态</option>
+            <option value="forming">待点亮</option>
+            <option value="lit">已点亮</option>
+            <option value="ended">已结束</option>
+          </select>
+          <button type="button" onClick={handleExportAll} className="inline-flex h-10 items-center gap-2 rounded-control border border-border-subtle px-3 text-sm font-semibold hover:bg-surface-subtle"><Download size={16} />导出全部团队</button>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">本周全部团队有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{weekTotal}</p><p className="mt-1 text-xs"><TrendBadge trend={weekDelta > 0 ? "up" : weekDelta < 0 ? "down" : "flat"} delta={weekDelta} /></p></div>
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">上周全部团队有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{prevWeekTotal}</p></div>
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">参与团队数</p><p className="mt-2 text-2xl font-semibold tabular-nums">{filteredTeams.length}</p></div>
+      </div>
+      <div className="mt-5 overflow-x-auto">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead>
+            <tr className="border-b border-border-subtle text-left text-xs text-text-tertiary">
+              <th className="py-3 pr-4 font-medium">团队</th>
+              <th className="py-3 pr-4 font-medium">学校</th>
+              <th className="py-3 pr-4 font-medium">校园大使</th>
+              <th className="py-3 pr-4 font-medium">状态</th>
+              <th className="py-3 pr-4 font-medium">人数</th>
+              <th className="py-3 pr-4 font-medium text-right">本周有效新增</th>
+              <th className="py-3 pr-4 font-medium text-right">周环比</th>
+              <th className="py-3 pr-4 font-medium text-right">累计有效新增</th>
+              <th className="py-3 font-medium">激励</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-subtle">
+            {filteredTeams.length === 0 ? <tr><td colSpan={9} className="py-8 text-center text-sm text-text-tertiary">暂时还没有团队，等待 App 产生校园大使申请。</td></tr> : filteredTeams.map(team => {
+              const tm = weekMetricsMap.get(team.id);
+              const ambassador = team.members.find(m => m.role === "ambassador");
+              const ambassadorName = ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "-";
+              return <tr key={team.id} className="hover:bg-surface-subtle">
+                <td className="py-3 pr-4"><Link to={`/admin/ambassadors/${campaignId}/teams/${team.id}`} className="font-medium text-text-brand hover:underline">{ambassadorTeamDisplayName(team)}</Link></td>
+                <td className="py-3 pr-4 text-text-secondary">{schools[team.schoolId] ?? team.schoolId}</td>
+                <td className="py-3 pr-4 text-text-secondary">{ambassadorName}</td>
+                <td className="py-3 pr-4"><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{teamLabel[team.status]}</StatusTag></td>
+                <td className="py-3 pr-4 text-text-secondary">{ambassadorTeamMemberCount(team)} 人</td>
+                <td className="py-3 pr-4 text-right font-semibold tabular-nums">{tm?.weekAcquisitions ?? 0}</td>
+                <td className="py-3 pr-4 text-right"><TrendBadge trend={tm?.trend ?? "flat"} delta={tm?.trendDelta ?? 0} /></td>
+                <td className="py-3 pr-4 text-right text-text-secondary tabular-nums">{tm?.totalAcquisitions ?? 0}</td>
+                <td className="py-3 text-text-secondary">{incentiveLabel[team.incentiveStatus]}</td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>;
+}
+
+function TrendBadge({ trend, delta }: { trend: WeekTrend; delta: number }) {
+  if (trend === "first") {
+    return <span className="inline-flex items-center gap-1 rounded-full bg-info-bg px-2 py-0.5 text-[11px] text-info-text">首周数据</span>;
+  }
+  if (trend === "up") {
+    return <span className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-[11px] text-success-text"><ArrowUp size={12} />上升 {delta}</span>;
+  }
+  if (trend === "down") {
+    return <span className="inline-flex items-center gap-1 rounded-full bg-danger-bg px-2 py-0.5 text-[11px] text-danger-text"><ArrowDown size={12} />下降 {Math.abs(delta)}</span>;
+  }
+  return <span className="inline-flex items-center gap-1 rounded-full bg-surface-subtle px-2 py-0.5 text-[11px] text-text-tertiary">持平</span>;
+}
+
+function downloadCsv(headers: string[], rows: string[][], filename: string) {
+  const escape = (val: string) => {
+    if (val.includes(",") || val.includes("\n") || val.includes('\"')) {
+      return '\"' + val.replace(/\"/g, '\"\"') + '\"';
+    }
+    return val;
+  };
+  const csv = [headers.map(escape).join(","), ...rows.map(row => row.map(escape).join(","))].join("\n");
+  // 加 BOM 保证 Excel 正确识别中文
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function QuestionnaireAnswerView({
@@ -379,16 +551,61 @@ function QuestionnaireAnswerView({
 }
 
 function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string }) {
-  const { campaigns, teams, validAcquisitions, setAmbassadorTeamName, setTeamIncentiveStatus } = useAmbassadorState();
+  const { campaigns, teams, validAcquisitions, termsVersions, schoolRecruitmentCodes, teamRecruitmentCodes, promotionCodes, setAmbassadorTeamName, setTeamIncentiveStatus } = useAmbassadorState();
   const campaign = campaigns.find(item => item.id === campaignId);
   const team = teams.find(item => item.id === teamId);
   const resolvedTeamName = team ? ambassadorTeamDisplayName(team) : "";
   const [teamNameDraft, setTeamNameDraft] = useState(resolvedTeamName);
+  const [weekStart, setWeekStart] = useState(() => weekStartOf(new Date()));
   useEffect(() => setTeamNameDraft(resolvedTeamName), [resolvedTeamName]);
   if (!campaign || !team) return <CampaignDetail campaignId={campaignId} />;
-  const acquisitions = validAcquisitions.filter(item => item.teamId === team.id);
+
+  const state = { campaigns, teams, validAcquisitions, termsVersions, schoolRecruitmentCodes, teamRecruitmentCodes, promotionCodes };
+  const totalAcquisitions = validAcquisitions.filter(item => item.teamId === team.id);
   const ambassador = team.members.find(member => member.role === "ambassador");
-  const form = ambassadorApplicationForm(campaign);
+  const weekContributions = deriveTeamWeekContributions(state, team.id, weekStart);
+  const weekAcqs = getTeamWeekAcquisitions(state, team.id, weekStart);
+  const weekMetrics = deriveCampaignWeekMetrics(state, campaignId, weekStart);
+  const teamWeek = weekMetrics.find(item => item.teamId === team.id);
+
+  const handleExportTeam = () => {
+    const headers = [
+      "活动", "周期起止", "团队名", "学校", "校园大使", "团队状态", "团队人数",
+      "本周有效新增", "累计有效新增", "成员身份", "成员标识", "成员本周有效新增",
+      "成员累计有效新增", "新用户标识", "注册时间", "归因成员",
+    ];
+    const rows: string[][] = [];
+    const weekLabel = formatWeekLabel(weekStart);
+    const ambassadorName = ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "";
+
+    for (const c of weekContributions) {
+      const roleLabel = c.role === "ambassador" ? "校园大使" : "校园推荐官";
+      const memberAcqs = weekAcqs.filter(a => a.promoterAccountId === c.accountId);
+      if (memberAcqs.length === 0) {
+        rows.push([
+          campaign.name, weekLabel, resolvedTeamName,
+          schools[team.schoolId] ?? team.schoolId, ambassadorName,
+          teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
+          String(teamWeek?.weekAcquisitions ?? 0), String(teamWeek?.totalAcquisitions ?? 0),
+          roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
+          "", "", "",
+        ]);
+      } else {
+        for (const acq of memberAcqs) {
+          rows.push([
+            campaign.name, weekLabel, resolvedTeamName,
+            schools[team.schoolId] ?? team.schoolId, ambassadorName,
+            teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
+            String(teamWeek?.weekAcquisitions ?? 0), String(teamWeek?.totalAcquisitions ?? 0),
+            roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
+            acq.newAccountId, acq.registeredAt.replace("T", " ").slice(0, 19), acq.promoterAccountId,
+          ]);
+        }
+      }
+    }
+    downloadCsv(headers, rows, `核心大使计划_${resolvedTeamName}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_团队运营数据.csv`);
+  };
+
   return <div className="space-y-6">
     <Link to={`/admin/ambassadors/${campaignId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-text-brand"><ArrowLeft size={16} />返回活动详情</Link>
     <section className="rounded-container border border-border-subtle bg-surface p-6"><p className="text-xs text-text-tertiary">团队详情 · {campaign.name}</p><h1 className="mt-2 text-2xl font-semibold">{resolvedTeamName}</h1><div className="mt-4 flex flex-wrap gap-2"><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{teamLabel[team.status]}</StatusTag><span className="rounded-control bg-surface-subtle px-3 py-1.5 text-xs">{schools[team.schoolId] ?? team.schoolId}</span><span className="rounded-control bg-surface-subtle px-3 py-1.5 text-xs">{ambassadorTeamMemberCount(team)} 人</span></div><div className="mt-5 rounded-control bg-surface-subtle p-4"><label className="text-sm font-medium">后台团队名<div className="mt-2 flex flex-col gap-2 sm:flex-row"><input value={teamNameDraft} onChange={event => setTeamNameDraft(event.target.value)} placeholder={resolvedTeamName} className="min-h-10 min-w-0 flex-1 rounded-control border border-border-subtle bg-surface px-3 text-sm" /><Button type="button" onClick={() => setAmbassadorTeamName(team.id, teamNameDraft)}>保存团队名</Button></div></label><p className="mt-2 text-xs text-text-tertiary">仅供后台识别、运营分析与后续导出使用；App 暂不展示。清空保存时会恢复稳定兜底名称。</p></div></section>
@@ -398,8 +615,81 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
       teamName={resolvedTeamName}
       schoolName={schools[team.schoolId] ?? team.schoolId}
     />}
-    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {acquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div></section>
-    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">拉新与运营成果</h2><div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队有效新增</p><p className="mt-2 text-2xl font-semibold">{acquisitions.length}</p></div><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">校园大使贡献</p><p className="mt-2 text-2xl font-semibold">{acquisitions.filter(item => item.promoterAccountId === ambassador?.accountId).length}</p></div><div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队激励状态</p><p className="mt-2 text-lg font-semibold">{incentiveLabel[team.incentiveStatus]}</p></div></div><h3 className="mt-6 text-sm font-semibold">推广明细</h3>{acquisitions.length ? <div className="mt-2 space-y-2 text-xs text-text-secondary">{acquisitions.map(item => <p key={item.id}>{item.registeredAt.slice(0, 10)} · {item.promoterAccountId} 带来新用户 {item.newAccountId}</p>)}</div> : <p className="mt-2 text-sm text-text-tertiary">暂无有效新增记录。</p>}<div className="mt-6 flex items-center gap-3"><button type="button" onClick={() => setTeamIncentiveStatus(team.id, team.incentiveStatus === "processed" ? "unprocessed" : "processed")} className="rounded-control border border-border-subtle px-3 py-2 text-xs font-semibold">标记为{team.incentiveStatus === "processed" ? "未处理" : "已处理"}</button></div></section>
+    <section className="rounded-container border border-border-subtle bg-surface p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">周度运营</p>
+          <h2 className="mt-2 text-lg font-semibold">{formatWeekLabel(weekStart)}</h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center rounded-control border border-border-subtle">
+            <button type="button" onClick={() => setWeekStart(previousWeek(weekStart))} className="flex h-10 items-center gap-1 px-3 text-sm hover:bg-surface-subtle" aria-label="上一周"><ChevronLeft size={16} />上一周</button>
+            <span className="px-2 text-sm font-medium tabular-nums">{formatWeekLabel(weekStart)}</span>
+            <button type="button" onClick={() => setWeekStart(nextWeek(weekStart))} className="flex h-10 items-center gap-1 px-3 text-sm hover:bg-surface-subtle" aria-label="下一周">下一周<ChevronRight size={16} /></button>
+          </div>
+          <button type="button" onClick={() => setWeekStart(weekStartOf(new Date()))} className="h-10 rounded-control border border-border-subtle px-3 text-sm hover:bg-surface-subtle">本周</button>
+          <button type="button" onClick={handleExportTeam} className="inline-flex h-10 items-center gap-2 rounded-control bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"><Download size={16} />导出本团队</button>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-4">
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">本周有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{teamWeek?.weekAcquisitions ?? 0}</p></div>
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">周环比</p><p className="mt-2 text-lg font-semibold"><TrendBadge trend={teamWeek?.trend ?? "flat"} delta={teamWeek?.trendDelta ?? 0} /></p></div>
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">累计有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{teamWeek?.totalAcquisitions ?? 0}</p></div>
+        <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队激励状态</p><p className="mt-2 text-lg font-semibold">{incentiveLabel[team.incentiveStatus]}</p></div>
+      </div>
+      <h3 className="mt-6 text-sm font-semibold">成员本周贡献</h3>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[480px] text-sm">
+          <thead>
+            <tr className="border-b border-border-subtle text-left text-xs text-text-tertiary">
+              <th className="py-3 pr-4 font-medium">成员</th>
+              <th className="py-3 pr-4 font-medium">身份</th>
+              <th className="py-3 pr-4 font-medium text-right">本周有效新增</th>
+              <th className="py-3 pr-4 font-medium text-right">累计有效新增</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-subtle">
+            {weekContributions.map(c => <tr key={c.accountId}>
+              <td className="py-3 pr-4 font-mono text-sm">{c.accountId}</td>
+              <td className="py-3 pr-4"><StatusTag tone="neutral">{c.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag></td>
+              <td className="py-3 pr-4 text-right font-semibold tabular-nums">{c.weekAcquisitions}</td>
+              <td className="py-3 pr-4 text-right text-text-secondary tabular-nums">{c.totalAcquisitions}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+      <h3 className="mt-6 text-sm font-semibold">本周拉新明细</h3>
+      {weekAcqs.length === 0 ? <p className="mt-2 text-sm text-text-tertiary">本周暂无有效新增记录。</p> : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-xs text-text-tertiary">
+                <th className="py-3 pr-4 font-medium">注册时间</th>
+                <th className="py-3 pr-4 font-medium">新用户</th>
+                <th className="py-3 pr-4 font-medium">归因成员</th>
+                <th className="py-3 pr-4 font-medium">身份</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-subtle">
+              {weekAcqs.map(acq => {
+                const member = team.members.find(m => m.accountId === acq.promoterAccountId);
+                return <tr key={acq.id}>
+                  <td className="py-3 pr-4 text-text-secondary tabular-nums">{acq.registeredAt.replace("T", " ").slice(0, 16)}</td>
+                  <td className="py-3 pr-4 font-mono text-xs">{acq.newAccountId}</td>
+                  <td className="py-3 pr-4 font-mono text-xs">{acq.promoterAccountId}</td>
+                  <td className="py-3 pr-4"><StatusTag tone="neutral">{member?.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag></td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="mt-6 flex items-center gap-3 border-t border-border-subtle pt-5">
+        <button type="button" onClick={() => setTeamIncentiveStatus(team.id, team.incentiveStatus === "processed" ? "unprocessed" : "processed")} className="rounded-control border border-border-subtle px-3 py-2 text-xs font-semibold hover:bg-surface-subtle">标记为{team.incentiveStatus === "processed" ? "未处理" : "已处理"}</button>
+        <p className="text-xs text-text-tertiary">激励处理为独立动作，与周度运营数据不绑定。</p>
+      </div>
+    </section>
+    <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {totalAcquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div></section>
   </div>;
 }
 
