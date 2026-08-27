@@ -60,7 +60,7 @@ test("T047 previews school recruitment QR in a branded dialog", async ({ page })
   await expect.poll(async () => qr.innerHTML()).toContain("path");
 
   await page.getByRole("button", { name: "查看 华南商贸职业学院 学校招募二维码" }).click();
-  const dialog = page.getByRole("dialog", { name: "华南商贸职业学院 · 大使招募二维码" });
+  const dialog = page.getByRole("dialog", { name: "华南商贸职业学院 · 校园大使招募二维码" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("核心大使计划 · 校园招募", { exact: true })).toBeVisible();
   const preview = dialog.getByTestId("qr-preview-CA-DEMO-HN-2026");
