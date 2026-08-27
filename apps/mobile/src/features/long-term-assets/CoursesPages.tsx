@@ -5,7 +5,7 @@ import { Dialog } from "@core/shared";
 import { Carousel } from "../../components/Carousel";
 import { MobileFilter } from "../../components/MobileFilter";
 import { Button, Card, GhostButton, PageHeader, PublicShell, SecondaryButton, Section, StatusTag } from "../../components/ui";
-import { courseById, courses, type Course, type CourseCategory } from "./data";
+import { courseById, courses, type Course } from "./data";
 import { ProgressBar, SourceLine, useAccountAction, useAccountLoggedIn } from "./shared";
 import { useLongTermAssets } from "./store";
 
@@ -48,11 +48,6 @@ function CourseValueTag({ course, compact = false }: { course: Course; compact?:
   if (course.entitlement === "free") return <StatusTag tone="success">{compact ? "免费" : "免费学习"}</StatusTag>;
   if (course.entitlement === "creditRequired") return <span className="inline-flex items-center gap-1 rounded-full bg-primary-container px-2 py-1 text-xs font-semibold text-text-brand"><Coins size={12} aria-hidden="true" />{course.cost}</span>;
   return <StatusTag tone="info">{compact ? "权益" : "权益解锁"}</StatusTag>;
-}
-
-function CategoryTag({ category }: { category: Exclude<CourseCategory, "all"> }) {
-  const label = categoryTabs.find(item => item.value === category)?.label ?? category;
-  return <span className="rounded-full bg-surface px-2 py-1 text-xs text-text-secondary">{label}</span>;
 }
 
 function OnboardingCourseRow({ course }: { course: Course }) {
@@ -277,7 +272,6 @@ export function CourseCenterPage() {
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <CourseValueTag course={course} compact />
-                        <CategoryTag category={course.category} />
                         {enrolled && record.status !== "notStarted" && <StatusTag tone={record.status === "completed" ? "success" : "info"}>{statusLabel(record.status)}</StatusTag>}
                       </div>
                     </div>
@@ -500,7 +494,6 @@ export function CourseDetailPage() {
 
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <CategoryTag category={course.category} />
             <CourseValueTag course={course} compact />
             <SourceLine source={course.source} />
           </div>
