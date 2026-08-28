@@ -4,7 +4,7 @@ test("T049 PC campaign state hydrates Mobile and Mobile application returns to P
   await page.goto("http://127.0.0.1:5174/admin/ambassadors");
   await page.getByRole("button", { name: "创建活动" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "创建核心大使计划" });
+  const dialog = page.getByRole("dialog", { name: "创建校园大使计划" });
   await dialog.getByLabel("活动名称").fill("T049 联动活动");
   await dialog.getByLabel("开始日期").fill("2026-08-26");
   await dialog.getByLabel("结束日期").fill("2026-12-31");
