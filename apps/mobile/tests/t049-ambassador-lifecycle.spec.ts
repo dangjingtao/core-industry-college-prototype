@@ -86,7 +86,7 @@ test("T049 ended campaign disables all codes, keeps history and allows a later c
     const previous = state.campaigns.find((item: { id: string }) => item.id === currentCampaignId);
     state.campaigns.push({
       id: "campus-ambassador-next",
-      name: "2026 核心大使计划 · 二期",
+      name: "2026 校园大使计划 · 二期",
       startsAt: "2026-08-26T00:00:00+08:00",
       endsAt: "2026-12-31T23:59:59+08:00",
       schoolIds: ["org-huanan-commerce-college"],
@@ -107,7 +107,7 @@ test("T049 ended campaign disables all codes, keeps history and allows a later c
 
   await page.goto("/ambassadors?code=CA-NEXT-HN-2026&accountId=account-demo");
   await expect(page).toHaveURL(/\/ambassadors\/apply/);
-  await expect(page.getByText("2026 核心大使计划 · 二期", { exact: true })).toBeVisible();
+  await expect(page.getByText("2026 校园大使计划 · 二期", { exact: true })).toBeVisible();
   await expect(page.getByText("你已加入本期推广团队")).toHaveCount(0);
 });
 
