@@ -52,7 +52,7 @@ export function CampusAmbassadorLandingPage() {
   };
 
   return <PublicShell showNavigation={false}>
-    <PageHeader title="核心大使计划" backTo="/home" />
+    <PageHeader title="校园大使计划" backTo="/home" />
     <div className="space-y-5 px-4 py-5">
       <Card className="border border-primary/20 bg-primary-container">
         <StatusTag tone="info">校园招募</StatusTag>
@@ -72,7 +72,7 @@ export function CampusAmbassadorLandingPage() {
       <Section title="已有团队招募码" subtitle="校园推荐官使用校园大使分享的团队专属码加入">
         <Card className="flex items-center justify-between gap-3"><div className="flex items-start gap-3"><UsersRound size={20} className="mt-0.5 text-text-brand" /><div><p className="font-medium text-text-primary">我是校园推荐官</p><p className="mt-1 text-xs text-text-secondary">加入后不能退队或换队</p></div></div><SecondaryButton onClick={() => navigate(`/ambassadors/join${location.search}`)}>输入团队码</SecondaryButton></Card>
       </Section>
-      <Card className="border border-border-subtle bg-surface-subtle"><div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 text-text-brand" /><p className="text-xs leading-5 text-text-secondary">核心大使计划属于长期账号上的运营活动，不会创建新的赛事身份。</p></div></Card>
+      <Card className="border border-border-subtle bg-surface-subtle"><div className="flex items-start gap-3"><ShieldCheck size={18} className="mt-0.5 text-text-brand" /><p className="text-xs leading-5 text-text-secondary">校园大使计划属于长期账号上的运营活动，不会创建新的赛事身份。</p></div></Card>
     </div>
   </PublicShell>;
 }
@@ -129,7 +129,7 @@ export function CampusAmbassadorApplyPage() {
         {field.type === "textarea" ? <label className="block text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}<textarea value={applicationValues[field.id] ?? ""} onChange={event => setValue(field.id, event.target.value)} rows={3} className="mt-2 w-full rounded-control border border-border px-3 py-2 text-sm" /></label> : field.type === "text" ? <label className="block text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}<input value={applicationValues[field.id] ?? ""} onChange={event => setValue(field.id, event.target.value)} className="mt-2 min-h-11 w-full rounded-control border border-border px-3 text-sm" /></label> : <fieldset><legend className="text-sm font-medium">{field.label}{field.required && <span className="text-danger"> *</span>}</legend><div className="mt-2 space-y-2">{(field.options ?? []).map(option => field.type === "single-choice" ? <label key={option} className="flex items-center gap-2 text-sm"><input type="radio" name={field.id} checked={applicationValues[field.id] === option} onChange={() => setValue(field.id, option)} />{option}</label> : <label key={option} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={(applicationValues[field.id] ?? "").split("、").filter(Boolean).includes(option)} onChange={() => toggleMultiChoice(field.id, option)} />{option}</label>)}</div></fieldset>}
       </div>)}
     </Card></Section>
-    <label className="flex items-start gap-3 rounded-control border border-border bg-surface p-4 text-sm leading-6 text-text-secondary"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} className="mt-1" /><span>我已阅读并同意本期核心大使计划条款（{campaign.termsVersion}）。</span></label>
+    <label className="flex items-start gap-3 rounded-control border border-border bg-surface p-4 text-sm leading-6 text-text-secondary"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} className="mt-1" /><span>我已阅读并同意本期校园大使计划条款（{campaign.termsVersion}）。</span></label>
     {error && <p className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-text">{error}</p>}
     <Button className="w-full" disabled={Boolean(submittedTeamId)} onClick={submit}>{submittedTeamId ? "正在创建团队" : "提交申请，获得团队招募码"}</Button>
   </div></PublicShell>;
@@ -209,13 +209,13 @@ export function CampusAmbassadorTeamPage() {
   const statusLabel = team.status === "lit" ? "已点亮" : team.status === "ended" ? "已结束" : "待点亮";
 
   return <PublicShell showNavigation={false}><PageHeader title="我的推广团队" backTo="/ambassadors" /><div className="space-y-5 px-4 py-5">
-    <Card className={team.status === "lit" ? "border border-success/30 bg-success-bg" : "border border-warning/30 bg-warning-bg"}><div className="flex items-start justify-between gap-3"><div><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{statusLabel}</StatusTag><h1 className="mt-3 text-lg font-semibold">核心大使计划 · 推广团队</h1><p className="mt-1 text-sm text-text-secondary">{campaign.name}</p></div><UsersRound size={24} className="text-text-brand" /></div></Card>
+    <Card className={team.status === "lit" ? "border border-success/30 bg-success-bg" : "border border-warning/30 bg-warning-bg"}><div className="flex items-start justify-between gap-3"><div><StatusTag tone={team.status === "lit" ? "success" : team.status === "ended" ? "neutral" : "warning"}>{statusLabel}</StatusTag><h1 className="mt-3 text-lg font-semibold">校园大使计划 · 推广团队</h1><p className="mt-1 text-sm text-text-secondary">{campaign.name}</p></div><UsersRound size={24} className="text-text-brand" /></div></Card>
     <Card className="space-y-3"><div className="flex items-center justify-between"><span className="text-sm text-text-secondary">组队进度</span><strong>{activeMembers.length} 人</strong></div><div className="h-2 overflow-hidden rounded-full bg-surface-subtle"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, activeMembers.length / 4 * 100)}%` }} /></div><p className="text-xs text-text-secondary">点亮条件：1 位校园大使 + 至少 3 位校园推荐官。点亮后可继续加人。</p>{team.status !== "lit" && <p className="rounded-control bg-warning-bg px-3 py-2 text-sm text-warning-text">还需 {Math.max(0, 3 - partners.length)} 位校园推荐官</p>}</Card>
     {isAmbassador ? <Card className="space-y-3"><div className="flex items-center gap-2"><QrCode size={18} className="text-text-brand" /><h2 className="font-semibold">团队招募码</h2></div><p className="text-sm text-text-secondary">只用于邀请校园推荐官加入当前团队，不是学校招募码。</p><div className="flex items-center gap-2"><code className="min-w-0 flex-1 overflow-wrap-anywhere rounded-control bg-surface-subtle px-3 py-3 text-xs">{recruitment?.code}</code><SecondaryButton onClick={copyCode}><Clipboard size={16} />{copied ? "已复制" : "复制"}</SecondaryButton></div></Card> : <Card className="border border-info bg-info-bg"><p className="text-sm font-semibold text-info-text">你是校园推荐官</p><p className="mt-1 text-sm text-info-text">团队点亮后，你只能查看自己的专属推广码，不展示任何推广成果数字。</p></Card>}
     {team.status === "lit" && personalPromotionCode ? <Card className="space-y-3" data-testid="personal-promotion-code"><div className="flex items-center gap-2"><QrCode size={18} className="text-text-brand" /><h2 className="font-semibold">我的专属推广码</h2></div><p className="text-sm text-text-secondary">新用户扫描这个二维码完成注册后，会归因到你本人。</p><PersonalPromotionQr promotionCode={personalPromotionCode.code} /><code className="block overflow-wrap-anywhere rounded-control bg-surface-subtle px-3 py-3 text-xs">{personalPromotionCode.code}</code><Button className="w-full" onClick={() => navigate(`/ambassadors/promote/${encodeURIComponent(personalPromotionCode.code)}`)}>模拟扫码注册</Button></Card> : <Card className="border border-warning/30 bg-warning-bg"><p className="text-sm font-semibold text-warning-text">团队点亮后开放专属推广码</p><p className="mt-1 text-xs text-warning-text">当前只能继续邀请校园推荐官，不会提前产生推广归因。</p></Card>}
     {isAmbassador && team.status === "lit" && <Button className="w-full" onClick={() => navigate(`/ambassadors/team/${team.id}/results?accountId=${encodeURIComponent(accountId)}`)}><BarChart3 size={16} className="mr-2" />查看团队推广成果</Button>}
     {isAmbassador && <Section title="当前成员"><div className="space-y-2">{activeMembers.map(member => <Card key={member.id} data-testid="ambassador-member" className="flex items-center justify-between"><div><p className="font-medium">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</p><p className="mt-1 text-xs text-text-tertiary">账号 {member.accountId}</p></div><StatusTag tone={member.role === "ambassador" ? "info" : "neutral"}>{member.role === "ambassador" ? "负责人" : "成员"}</StatusTag></Card>)}</div></Section>}
-    <SecondaryButton className="w-full" onClick={() => navigate("/ambassadors")}>返回核心大使计划</SecondaryButton>
+    <SecondaryButton className="w-full" onClick={() => navigate("/ambassadors")}>返回校园大使计划</SecondaryButton>
   </div></PublicShell>;
 }
 
