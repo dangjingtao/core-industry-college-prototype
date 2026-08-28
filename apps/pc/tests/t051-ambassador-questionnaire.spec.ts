@@ -60,7 +60,8 @@ test("T051 questionnaire keeps submission-time schema after the current campaign
   await expect(questionnaire.getByText("成长", { exact: true })).toBeVisible();
   await expect(questionnaire.getByText("连接同学", { exact: true })).toBeVisible();
   await expect(questionnaire.getByText("未填写", { exact: true })).toBeVisible();
-  await expect(questionnaire.getByText("核心大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(questionnaire.getByText("校园大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(questionnaire.getByText(/核心大使计划/)).toHaveCount(0);
   await expect(questionnaire.getByText("2026-08-12 10:20:30", { exact: true })).toBeVisible();
 });
 
@@ -93,5 +94,6 @@ test("T051 legacy record without snapshot shows an explicit fallback warning", a
   await expect(questionnaire).toContainText("该申请提交时未保存表单版本");
   await expect(questionnaire.getByText("旧版活动问题", { exact: true })).toBeVisible();
   await expect(questionnaire.getByText("旧版活动答案仍可读取", { exact: true })).toBeVisible();
-  await expect(questionnaire.getByText("核心大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(questionnaire.getByText("校园大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(questionnaire.getByText(/核心大使计划/)).toHaveCount(0);
 });
