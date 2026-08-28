@@ -100,7 +100,8 @@ test("T054 PC uses UTC+8 natural week and keeps V1.1 questionnaire, team name an
   await teamRow.getByRole("link", { name: originalTeamName }).click();
   await expect(page.getByTestId("ambassador-questionnaire-answers")).toBeVisible();
   await expect(page.getByTestId("ambassador-questionnaire-answers").getByText("提交时版本", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("ambassador-questionnaire-answers").getByText("核心大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("ambassador-questionnaire-answers").getByText("校园大使计划活动条款 · v1.0", { exact: true })).toBeVisible();
+  await expect(page.getByText(/核心大使计划/)).toHaveCount(0);
 
   const weekSection = page.getByText("周度运营", { exact: true }).locator("xpath=ancestor::section[1]");
   await expect(weekSection.getByText(week.label, { exact: true })).toBeVisible();
