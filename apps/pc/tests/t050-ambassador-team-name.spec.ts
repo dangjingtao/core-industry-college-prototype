@@ -16,14 +16,16 @@ async function storedTeamSnapshot(page: Page) {
   }, { key: storageKey, targetTeamId: teamId });
 }
 
-test("T050 PC edits and persists the operations team name without changing the recruitment code", async ({ page }) => {
+test("T050 PC uses campus display naming and persists the operations team name without changing the recruitment code", async ({ page }) => {
   await page.goto(`/admin/ambassadors/${campaignId}/teams/${teamId}`);
 
   await expect(page.getByRole("heading", { name: "华南商贸 · 校园大使 01" })).toBeVisible();
+  await expect(page.getByText("校园大使计划", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("校园大使", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("校园推荐官", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("核心大使", { exact: true })).toHaveCount(0);
   await expect(page.getByText("推广伙伴", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/核心大使计划/)).toHaveCount(0);
 
   await page.getByLabel("后台团队名").fill("T050 华南校园增长队");
   await page.getByRole("button", { name: "保存团队名" }).click();
