@@ -46,15 +46,24 @@ type AmbassadorBridgeMessage = {
 
 const AmbassadorStateContext = createContext<AmbassadorStateValue | null>(null);
 
+function migrateAmbassadorDisplayText(value: string) {
+  return value.replaceAll("核心大使计划", "校园大使计划");
+}
+
 function cloneState(source: AmbassadorCampaignState): AmbassadorCampaignState {
   return {
     campaigns: source.campaigns.map(item => ({
       ...item,
+      name: migrateAmbassadorDisplayText(item.name),
       schoolIds: [...item.schoolIds],
       applicationFields: [...item.applicationFields],
       applicationForm: item.applicationForm?.map(field => ({ ...field, options: field.options ? [...field.options] : undefined })),
     })),
-    termsVersions: source.termsVersions.map(item => ({ ...item })),
+    termsVersions: source.termsVersions.map(item => ({
+      ...item,
+      title: migrateAmbassadorDisplayText(item.title),
+      contentHtml: migrateAmbassadorDisplayText(item.contentHtml),
+    })),
     schoolRecruitmentCodes: source.schoolRecruitmentCodes.map(item => ({ ...item })),
     teamRecruitmentCodes: source.teamRecruitmentCodes.map(item => ({ ...item })),
     teams: source.teams.map(item => {
@@ -244,7 +253,7 @@ export function AmbassadorStateProvider({ children, storageKey, bridge }: Ambass
         ...current,
         termsVersions: [...current.termsVersions, {
           id,
-          title: input.title.trim() || "核心大使计划活动条款",
+          title: input.title.trim() || "校园大使计划活动条款",
           version: `v${serial}.0`,
           status: "draft",
           contentHtml: input.contentHtml,
