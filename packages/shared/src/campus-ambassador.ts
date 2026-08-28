@@ -153,7 +153,7 @@ export const defaultAmbassadorApplicationForm: AmbassadorApplicationField[] = [
 
 export const coreAmbassadorTermsV1Html = `
 <h3>一、参与资格与身份</h3>
-<p>核心大使计划面向活动指定学校的学生开放。用户通过学校招募二维码提交申请并同意本条款后，获得“校园大使 · 待点亮”身份；通过团队招募二维码加入的成员为“校园推荐官”。</p>
+<p>校园大使计划面向活动指定学校的学生开放。用户通过学校招募二维码提交申请并同意本条款后，获得“校园大使 · 待点亮”身份；通过团队招募二维码加入的成员为“校园推荐官”。</p>
 <h3>二、团队与活动规则</h3>
 <p>同一账号在同一期活动中只能加入一个团队。活动期间不支持退出团队或更换团队。团队由 1 位校园大使和至少 3 位校园推荐官组成，达到条件后自动点亮；点亮后仍可继续邀请校园推荐官。</p>
 <h3>三、推广码与有效新增</h3>
@@ -224,7 +224,7 @@ export function ambassadorTeamDisplayName(team: Pick<AmbassadorTeam, "id" | "tea
 export const campusAmbassadorSeed: AmbassadorCampaignState = {
   campaigns: [{
     id: "campus-ambassador-2026-一期",
-    name: "2026 核心大使计划 · 一期",
+    name: "2026 校园大使计划 · 一期",
     startsAt: "2026-08-26T00:00:00+08:00",
     endsAt: "2026-10-31T23:59:59+08:00",
     schoolIds: ["org-huanan-commerce-college", "org-gdtc"],
@@ -234,7 +234,7 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
     status: "upcoming",
   }, {
     id: "campus-ambassador-demo-active",
-    name: "核心大使计划 · 演示活动",
+    name: "校园大使计划 · 演示活动",
     startsAt: "2026-08-01T00:00:00+08:00",
     endsAt: "2026-12-31T23:59:59+08:00",
     schoolIds: ["org-huanan-commerce-college", "org-gdtc"],
@@ -245,7 +245,7 @@ export const campusAmbassadorSeed: AmbassadorCampaignState = {
   }],
   termsVersions: [{
     id: "campus-ambassador-terms-v1",
-    title: "核心大使计划活动条款",
+    title: "校园大使计划活动条款",
     version: "v1.0",
     status: "published",
     contentHtml: coreAmbassadorTermsV1Html,
