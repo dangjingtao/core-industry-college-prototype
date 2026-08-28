@@ -27,9 +27,10 @@ test("T048 school QR routes directly to application and official terms are reada
   await expect(page).toHaveURL(/\/ambassadors\/apply/);
   await expect(page.getByText("使用学校招募码")).toHaveCount(0);
   await expect(page.getByText("campus-ambassador-terms-v1")).toHaveCount(0);
-  await page.getByRole("button", { name: "核心大使计划活动条款" }).click();
+  await page.getByRole("button", { name: "校园大使计划活动条款" }).click();
   await expect(page.getByTestId("ambassador-terms-content")).toContainText("同一账号在同一期活动中只能加入一个团队");
-  await expect(page.getByText(/核心大使计划活动条款 · v1.0/)).toBeVisible();
+  await expect(page.getByText(/校园大使计划活动条款 · v1.0/)).toBeVisible();
+  await expect(page.getByText(/核心大使计划/)).toHaveCount(0);
 });
 
 test("T048 application adds ambassador identity and My Team entry, scanner can switch prototype users", async ({ page }) => {
