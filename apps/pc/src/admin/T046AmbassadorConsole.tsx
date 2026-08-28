@@ -105,7 +105,7 @@ function SchoolRecruitmentCodeCard({ code, schoolName, campaignName }: { code: s
       </>}
     >
       <div className="rounded-container bg-primary-container p-5 text-center">
-        <p className="text-xs font-semibold text-text-brand">核心大使计划 · 校园招募</p>
+        <p className="text-xs font-semibold text-text-brand">校园大使计划 · 校园招募</p>
         <p className="mt-1 text-lg font-semibold">{schoolName}</p>
         <div className="mx-auto mt-4 size-64 max-w-full overflow-hidden rounded-container bg-white p-3 shadow-sm" data-testid={`qr-preview-${code}`} data-payload={payload} dangerouslySetInnerHTML={{ __html: svg }} />
         <p className="mt-4 text-xs text-text-secondary">扫码进入 Mobile 校园大使申请入口</p>
@@ -197,7 +197,7 @@ function TermsDraftEditor({ terms, onClose }: { terms: AmbassadorTermsVersion; o
   const { updateAmbassadorTermsDraft, publishAmbassadorTermsVersion } = useAmbassadorState();
   const [title, setTitle] = useState(terms.title);
   const [contentHtml, setContentHtml] = useState(terms.contentHtml);
-  const save = () => updateAmbassadorTermsDraft(terms.id, { title: title.trim() || "核心大使计划活动条款", contentHtml });
+  const save = () => updateAmbassadorTermsDraft(terms.id, { title: title.trim() || "校园大使计划活动条款", contentHtml });
   return <div className="space-y-3">
     <label className="block text-sm font-medium">条款标题<input value={title} onChange={event => setTitle(event.target.value)} className="mt-2 min-h-10 w-full rounded-control border border-border-subtle px-3" /></label>
     <RichTextEditor value={contentHtml} onChange={setContentHtml} />
@@ -210,9 +210,9 @@ function TermsManagerDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   const [editingId, setEditingId] = useState<string>();
   const editing = termsVersions.find(item => item.id === editingId && item.status === "draft");
   const latestPublished = [...termsVersions].reverse().find(item => item.status === "published");
-  return <Dialog open={open} onOpenChange={next => { onOpenChange(next); if (!next) setEditingId(undefined); }} title="核心大使计划活动条款" description="已发布版本不可覆盖修改；需要调整时从已发布版本创建新草稿。" size="lg">
+  return <Dialog open={open} onOpenChange={next => { onOpenChange(next); if (!next) setEditingId(undefined); }} title="校园大使计划活动条款" description="已发布版本不可覆盖修改；需要调整时从已发布版本创建新草稿。" size="lg">
     {editing ? <TermsDraftEditor key={editing.id} terms={editing} onClose={() => setEditingId(undefined)} /> : <div className="space-y-4">
-      <div className="flex justify-end"><Button type="button" onClick={() => createAmbassadorTermsDraft({ title: latestPublished?.title ?? "核心大使计划活动条款", contentHtml: latestPublished?.contentHtml ?? "<p>请输入活动条款。</p>", basedOnId: latestPublished?.id })}><Plus size={16} className="mr-2" />基于当前版本新建</Button></div>
+      <div className="flex justify-end"><Button type="button" onClick={() => createAmbassadorTermsDraft({ title: latestPublished?.title ?? "校园大使计划活动条款", contentHtml: latestPublished?.contentHtml ?? "<p>请输入活动条款。</p>", basedOnId: latestPublished?.id })}><Plus size={16} className="mr-2" />基于当前版本新建</Button></div>
       <div className="divide-y divide-border-subtle rounded-container border border-border-subtle">{termsVersions.map(terms => <div key={terms.id} className="flex flex-wrap items-center gap-3 p-4">
         <FileText size={18} className="text-text-brand" />
         <div className="min-w-0 flex-1"><p className="font-semibold">{readableAmbassadorTerms(terms)}</p><p className="mt-1 text-xs text-text-tertiary">{terms.status === "published" ? `已发布并冻结 · ${terms.publishedAt?.slice(0, 10) ?? ""}` : "草稿 · 可编辑"}</p></div>
@@ -263,7 +263,7 @@ function CampaignEditorDialog({ campaignId, onDone }: { campaignId?: string; onD
   return <Dialog
     open
     onOpenChange={next => { if (!next) onDone(); }}
-    title={existing ? "编辑核心大使计划" : "创建核心大使计划"}
+    title={existing ? "编辑校园大使计划" : "创建校园大使计划"}
     description="活动按开始/结束时间自动进入未开始、进行中和已结束状态。"
     size="lg"
     footer={<><SecondaryButton type="button" onClick={onDone}>取消</SecondaryButton><Button type="button" onClick={save}>{existing ? "保存修改" : "创建活动"}</Button></>}
@@ -291,7 +291,7 @@ function CampaignList() {
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
   return <div className="space-y-6">
-    <section className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">运营活动</p><h1 className="mt-2 text-2xl font-semibold">核心大使计划</h1><p className="mt-2 text-sm text-text-secondary">按期管理学校招募、团队点亮与推广成果。</p></div><div className="flex gap-2"><SecondaryButton type="button" onClick={() => setTermsOpen(true)}><FileText size={16} className="mr-2" />活动条款</SecondaryButton><Button type="button" onClick={() => setEditing("new")}><Plus size={16} className="mr-2" />创建活动</Button></div></section>
+    <section className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-brand">运营活动</p><h1 className="mt-2 text-2xl font-semibold">校园大使计划</h1><p className="mt-2 text-sm text-text-secondary">按期管理学校招募、团队点亮与推广成果。</p></div><div className="flex gap-2"><SecondaryButton type="button" onClick={() => setTermsOpen(true)}><FileText size={16} className="mr-2" />活动条款</SecondaryButton><Button type="button" onClick={() => setEditing("new")}><Plus size={16} className="mr-2" />创建活动</Button></div></section>
     <div className="overflow-x-auto rounded-container border border-border-subtle bg-surface"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-surface-subtle text-xs text-text-tertiary"><tr><th className="p-4">活动</th><th>时间</th><th>状态</th><th>覆盖学校</th><th>校园大使</th><th>已点亮团队</th><th>有效新增</th><th /></tr></thead><tbody>{campaigns.map(campaign => { const metrics = deriveAmbassadorMetrics({ campaigns, teams, validAcquisitions, termsVersions: [], schoolRecruitmentCodes: [], teamRecruitmentCodes: [], promotionCodes: [] }, campaign.id); return <tr key={campaign.id} className="border-t border-border-subtle"><td className="p-4"><button className="font-semibold text-text-brand hover:underline" onClick={() => navigate(`/admin/ambassadors/${campaign.id}`)}>{campaign.name}</button><p className="mt-1 font-mono text-xs text-text-tertiary">campaignId={campaign.id}</p></td><td>{campaign.startsAt.slice(0, 10)} ~ {campaign.endsAt.slice(0, 10)}</td><td><StatusTag tone={ambassadorCampaignStatus(campaign) === "active" ? "success" : "neutral"}>{statusLabel[ambassadorCampaignStatus(campaign)]}</StatusTag></td><td>{campaign.schoolIds.length}</td><td>{metrics.coreAmbassadorCount}</td><td>{metrics.litTeamCount}</td><td>{metrics.validAcquisitionCount}</td><td><button type="button" onClick={() => setEditing(campaign.id)} className="text-xs font-semibold text-text-brand">编辑</button></td></tr>; })}</tbody></table></div>
     {editing && <CampaignEditorDialog key={editing} campaignId={editing === "new" ? undefined : editing} onDone={() => setEditing(null)} />}
     <TermsManagerDialog open={termsOpen} onOpenChange={setTermsOpen} />
@@ -347,7 +347,7 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
           if (memberAcqs.length === 0) {
             rows.push([
               campaign.name, weekLabel, ambassadorTeamDisplayName(team), team.id,
-            schools[team.schoolId] ?? team.schoolId,
+              schools[team.schoolId] ?? team.schoolId,
               ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
               teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
               String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
@@ -358,7 +358,7 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
             for (const acq of memberAcqs) {
               rows.push([
                 campaign.name, weekLabel, ambassadorTeamDisplayName(team), team.id,
-            schools[team.schoolId] ?? team.schoolId,
+                schools[team.schoolId] ?? team.schoolId,
                 ambassador?.application?.__applicantName ?? ambassador?.accountId ?? "",
                 teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
                 String(tm?.weekAcquisitions ?? 0), String(tm?.totalAcquisitions ?? 0),
@@ -370,12 +370,12 @@ function CampaignDetail({ campaignId }: { campaignId: string }) {
         }
       }
     }
-    downloadCsv(headers, rows, `核心大使计划_${campaign.name}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_全部团队运营数据.csv`);
+    downloadCsv(headers, rows, `校园大使计划_${campaign.name}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_全部团队运营数据.csv`);
   };
 
   return <div className="space-y-6">
     <Link to="/admin/ambassadors" className="inline-flex items-center gap-2 text-sm font-semibold text-text-brand"><ArrowLeft size={16} />返回活动列表</Link>
-    <section className="rounded-container border border-border-subtle bg-surface p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-text-tertiary">核心大使计划</p><h1 className="mt-2 text-2xl font-semibold">{campaign.name}</h1><p className="mt-2 font-mono text-xs text-text-tertiary">campaignId={campaign.id}</p></div><StatusTag tone="info">{statusLabel[ambassadorCampaignStatus(campaign)]}</StatusTag></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["覆盖学校", metrics.schoolCount], ["校园大使", metrics.coreAmbassadorCount], ["已点亮团队", metrics.litTeamCount], ["校园推荐官", metrics.partnerCount], ["累计有效新增", metrics.validAcquisitionCount]].map(([label, value]) => <div key={label} className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div></section>
+    <section className="rounded-container border border-border-subtle bg-surface p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs text-text-tertiary">校园大使计划</p><h1 className="mt-2 text-2xl font-semibold">{campaign.name}</h1><p className="mt-2 font-mono text-xs text-text-tertiary">campaignId={campaign.id}</p></div><StatusTag tone="info">{statusLabel[ambassadorCampaignStatus(campaign)]}</StatusTag></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["覆盖学校", metrics.schoolCount], ["校园大使", metrics.coreAmbassadorCount], ["已点亮团队", metrics.litTeamCount], ["校园推荐官", metrics.partnerCount], ["累计有效新增", metrics.validAcquisitionCount]].map(([label, value]) => <div key={label} className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div></section>
     <section className="grid gap-4 lg:grid-cols-2">{campaign.schoolIds.map(schoolId => <article key={schoolId} className="rounded-container border border-border-subtle bg-surface p-5"><div className="flex items-center gap-2"><Building2 size={18} className="text-text-brand" /><h2 className="font-semibold">{schools[schoolId] ?? schoolId}</h2></div><div className="mt-4">{schoolRecruitmentCodes.filter(code => code.campaignId === campaignId && code.schoolId === schoolId).map(code => <SchoolRecruitmentCodeCard key={code.id} code={code.code} schoolName={schools[schoolId] ?? schoolId} campaignName={campaign.name} />)}</div></article>)}</section>
     <section className="rounded-container border border-border-subtle bg-surface p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -584,7 +584,7 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
       if (memberAcqs.length === 0) {
         rows.push([
           campaign.name, weekLabel, resolvedTeamName, team.id,
-            schools[team.schoolId] ?? team.schoolId, ambassadorName,
+          schools[team.schoolId] ?? team.schoolId, ambassadorName,
           teamLabel[team.status], String(ambassadorTeamMemberCount(team)),
           String(teamWeek?.weekAcquisitions ?? 0), String(teamWeek?.totalAcquisitions ?? 0),
           roleLabel, c.accountId, String(c.weekAcquisitions), String(c.totalAcquisitions),
@@ -603,7 +603,7 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
         }
       }
     }
-    downloadCsv(headers, rows, `核心大使计划_${resolvedTeamName}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_团队运营数据.csv`);
+    downloadCsv(headers, rows, `校园大使计划_${resolvedTeamName}_${formatWeekLabel(weekStart).replace(/ ~ /g, "_")}_团队运营数据.csv`);
   };
 
   return <div className="space-y-6">
@@ -637,7 +637,7 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
         <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">累计有效新增</p><p className="mt-2 text-2xl font-semibold tabular-nums">{teamWeek?.totalAcquisitions ?? 0}</p></div>
         <div className="rounded-control bg-surface-subtle p-4"><p className="text-xs text-text-tertiary">团队激励状态</p><p className="mt-2 text-lg font-semibold">{incentiveLabel[team.incentiveStatus]}</p></div>
       </div>
-<h3 className="mt-6 text-sm font-semibold">本周每日新增分布</h3>
+      <h3 className="mt-6 text-sm font-semibold">本周每日新增分布</h3>
       <div className="mt-3">
         <DailyDistribution weekAcqs={weekAcqs} weekStart={weekStart} />
       </div>
@@ -696,7 +696,6 @@ function TeamDetail({ campaignId, teamId }: { campaignId: string; teamId: string
     <section className="rounded-container border border-border-subtle bg-surface p-5"><h2 className="font-semibold">成员</h2><div className="mt-4 divide-y divide-border-subtle">{team.members.map(member => <div key={member.id} className="flex flex-wrap items-center gap-3 py-3"><span className="font-mono text-sm">{member.accountId}</span><StatusTag tone="neutral">{member.role === "ambassador" ? "校园大使" : "校园推荐官"}</StatusTag><span className="ml-auto text-sm">有效新增 {totalAcquisitions.filter(item => item.promoterAccountId === member.accountId).length}</span></div>)}</div></section>
   </div>;
 }
-
 
 function DailyDistribution({ weekAcqs, weekStart }: { weekAcqs: { registeredAt: string }[]; weekStart: string }) {
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
