@@ -61,8 +61,8 @@
 - 详情承接路由：`/courses/leaderboard`
 - 实现：`apps/mobile/src/features/learning-leaderboard/T055CourseHomePage.tsx`
 - 专项回归：`apps/mobile/tests/t055-course-home-leaderboard.spec.ts`
-- Quality Gate run `33572893544`：mobile routes/types/build = success；learning leaderboard regression = success（原 T043 文件名阶段执行，后续仅做编号迁移）。
-- Deploy Mobile run `33572422498`：type-check/build = success；deploy = success。
+- Quality Gate run `33573311436`：`Verify mobile routes, types and build` = **success**；`Run learning leaderboard regressions` = **success**。
+- Deploy Mobile run `33572422498`：type-check/build = **success**；deploy = **success**。
 
 ## 不在本卡范围
 
@@ -74,4 +74,4 @@
 
 ## 状态说明
 
-本卡已完成施工并具备自动化证据，按项目规则进入 **REVIEW**；未获得人工验收前不自行标记 PASS。
+本卡已完成施工并具备编号纠正后的自动化证据，按项目规则进入 **REVIEW**；未获得人工验收前不自行标记 PASS。
