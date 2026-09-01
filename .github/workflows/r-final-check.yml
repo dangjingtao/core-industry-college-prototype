@@ -39,7 +39,7 @@ jobs:
         continue-on-error: true
         run: >-
           npm run e2e --workspace @core/mobile --
-          tests/t043-course-home-leaderboard.spec.ts
+          tests/t055-course-home-leaderboard.spec.ts
 
       - name: Run mobile browser regressions (soft gate)
         id: mobile-regressions
