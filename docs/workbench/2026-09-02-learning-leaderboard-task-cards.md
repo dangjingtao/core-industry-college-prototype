@@ -6,14 +6,27 @@
 > 入口语义：本文所称「学习首页」统一指 **课程首页**。  
 > UI 原则：复用项目现有 Com Design / design token / icon 体系，不建立平行视觉语言。
 
+## 编号纠正
+
+本批任务最初误派为 T043–T046。完整核对 `docs/workbench` 历史后确认：既有“核心大使”任务链已经占用 T043–T054，因此排行榜任务不能复用这些稳定编号。
+
+2026-09-02 正式纠正为：
+
+- 原 T043 → **T055**
+- 原 T044 → **T056**
+- 原 T045 → **T057**
+- 原 T046 → **T058**
+
+旧核心大使 T043–T054 保持原编号和历史记录不变。
+
 ## 任务总览
 
 | 卡片 | 主题 | 状态 | 独立任务卡 |
 | --- | --- | --- | --- |
-| T043 | 课程首页学习排行榜模块 | TODO | `docs/workbench/tasks/T043-course-home-learning-leaderboard.md` |
-| T044 | 本校榜 / 全国榜排行榜详情页 | TODO | `docs/workbench/tasks/T044-learning-leaderboard-detail.md` |
-| T045 | 校园大使 / 推荐官与榜单状态组件 | TODO | `docs/workbench/tasks/T045-leaderboard-role-badges-and-states.md` |
-| T046 | 排行榜点赞与周周期交互 | TODO | `docs/workbench/tasks/T046-leaderboard-like-interaction.md` |
+| T055 | 课程首页学习排行榜模块 | REVIEW | `docs/workbench/tasks/T055-course-home-learning-leaderboard.md` |
+| T056 | 本校榜 / 全国榜排行榜详情页 | TODO | `docs/workbench/tasks/T056-learning-leaderboard-detail.md` |
+| T057 | 校园大使 / 推荐官与榜单状态组件 | TODO | `docs/workbench/tasks/T057-leaderboard-role-badges-and-states.md` |
+| T058 | 排行榜点赞与周周期交互 | TODO | `docs/workbench/tasks/T058-leaderboard-like-interaction.md` |
 
 ## 统一产品事实
 
@@ -38,9 +51,21 @@
 - 完成度需要接近正式 UI，而不是线框占位。
 - 关键交互和状态应可在原型中真实触发，或通过 Prototype Runtime / 明确 mock 切换。
 
+## T055 当前实施状态
+
+T055 已完成课程首页排行榜摘要原型施工并进入 REVIEW：
+
+- 课程首页展示我的本校排名、本周课程学习时长、本校 Top 3；
+- Top 3 可显示校园大使 / 推荐官 Badge；
+- 周榜与本周日期范围可感知；
+- 「查看完整排行榜」已接真实 `/courses/leaderboard` 路由；
+- 完整 Top 10、本校 / 全国切换仍由 T056 承接，没有提前伪造；
+- mobile routes/types/build 已通过；
+- learning leaderboard Playwright 专项回归已通过。
+
 ## 统一验收
 
-T043–T046 全部进入 REVIEW 前，至少验证：
+T055–T058 全部进入 REVIEW 前，至少验证：
 
 - 课程首页能发现排行榜并进入详情；
 - 本校榜 / 全国榜切换完整；
@@ -51,7 +76,3 @@ T043–T046 全部进入 REVIEW 前，至少验证：
 - 点赞不影响排名；
 - 页面不展示真实姓名；
 - 不扩展日榜、月榜、历史榜、好友榜、PK、战队、私信、排行榜分享或学习时长奖励。
-
-## 编号说明
-
-本批从 T043 起号。`dev` 的既有台账已经存在 T038–T042，因此不得复用 T038–T041 作为本批编号。
