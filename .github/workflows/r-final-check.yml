@@ -34,6 +34,13 @@ jobs:
       - name: Verify mobile routes, types and build
         run: npm run verify --workspace @core/mobile
 
+      - name: Run learning leaderboard regressions (soft gate)
+        id: leaderboard-regressions
+        continue-on-error: true
+        run: >-
+          npm run e2e --workspace @core/mobile --
+          tests/t043-course-home-leaderboard.spec.ts
+
       - name: Run mobile browser regressions (soft gate)
         id: mobile-regressions
         continue-on-error: true
@@ -48,7 +55,6 @@ jobs:
           tests/t013a-workshop.spec.ts
           tests/t013b-s3s4.spec.ts
           tests/t013c-s5s6.spec.ts
-          tests/t043-course-home-leaderboard.spec.ts
           tests/t044-campus-ambassador.spec.ts
           tests/t045-ambassador-promotion.spec.ts
           tests/t048-ambassador-scan-team-experience.spec.ts
@@ -74,6 +80,7 @@ jobs:
         if: always()
         shell: bash
         env:
+          LEADERBOARD_REGRESSIONS: ${{ steps.leaderboard-regressions.outcome }}
           MOBILE_REGRESSIONS: ${{ steps.mobile-regressions.outcome }}
           MOBILE_PC_HANDOFF: ${{ steps.mobile-pc-handoff.outcome }}
           PC_REGRESSIONS: ${{ steps.pc-regressions.outcome }}
@@ -86,12 +93,13 @@ jobs:
             echo
             echo "| Diagnostic suite | Outcome |"
             echo "| --- | --- |"
+            echo "| Learning leaderboard regressions | ${LEADERBOARD_REGRESSIONS} |"
             echo "| Mobile browser regressions | ${MOBILE_REGRESSIONS} |"
             echo "| Mobile-PC-Mobile handoff | ${MOBILE_PC_HANDOFF} |"
             echo "| PC browser regressions | ${PC_REGRESSIONS} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          for outcome in "$MOBILE_REGRESSIONS" "$MOBILE_PC_HANDOFF" "$PC_REGRESSIONS"; do
+          for outcome in "$LEADERBOARD_REGRESSIONS" "$MOBILE_REGRESSIONS" "$MOBILE_PC_HANDOFF" "$PC_REGRESSIONS"; do
             if [ "$outcome" = "failure" ]; then
               echo "::warning::Prototype browser regression failed; retained as diagnostic only."
             fi
