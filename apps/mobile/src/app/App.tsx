@@ -44,8 +44,8 @@ import {
   T034CourseAssessmentPage,
   T034CourseCenterPage,
   T034CourseDetailPage,
-  T034CoursesPage,
 } from "../features/long-term-assets/T034CoursePages";
+import { T043CourseHomePage, T043LeaderboardEntryPage } from "../features/learning-leaderboard/T043CourseHomePage";
 import { BenefitDetailPage, BenefitsPage, BenefitsWalletPage, CreditDetailsPage, FreeBenefitsPage, GiftPackDetailPage, GiftPacksPage } from "../features/long-term-assets/BenefitsPages";
 import { T035ExchangeCenterPage, T035ExchangeDetailPage } from "../features/long-term-assets/T035ExchangePages";
 import {
@@ -173,7 +173,8 @@ export function App() {
               <Route path="/companies/:companyId" element={<CompanyDetailTrustedPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:contentId" element={<NewsDetailPage />} />
-              <Route path="/courses" element={<T034CoursesPage />} />
+              <Route path="/courses" element={<T043CourseHomePage />} />
+              <Route path="/courses/leaderboard" element={<T043LeaderboardEntryPage />} />
               <Route path="/courses/center" element={<T034CourseCenterPage />} />
               <Route path="/courses/:courseId" element={<T034CourseDetailPage />} />
               <Route path="/courses/:courseId/learn" element={account(<CourseLearnPage />)} />
@@ -191,7 +192,7 @@ export function App() {
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
               <Route path="/growth/score" element={account(<GrowthScorePage />)} />
               <Route path="/assets" element={account(<AssetsHomePage />)} />
-              <Route path="/assets/experiences" element={account(<ExperiencesPage />)} />
+              <Route path="/assets/experiences" element={account(<ExperiencesPage />} />
               <Route path="/assets/experiences/:experienceId" element={account(<ExperienceDetailPage />)} />
               <Route path="/assets/learning" element={account(<LearningAssetsPage />)} />
               <Route path="/assets/results" element={account(<ResultsPage />)} />
