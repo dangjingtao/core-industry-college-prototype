@@ -192,7 +192,7 @@ export function App() {
               <Route path="/benefits/:benefitId" element={<BenefitDetailPage />} />
               <Route path="/growth/score" element={account(<GrowthScorePage />)} />
               <Route path="/assets" element={account(<AssetsHomePage />)} />
-              <Route path="/assets/experiences" element={account(<ExperiencesPage />} />
+              <Route path="/assets/experiences" element={account(<ExperiencesPage />)} />
               <Route path="/assets/experiences/:experienceId" element={account(<ExperienceDetailPage />)} />
               <Route path="/assets/learning" element={account(<LearningAssetsPage />)} />
               <Route path="/assets/results" element={account(<ResultsPage />)} />
