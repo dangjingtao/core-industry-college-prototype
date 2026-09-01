@@ -1,4 +1,4 @@
-import { Award, BookOpen, ChevronRight, Clock, Coins, GraduationCap, ShieldCheck, Trophy } from "lucide-react";
+import { ChevronRight, Coins, ShieldCheck, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { courses, type Course } from "../long-term-assets/data";
