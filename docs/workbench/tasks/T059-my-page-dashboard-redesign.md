@@ -131,7 +131,7 @@
 - `fec9aef02ccd0fc22f6673b70284af2a3c189caf` — `/me` 按真实产品能力重新设计
 - `6dd997e9c4efc8a5e1af0729b6135317850cbc00` — T059 专项回归改为验证真实入口与无阅读功能
 
-## 当前自动验证证据
+## 自动验证证据
 
 Deploy Mobile run `33631084779`：
 
@@ -139,11 +139,26 @@ Deploy Mobile run `33631084779`：
 - `Run F00 cross-app browser regression (soft gate)` = **success**
 - `Deploy mobile` = **success**
 
-Prototype Quality Gate run `33631084781` 当前已完成：
+Prototype Quality Gate run `33631084781`：
 
 - `Verify mobile routes, types and build` = **success**
 - `Run learning leaderboard regressions (soft gate)` = **success**
-- `Run mobile browser regressions (soft gate)`：本次落档时仍在运行，最终结果需继续回查；T059 已被该 suite 纳入。
+- `Run mobile browser regressions (soft gate)` = **success**，其中包含 `tests/t059-my-page-dashboard.spec.ts`
+- `Run real Mobile-PC-Mobile handoff (soft gate)` = **success**
+
+T059 专项回归已验证：
+
+- 页面不存在阅读功能 / 阅读占位；
+- 个人资料、扫一扫、设置可达；
+- 长期资产主卡进入 `/assets`；
+- 4 个学习入口正确；
+- 排行榜入口正确；
+- 8 个主要服务入口正确；
+- 用户协议、隐私政策、授权管理仍直接可达；
+- 动态校园推广团队入口保留；
+- 退出登录二次确认保留；
+- 375 / 390 / 430px 均无横向滚动；
+- 扫码模拟器仍可达。
 
 ## 专项验收
 
@@ -159,8 +174,8 @@ Prototype Quality Gate run `33631084781` 当前已完成：
 - [x] 退出登录二次确认保留。
 - [x] mobile route audit / typecheck / build 通过。
 - [x] dev mobile preview 已部署。
-- [ ] T059 所在完整 mobile browser regression suite 最终结果回查。
-- [ ] 375 / 390 / 430px 的自动回归最终结果回查。
+- [x] T059 所在 mobile browser regression suite 通过。
+- [x] 375 / 390 / 430px 专项回归通过。
 - [ ] 人工视觉验收。
 
 ## 被否决实现记录
