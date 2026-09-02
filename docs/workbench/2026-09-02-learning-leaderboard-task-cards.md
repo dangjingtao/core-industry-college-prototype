@@ -24,7 +24,7 @@
 | 卡片 | 主题 | 状态 | 独立任务卡 |
 | --- | --- | --- | --- |
 | T055 | 课程首页学习排行榜模块 | REVIEW | `docs/workbench/tasks/T055-course-home-learning-leaderboard.md` |
-| T056 | 本校榜 / 全国榜排行榜详情页 | TODO | `docs/workbench/tasks/T056-learning-leaderboard-detail.md` |
+| T056 | 本校榜 / 全国榜排行榜详情页 | REVIEW | `docs/workbench/tasks/T056-learning-leaderboard-detail.md` |
 | T057 | 校园大使 / 推荐官与榜单状态组件 | TODO | `docs/workbench/tasks/T057-leaderboard-role-badges-and-states.md` |
 | T058 | 排行榜点赞与周周期交互 | TODO | `docs/workbench/tasks/T058-leaderboard-like-interaction.md` |
 
@@ -59,9 +59,22 @@ T055 已完成课程首页排行榜摘要原型施工并进入 REVIEW：
 - Top 3 可显示校园大使 / 推荐官 Badge；
 - 周榜与本周日期范围可感知；
 - 「查看完整排行榜」已接真实 `/courses/leaderboard` 路由；
-- 完整 Top 10、本校 / 全国切换仍由 T056 承接，没有提前伪造；
 - mobile routes/types/build 已通过；
 - learning leaderboard Playwright 专项回归已通过。
+
+## T056 当前实施状态
+
+T056 已完成排行榜详情页施工并进入 REVIEW：
+
+- `/courses/leaderboard` 已从承接页升级为正式详情原型；
+- 本校榜 / 全国榜可真实切换，两个榜单均展示 Top 10；
+- 本校榜用“当前用户第 12 名”验证未进 Top 10 时的独立「我的排名」；
+- 全国榜用“当前用户第 8 名”验证 Top 10 内本人态；
+- 全国榜展示学校维度并覆盖多所高校；
+- 托管账户只保留在 mock 数据层，用户侧不显示托管 / 模拟标签，并通过不同名次混排表达不固定霸榜；
+- Top 1–3 使用克制层级，普通榜单行保持移动端阅读密度；
+- 点赞数已展示，但点赞状态机仍由 T058 承接；
+- Quality Gate run `33577071577`：mobile routes/types/build 与 learning leaderboard regressions 均通过。
 
 ## 统一验收
 
