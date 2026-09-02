@@ -1,6 +1,6 @@
-import { Clock3, Heart, School, Trophy } from "lucide-react";
+import { Clock3, Heart, Orbit, School } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Card, PageHeader, PublicShell, StatusTag } from "../../components/ui";
+import { Card, PageHeader, PublicShell } from "../../components/ui";
 import { LeaderboardRoleBadges, LeaderboardSelfBadge, type LeaderboardRole } from "./LeaderboardIdentity";
 
 type BoardScope = "school" | "national";
@@ -66,8 +66,8 @@ const schoolSelfStanding: LeaderboardEntry = {
 function formatDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (!hours) return `${rest} 分钟`;
-  return rest ? `${hours} 小时 ${rest} 分` : `${hours} 小时`;
+  if (!hours) return `${rest}分钟`;
+  return rest ? `${hours}时${String(rest).padStart(2, "0")}分` : `${hours}小时`;
 }
 
 function weekStart(now = new Date()) {
@@ -89,14 +89,6 @@ function weekKey(now = new Date()) {
   return localDateKey(weekStart(now));
 }
 
-function weekRangeLabel(now = new Date()) {
-  const start = weekStart(now);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  const format = (date: Date) => `${date.getMonth() + 1}月${date.getDate()}日`;
-  return `${format(start)}–${format(end)}`;
-}
-
 function readWeeklyLikes(storageKey: string) {
   if (typeof window === "undefined") return new Set<string>();
   try {
@@ -108,24 +100,19 @@ function readWeeklyLikes(storageKey: string) {
   }
 }
 
-function RankMark({ rank }: { rank: number }) {
-  const tone = rank === 1
-    ? "bg-warning-bg text-warning-text"
-    : rank === 2
-      ? "bg-info-bg text-info-text"
-      : rank === 3
-        ? "bg-primary-container text-text-brand"
-        : "bg-surface-subtle text-text-secondary";
-  return <span className={`grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold ${tone}`}>{rank}</span>;
+function LearnerAvatar({ entry, featured = false }: { entry: LeaderboardEntry; featured?: boolean }) {
+  return (
+    <span
+      aria-label={`${entry.name}公开头像`}
+      role="img"
+      className={`grid shrink-0 place-items-center rounded-full border-2 border-surface font-semibold shadow-sm ${featured ? "size-[68px] text-lg" : "size-9 text-xs"} ${entry.avatarTone}`}
+    >
+      {entry.name.slice(0, 1)}
+    </span>
+  );
 }
 
-function LearnerAvatar({ entry }: { entry: LeaderboardEntry }) {
-  return <span aria-label={`${entry.name}公开头像`} role="img" className={`grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold ${entry.avatarTone}`}>
-    {entry.name.slice(0, 1)}
-  </span>;
-}
-
-function LikeButton({ entry, liked, onToggle }: { entry: LeaderboardEntry; liked: boolean; onToggle: () => void }) {
+function LikeButton({ entry, liked, onToggle, compact = false }: { entry: LeaderboardEntry; liked: boolean; onToggle: () => void; compact?: boolean }) {
   const likes = entry.likes + (liked ? 1 : 0);
   const label = entry.isSelf
     ? `不能给自己点赞，本周 ${likes} 个赞`
@@ -133,69 +120,175 @@ function LikeButton({ entry, liked, onToggle }: { entry: LeaderboardEntry; liked
       ? `取消给${entry.name}的点赞，本周 ${likes} 个赞`
       : `给${entry.name}点赞，本周 ${likes} 个赞`;
 
-  return <button
-    type="button"
-    disabled={entry.isSelf}
-    aria-label={label}
-    aria-pressed={entry.isSelf ? undefined : liked}
-    data-testid="leaderboard-like"
-    data-person-key={entry.personKey}
-    onClick={entry.isSelf ? undefined : onToggle}
-    className={`inline-flex min-h-touch shrink-0 items-center gap-1 rounded-control px-2 text-xs font-semibold transition ${entry.isSelf ? "cursor-not-allowed text-text-disabled" : liked ? "bg-primary-container text-text-brand" : "text-text-secondary active:bg-surface-pressed"}`}
-  >
-    <Heart size={15} aria-hidden="true" className={liked ? "fill-current" : ""} />
-    <span data-testid="like-count">{likes}</span>
-  </button>;
+  return (
+    <button
+      type="button"
+      disabled={entry.isSelf}
+      aria-label={label}
+      aria-pressed={entry.isSelf ? undefined : liked}
+      data-testid="leaderboard-like"
+      data-person-key={entry.personKey}
+      onClick={entry.isSelf ? undefined : onToggle}
+      className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-full transition ${compact ? "min-h-7 px-2 text-[11px]" : "min-h-9 px-2 text-xs"} ${entry.isSelf ? "cursor-not-allowed bg-surface-subtle text-text-disabled" : liked ? "bg-primary-container text-text-brand" : "text-text-secondary active:bg-surface-pressed"}`}
+    >
+      <Heart size={compact ? 13 : 15} aria-hidden="true" className={liked ? "fill-current" : ""} />
+      <span data-testid="like-count">{likes}</span>
+    </button>
+  );
 }
 
-function LeaderboardRow({ entry, scope, liked, onToggleLike }: { entry: LeaderboardEntry; scope: BoardScope; liked: boolean; onToggleLike: () => void }) {
-  return <div
-    data-testid="leaderboard-row"
-    data-entry-id={entry.id}
-    data-person-key={entry.personKey}
-    data-self={entry.isSelf ? "true" : "false"}
-    className={`flex min-h-[76px] items-center gap-3 px-3 py-3 ${entry.isSelf ? "bg-primary-container/45" : "bg-surface"}`}
-  >
-    <RankMark rank={entry.rank} />
-    <LearnerAvatar entry={entry} />
-    <div className="min-w-0 flex-1">
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        <span className="truncate text-sm font-semibold text-text-primary">{entry.name}</span>
-        {entry.isSelf && <LeaderboardSelfBadge />}
-        <LeaderboardRoleBadges roles={entry.roles} />
-      </div>
-      {scope === "national" && <p className="mt-1 flex items-center gap-1 text-xs text-text-tertiary"><School size={12} aria-hidden="true" />{entry.school}</p>}
-      <p className="mt-1 flex items-center gap-1 text-xs text-text-secondary"><Clock3 size={12} aria-hidden="true" />本周 {formatDuration(entry.minutes)}</p>
-    </div>
-    <LikeButton entry={entry} liked={liked} onToggle={onToggleLike} />
-  </div>;
+function RankMedal({ rank }: { rank: number }) {
+  const className = rank === 1
+    ? "bg-warning text-white"
+    : rank === 2
+      ? "border border-border bg-surface-subtle text-text-secondary"
+      : "border border-warning/30 bg-warning-bg text-warning-text";
+  return <span className={`grid size-7 place-items-center rounded-full text-xs font-bold shadow-sm ${className}`}>{rank}</span>;
 }
 
 function BoardTabs({ scope, onChange }: { scope: BoardScope; onChange: (scope: BoardScope) => void }) {
-  return <div className="grid grid-cols-2 gap-1 rounded-container bg-surface-subtle p-1" aria-label="排行榜范围">
-    {(["school", "national"] as const).map(value => {
-      const active = scope === value;
-      return <button
-        key={value}
-        type="button"
-        aria-pressed={active}
-        onClick={() => onChange(value)}
-        className={`min-h-touch rounded-control px-3 text-sm font-semibold transition ${active ? "bg-surface text-text-primary shadow-sm" : "text-text-secondary"}`}
-      >
-        {value === "school" ? "本校榜" : "全国榜"}
-      </button>;
-    })}
-  </div>;
+  return (
+    <div className="grid grid-cols-2 border-b border-border-subtle bg-surface" aria-label="排行榜范围">
+      {(["school", "national"] as const).map(value => {
+        const active = scope === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(value)}
+            className={`relative min-h-12 text-sm font-semibold transition ${active ? "text-text-brand" : "text-text-primary"}`}
+          >
+            {value === "school" ? "本校榜" : "全国榜"}
+            {active && <span className="absolute bottom-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function BoardHero({ scope }: { scope: BoardScope }) {
+  const Icon = scope === "school" ? School : Orbit;
+  return (
+    <div
+      className="relative overflow-hidden rounded-container px-5 py-4 text-on-primary shadow-sm"
+      style={{ background: "linear-gradient(135deg, var(--com-brand-500) 0%, var(--com-brand-400) 62%, var(--com-accent-500) 145%)" }}
+    >
+      <div className="relative z-10">
+        <h2 className="text-lg font-bold">{scope === "school" ? "本校学习排行榜" : "全国学习排行榜"}</h2>
+        <p className="mt-1 text-xs text-white/80">每周一 00:00 更新</p>
+      </div>
+      <div className="absolute -right-5 -top-8 size-28 rounded-full border border-white/20 bg-white/10" />
+      <div className="absolute right-8 top-2 size-16 rounded-full border border-white/20 bg-white/10" />
+      <Icon className="absolute right-5 top-1/2 -translate-y-1/2 text-white/85" size={62} strokeWidth={1.35} aria-hidden="true" />
+    </div>
+  );
+}
+
+function PodiumEntry({ entry, liked, onToggleLike }: { entry: LeaderboardEntry; liked: boolean; onToggleLike: () => void }) {
+  const first = entry.rank === 1;
+  return (
+    <div
+      data-testid="leaderboard-row"
+      data-entry-id={entry.id}
+      data-person-key={entry.personKey}
+      data-self={entry.isSelf ? "true" : "false"}
+      className={`flex min-w-0 flex-col items-center text-center ${first ? "pb-1" : "pt-5"}`}
+    >
+      <div className="relative">
+        <LearnerAvatar entry={entry} featured />
+        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2"><RankMedal rank={entry.rank} /></span>
+      </div>
+      <div className="mt-5 flex min-w-0 flex-col items-center gap-1">
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
+          <span className="max-w-[92px] truncate text-sm font-semibold text-text-primary">{entry.name}</span>
+          {entry.isSelf && <LeaderboardSelfBadge />}
+        </div>
+        <LeaderboardRoleBadges roles={entry.roles} />
+        {entry.school && <span className={`max-w-[108px] truncate text-[11px] text-text-tertiary ${entry.rank === 1 ? "block" : "hidden"}`}>{entry.school}</span>}
+        <span className="text-xs font-medium text-text-primary">{formatDuration(entry.minutes)}</span>
+        <LikeButton entry={entry} liked={liked} onToggle={onToggleLike} compact />
+      </div>
+    </div>
+  );
+}
+
+function CompactLeaderboardRow({ entry, scope, liked, onToggleLike }: { entry: LeaderboardEntry; scope: BoardScope; liked: boolean; onToggleLike: () => void }) {
+  const national = scope === "national";
+  return (
+    <div
+      data-testid="leaderboard-row"
+      data-entry-id={entry.id}
+      data-person-key={entry.personKey}
+      data-self={entry.isSelf ? "true" : "false"}
+      className={`grid min-h-[58px] items-center gap-2 border-t border-border-subtle px-3 py-2 ${national ? "grid-cols-[24px_minmax(0,1fr)_68px_64px_50px]" : "grid-cols-[24px_minmax(0,1fr)_72px_52px]"} ${entry.isSelf ? "bg-primary-container/55" : "bg-surface"}`}
+    >
+      <span className="text-center text-xs font-semibold text-text-primary">{entry.rank}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <LearnerAvatar entry={entry} />
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <span className="truncate text-xs font-medium text-text-primary">{entry.name}</span>
+            {entry.isSelf && <LeaderboardSelfBadge />}
+            <LeaderboardRoleBadges roles={entry.roles} />
+          </div>
+        </div>
+      </div>
+      {national && <span className="line-clamp-2 text-[10px] leading-4 text-text-tertiary">{entry.school}</span>}
+      <span className="whitespace-nowrap text-[11px] font-medium text-text-primary">{formatDuration(entry.minutes)}</span>
+      <LikeButton entry={entry} liked={liked} onToggle={onToggleLike} compact />
+    </div>
+  );
+}
+
+function TableHeader({ scope }: { scope: BoardScope }) {
+  const national = scope === "national";
+  return (
+    <div className={`grid items-center gap-2 bg-surface-subtle px-3 py-2 text-[10px] text-text-tertiary ${national ? "grid-cols-[24px_minmax(0,1fr)_68px_64px_50px]" : "grid-cols-[24px_minmax(0,1fr)_72px_52px]"}`}>
+      <span className="text-center">排名</span>
+      <span>用户</span>
+      {national && <span>学校</span>}
+      <span>本周学习时长</span>
+      <span className="text-center">点赞</span>
+    </div>
+  );
+}
+
+function SelfRankingCard({ entry, scope }: { entry: LeaderboardEntry; scope: BoardScope }) {
+  return (
+    <section aria-labelledby="my-ranking-title" className="space-y-1.5">
+      <h2 id="my-ranking-title" className="px-1 text-xs font-semibold text-text-brand">我的排名</h2>
+      <div className={`grid min-h-[60px] items-center gap-2 rounded-container border border-primary/45 bg-surface px-3 py-2 shadow-sm ${scope === "national" ? "grid-cols-[26px_minmax(0,1fr)_70px_66px_52px]" : "grid-cols-[26px_minmax(0,1fr)_74px_54px]"}`}>
+        <span className="text-center text-sm font-bold text-text-primary">{entry.rank}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <LearnerAvatar entry={entry} />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="truncate text-xs font-semibold text-text-primary">{entry.name}</span>
+              <LeaderboardSelfBadge />
+              <LeaderboardRoleBadges roles={entry.roles} />
+            </div>
+          </div>
+        </div>
+        {scope === "national" && <span className="text-[10px] leading-4 text-text-tertiary">{entry.school}</span>}
+        <span className="whitespace-nowrap text-[11px] font-semibold text-text-primary">{formatDuration(entry.minutes)}</span>
+        <span className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-text-brand"><Heart size={14} className="fill-current" aria-hidden="true" />{entry.likes}</span>
+      </div>
+    </section>
+  );
 }
 
 export function T056LeaderboardPage() {
   const [scope, setScope] = useState<BoardScope>("school");
+  const [showRules, setShowRules] = useState(false);
   const currentWeekKey = weekKey();
   const storageKey = `${weeklyLikeStoragePrefix}${currentWeekKey}`;
   const [likedPeople, setLikedPeople] = useState<Set<string>>(() => readWeeklyLikes(storageKey));
   const entries = useMemo(() => scope === "school" ? schoolBoard : nationalBoard, [scope]);
   const selfInTopTen = entries.some(entry => entry.isSelf);
-  const weekRange = weekRangeLabel();
+  const topThree = useMemo(() => [entries[1], entries[0], entries[2]].filter(Boolean), [entries]);
+  const remaining = entries.slice(3);
 
   useEffect(() => {
     setLikedPeople(readWeeklyLikes(storageKey));
@@ -213,74 +306,75 @@ export function T056LeaderboardPage() {
     });
   };
 
-  return <PublicShell showNavigation={false}>
-    <PageHeader title="学习排行榜" backTo="/courses" />
-    <div className="space-y-4 px-4 py-5">
-      <Card className="overflow-hidden border border-border-subtle p-0">
-        <div className="flex items-start gap-3 p-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-[16px] bg-primary-container text-text-brand"><Trophy size={22} aria-hidden="true" /></span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-base font-semibold text-text-primary">本周学习排行榜</h1>
-              <StatusTag tone="info">周榜</StatusTag>
+  return (
+    <PublicShell showNavigation={false}>
+      <PageHeader
+        title="学习排行榜"
+        backTo="/courses"
+        right={
+          <button type="button" onClick={() => setShowRules(value => !value)} className="min-h-touch px-2 text-xs font-medium text-text-secondary">
+            规则说明
+          </button>
+        }
+      />
+      <h2 className="sr-only">本周学习排行榜</h2>
+      <BoardTabs scope={scope} onChange={setScope} />
+
+      <div className="space-y-4 px-4 py-4">
+        <BoardHero scope={scope} />
+
+        {showRules && (
+          <Card className="border border-border-subtle bg-surface-subtle px-4 py-3">
+            <h3 className="text-sm font-semibold text-text-primary">排行榜规则</h3>
+            <div className="mt-2 space-y-1 text-xs leading-5 text-text-secondary">
+              <p>· 仅按本周课程学习时长排名，每周一进入新周期。</p>
+              <p>· 点赞按周记录，可取消后重新点赞，但不参与排名。</p>
+              <p>· 全国榜展示学校；校园大使 / 推荐官仅作身份识别。</p>
             </div>
-            <p className="mt-1 text-xs text-text-tertiary">{weekRange} · 每周进入新的榜单周期</p>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">仅按本周课程学习时长排名，点赞不参与排名。</p>
+          </Card>
+        )}
+
+        <section data-testid="leaderboard-list" className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-semibold text-text-primary">本周课程学习时长排名</h3>
+            <span className="inline-flex items-center gap-1 text-[11px] text-text-tertiary"><Clock3 size={13} aria-hidden="true" />周榜</span>
           </div>
-        </div>
-        <div className="border-t border-border-subtle p-3">
-          <BoardTabs scope={scope} onChange={setScope} />
-        </div>
-      </Card>
 
-      <Card className="overflow-hidden border border-border-subtle p-0">
-        <div className="flex items-end justify-between gap-3 border-b border-border-subtle px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold text-text-primary">{scope === "school" ? "本校 Top 10" : "全国 Top 10"}</h2>
-            <p className="mt-1 text-xs text-text-tertiary">{scope === "school" ? mySchool : "全国高校"} · 本周课程学习时长</p>
+          <div className="grid grid-cols-3 items-end gap-1 px-1 pb-1">
+            {topThree.map(entry => (
+              <PodiumEntry
+                key={entry.id}
+                entry={entry}
+                liked={likedPeople.has(entry.personKey)}
+                onToggleLike={() => toggleLike(entry.personKey)}
+              />
+            ))}
           </div>
-          <span className="text-xs text-text-tertiary">Top 10</span>
-        </div>
-        <div data-testid="leaderboard-list" data-week-key={currentWeekKey} className="divide-y divide-border-subtle">
-          {entries.map(entry => <LeaderboardRow
-            key={entry.id}
-            entry={entry}
-            scope={scope}
-            liked={likedPeople.has(entry.personKey)}
-            onToggleLike={() => toggleLike(entry.personKey)}
-          />)}
-        </div>
-      </Card>
 
-      {!selfInTopTen && <section aria-labelledby="my-ranking-title" className="space-y-2">
-        <div className="flex items-end justify-between gap-3 px-1">
-          <h2 id="my-ranking-title" className="text-sm font-semibold text-text-primary">我的排名</h2>
-          <span className="text-xs text-text-tertiary">未进入 Top 10 也会保留</span>
-        </div>
-        <Card className="overflow-hidden border border-primary/20 bg-primary-container/30 p-0">
-          <LeaderboardRow
-            entry={schoolSelfStanding}
-            scope="school"
-            liked={false}
-            onToggleLike={() => undefined}
-          />
-        </Card>
-      </section>}
+          <Card className="overflow-hidden border border-border-subtle p-0 shadow-sm">
+            <TableHeader scope={scope} />
+            {remaining.map(entry => (
+              <CompactLeaderboardRow
+                key={entry.id}
+                entry={entry}
+                scope={scope}
+                liked={likedPeople.has(entry.personKey)}
+                onToggleLike={() => toggleLike(entry.personKey)}
+              />
+            ))}
+          </Card>
+        </section>
 
-      <Card className="border border-border-subtle bg-surface-subtle">
-        <h2 className="text-sm font-semibold text-text-primary">榜单规则</h2>
-        <div className="mt-2 space-y-1.5 text-xs leading-5 text-text-secondary">
-          <p>· 本校榜与全国榜均只按本周课程学习时长排序。</p>
-          <p>· 全国榜额外展示所属学校；本校榜保持更紧凑的信息密度。</p>
-          <p>· 点赞按周记录；取消后可以重新点赞，新一周会进入新的点赞周期。</p>
-          <p>· 点赞只表达互动，不改变当前排名；用户不能给自己点赞。</p>
-        </div>
-      </Card>
-    </div>
-  </PublicShell>;
+        {!selfInTopTen && <SelfRankingCard entry={schoolSelfStanding} scope="school" />}
+
+        <p className="pb-2 pt-1 text-center text-xs text-text-tertiary">
+          {selfInTopTen ? "已经进入 Top10，继续保持本周学习节奏。" : "未进入 Top10？别着急，你的排名也在不断上升中。"}
+        </p>
+      </div>
+    </PublicShell>
+  );
 }
 
-// Prototype-only data note for T056/T058:
+// Prototype-only data note:
 // `managed` is deliberately never rendered. It represents dynamically supplemented accounts from promoted schools.
 // Managed examples are mixed across ranks instead of occupying fixed top positions, and real-user examples can rank above them.
-// T058 stores only the current viewer's active likes, namespaced by Monday week key, so a new week naturally starts a new interaction cycle.
