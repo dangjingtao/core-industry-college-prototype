@@ -53,8 +53,8 @@ test.describe("T059 my page dashboard", () => {
     if (await ambassadorTeam.count()) await expect(ambassadorTeam).toHaveAttribute("href", /\/ambassadors\/team\//);
 
     await page.getByRole("button", { name: "退出登录" }).click();
-    await expect(page.getByRole("dialog")).toContainText("退出登录");
     await expect(page.getByRole("button", { name: "确认退出" })).toBeVisible();
+    await expect(page.getByText(/只会清除当前登录 session/)).toBeVisible();
   });
 
   test("has no horizontal overflow at common mobile widths", async ({ page }) => {
