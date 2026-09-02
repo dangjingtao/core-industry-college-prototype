@@ -25,7 +25,7 @@
 | --- | --- | --- | --- |
 | T055 | 课程首页学习排行榜模块 | REVIEW | `docs/workbench/tasks/T055-course-home-learning-leaderboard.md` |
 | T056 | 本校榜 / 全国榜排行榜详情页 | REVIEW | `docs/workbench/tasks/T056-learning-leaderboard-detail.md` |
-| T057 | 校园大使 / 推荐官与榜单状态组件 | TODO | `docs/workbench/tasks/T057-leaderboard-role-badges-and-states.md` |
+| T057 | 校园大使 / 推荐官与榜单状态组件 | REVIEW | `docs/workbench/tasks/T057-leaderboard-role-badges-and-states.md` |
 | T058 | 排行榜点赞与周周期交互 | TODO | `docs/workbench/tasks/T058-leaderboard-like-interaction.md` |
 
 ## 统一产品事实
@@ -75,6 +75,19 @@ T056 已完成排行榜详情页施工并进入 REVIEW：
 - Top 1–3 使用克制层级，普通榜单行保持移动端阅读密度；
 - 点赞数已展示，但点赞状态机仍由 T058 承接；
 - Quality Gate run `33577071577`：mobile routes/types/build 与 learning leaderboard regressions 均通过。
+
+## T057 当前实施状态
+
+T057 已完成校园大使 / 推荐官 Badge 与榜单状态组件施工并进入 REVIEW：
+
+- 新增共享 `LeaderboardIdentity.tsx`，课程首页与排行榜详情不再各维护一套身份标签；
+- 校园大使使用轻量 BadgeCheck 图标 + warning 语义色；
+- 推荐官使用轻量 Megaphone 图标 + info 语义色；
+- Badge 使用现有 design token，不建立平行视觉体系；
+- 身份数据继续使用数组，可支持未来多身份布局，不写死单 Badge；
+- 普通用户、校园大使、推荐官、Top 1–3、普通 Top 10、本人、Top 10 外「我的排名」均有状态样例；
+- 当前用户以“我 + 推荐官”同时覆盖本校 Top 10 外和全国 Top 10 内两种本人场景；
+- Quality Gate run `33578621026`：mobile routes/types/build 与 T055–T057 learning leaderboard regressions 均通过。
 
 ## 统一验收
 
