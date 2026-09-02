@@ -10,9 +10,16 @@ async function expectLeaderboardMaterialsLoaded(page: import("@playwright/test")
   }))).toBe(true);
 }
 
-test.describe("T056 leaderboard visual review evidence", () => {
-  test("captures school and national boards with all WebP materials loaded", async ({ page }) => {
+test.describe("T055/T056 leaderboard visual review evidence", () => {
+  test("captures course-home preview plus school and national boards with all WebP materials loaded", async ({ page }) => {
     await mkdir("visual-artifacts", { recursive: true });
+
+    await page.goto("/courses");
+    const preview = page.locator('section[aria-labelledby="learning-leaderboard-title"]');
+    await expect(preview.getByRole("heading", { name: "学习排行榜" })).toBeVisible();
+    await expectLeaderboardMaterialsLoaded(page);
+    await preview.screenshot({ path: "visual-artifacts/leaderboard-course-home.png" });
+
     await page.goto("/courses/leaderboard");
     await expect(page.getByRole("heading", { name: "本校学习排行榜" })).toBeVisible();
     await expectLeaderboardMaterialsLoaded(page);
