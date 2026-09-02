@@ -216,7 +216,7 @@ export function AmbassadorAwareMyPage() {
         </div>
       </section>
 
-      <section data-testid="reading-center-entry" className="overflow-hidden rounded-container bg-gradient-to-br from-primary to-primary-pressed p-5 text-text-inverse">
+      <section data-testid="reading-center-entry" className="overflow-hidden rounded-container bg-gradient-to-br from-primary to-primary-pressed p-5 text-on-primary">
         <div className="flex items-center gap-4">
           <span className="grid size-14 shrink-0 place-items-center rounded-full bg-surface text-text-brand">
             <BookOpen size={28} strokeWidth={1.8} aria-hidden="true" />
@@ -224,6 +224,7 @@ export function AmbassadorAwareMyPage() {
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-semibold">阅读中心</h2>
             <p className="mt-1 text-sm leading-5">读万卷书，行万里路</p>
+            <span className="mt-2 inline-flex rounded-full border border-surface px-2 py-0.5 text-xs font-medium">功能接入中</span>
           </div>
           <button
             type="button"
@@ -234,7 +235,6 @@ export function AmbassadorAwareMyPage() {
             进入阅读 <ChevronRight size={17} aria-hidden="true" />
           </button>
         </div>
-        <div className="mt-4 border-t border-surface pt-3 text-xs leading-5">阅读功能正式路由接入后开放；当前不伪造书架、时长或阅读统计。</div>
       </section>
 
       <section className="rounded-container border border-border-subtle bg-surface p-4" aria-labelledby="my-learning-title">
