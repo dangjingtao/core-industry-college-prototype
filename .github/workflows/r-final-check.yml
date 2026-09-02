@@ -41,6 +41,7 @@ jobs:
           npm run e2e --workspace @core/mobile --
           tests/t055-course-home-leaderboard.spec.ts
           tests/t056-learning-leaderboard-detail.spec.ts
+          tests/t057-leaderboard-identity-states.spec.ts
 
       - name: Run mobile browser regressions (soft gate)
         id: mobile-regressions
