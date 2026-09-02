@@ -6,3 +6,366 @@
 html { background: var(--color-background); }
 body { margin: 0; min-width: 320px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 * { box-sizing: border-box; }
+
+/* ── Home visual polish
+   Visual target: approved AI UI concept.
+   Product structure remains owned by the existing React tree.
+   Scope intentionally keys off the existing home section id so other routes are untouched. ── */
+
+main:has(#home-explore-title) {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--com-brand-50) 34%, var(--color-background)) 0,
+      var(--color-background) 280px
+    );
+}
+
+main:has(#home-explore-title) > header {
+  align-items: center;
+  padding: var(--space-24) var(--space-16) var(--space-16);
+}
+
+main:has(#home-explore-title) > header > div:first-child p {
+  color: var(--color-text-brand);
+  font: var(--type-label-small);
+  letter-spacing: 0.02em;
+}
+
+main:has(#home-explore-title) > header > div:first-child h1 {
+  margin-top: var(--space-4);
+  color: var(--color-text-primary);
+  font: var(--type-heading);
+}
+
+main:has(#home-explore-title) > header button[title*="奖励规则"] {
+  min-height: var(--size-touch-min);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-primary-container);
+  color: var(--color-text-primary);
+  padding-inline: var(--space-12);
+}
+
+main:has(#home-explore-title) > header button[title*="奖励规则"] svg {
+  color: var(--color-primary);
+}
+
+main:has(#home-explore-title) > header button[aria-label="消息通知"] {
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 {
+  padding-inline: var(--space-16);
+}
+
+/* Competition hero: keep the live product copy/actions, borrow only the concept's visual hierarchy. */
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child {
+  position: relative;
+  isolation: isolate;
+  min-height: 232px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--com-brand-400) 38%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--com-brand-200) 34%, transparent) 0, transparent 28%),
+    linear-gradient(135deg, var(--com-brand-700) 0%, var(--color-primary) 52%, var(--com-brand-400) 100%);
+  padding: var(--space-20);
+  box-shadow: none;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: var(--space-12);
+  right: -18px;
+  width: 54%;
+  height: 76%;
+  background: url("/ui/home-hero-trophy.webp") center / contain no-repeat;
+  opacity: 0.92;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 100%);
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > * {
+  position: relative;
+  z-index: 1;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:first-child > div:first-child {
+  max-width: 66%;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:first-child > span:last-child {
+  display: none;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child h2 {
+  margin-top: var(--space-8);
+  font: var(--type-title);
+  line-height: var(--line-height-title);
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child p {
+  max-width: 28ch;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:last-child {
+  align-items: center;
+  margin-top: var(--space-24);
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:last-child > button:first-child {
+  flex: 0 1 auto;
+  min-width: 148px;
+  border-radius: var(--radius-control);
+  padding-inline: var(--space-16);
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:last-child > button:last-child {
+  margin-left: auto;
+  border: 1px solid color-mix(in srgb, var(--com-neutral-0) 28%, transparent);
+  background: color-mix(in srgb, var(--com-neutral-0) 12%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+/* Explore section */
+section:has(#home-explore-title) > div:first-child {
+  padding-inline: var(--space-4);
+}
+
+section:has(#home-explore-title) > div:first-child h2 {
+  font: var(--type-heading);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) {
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child {
+  gap: var(--space-12);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-12);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button {
+  min-height: 128px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
+  padding: var(--space-16);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:first-child {
+  background:
+    linear-gradient(
+      145deg,
+      var(--com-brand-50),
+      color-mix(in srgb, var(--com-brand-100) 52%, var(--color-surface))
+    );
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:nth-child(2) {
+  background:
+    linear-gradient(
+      145deg,
+      var(--com-accent-50),
+      color-mix(in srgb, var(--com-accent-100) 46%, var(--color-surface))
+    );
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:first-child > span:first-child > span:first-child {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: none;
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:nth-child(2) > span:first-child > span:first-child {
+  background: var(--color-accent);
+  color: var(--color-on-primary);
+  box-shadow: none;
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:first-child > span:first-child > span:last-child {
+  background: var(--color-surface);
+  color: var(--color-text-brand);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button:nth-child(2) > span:first-child > span:last-child {
+  background: var(--color-surface);
+  color: var(--color-accent-strong);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:nth-child(2) {
+  margin-top: var(--space-12);
+  gap: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-12) var(--space-8);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:nth-child(2) > button {
+  min-height: 72px;
+  background: transparent;
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:nth-child(2) > button > span:first-child {
+  border-radius: var(--radius-md);
+  background: var(--color-primary-container);
+  color: var(--color-text-brand);
+}
+
+section:has(#home-explore-title) > div:nth-child(2) > div:nth-child(2) > button:nth-child(2) > span:first-child,
+section:has(#home-explore-title) > div:nth-child(2) > div:nth-child(2) > button:nth-child(5) > span:first-child {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-strong);
+}
+
+/* Task zone */
+section:has(#home-task-zone-title) > div:first-child {
+  padding-inline: var(--space-4);
+}
+
+section:has(#home-task-zone-title) > div:first-child h2 {
+  font: var(--type-heading);
+}
+
+section:has(#home-task-zone-title) > div:nth-child(2) {
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+section:has(#home-task-zone-title) > div:nth-child(2) > button:first-child {
+  min-height: 124px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--color-primary-container),
+      var(--color-surface) 72%
+    );
+  padding: var(--space-16);
+}
+
+section:has(#home-task-zone-title) > div:nth-child(2) > button:first-child > span:last-child {
+  color: var(--color-text-brand);
+}
+
+section:has(#home-task-zone-title) > div:nth-child(2) > div:last-child > button {
+  min-height: 88px;
+  padding-block: var(--space-12);
+}
+
+section:has(#home-task-zone-title) + div {
+  border: 1px solid color-mix(in srgb, var(--com-brand-200) 72%, var(--color-border-subtle));
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      100deg,
+      var(--color-primary-container),
+      color-mix(in srgb, var(--com-accent-50) 26%, var(--color-surface))
+    );
+  padding: var(--space-16);
+}
+
+/* Existing welfare content, upgraded with the cropped material from the approved visual reference. */
+main:has(#home-explore-title) a[href^="/welfare/"] > div {
+  position: relative;
+  isolation: isolate;
+  min-height: 128px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--com-brand-200) 68%, var(--color-border-subtle));
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      110deg,
+      var(--com-brand-50) 0%,
+      color-mix(in srgb, var(--com-brand-100) 52%, var(--color-surface)) 100%
+    ) !important;
+  color: var(--color-text-primary) !important;
+  padding: var(--space-20);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: -8px;
+  width: 48%;
+  height: 100%;
+  background: url("/ui/home-welfare-gift.webp") center / cover no-repeat;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 100%);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > * {
+  position: relative;
+  z-index: 1;
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > div {
+  max-width: 62%;
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > div > svg:first-child {
+  display: none;
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] h3 {
+  color: var(--color-text-brand);
+  font: var(--type-heading);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] p {
+  color: var(--color-text-secondary);
+}
+
+/* Bottom navigation keeps the existing five destinations. */
+body:has(#home-explore-title) nav.fixed {
+  min-height: 64px;
+  border-top-color: var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+body:has(#home-explore-title) nav.fixed a {
+  gap: var(--space-4);
+}
+
+body:has(#home-explore-title) nav.fixed a[aria-current="page"] {
+  color: var(--color-text-brand);
+}
+
+/* Do not let the fixed bottom bar cover the last content block. */
+main:has(#home-explore-title) {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 360px) {
+  main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child::after {
+    width: 48%;
+    opacity: 0.72;
+  }
+
+  main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:first-child > div:first-child {
+    max-width: 72%;
+  }
+
+  section:has(#home-explore-title) > div:nth-child(2) > div:first-child {
+    gap: var(--space-8);
+    padding: var(--space-8);
+  }
+
+  section:has(#home-explore-title) > div:nth-child(2) > div:first-child > button {
+    padding: var(--space-12);
+  }
+}
