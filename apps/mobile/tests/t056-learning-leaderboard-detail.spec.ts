@@ -1,12 +1,20 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("T056 learning leaderboard detail", () => {
-  test("renders the UI-reference leaderboard structure and preserves ranking states", async ({ page }) => {
+  test("renders the material-backed leaderboard structure and preserves ranking states", async ({ page }) => {
     await page.goto("/courses/leaderboard");
 
     await expect(page.getByRole("button", { name: "本校榜" })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("heading", { name: "本校学习排行榜" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "本周课程学习时长排名" })).toBeVisible();
+
+    const bannerImage = page.getByTestId("weekly-material-banner").locator("img");
+    await expect(bannerImage).toHaveAttribute("src", /weekly-banner\.webp$/);
+    await expect(page.getByTestId("rank-material-1")).toBeVisible();
+    await expect(page.getByTestId("rank-material-2")).toBeVisible();
+    await expect(page.getByTestId("rank-material-3")).toBeVisible();
+    await expect(page.getByTestId("role-material-校园大使").first()).toHaveAttribute("src", /campus-ambassador\.webp$/);
+    await expect(page.getByTestId("role-material-推荐官").first()).toHaveAttribute("src", /recommender\.webp$/);
 
     const list = page.getByTestId("leaderboard-list");
     await expect(list.getByTestId("leaderboard-row")).toHaveCount(10);
