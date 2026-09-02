@@ -1,0 +1,149 @@
+/* Home polish corrections after on-device visual review.
+   Imported after styles.css so these rules only correct the /home presentation.
+   Product structure and Com Design tokens remain authoritative. */
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child {
+  min-height: 220px;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child::after {
+  top: 42px;
+  right: 2px;
+  width: 38%;
+  height: 60%;
+  background: url("/ui/home-hero-trophy.webp") right center / contain no-repeat;
+  opacity: 0.96;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:first-child > div:first-child {
+  max-width: 78%;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child h2 {
+  max-width: 15em;
+  font-size: var(--com-font-size-20);
+  line-height: var(--com-line-height-30);
+  font-weight: var(--com-font-weight-bold);
+  text-wrap: balance;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child p {
+  max-width: 72%;
+}
+
+main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:last-child {
+  position: relative;
+  z-index: 2;
+  margin-top: var(--space-20);
+}
+
+/* Welfare card: content first, material second. */
+main:has(#home-explore-title) a[href^="/welfare/"] > div {
+  min-height: 156px;
+  padding: var(--space-20);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div::after {
+  right: 0;
+  width: 38%;
+  height: 100%;
+  background-position: right center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 100%);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > div {
+  width: 100%;
+  max-width: none;
+  padding-right: 38%;
+  padding-bottom: var(--space-24);
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > div > div {
+  min-width: 0;
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] h3 {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  font: var(--type-heading-small);
+  line-height: var(--line-height-heading-small);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] p {
+  display: block;
+  margin-top: var(--space-8);
+  overflow: visible;
+  white-space: normal;
+  -webkit-box-orient: initial;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  font: var(--type-body-small);
+  line-height: var(--line-height-body-small);
+}
+
+main:has(#home-explore-title) a[href^="/welfare/"] > div > div > span:last-child {
+  position: absolute;
+  left: var(--space-20);
+  bottom: var(--space-16);
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* On /home the support entry becomes an in-flow end-of-page control.
+   It stays available but can no longer cover task/opportunity content while scrolling. */
+body:has(#home-explore-title) main {
+  padding-bottom: calc(128px + env(safe-area-inset-bottom));
+}
+
+body:has(#home-explore-title) div:has(> button[data-testid="support-bubble"]) {
+  position: static;
+  inset: auto;
+  bottom: auto;
+  max-width: 28rem;
+  margin: -108px auto 0;
+  padding: 0 var(--space-16) calc(72px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+body:has(#home-explore-title) button[data-testid="support-bubble"] {
+  width: var(--com-size-48);
+  height: var(--com-size-48);
+  box-shadow: var(--shadow-1);
+}
+
+/* Keep the concept treatment usable on smaller phones without forcing long copy under the material. */
+@media (max-width: 360px) {
+  main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child::after {
+    top: 52px;
+    right: -2px;
+    width: 34%;
+    height: 54%;
+    opacity: 0.9;
+  }
+
+  main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child > div:first-child > div:first-child {
+    max-width: 84%;
+  }
+
+  main:has(#home-explore-title) > div.space-y-7.px-4 > section:first-child h2 {
+    font-size: var(--com-font-size-18);
+    line-height: var(--com-line-height-24);
+  }
+
+  main:has(#home-explore-title) a[href^="/welfare/"] > div::after {
+    width: 34%;
+  }
+
+  main:has(#home-explore-title) a[href^="/welfare/"] > div > div {
+    padding-right: 34%;
+  }
+}
