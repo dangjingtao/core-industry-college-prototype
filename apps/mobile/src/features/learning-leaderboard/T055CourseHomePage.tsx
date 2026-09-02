@@ -2,9 +2,9 @@ import { ChevronRight, Coins, ShieldCheck, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { courses, type Course } from "../long-term-assets/data";
+import { LeaderboardRoleBadges, type LeaderboardRole } from "./LeaderboardIdentity";
 
 type CredentialTier = "none" | "standard" | "trusted";
-type LeaderboardRole = "校园大使" | "推荐官";
 
 type LearnerPreview = {
   rank: 1 | 2 | 3;
@@ -85,10 +85,6 @@ function weekRangeLabel(now = new Date()) {
   return `${format(start)}–${format(end)}`;
 }
 
-function RoleBadge({ role }: { role: LeaderboardRole }) {
-  return <StatusTag tone={role === "校园大使" ? "warning" : "info"}>{role}</StatusTag>;
-}
-
 function RankMark({ rank }: { rank: 1 | 2 | 3 }) {
   const tone = rank === 1 ? "bg-warning-bg text-warning-text" : rank === 2 ? "bg-info-bg text-info-text" : "bg-surface-subtle text-text-secondary";
   return <span className={`grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold ${tone}`}>{rank}</span>;
@@ -148,7 +144,7 @@ export function LearningLeaderboardPreview() {
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span className="truncate text-sm font-medium text-text-primary">{learner.name}</span>
-                {learner.roles.map(role => <RoleBadge key={role} role={role} />)}
+                <LeaderboardRoleBadges roles={learner.roles} />
               </div>
               <p className="mt-1 text-xs text-text-tertiary">本周 {formatDuration(learner.minutes)}</p>
             </div>
