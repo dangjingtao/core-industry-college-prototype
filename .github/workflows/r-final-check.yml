@@ -42,6 +42,7 @@ jobs:
           tests/t055-course-home-leaderboard.spec.ts
           tests/t056-learning-leaderboard-detail.spec.ts
           tests/t057-leaderboard-identity-states.spec.ts
+          tests/t058-leaderboard-like-interaction.spec.ts
 
       - name: Run mobile browser regressions (soft gate)
         id: mobile-regressions
