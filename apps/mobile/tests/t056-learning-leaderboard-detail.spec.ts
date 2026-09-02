@@ -40,8 +40,18 @@ test.describe("T056 learning leaderboard detail", () => {
     await expect(page.getByText("托管")).toHaveCount(0);
     await expect(page.getByText("模拟")).toHaveCount(0);
 
-    await page.getByRole("button", { name: "规则说明" }).click();
-    await expect(page.getByRole("heading", { name: "排行榜规则" })).toBeVisible();
-    await expect(page.getByText("· 仅按本周课程学习时长排名，每周一进入新周期。")).toBeVisible();
+    const rulesTrigger = page.getByRole("button", { name: "规则说明" });
+    await expect(rulesTrigger).toHaveAttribute("aria-haspopup", "dialog");
+    await rulesTrigger.click();
+
+    const dialog = page.getByRole("dialog", { name: "排行榜规则" });
+    await expect(dialog).toBeVisible();
+    await expect(page.getByTestId("leaderboard-rules-dialog")).toBeVisible();
+    await expect(dialog.getByText("仅按本周课程学习时长排名，每周一进入新周期。")).toBeVisible();
+    await expect(dialog.getByText("点赞按周记录，可取消后重新点赞，但不参与排名。")).toBeVisible();
+    await expect(dialog.getByText("全国榜展示学校；校园大使 / 推荐官仅作身份识别。")).toBeVisible();
+
+    await dialog.getByRole("button", { name: "关闭弹窗" }).click();
+    await expect(dialog).toHaveCount(0);
   });
 });
