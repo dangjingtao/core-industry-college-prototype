@@ -70,86 +70,65 @@ function CourseRow({ course }: { course: Course }) {
 function formatDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (!hours) return `${rest} 分钟`;
-  return rest ? `${hours} 小时 ${rest} 分` : `${hours} 小时`;
+  if (!hours) return `${rest}分钟`;
+  return rest ? `${hours}时${String(rest).padStart(2, "0")}分` : `${hours}小时`;
 }
 
-function weekRangeLabel(now = new Date()) {
-  const start = new Date(now);
-  const weekday = (start.getDay() + 6) % 7;
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - weekday);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  const format = (date: Date) => `${date.getMonth() + 1}月${date.getDate()}日`;
-  return `${format(start)}–${format(end)}`;
-}
-
-function RankMark({ rank }: { rank: 1 | 2 | 3 }) {
-  const tone = rank === 1 ? "bg-warning-bg text-warning-text" : rank === 2 ? "bg-info-bg text-info-text" : "bg-surface-subtle text-text-secondary";
-  return <span className={`grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold ${tone}`}>{rank}</span>;
-}
-
-function LearnerAvatar({ learner }: { learner: LearnerPreview }) {
-  return <span aria-label={`${learner.name}公开头像`} role="img" className={`grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold ${learner.avatarTone}`}>
+function LearnerAvatar({ learner, featured = false }: { learner: LearnerPreview; featured?: boolean }) {
+  return <span aria-label={`${learner.name}公开头像`} role="img" className={`grid shrink-0 place-items-center rounded-full border-2 border-surface font-semibold shadow-sm ${featured ? "size-14 text-base" : "size-10 text-sm"} ${learner.avatarTone}`}>
     {learner.name.slice(0, 1)}
   </span>;
 }
 
+function RankMedal({ rank }: { rank: 1 | 2 | 3 }) {
+  const tone = rank === 1 ? "bg-warning text-white" : rank === 2 ? "border border-border bg-surface-subtle text-text-secondary" : "border border-warning/30 bg-warning-bg text-warning-text";
+  return <span className={`grid size-6 place-items-center rounded-full text-[11px] font-bold shadow-sm ${tone}`}>{rank}</span>;
+}
+
 export function LearningLeaderboardPreview() {
-  const weekRange = weekRangeLabel();
+  const podium = [topLearners[1], topLearners[0], topLearners[2]];
   return <section aria-labelledby="learning-leaderboard-title" className="space-y-3">
-    <Card className="overflow-hidden border border-border-subtle p-0">
-      <div className="flex items-start justify-between gap-3 border-b border-border-subtle p-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-[14px] bg-primary-container text-text-brand"><Trophy size={20} aria-hidden="true" /></span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 id="learning-leaderboard-title" className="text-base font-semibold text-text-primary">学习排行榜</h2>
-              <StatusTag tone="info">周榜</StatusTag>
-            </div>
-            <p className="mt-1 text-xs text-text-tertiary">本周 · {weekRange}</p>
+    <div className="flex items-center justify-between gap-3 px-1">
+      <h2 id="learning-leaderboard-title" className="text-base font-semibold text-text-primary">学习排行榜</h2>
+      <Link to="/courses/leaderboard" aria-label="查看完整排行榜" className="inline-flex min-h-touch items-center gap-0.5 text-xs font-medium text-text-secondary">查看完整榜单 <ChevronRight size={14} aria-hidden="true" /></Link>
+    </div>
+
+    <Card className="overflow-hidden border border-border-subtle p-0 shadow-sm">
+      <div className="relative overflow-hidden bg-warning-bg/60 px-4 py-4">
+        <div className="relative z-10 grid grid-cols-[1fr_1px_1.25fr] items-end gap-4 pr-16">
+          <div>
+            <p className="text-[11px] text-text-secondary">我的本校排名</p>
+            <p className="mt-1 text-2xl font-bold text-text-primary">{mySchoolRank}<span className="ml-1 text-xs font-medium text-text-secondary">名</span></p>
+          </div>
+          <span className="h-9 bg-warning/30" />
+          <div>
+            <p className="text-[11px] text-text-secondary">本周课程学习时长</p>
+            <p className="mt-1 text-xl font-bold text-text-primary">{formatDuration(myWeeklyMinutes)}</p>
           </div>
         </div>
-        <Link to="/courses/leaderboard" aria-label="查看完整排行榜" className="inline-flex min-h-touch shrink-0 items-center gap-0.5 rounded-control px-1 text-xs font-medium text-text-brand active:bg-surface-pressed">
-          查看完整排行榜 <ChevronRight size={15} aria-hidden="true" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 border-b border-border-subtle p-4">
-        <div className="rounded-control bg-surface-subtle p-3">
-          <p className="text-xs text-text-tertiary">我的本校排名</p>
-          <p className="mt-1 text-xl font-semibold text-text-primary">#{mySchoolRank}</p>
-          <p className="mt-1 text-[11px] text-text-tertiary">继续学习即可向前追赶</p>
-        </div>
-        <div className="rounded-control bg-surface-subtle p-3">
-          <p className="text-xs text-text-tertiary">本周课程学习时长</p>
-          <p className="mt-1 text-base font-semibold leading-7 text-text-primary">{formatDuration(myWeeklyMinutes)}</p>
-          <p className="mt-1 text-[11px] text-text-tertiary">仅统计课程学习</p>
-        </div>
+        <Trophy className="absolute -bottom-2 right-3 text-warning/80" size={68} strokeWidth={1.5} aria-hidden="true" />
+        <div className="absolute -right-5 -top-7 size-20 rounded-full bg-white/30" />
       </div>
 
       <div className="p-4">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-text-primary">本校 Top 3</h3>
-            <p className="mt-0.5 text-xs text-text-tertiary">按本周课程学习时长排序</p>
-          </div>
-          <span className="text-[11px] text-text-tertiary">每周更新</span>
-        </div>
-        <div className="mt-3 divide-y divide-border-subtle">
-          {topLearners.map(learner => <div key={learner.rank} className="flex min-h-[64px] items-center gap-3 py-2.5">
-            <RankMark rank={learner.rank} />
-            <LearnerAvatar learner={learner} />
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span className="truncate text-sm font-medium text-text-primary">{learner.name}</span>
-                <LeaderboardRoleBadges roles={learner.roles} />
+        <h3 className="text-sm font-semibold text-text-primary">本校 Top 3</h3>
+        <div className="mt-3 grid grid-cols-3 items-end gap-1">
+          {podium.map(learner => {
+            const first = learner.rank === 1;
+            return <div key={learner.rank} className={`flex min-w-0 flex-col items-center text-center ${first ? "pb-1" : "pt-4"}`}>
+              <div className="relative">
+                <LearnerAvatar learner={learner} featured />
+                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2"><RankMedal rank={learner.rank} /></span>
               </div>
-              <p className="mt-1 text-xs text-text-tertiary">本周 {formatDuration(learner.minutes)}</p>
-            </div>
-          </div>)}
+              <div className="mt-4 flex min-w-0 flex-col items-center gap-1">
+                <span className="max-w-[88px] truncate text-xs font-semibold text-text-primary">{learner.name}</span>
+                <LeaderboardRoleBadges roles={learner.roles} />
+                <span className="text-[11px] text-text-secondary">{formatDuration(learner.minutes)}</span>
+              </div>
+            </div>;
+          })}
         </div>
+        <Link to="/courses/leaderboard" className="mt-4 flex min-h-touch items-center justify-center rounded-control bg-primary text-sm font-semibold text-on-primary active:bg-primary-pressed">进入完整排行榜</Link>
       </div>
     </Card>
   </section>;
@@ -189,15 +168,6 @@ export function T055LeaderboardEntryPage() {
   return <PublicShell showNavigation={false}>
     <PageHeader title="学习排行榜" backTo="/courses" />
     <div className="space-y-4 px-4 py-5">
-      <Card className="border border-border-subtle">
-        <div className="flex items-start gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-[16px] bg-primary-container text-text-brand"><Trophy size={22} aria-hidden="true" /></span>
-          <div>
-            <div className="flex flex-wrap items-center gap-2"><h1 className="text-base font-semibold text-text-primary">本周学习排行榜</h1><StatusTag tone="info">周榜</StatusTag></div>
-            <p className="mt-1 text-sm leading-6 text-text-secondary">当前先展示课程首页排行榜摘要；完整本校榜与全国榜 Top 10 将由排行榜详情模块承接。</p>
-          </div>
-        </div>
-      </Card>
       <LearningLeaderboardPreview />
     </div>
   </PublicShell>;
