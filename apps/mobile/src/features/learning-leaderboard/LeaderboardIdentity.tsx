@@ -20,13 +20,13 @@ export function LeaderboardRoleBadge({ role, compact = false }: { role: Leaderbo
       data-leaderboard-role={role}
       aria-label={role}
       title={compact ? role : undefined}
-      className={`inline-flex min-h-6 items-center gap-1 rounded-full text-[11px] font-semibold leading-none ${compact ? "w-6 justify-center overflow-hidden p-0" : "px-1.5 pr-2"} ${compact ? "bg-transparent" : className}`}
+      className={`inline-flex items-center gap-1 rounded-full text-[11px] font-semibold leading-none ${compact ? "min-h-7 w-7 justify-center overflow-hidden p-0" : "min-h-6 px-1.5 pr-2"} ${compact ? "bg-transparent" : className}`}
     >
       <img
         src={asset}
         alt=""
         aria-hidden="true"
-        className={`${compact ? "size-6" : "size-5"} shrink-0 object-contain`}
+        className={`${compact ? "size-7" : "size-5"} shrink-0 object-contain`}
       />
       {!compact && role}
     </span>
