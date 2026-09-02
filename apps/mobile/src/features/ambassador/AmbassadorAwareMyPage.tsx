@@ -10,7 +10,6 @@ import {
   GraduationCap,
   Headphones,
   Info,
-  KeyRound,
   Link2,
   LogOut,
   QrCode,
@@ -42,10 +41,13 @@ const SIMULATION_ACCOUNTS = [
   { id: "partner-4", label: "模拟校园推荐官 4" },
 ];
 
+type EntryTone = "brand" | "info" | "success" | "warning" | "neutral";
+
 type DashboardEntry = {
   label: string;
   to: string;
   icon: LucideIcon;
+  tone?: EntryTone;
   state?: Record<string, string>;
 };
 
@@ -53,18 +55,27 @@ function schoolLabel(id: string) {
   return SCHOOL_LABELS[id] ?? "参与学校";
 }
 
-function ShortcutGrid({ entries, testId, emphasized = false }: { entries: DashboardEntry[]; testId: string; emphasized?: boolean }) {
-  return <div data-testid={testId} className="grid grid-cols-4 gap-x-2 gap-y-4">
-    {entries.map(({ label, to, icon: Icon, state }) => <Link
+function iconToneClass(tone: EntryTone = "neutral") {
+  if (tone === "brand") return "bg-primary-container text-text-brand";
+  if (tone === "info") return "bg-info-bg text-info-text";
+  if (tone === "success") return "bg-success-bg text-success-text";
+  if (tone === "warning") return "bg-warning-bg text-warning-text";
+  return "bg-surface-subtle text-text-secondary";
+}
+
+function ShortcutGrid({ entries, testId }: { entries: DashboardEntry[]; testId: string }) {
+  return <div data-testid={testId} className="grid grid-cols-4 gap-x-1 gap-y-3">
+    {entries.map(({ label, to, icon: Icon, tone, state }) => <Link
       key={`${label}-${to}`}
       to={to}
       state={state}
-      className="group flex min-w-0 flex-col items-center gap-2 rounded-control px-1 py-2 text-center transition active:bg-surface-pressed"
+      aria-label={label}
+      className="group flex min-w-0 flex-col items-center rounded-control px-1 py-2 text-center transition active:bg-surface-pressed"
     >
-      <span className={`grid size-11 shrink-0 place-items-center rounded-control ${emphasized ? "bg-primary-container text-text-brand" : "bg-surface-subtle text-text-primary"}`}>
+      <span className={`grid size-11 shrink-0 place-items-center rounded-control ${iconToneClass(tone)}`}>
         <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
       </span>
-      <span className="w-full text-xs font-medium leading-5 text-text-primary">{label}</span>
+      <span className="mt-2 w-full text-xs font-medium leading-5 text-text-primary">{label}</span>
     </Link>)}
   </div>;
 }
@@ -73,7 +84,13 @@ export function AmbassadorAwareMyPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, continueAsGuest } = usePublicPlatform();
-  const { profile, simulateScanRedeem } = useLongTermAssets();
+  const {
+    profile,
+    learning,
+    certificates,
+    competitionResults,
+    simulateScanRedeem,
+  } = useLongTermAssets();
   const ambassador = useAmbassadorState();
   const accountId = new URLSearchParams(location.search).get("accountId") || "account-demo";
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -81,6 +98,7 @@ export function AmbassadorAwareMyPage() {
   const [scanAccountId, setScanAccountId] = useState(accountId);
   const competitionTag = profile.competitionExperience ? labelFor(competitionExperienceOptions, profile.competitionExperience) : "";
   const educationTag = profile.educationLevel ? labelFor(educationLevelOptions, profile.educationLevel) : "";
+  const profileMeta = [educationTag, profile.city, competitionTag].filter(Boolean).join(" · ");
 
   const memberTeams = useMemo(() => ambassador.teams.filter(team => team.members.some(member => member.accountId === accountId && member.status === "active")), [ambassador.teams, accountId]);
   const currentTeam = useMemo(() => {
@@ -118,7 +136,7 @@ export function AmbassadorAwareMyPage() {
 
   if (!session.loggedIn) return <PublicShell showNavigation={true}>
     <div className="px-4 pb-8 pt-8">
-      <div className="rounded-container border border-border-subtle bg-surface px-5 py-8 text-center">
+      <div className="rounded-container bg-surface px-5 py-8 text-center">
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-primary-container text-text-brand"><BriefcaseBusiness size={26} aria-hidden="true" /></span>
         <h1 className="mt-4 text-lg font-semibold text-text-primary">登录后查看我的长期账号</h1>
         <p className="mt-2 text-sm leading-6 text-text-secondary">赛事经历、课程成果、证书、投递和简历都会归到同一个账号。</p>
@@ -132,26 +150,30 @@ export function AmbassadorAwareMyPage() {
     navigate("/auth/login", { replace: true });
   };
 
+  const completedLearningCount = learning.filter(item => item.status === "completed").length;
+  const assetStats = [
+    { label: "课程记录", value: learning.length },
+    { label: "已完成", value: completedLearningCount },
+    { label: "证书", value: certificates.length },
+    { label: "赛事成绩", value: competitionResults.length },
+  ];
+
   const learningEntries: DashboardEntry[] = [
-    { label: "我的课程", to: "/courses/center", icon: BookOpen },
-    { label: "学习记录", to: "/assets/learning", icon: GraduationCap },
-    { label: "我的证书", to: "/assets/certificates", icon: Award },
-    { label: "赛事成绩", to: "/assets/results", icon: Trophy },
+    { label: "我的课程", to: "/courses/center", icon: BookOpen, tone: "brand" },
+    { label: "学习记录", to: "/assets/learning", icon: GraduationCap, tone: "info" },
+    { label: "我的证书", to: "/assets/certificates", icon: Award, tone: "warning" },
+    { label: "赛事成绩", to: "/assets/results", icon: Trophy, tone: "success" },
   ];
 
   const serviceEntries: DashboardEntry[] = [
-    { label: "长期资产", to: "/assets", icon: BriefcaseBusiness },
-    { label: "我的卡券", to: "/benefits/wallet", icon: Wallet },
-    { label: "消息通知", to: "/me/notifications", icon: Bell, state: { from: "/me" } },
-    { label: "比赛团队", to: "/me/teams", icon: Users },
-    { label: "我的简历", to: "/me/resume", icon: FileText },
-    { label: "账号绑定", to: "/me/accounts", icon: Link2 },
-    { label: "帮助客服", to: "/support", icon: Headphones },
-    { label: "设置中心", to: "/me/settings", icon: Settings },
-    { label: "授权管理", to: "/me/authorization", icon: KeyRound },
-    { label: "用户协议", to: "/legal/user-agreement", icon: FileText },
-    { label: "隐私政策", to: "/legal/privacy", icon: ShieldCheck },
-    { label: "关于我们", to: "/about", icon: Info },
+    { label: "我的卡券", to: "/benefits/wallet", icon: Wallet, tone: "warning" },
+    { label: "消息通知", to: "/me/notifications", icon: Bell, tone: "info", state: { from: "/me" } },
+    { label: "比赛团队", to: "/me/teams", icon: Users, tone: "brand" },
+    { label: "我的简历", to: "/me/resume", icon: FileText, tone: "success" },
+    { label: "账号绑定", to: "/me/accounts", icon: Link2, tone: "neutral" },
+    { label: "帮助客服", to: "/support", icon: Headphones, tone: "info" },
+    { label: "设置中心", to: "/me/settings", icon: Settings, tone: "neutral" },
+    { label: "关于我们", to: "/about", icon: Info, tone: "brand" },
   ];
 
   const scanSchool = (campaignId: string, schoolId: string) => {
@@ -174,8 +196,8 @@ export function AmbassadorAwareMyPage() {
   };
 
   return <PublicShell showNavigation={true}>
-    <main className="space-y-5 px-4 pb-8 pt-6" data-testid="t059-my-dashboard">
-      <section className="relative min-h-[112px]" aria-label="个人资料">
+    <main className="space-y-5 px-4 pb-8 pt-5" data-testid="t059-my-dashboard">
+      <section className="relative py-1" aria-label="个人资料">
         <div className="absolute right-0 top-0 z-10 flex items-center gap-1">
           <button
             type="button"
@@ -183,84 +205,85 @@ export function AmbassadorAwareMyPage() {
             onClick={() => { setScanAccountId(accountId); setScannerOpen(true); }}
             className="grid min-h-touch min-w-11 place-items-center rounded-control text-text-primary transition active:bg-surface-pressed"
           >
-            <ScanLine size={23} aria-hidden="true" />
+            <ScanLine size={22} aria-hidden="true" />
           </button>
           <Link
             to="/me/settings"
             aria-label="设置"
             className="grid min-h-touch min-w-11 place-items-center rounded-control text-text-primary transition active:bg-surface-pressed"
           >
-            <Settings size={23} aria-hidden="true" />
+            <Settings size={22} aria-hidden="true" />
           </Link>
         </div>
 
-        <Link to="/me/profile" className="flex min-w-0 items-start gap-3 pr-[92px]">
-          <span className="grid size-[72px] shrink-0 place-items-center rounded-full bg-primary-container text-2xl font-semibold text-text-brand">
+        <Link data-testid="profile-entry" to="/me/profile" className="flex min-w-0 items-center gap-3 pr-[92px]">
+          <span className="grid size-[68px] shrink-0 place-items-center rounded-full bg-primary-container text-2xl font-semibold text-text-brand">
             {profile.nickname.slice(0, 1) || profile.name.slice(0, 1)}
           </span>
-          <span className="min-w-0 flex-1 pt-1">
-            <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-              <strong className="truncate text-2xl font-semibold tracking-tight text-text-primary">{profile.name}</strong>
-              {profile.phoneVerified === "verified" && <Check size={17} className="shrink-0 text-text-brand" aria-label="手机号已验证" />}
-              {currentCampaignStatus !== "ended" && currentMember?.role === "ambassador" && <span data-testid="core-ambassador-badge" className="inline-flex min-h-6 items-center gap-1 rounded-full bg-primary-container px-2 text-xs font-medium text-text-brand"><ShieldCheck size={13} aria-hidden="true" />校园大使</span>}
-              <ChevronRight size={18} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <strong className="truncate text-[21px] font-semibold leading-7 tracking-tight text-text-primary">{profile.name}</strong>
+              {profile.phoneVerified === "verified" && <Check size={16} className="shrink-0 text-text-brand" aria-label="手机号已验证" />}
+              <ChevronRight size={17} className="shrink-0 text-text-tertiary" aria-hidden="true" />
             </span>
-            <span className="mt-2 block truncate text-sm text-text-secondary">{profile.school} · {profile.major}</span>
+            <span className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-secondary">
+              <span className="max-w-full truncate">{profile.school} · {profile.major}</span>
+              {currentCampaignStatus !== "ended" && currentMember?.role === "ambassador" && <span data-testid="core-ambassador-badge" className="inline-flex min-h-5 shrink-0 items-center gap-1 rounded-full bg-primary-container px-2 text-[11px] font-medium text-text-brand"><ShieldCheck size={12} aria-hidden="true" />校园大使</span>}
+            </span>
+            {profileMeta && <span className="mt-1.5 block truncate text-xs text-text-tertiary">{profileMeta}</span>}
           </span>
         </Link>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2 pl-[84px]">
-          {educationTag && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{educationTag}</span>}
-          {competitionTag && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{competitionTag}</span>}
-          {profile.city && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs text-text-secondary">{profile.city}</span>}
-        </div>
       </section>
 
-      <section data-testid="reading-center-entry" className="overflow-hidden rounded-container bg-gradient-to-br from-primary to-primary-pressed p-5 text-on-primary">
-        <div className="flex items-center gap-4">
-          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-surface text-text-brand">
-            <BookOpen size={28} strokeWidth={1.8} aria-hidden="true" />
-          </span>
+      <Link
+        to="/assets"
+        data-testid="long-term-assets-entry"
+        className="block overflow-hidden rounded-container bg-gradient-to-br from-primary to-primary-pressed p-5 text-on-primary"
+      >
+        <div className="flex items-center gap-3">
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-surface text-text-brand"><BriefcaseBusiness size={24} strokeWidth={1.8} aria-hidden="true" /></span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold">阅读中心</h2>
-            <p className="mt-1 text-sm leading-5">读万卷书，行万里路</p>
-            <span className="mt-2 inline-flex rounded-full border border-surface px-2 py-0.5 text-xs font-medium">功能接入中</span>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">长期资产</h2>
+              <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-text-brand">长期保存</span>
+            </div>
+            <p className="mt-1 text-sm leading-5">赛事、学习、证书与成绩都会沉淀在这里</p>
           </div>
-          <button
-            type="button"
-            disabled
-            aria-label="进入阅读，阅读功能待接入"
-            className="inline-flex min-h-touch shrink-0 items-center gap-1 rounded-full bg-surface px-3 text-sm font-semibold text-text-brand disabled:cursor-not-allowed"
-          >
-            进入阅读 <ChevronRight size={17} aria-hidden="true" />
-          </button>
+          <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold">查看 <ChevronRight size={18} aria-hidden="true" /></span>
         </div>
-      </section>
 
-      <section className="rounded-container border border-border-subtle bg-surface p-4" aria-labelledby="my-learning-title">
+        <div className="mt-5 grid grid-cols-4 border-t border-primary-container pt-4">
+          {assetStats.map((item, index) => <span key={item.label} className={`min-w-0 text-center ${index ? "border-l border-primary-container" : ""}`}>
+            <strong className="block text-xl font-semibold leading-6">{item.value}</strong>
+            <span className="mt-1 block truncate px-1 text-[11px] leading-4">{item.label}</span>
+          </span>)}
+        </div>
+      </Link>
+
+      <section className="rounded-container bg-surface p-4" aria-labelledby="my-learning-title">
         <h2 id="my-learning-title" className="text-lg font-semibold text-text-primary">我的学习</h2>
-        <div className="mt-3">
-          <ShortcutGrid entries={learningEntries} testId="my-learning-grid" emphasized />
+        <div className="mt-2">
+          <ShortcutGrid entries={learningEntries} testId="my-learning-grid" />
         </div>
 
         <Link
           to="/courses/leaderboard"
           data-testid="learning-leaderboard-entry"
-          className="mt-4 flex min-h-[96px] items-center gap-4 rounded-container bg-primary-container px-4 py-3 transition active:bg-surface-pressed"
+          className="mt-3 flex min-h-[78px] items-center gap-3 rounded-container bg-primary-container px-4 py-3 transition active:bg-surface-pressed"
         >
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-text-brand"><Trophy size={22} aria-hidden="true" /></span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold text-text-primary">学习排行榜</h3>
-              <span className="rounded-full bg-surface px-2 py-1 text-xs font-medium text-text-brand">周榜</span>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-text-primary">学习排行榜</h3>
+              <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-text-brand">周榜</span>
             </div>
-            <p className="mt-1 text-sm leading-5 text-text-secondary">看看你在校园学习榜上排第几</p>
-            <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-text-brand">查看榜单 <ChevronRight size={16} aria-hidden="true" /></span>
+            <p className="mt-1 truncate text-xs text-text-secondary">看看本周校园学习榜</p>
           </div>
-          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-surface text-text-brand"><Trophy size={28} aria-hidden="true" /></span>
+          <ChevronRight size={19} className="shrink-0 text-text-brand" aria-hidden="true" />
         </Link>
       </section>
 
-      <section className="rounded-container border border-border-subtle bg-surface p-4" aria-labelledby="more-services-title">
+      <section className="rounded-container bg-surface p-4" aria-labelledby="more-services-title">
         <h2 id="more-services-title" className="text-lg font-semibold text-text-primary">更多服务</h2>
 
         {currentTeam && <Link
@@ -276,21 +299,26 @@ export function AmbassadorAwareMyPage() {
           <ChevronRight size={18} className="shrink-0 text-text-brand" aria-hidden="true" />
         </Link>}
 
-        <div className="mt-3">
+        <div className="mt-2">
           <ShortcutGrid entries={serviceEntries} testId="more-services-grid" />
         </div>
       </section>
 
-      <section className="rounded-container border border-border-subtle bg-surface px-4 py-4" aria-label="账号操作">
-        <p className="text-xs leading-5 text-text-tertiary">退出后仍可浏览公共平台；简历、赛事经历、课程、证书和其它长期账号资产不会删除。</p>
+      <nav data-testid="my-page-secondary-links" aria-label="协议与授权" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-2 text-xs text-text-tertiary">
+        <Link to="/legal/user-agreement" className="min-h-touch py-3">用户协议</Link>
+        <Link to="/legal/privacy" className="min-h-touch py-3">隐私政策</Link>
+        <Link to="/me/authorization" className="min-h-touch py-3">授权管理</Link>
+      </nav>
+
+      <div className="flex justify-center">
         <button
           type="button"
           onClick={() => setConfirmLogout(true)}
-          className="mt-2 inline-flex min-h-touch items-center gap-2 rounded-control px-2 text-sm font-medium text-text-secondary transition active:bg-surface-pressed"
+          className="inline-flex min-h-touch items-center gap-2 rounded-control px-3 text-sm font-medium text-text-secondary transition active:bg-surface-pressed"
         >
-          <LogOut size={17} aria-hidden="true" />退出登录
+          <LogOut size={16} aria-hidden="true" />退出登录
         </button>
-      </section>
+      </div>
     </main>
 
     <Dialog open={scannerOpen} onOpenChange={setScannerOpen} title="扫一扫 · 原型模拟" description="正式 App 由摄像头识别码型；这里用于连续验收不同学生扫码。" size="sm">
