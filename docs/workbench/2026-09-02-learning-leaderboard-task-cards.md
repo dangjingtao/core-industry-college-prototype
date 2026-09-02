@@ -26,7 +26,7 @@
 | T055 | 课程首页学习排行榜模块 | REVIEW | `docs/workbench/tasks/T055-course-home-learning-leaderboard.md` |
 | T056 | 本校榜 / 全国榜排行榜详情页 | REVIEW | `docs/workbench/tasks/T056-learning-leaderboard-detail.md` |
 | T057 | 校园大使 / 推荐官与榜单状态组件 | REVIEW | `docs/workbench/tasks/T057-leaderboard-role-badges-and-states.md` |
-| T058 | 排行榜点赞与周周期交互 | TODO | `docs/workbench/tasks/T058-leaderboard-like-interaction.md` |
+| T058 | 排行榜点赞与周周期交互 | REVIEW | `docs/workbench/tasks/T058-leaderboard-like-interaction.md` |
 
 ## 统一产品事实
 
@@ -73,7 +73,6 @@ T056 已完成排行榜详情页施工并进入 REVIEW：
 - 全国榜展示学校维度并覆盖多所高校；
 - 托管账户只保留在 mock 数据层，用户侧不显示托管 / 模拟标签，并通过不同名次混排表达不固定霸榜；
 - Top 1–3 使用克制层级，普通榜单行保持移动端阅读密度；
-- 点赞数已展示，但点赞状态机仍由 T058 承接；
 - Quality Gate run `33577071577`：mobile routes/types/build 与 learning leaderboard regressions 均通过。
 
 ## T057 当前实施状态
@@ -89,9 +88,22 @@ T057 已完成校园大使 / 推荐官 Badge 与榜单状态组件施工并进�
 - 当前用户以“我 + 推荐官”同时覆盖本校 Top 10 外和全国 Top 10 内两种本人场景；
 - Quality Gate run `33578621026`：mobile routes/types/build 与 T055–T057 learning leaderboard regressions 均通过。
 
+## T058 当前实施状态
+
+T058 已完成排行榜点赞与周周期交互施工并进入 REVIEW：
+
+- 本校榜 / 全国榜的非本人条目均可真实点赞；
+- 未点赞 → 点赞 → 取消 → 再点赞可完整演示，点赞数同步变化；
+- 点赞操作不改变排名、学习时长或排序；
+- 本人点赞入口 disabled，不能自赞；
+- 同一公开用户通过稳定 `personKey` 在本校榜 / 全国榜共享当前周点赞状态；
+- 当前查看者的有效点赞集合按当周周一日期写入 prototype localStorage，历史周状态不会污染新周；
+- 页面明确说明点赞按周记录、取消后可重新点赞、点赞不参与排名；
+- Quality Gate run `33579242077`：mobile routes/types/build 与 T055–T058 learning leaderboard regressions 均通过。
+
 ## 统一验收
 
-T055–T058 全部进入 REVIEW 前，至少验证：
+T055–T058 已全部进入 REVIEW，并已验证：
 
 - 课程首页能发现排行榜并进入详情；
 - 本校榜 / 全国榜切换完整；
@@ -100,5 +112,8 @@ T055–T058 全部进入 REVIEW 前，至少验证：
 - 托管账户规则通过示例数据和说明完整表达；
 - 点赞 → 取消 → 重新点赞可演示，用户本人不可自赞；
 - 点赞不影响排名；
+- 点赞按周隔离；
 - 页面不展示真实姓名；
-- 不扩展日榜、月榜、历史榜、好友榜、PK、战队、私信、排行榜分享或学习时长奖励。
+- 未扩展日榜、月榜、历史榜、好友榜、PK、战队、私信、排行榜分享或学习时长奖励。
+
+所有任务保持 **REVIEW**，等待人工验收；自动化通过不代替人工 PASS。
