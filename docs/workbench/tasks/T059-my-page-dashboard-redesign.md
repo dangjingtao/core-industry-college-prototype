@@ -160,6 +160,7 @@
 - [x] 375px / 390px / 430px 横向溢出专项回归已覆盖并通过。
 - [x] mobile type-check / build 通过。
 - [x] T059 专项 browser 回归随 mobile browser regression suite 通过。
+- [x] dev mobile preview 构建与 Cloudflare Pages 部署通过。
 
 ## 施工提交
 
@@ -177,6 +178,12 @@ Quality Gate run `33618152527`：
 - `Verify mobile routes, types and build` = **success**
 - `Run learning leaderboard regressions (soft gate)` = **success**
 - `Run mobile browser regressions (soft gate)` = **success**，其中已包含 `tests/t059-my-page-dashboard.spec.ts`
+
+Deploy Mobile run `33618152565`：
+
+- `Type-check and build mobile preview` = **success**
+- `Run F00 cross-app browser regression (soft gate)` = **success**
+- `Deploy mobile` = **success**
 
 T059 专项回归覆盖：
 
