@@ -1,9 +1,9 @@
 import { Clock3, Heart, School, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Card, PageHeader, PublicShell, StatusTag } from "../../components/ui";
+import { LeaderboardRoleBadges, LeaderboardSelfBadge, type LeaderboardRole } from "./LeaderboardIdentity";
 
 type BoardScope = "school" | "national";
-type LeaderboardRole = "校园大使" | "推荐官";
 
 type LeaderboardEntry = {
   id: string;
@@ -20,6 +20,7 @@ type LeaderboardEntry = {
 
 const mySchool = "广东财经大学";
 const myPublicName = "新芽同学";
+const myRoles: LeaderboardRole[] = ["推荐官"];
 
 const schoolBoard: LeaderboardEntry[] = [
   { id: "s1", rank: 1, name: "林知夏", school: mySchool, minutes: 512, likes: 38, roles: ["校园大使"], avatarTone: "bg-warning-bg text-warning-text" },
@@ -42,7 +43,7 @@ const nationalBoard: LeaderboardEntry[] = [
   { id: "n5", rank: 5, name: "白榆", school: "广东工业大学", minutes: 451, likes: 29, roles: [], avatarTone: "bg-warning-bg text-warning-text" },
   { id: "n6", rank: 6, name: "江澄", school: "华南师范大学", minutes: 428, likes: 25, roles: ["推荐官"], avatarTone: "bg-info-bg text-info-text", managed: true },
   { id: "n7", rank: 7, name: "北野", school: "广州大学", minutes: 402, likes: 23, roles: [], avatarTone: "bg-primary-container text-text-brand" },
-  { id: "me", rank: 8, name: myPublicName, school: mySchool, minutes: 390, likes: 21, roles: [], avatarTone: "bg-success-bg text-success-text", isSelf: true },
+  { id: "me", rank: 8, name: myPublicName, school: mySchool, minutes: 390, likes: 21, roles: myRoles, avatarTone: "bg-success-bg text-success-text", isSelf: true },
   { id: "n9", rank: 9, name: "青禾", school: "广东金融学院", minutes: 367, likes: 20, roles: [], avatarTone: "bg-warning-bg text-warning-text" },
   { id: "n10", rank: 10, name: "拾光", school: "广州商学院", minutes: 349, likes: 18, roles: [], avatarTone: "bg-info-bg text-info-text", managed: true },
 ];
@@ -54,7 +55,7 @@ const schoolSelfStanding: LeaderboardEntry = {
   school: mySchool,
   minutes: 222,
   likes: 9,
-  roles: [],
+  roles: myRoles,
   avatarTone: "bg-success-bg text-success-text",
   isSelf: true,
 };
@@ -88,10 +89,6 @@ function RankMark({ rank }: { rank: number }) {
   return <span className={`grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold ${tone}`}>{rank}</span>;
 }
 
-function RoleBadge({ role }: { role: LeaderboardRole }) {
-  return <StatusTag tone={role === "校园大使" ? "warning" : "info"}>{role}</StatusTag>;
-}
-
 function LearnerAvatar({ entry }: { entry: LeaderboardEntry }) {
   return <span aria-label={`${entry.name}公开头像`} role="img" className={`grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold ${entry.avatarTone}`}>
     {entry.name.slice(0, 1)}
@@ -108,16 +105,17 @@ function LikeSummary({ likes }: { likes: number }) {
 function LeaderboardRow({ entry, scope }: { entry: LeaderboardEntry; scope: BoardScope }) {
   return <div
     data-testid="leaderboard-row"
+    data-entry-id={entry.id}
     data-self={entry.isSelf ? "true" : "false"}
     className={`flex min-h-[76px] items-center gap-3 px-3 py-3 ${entry.isSelf ? "bg-primary-container/45" : "bg-surface"}`}
   >
     <RankMark rank={entry.rank} />
     <LearnerAvatar entry={entry} />
     <div className="min-w-0 flex-1">
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         <span className="truncate text-sm font-semibold text-text-primary">{entry.name}</span>
-        {entry.isSelf && <StatusTag tone="info">我</StatusTag>}
-        {entry.roles.map(role => <RoleBadge key={role} role={role} />)}
+        {entry.isSelf && <LeaderboardSelfBadge />}
+        <LeaderboardRoleBadges roles={entry.roles} />
       </div>
       {scope === "national" && <p className="mt-1 flex items-center gap-1 text-xs text-text-tertiary"><School size={12} aria-hidden="true" />{entry.school}</p>}
       <p className="mt-1 flex items-center gap-1 text-xs text-text-secondary"><Clock3 size={12} aria-hidden="true" />本周 {formatDuration(entry.minutes)}</p>
