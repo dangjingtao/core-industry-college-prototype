@@ -1,28 +1,33 @@
-import { BadgeCheck, Megaphone } from "lucide-react";
-
 export type LeaderboardRole = "校园大使" | "推荐官";
+
+const ASSET_BASE = "/assets/learning-leaderboard";
 
 const roleSpec = {
   校园大使: {
-    Icon: BadgeCheck,
+    asset: `${ASSET_BASE}/campus-ambassador.webp`,
     className: "bg-warning-bg text-warning-text",
   },
   推荐官: {
-    Icon: Megaphone,
+    asset: `${ASSET_BASE}/recommender.webp`,
     className: "bg-info-bg text-info-text",
   },
-} satisfies Record<LeaderboardRole, { Icon: typeof BadgeCheck; className: string }>;
+} satisfies Record<LeaderboardRole, { asset: string; className: string }>;
 
 export function LeaderboardRoleBadge({ role, compact = false }: { role: LeaderboardRole; compact?: boolean }) {
-  const { Icon, className } = roleSpec[role];
+  const { asset, className } = roleSpec[role];
   return (
     <span
       data-leaderboard-role={role}
       aria-label={role}
       title={compact ? role : undefined}
-      className={`inline-flex min-h-6 items-center gap-1 rounded-full text-[11px] font-semibold leading-none ${compact ? "w-6 justify-center px-0" : "px-2"} ${className}`}
+      className={`inline-flex min-h-6 items-center gap-1 rounded-full text-[11px] font-semibold leading-none ${compact ? "w-6 justify-center overflow-hidden p-0" : "px-1.5 pr-2"} ${compact ? "bg-transparent" : className}`}
     >
-      <Icon size={12} strokeWidth={2} aria-hidden="true" />
+      <img
+        src={asset}
+        alt=""
+        aria-hidden="true"
+        className={`${compact ? "size-6" : "size-5"} shrink-0 object-contain`}
+      />
       {!compact && role}
     </span>
   );
