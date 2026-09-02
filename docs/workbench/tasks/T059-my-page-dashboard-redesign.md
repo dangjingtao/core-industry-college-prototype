@@ -1,208 +1,144 @@
 # T059｜「我的」页面 Dashboard 化重构
 
 **类型：原型设计 / 施工卡**  
-**状态：PASS**  
+**状态：DOING**  
 **优先级：P1**  
 **范围：Mobile `/me` 视觉与信息架构重构**  
-**前置：T014、T055–T058 已有学习排行榜能力**
+**前置：T014、T055–T058**
 
-## 背景
+## 2026-09-02 产品纠正
 
-旧 `/me` 以「顶部资料大卡 + 服务入口纵向列表 + 关于 / 账号列表」为主，更像设置页而不是学生个人中心。
+上一版 T059 被人工评审否决，原因不是视觉微调，而是产品事实错误：参考页面中的「阅读中心」被错误地当成核心学院功能实现。
 
-2026-09-02 确认新方向：参考成熟个人中心的**布局结构、信息节奏与分组方式**，把 `/me` 改成个人中心 Dashboard；只借鉴布局，不复制参考图的黑金 / 橙色视觉。颜色、圆角、文字、边框、状态和触摸尺寸全部使用核心学院现有 Com Design / design token。
+**核心学院当前没有阅读功能。`/me` 禁止出现阅读中心、阅读功能接入中、假入口或任何阅读统计。**
 
-### 最新入口约束
+本轮重新施工遵守两条硬约束：
 
-2026-09-02 施工前再次确认：**允许更高设计自由度，但原有入口一个都不能少。**
+1. 可以有较高设计自由度，但只能组织仓库中真实存在的业务能力；
+2. 原 `/me` 已有入口一个都不能少，但“不能少”不等于全部做成同权重宫格，允许通过核心卡、宫格、动态卡和低权重直达链接分层承接。
 
-因此本卡不再把协议 / 隐私 / 关于等低频入口从 `/me` 隐藏到二级页；它们可以降视觉权重、放在页面后段，但必须继续可直接到达。该约束优先于本卡早期“低频内容可由设置 / 关于承接”的建议。
+上一版 `PASS` 结论作废，保留历史提交作为被否决实现记录；本卡重新进入 `DOING`。
 
-## 目标
+## 目标结构
 
 ```text
 个人身份区
-→ 核心业务大卡（阅读中心）
+→ 长期资产核心卡
 → 我的学习四宫格
 → 学习排行榜 Banner
-→ 更多服务宫格
-→ 低频账号操作
+→ 更多服务 4×2
+→ 协议 / 隐私 / 授权低权重直达
+→ 退出登录
 ```
 
-页面更像学生自己的长期个人中心，同时不丢失旧 `/me` 的任何可达能力。
+页面参考成熟个人中心的布局节奏，但不复制参考图功能，也不复制黑金 / 橙色视觉。所有颜色、圆角、边框、文字与触摸尺寸继续使用核心学院现有 Com Design / design token。
 
-## 实现
+## 1. 个人身份区
 
-主要实现：
+- 不恢复独立 `PageHeader title="我的"`。
+- 头像、姓名、学校 / 专业为主要身份信息；已有校园大使等真实徽章继续显示。
+- 学历、城市、参赛经历等已有资料可压缩为低权重辅助信息，不再堆成大量标签。
+- 身份区进入 `/me/profile`。
+- 右上保留「扫一扫」与「设置」；扫码模拟器原有学校招募码、团队招募码、推广码、福利兑换码链路全部保留。
 
-- `apps/mobile/src/features/ambassador/AmbassadorAwareMyPage.tsx`
-- `apps/mobile/tests/t059-my-page-dashboard.spec.ts`
-- `.github/workflows/r-final-check.yml` 已把 T059 专项回归加入 mobile browser regression suite。
+## 2. 核心卡：长期资产
 
-## 1. 顶部个人身份区
+参考图中第一张强视觉业务卡只作为**版式槽位参考**，改由核心学院真实的 `/assets` 承接。
 
-- `/me` 移除独立 `PageHeader title="我的"`。
-- 头像、姓名、学校 / 专业组成紧凑横向身份区。
-- 保留手机号已验证状态与真实校园大使徽章。
-- 无头像字段时使用现有首字 fallback，不伪造真人头像。
-- 身份区直接进入 `/me/profile`，不再额外占一行“编辑基础资料”。
-- 扫一扫与设置位于右上轻操作区；扫一扫完整保留原有学校招募码、团队招募码、推广码、福利兑换码模拟链路。
+- 主入口：长期资产 → `/assets`。
+- 可展示当前 store 中可验证的真实摘要，例如学习记录、已完成学习、证书、赛事成绩数量。
+- 数值必须直接来自 `useLongTermAssets()` 当前状态，不硬编码用户成绩或虚构统计。
+- 使用项目 `primary / primary-pressed / on-primary / primary-container` 等 token 建立视觉层级。
+- 不新增其它强视觉“概念功能”。
 
-## 2. 阅读中心核心卡
+## 3. 我的学习
 
-- 阅读中心作为身份区后的首个强视觉卡。
-- 使用 `primary → primary-pressed` 与 `on-primary / surface / text-brand` 等现有 token。
-- 不复制参考图黑色、橙金、黄色，不新增硬编码主题色。
-- 当前 `dev` 尚无正式阅读中心 route，因此“进入阅读”明确显示为**功能接入中**并 disabled。
-- 不拿 `/stories`、课程或其它页面冒充阅读中心。
-- 不伪造连续阅读、已读本数、时长、书架数量等统计。
-
-## 3. 我的学习四宫格
-
-全部映射当前真实 route：
+使用 4 列快捷入口，全部对应当前真实 route：
 
 - 我的课程 → `/courses/center`
 - 学习记录 → `/assets/learning`
 - 我的证书 → `/assets/certificates`
 - 赛事成绩 → `/assets/results`
 
-不凭空新增“我的考试”等不存在的独立业务。
+不新增“我的考试”等当前没有独立 route 的功能。
 
-## 4. 学习排行榜 Banner
+## 4. 学习排行榜
 
-- 入口 → `/courses/leaderboard`
-- 沿用 T055–T058 已确认榜单业务，不在 `/me` 复制排行榜详情。
-- Banner 使用项目 token，不伪造当前用户排名数字。
+- Banner → `/courses/leaderboard`。
+- 只做入口，不在 `/me` 复制榜单详情或伪造当前排名。
+- 视觉可比普通宫格更突出，但不得与长期资产核心卡争夺第一层级。
 
-## 5. 更多服务：入口完整性合同
+## 5. 更多服务与入口完整性合同
 
-### 原有常驻入口全部保留
+### 主要服务 4×2
 
-- 长期资产 → `/assets`
+使用真实能力组成 8 个常用入口：
+
 - 我的卡券 → `/benefits/wallet`
 - 消息通知 → `/me/notifications`
 - 比赛团队 → `/me/teams`
+- 我的简历 → `/me/resume`
 - 账号绑定 → `/me/accounts`
-- 设置中心 → `/me/settings`
 - 帮助客服 → `/support`
-- 用户协议 → `/legal/user-agreement`
-- 隐私政策 → `/legal/privacy`
+- 设置中心 → `/me/settings`
 - 关于我们 → `/about`
 
-### 原有动态入口保留
+### 动态校园推广团队
 
-- 当前存在校园推广团队时，继续显示：
-  - 我的校园推广团队 / 往期推广记录 → `/ambassadors/team/:teamId?accountId=...`
+当前账号存在真实校园推广团队时，保留独立动态入口：
 
-### 本轮补充的真实入口
+- 我的校园推广团队 / 往期推广记录 → `/ambassadors/team/:teamId?accountId=...`
 
-- 我的简历 → `/me/resume`
+它不占固定 4×2 格位，避免角色差异导致布局错位。
+
+### 低频但必须直达
+
+以下已有能力不做大宫格，但 `/me` 仍必须有直接可点击入口：
+
+- 用户协议 → `/legal/user-agreement`
+- 隐私政策 → `/legal/privacy`
 - 授权管理 → `/me/authorization`
 
-上述入口采用 4 列宫格 + 动态团队卡组织。低频入口可以排在页面后段，但**不得因为版式需要删除或隐藏**。
+### 其它原入口承接
 
-## 6. 退出登录
+- 长期资产由核心卡承接，不再重复占服务宫格。
+- 设置既保留右上快捷入口，也保留服务宫格入口。
+- 个人资料由顶部身份区承接。
+- 退出登录保留在页面底部并继续二次确认。
 
-- 退出登录继续存在于 `/me` 页面底部低权重区域。
-- 保留原二次确认与账号生命周期语义。
+## 6. 视觉要求
 
-## 7. Token 与视觉纪律
+- mobile-first、compact-first、flat-first。
+- 页面背景 / Surface / 主色 / 文本 / Border / Radius / Touch target 全部来自项目 token。
+- 允许用项目 success / info / warning / primary-container 等**既有语义色**区分图标，但不得硬编码外部参考图色值。
+- 普通模块不堆厚重阴影；靠留白、单层 Surface、图标节奏和字号建立层级。
+- 参考图只提供：无顶部标题栏、身份区、强弱模块顺序、4 列快捷入口、低频功能后置等布局启发。
 
-必须复用项目现有 semantic token：
+## 禁止
 
-- `background / surface / surface-subtle / surface-pressed`
-- `primary / primary-pressed / primary-container / on-primary`
-- `text-primary / text-secondary / text-tertiary / text-brand`
-- `border-subtle`
-- `rounded-container / rounded-control / rounded-full`
-- mobile touch target token
+- 禁止再次出现「阅读中心」或任何阅读占位。
+- 禁止把不存在的功能写到 UI 里解释“尚未接入”。
+- 禁止为了凑 8 格删除真实入口，或为了“一个不能少”把全部低频入口做成同权重宫格。
+- 禁止伪造学习、资产、角色、排名数据。
+- 禁止修改 T055–T058 排行榜业务规则。
+- 禁止改变扫码、账号、团队、长期资产等既有业务语义。
 
-禁止：
+## 专项验收
 
-- 从参考图吸色；
-- 新增另一套页面主题色；
-- 用大面积黑底、厚重阴影或玻璃拟态制造“高级感”；
-- 为视觉填充伪造学习、阅读、角色数据；
-- 为了凑整齐宫格删除已有入口。
+- [ ] `/me` 无独立「我的」标题栏。
+- [ ] 页面不存在「阅读中心」及阅读占位文案。
+- [ ] 个人资料、扫一扫、设置均可达。
+- [ ] 长期资产核心卡进入 `/assets`，摘要均来自真实 store。
+- [ ] 4 个学习入口均正确。
+- [ ] 排行榜进入 `/courses/leaderboard`。
+- [ ] 主要服务 8 个入口均正确。
+- [ ] 动态校园推广团队入口仍存在于适用状态。
+- [ ] 用户协议、隐私政策、授权管理仍可从 `/me` 直接到达。
+- [ ] 退出登录二次确认保留。
+- [ ] 375 / 390 / 430px 无横向滚动或明显挤压。
+- [ ] mobile route audit / typecheck / build 通过。
+- [ ] T059 Playwright 专项回归通过。
 
-## 最低可演示路径
+## 被否决实现记录
 
-```text
-/me
-→ 个人资料 → /me/profile
-→ 设置 → /me/settings
-→ 我的课程 → /courses/center
-→ 学习记录 → /assets/learning
-→ 我的证书 → /assets/certificates
-→ 赛事成绩 → /assets/results
-→ 学习排行榜 → /courses/leaderboard
-→ 长期资产 / 卡券 / 消息 / 比赛团队 / 简历 / 账号绑定 / 客服
-→ 设置 / 授权 / 用户协议 / 隐私政策 / 关于
-→ 退出登录二次确认
-```
-
-阅读中心按当前 route 边界验收：显示入口设计，但不允许假链接。
-
-## 验收
-
-- [x] `/me` 已移除独立 PageHeader，身份区首屏不局促。
-- [x] 头像、姓名、学校 / 专业、已有角色徽章层级清楚。
-- [x] 扫一扫与设置位于右上轻量操作区，原扫码模拟链路保留。
-- [x] 阅读中心成为首个核心业务大卡，且未复制参考图颜色。
-- [x] 阅读中心没有正式 route 时未制造假链接 / 假阅读数据。
-- [x] 我的学习使用四宫格，并全部映射真实已有能力。
-- [x] 学习排行榜 Banner 正确进入 `/courses/leaderboard`。
-- [x] 更多服务从纵向列表重构为宫格。
-- [x] 原有常驻、动态、协议 / 隐私 / 关于入口均未丢失。
-- [x] 退出登录能力保留且降级处理。
-- [x] 页面主题颜色、圆角、文字、边框、触摸尺寸来自项目 token。
-- [x] 未新增伪造业务状态、假角色或无意义 route。
-- [x] 375px / 390px / 430px 横向溢出专项回归已覆盖并通过。
-- [x] mobile type-check / build 通过。
-- [x] T059 专项 browser 回归随 mobile browser regression suite 通过。
-- [x] dev mobile preview 构建与 Cloudflare Pages 部署通过。
-
-## 施工提交
-
-- `76c35371d3c2a2adb25a4ee738a081b50f974b92` — Dashboard 主实现
-- `9a11c8990f8ea75174857e55752691ada689cfbb` — T059 browser regression 初版
-- `db9296c33709936729ae16f9399525b8d8f4f8cd` — 回归 selector 加固
-- `de249ced554efde91c6578bbc68a5da04fb75138` — Quality Gate 纳入 T059 regression
-- `0749dfcf0db81032d30c3e6dfe0d6793590fee60` — 阅读卡 token / 文案收口
-- `f7a38cb7301119da0dc03f9cb1373dae0f91e3ae` — 退出确认回归断言修正
-
-## 验收证据
-
-Quality Gate run `33618152527`：
-
-- `Verify mobile routes, types and build` = **success**
-- `Run learning leaderboard regressions (soft gate)` = **success**
-- `Run mobile browser regressions (soft gate)` = **success**，其中已包含 `tests/t059-my-page-dashboard.spec.ts`
-
-Deploy Mobile run `33618152565`：
-
-- `Type-check and build mobile preview` = **success**
-- `Run F00 cross-app browser regression (soft gate)` = **success**
-- `Deploy mobile` = **success**
-
-T059 专项回归覆盖：
-
-- 个人资料、扫一扫、设置入口；
-- 阅读中心无正式 route 时 disabled；
-- 4 个学习入口；
-- 排行榜入口；
-- 12 个常驻“更多服务”入口；
-- 动态校园推广团队入口；
-- 退出登录二次确认；
-- 375 / 390 / 430 三档宽度无横向滚动；
-- 扫码模拟器仍可到达。
-
-**结论：T059 PASS。**
-
-## 不在本卡范围
-
-- 新建完整阅读器 / 书架业务；
-- 新建考试中心；
-- 重做课程、证书、资产、团队等二级页；
-- 改动排行榜 T055–T058 已确认业务规则；
-- 修改账号、主体、第三方绑定等未决业务模型。
+2026-09-02 第一版曾错误加入「阅读中心」并将全部低频入口摊平成 12 格宫格。用户人工评审明确否决，相关 `PASS` 不再有效。历史提交保留用于追溯，不作为当前设计依据。
