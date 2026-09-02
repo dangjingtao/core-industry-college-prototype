@@ -1,4 +1,4 @@
-import { ChevronRight, Clock3, Coins, ShieldCheck } from "lucide-react";
+import { ChevronRight, Clock3, Coins, ShieldCheck, Sparkles, Wheat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, PageHeader, PublicShell, Section, StatusTag } from "../../components/ui";
 import { courses, type Course } from "../long-term-assets/data";
@@ -13,7 +13,10 @@ type LearnerPreview = {
   roles: LeaderboardRole[];
   avatarTone: string;
 };
+
 const ASSET_BASE = "/assets/learning-leaderboard";
+const TROPHY_MATERIAL = `${ASSET_BASE}/user-materials/crops/trophy-simple-gold.svg`;
+const WREATH_MATERIAL = `${ASSET_BASE}/user-materials/crops/wreath-gold.svg`;
 
 const trustedCourseIds = new Set(["ai-ecommerce-agent", "data-analytics", "newbie-essential"]);
 
@@ -79,68 +82,90 @@ function LearnerAvatar({ learner, champion = false }: { learner: LearnerPreview;
   return <span
     aria-label={`${learner.name}公开头像`}
     role="img"
-    className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white font-bold shadow-[0_8px_20px_rgba(74,77,157,.14)] ${champion ? "size-[78px] text-2xl" : "size-[66px] text-xl"} ${learner.avatarTone}`}
+    className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white font-bold ${champion ? "size-[80px] text-[28px] shadow-[0_10px_28px_rgba(231,168,31,.28)] ring-2 ring-[#FFE8A9]" : "size-[68px] text-[24px] shadow-[0_8px_20px_rgba(74,77,157,.15)]"} ${learner.avatarTone}`}
   >
     <span className="absolute inset-x-2 top-1 h-5 rounded-full bg-white/25 blur-sm" />
     <span className="relative z-10">{learner.name.slice(0, 1)}</span>
   </span>;
 }
 
-function RankMaterial({ rank }: { rank: 1 | 2 | 3 }) {
-  return <img src={`${ASSET_BASE}/rank-${rank}.webp`} alt={`第${rank}名奖牌`} className="absolute left-1/2 top-0 z-10 h-[52px] w-[52px] -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-[0_6px_10px_rgba(36,49,124,.2)]" />;
+function TrophyMaterial() {
+  return <div aria-hidden="true" className="relative grid h-full min-h-[112px] place-items-center overflow-hidden bg-[linear-gradient(145deg,#FFFDF9_0%,#FFF4D8_100%)]">
+    <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,206,91,.28),transparent_68%)]" />
+    <Sparkles size={13} className="absolute left-2.5 top-4 text-[#F6C64F]" />
+    <Sparkles size={10} className="absolute right-2 top-5 text-[#F9D97E]" />
+    <img src={WREATH_MATERIAL} alt="" className="absolute bottom-1.5 left-1/2 w-[96px] -translate-x-1/2 opacity-65" />
+    <img src={TROPHY_MATERIAL} alt="" className="relative z-10 h-[84px] w-auto object-contain drop-shadow-[0_8px_12px_rgba(191,124,0,.22)]" />
+  </div>;
 }
 
-function TrophyMaterial() {
-  return <span aria-hidden="true" className="absolute inset-0 z-0 bg-[url('/assets/learning-leaderboard/user-materials/trophies-source.png')] bg-[length:300%_200%] bg-[position:0%_0%] bg-no-repeat opacity-95" />;
+function RankLabel({ rank }: { rank: 1 | 2 | 3 }) {
+  const first = rank === 1;
+  return <div className="relative flex h-8 items-center justify-center">
+    {first && <>
+      <span className="absolute -top-2 left-1/2 h-[44px] w-[82px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,213,109,.34),transparent_72%)]" />
+      <img src={WREATH_MATERIAL} alt="" aria-hidden="true" className="absolute -top-2 left-1/2 w-[62px] -translate-x-1/2 opacity-80" />
+    </>}
+    <span className={`relative z-10 text-[17px] font-extrabold tracking-wide ${first ? "text-[#B86600]" : rank === 2 ? "text-[#3549D5]" : "text-[#6B35CE]"}`}>NO.{rank}</span>
+  </div>;
 }
 
 export function LearningLeaderboardPreview() {
   const podium = [topLearners[1], topLearners[0], topLearners[2]];
-  return <section aria-labelledby="learning-leaderboard-title" className="space-y-3">
+
+  return <section aria-labelledby="learning-leaderboard-title" className="-mx-4 overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,#F7F9FF_0%,#EEF2FF_58%,#F7F4FF_100%)] px-4 py-5">
     <div className="flex items-start justify-between gap-3 px-1">
-      <div className="min-w-0">
-        <h2 id="learning-leaderboard-title" className="text-[22px] font-extrabold tracking-tight text-[#101A42]">学习排行榜</h2>
-        <p className="mt-1.5 inline-flex items-center gap-2 text-sm text-[#59627F]"><Clock3 size={17} className="text-[#3F42DB]" aria-hidden="true" />本周课程学习时长 · 每周一更新</p>
+      <div className="flex min-w-0 items-start gap-2.5">
+        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-[#EEF0FF] text-[#8A95E8]"><Wheat size={20} aria-hidden="true" /></span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h2 id="learning-leaderboard-title" className="text-[23px] font-extrabold tracking-tight text-[#101A42]">学习排行榜</h2>
+            <Sparkles size={17} className="shrink-0 text-[#FFD36A]" aria-hidden="true" />
+          </div>
+          <p className="mt-1 inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] text-[#66708F]"><Clock3 size={16} className="text-[#3F42DB]" aria-hidden="true" />本周课程学习时长，每周一更新</p>
+        </div>
       </div>
-      <Link to="/courses/leaderboard" aria-label="查看完整排行榜" className="inline-flex min-h-touch shrink-0 items-center gap-0.5 pt-2 text-[15px] font-bold text-[#2736C7]">查看完整榜单 <ChevronRight size={19} aria-hidden="true" /></Link>
+      <Link to="/courses/leaderboard" aria-label="查看完整排行榜" className="inline-flex min-h-touch shrink-0 items-center gap-0.5 pt-1 text-[14px] font-bold text-[#2736C7]">查看完整榜单 <ChevronRight size={18} aria-hidden="true" /></Link>
     </div>
 
-    <Card className="overflow-hidden rounded-[22px] border border-[#E3E6F3] bg-white p-0 shadow-[0_18px_42px_rgba(67,74,124,.14)]">
-      <div className="grid grid-cols-[1fr_1fr_88px] border-b border-[#E3E6F3]">
-        <div className="min-w-0 px-5 py-5">
-          <p className="text-[15px] text-[#59627F]">我的本校排名</p>
-          <p className="mt-2 text-[36px] font-extrabold leading-none tracking-tight text-[#101A42]">{mySchoolRank}<span className="ml-1 text-lg font-medium">名</span></p>
+    <Card className="mt-4 overflow-hidden rounded-[28px] border border-[#DCE3F4] bg-white p-0 shadow-[0_16px_42px_rgba(57,71,132,.14)]">
+      <div className="grid min-h-[112px] grid-cols-[1fr_1fr_104px] border-b border-[#DDE4F2]">
+        <div className="min-w-0 px-4 py-5">
+          <p className="text-[14px] font-medium text-[#59627F]">我的本校排名</p>
+          <p className="mt-2.5 text-[35px] font-extrabold leading-none tracking-tight text-[#101A42]">{mySchoolRank}<span className="ml-1 text-[17px] font-semibold">名</span></p>
         </div>
-        <div className="min-w-0 border-l border-[#E3E6F3] px-5 py-5">
-          <p className="text-[15px] text-[#59627F]">本周学习时长</p>
-          <p className="mt-2 whitespace-nowrap text-[29px] font-extrabold leading-none tracking-tight text-[#101A42]">{formatDuration(myWeeklyMinutes)}</p>
+        <div className="min-w-0 border-l border-[#DDE4F2] px-4 py-5">
+          <p className="text-[14px] font-medium text-[#59627F]">本周学习时长</p>
+          <p className="mt-2.5 whitespace-nowrap text-[27px] font-extrabold leading-none tracking-tight text-[#101A42]">{formatDuration(myWeeklyMinutes)}</p>
         </div>
-        <div className="relative overflow-hidden border-l border-[#E3E6F3] bg-[#FFF8E8]"><TrophyMaterial /></div>
+        <div className="border-l border-[#DDE4F2]"><TrophyMaterial /></div>
       </div>
 
-      <div className="px-5 pb-5 pt-5">
+      <div className="relative -mt-px rounded-t-[22px] border-t border-[#D9E1F1] bg-white px-4 pb-4 pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[21px] font-extrabold text-[#101A42]">本校 Top 3</h3>
-          <span className="text-[17px] font-medium text-[#59627F]">周榜</span>
+          <h3 className="text-[20px] font-extrabold text-[#101A42]">本校 Top 3</h3>
+          <span className="text-[15px] font-medium text-[#59627F]">周榜</span>
         </div>
 
-        <div className="mt-7 grid grid-cols-3">
+        <div className="mt-6 grid grid-cols-3">
           {podium.map(learner => {
             const first = learner.rank === 1;
-            return <div key={learner.rank} className={`relative min-w-0 px-2 text-center ${learner.rank !== 2 ? "border-l border-[#E3E6F3]" : ""} ${first ? "-translate-y-2" : ""}`}>
-              <span className={`text-[18px] font-extrabold ${first ? "text-[#B86600]" : "text-[#3236C8]"}`}>NO.{learner.rank}</span>
-              {first && <span className="pointer-events-none absolute -top-3 left-1/2 h-[110px] w-[110px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,210,101,.28),transparent_68%)]" />}
-              <div className="relative mt-5 flex justify-center"><RankMaterial rank={learner.rank} /><LearnerAvatar learner={learner} champion={first} /></div>
-              <div className="relative z-10 mt-4 flex min-w-0 flex-col items-center gap-1.5">
+            const separated = learner.rank !== 2;
+
+            return <div key={learner.rank} className={`relative min-w-0 px-2 text-center ${separated ? "border-l border-[#E0E5F1]" : ""} ${first ? "-translate-y-2" : ""}`}>
+              <RankLabel rank={learner.rank} />
+              {first && <span className="pointer-events-none absolute left-1/2 top-7 h-[122px] w-[122px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,218,128,.3),transparent_70%)]" />}
+              <div className={`relative z-10 flex justify-center ${first ? "mt-3" : "mt-4"}`}><LearnerAvatar learner={learner} champion={first} /></div>
+              <div className="relative z-10 mt-3 flex min-w-0 flex-col items-center gap-1.5">
                 <span className="max-w-full truncate text-[16px] font-bold text-[#101A42]">{learner.name}</span>
-                <LeaderboardRoleBadges roles={learner.roles} compact />
-                <span className="text-[16px] text-[#59627F]">{formatDuration(learner.minutes)}</span>
+                <span className="flex min-h-7 items-center justify-center"><LeaderboardRoleBadges roles={learner.roles} compact /></span>
+                <span className="text-[15px] font-medium text-[#59627F]">{formatDuration(learner.minutes)}</span>
               </div>
             </div>;
           })}
         </div>
 
-        <Link to="/courses/leaderboard" className="mt-7 flex min-h-[52px] items-center justify-center gap-1 rounded-[16px] border border-[#AAB1FF] bg-[linear-gradient(100deg,#7887FF_0%,#7650F2_100%)] text-[18px] font-bold text-white shadow-[0_10px_20px_rgba(100,86,234,.22)]">进入完整排行榜 <ChevronRight size={20} aria-hidden="true" /></Link>
+        <Link to="/courses/leaderboard" className="mt-6 flex min-h-[52px] items-center justify-center gap-1 rounded-[16px] border border-[#AAB1FF] bg-[linear-gradient(100deg,#7185FF_0%,#7952F4_100%)] text-[17px] font-bold text-white shadow-[0_10px_22px_rgba(100,86,234,.22)]">进入完整排行榜 <ChevronRight size={20} aria-hidden="true" /></Link>
       </div>
     </Card>
   </section>;
