@@ -1,72 +1,3 @@
-# T056｜本校榜 / 全国榜排行榜详情页｜实施记录
-
-**任务卡：** `docs/workbench/tasks/T056-learning-leaderboard-detail.md`  
-**分支：** `dev`  
-**状态：** REVIEW  
-**日期：** 2026-09-02
-
-## 实施结论
-
-T056 已将 `/courses/leaderboard` 从 T055 的承接页升级为完整学习排行榜详情原型，并在两轮人工视觉 Review 后完成专属视觉重构。当前版本保留 T057 / T058 的身份与点赞能力，同时不再把全局 design token 作为排行榜详情页的视觉硬边界。
-
-## 已实现
-
-- 「本校榜 / 全国榜」双 Tab 可真实切换，并具有明确选中态；
-- 本校榜与全国榜均完整展示 Top 10；
-- 排名唯一依据为本周课程学习时长；
-- 页面展示周榜周期与「每周一 00:00 更新」；
-- 全国榜额外展示所属学校，示例覆盖多所高校；
-- Top 1–3 使用 2 / 1 / 3 横向领奖台构图，Top 1 使用独立冠军视觉；
-- 本校榜场景中，当前用户排名第 12，未进入 Top 10，独立显示「我的排名」；
-- 全国榜场景中，当前用户排名第 8，直接在 Top 10 内高亮本人态；
-- 榜单项展示公开头像 fallback、公开昵称 / 网名、课程学习时长、身份 Badge、点赞数；
-- 托管账户通过 mock 数据层动态混排表达，不在用户界面出现“托管”“模拟”等标签；
-- 托管样本分散在不同名次，真实用户示例可位于其上方，避免形成固定霸榜表达；
-- T057 身份状态与 T058 点赞 / 取消 / 再点赞 / 自赞限制 / 周周期逻辑继续保留。
-
-## 正式实现文件
-
-- `apps/mobile/src/features/learning-leaderboard/T056LeaderboardPage.tsx`
-- `apps/mobile/tests/t056-learning-leaderboard-detail.spec.ts`
-- `apps/mobile/tests/t057-leaderboard-identity-states.spec.ts`
-- `apps/mobile/tests/t058-leaderboard-like-interaction.spec.ts`
-- `.github/workflows/r-final-check.yml`
-
-路由保持 `/courses/leaderboard` 不变，通过既有兼容出口：
-
-- `apps/mobile/src/features/learning-leaderboard/T043CourseHomePage.tsx`
-
-## 初始施工提交
-
-- `8910664` — `feat: implement T056 learning leaderboard detail`
-- `1a2190c` — `feat: route leaderboard entry to T056 detail`
-- `1aa6248` — `test: cover T056 leaderboard detail states`
-- `f8e6818` — `test: add T056 to leaderboard regression suite`
-- `42adaec` — `docs: move T056 leaderboard detail to review`
-
-## 第一轮 UI Review：功能完整，但视觉不可验收
-
-人工 Review 指出：初版虽然 Top 10、身份和点赞逻辑已经完成，但详情页仍是偏开发态的「说明卡 + Tab + 普通列表」，没有兑现 UI 参考构图，因此不可按视觉原型验收。
-
-随后完成第一轮修正：
-
-1. 顶栏保留居中「学习排行榜」，右侧增加「规则说明」入口；
-2. 本校榜 / 全国榜改为线性 Tab + 品牌色下划线；
-3. 榜单顶部增加品牌渐变 Banner；
-4. Top 1–3 从普通列表中抽出，改为横向领奖台构图（2 / 1 / 3 排列）；
-5. 第 4–10 名改为紧凑表格式榜单；
-6. Top 10 外的「我的排名」改为独立品牌描边卡片；
-7. 页尾增加排名反馈文案；
-8. T057 身份 Badge 和 T058 点赞状态机继续保留。
-
-第一轮 UI 修正提交：
-
-- `e60a9b8` — `fix: align leaderboard detail with approved UI reference`
-- `133e762` — `fix: align course home leaderboard with UI reference`
-- `a28c3a3` — `test: align T055 regression with approved leaderboard UI`
-- `12f96ee` — `test: align T056 regression with approved leaderboard UI`
-- `f876c0b` — `test: keep T058 interaction coverage after UI-reference rebuild`
-
 第一轮修正验证：
 
 - Prototype Quality Gate run `33580165062`：mobile verify 与 T055–T058 leaderboard regression 均 **success**；
@@ -110,6 +41,19 @@ Deploy Mobile run `33581820083`：
 - F00 cross-app browser regression = **success**；
 - `Deploy mobile` = **success**。
 
+## 第三轮：接入正式 WebP 排行榜物料
+
+在第二轮高保真方向基础上，不再通过 CSS 模拟徽章 / 奖牌，而是将已确认的视觉物料转换为 WebP 后直接接入页面组成：
+
+- `campus-ambassador.webp`：校园大使徽章；
+- `recommender.webp`：推荐官徽章；
+- `rank-1.webp`：第一名金冠奖牌；
+- `rank-2.webp`：第二名银蓝奖牌；
+- `rank-3.webp`：第三名铜金奖牌；
+- `weekly-banner.webp`：蓝金周榜小 Banner。
+
+页面保持头像、昵称、学校、学习时长、点赞等信息为真实 DOM；仅装饰性/身份类物料使用 WebP，不将榜单截图化。Top 3 使用真实奖牌 WebP，身份 Badge 使用真实徽章 WebP，顶部 Hero 使用真实周榜 Banner WebP，同时继续保留 T057/T058 所需的可访问语义、`data-leaderboard-role`、点赞状态和周周期交互。
+
 ## 当前视觉约束
 
 排行榜详情页当前执行以下规则：
@@ -117,6 +61,7 @@ Deploy Mobile run `33581820083`：
 - 基础页面壳层、语义、可访问性与交互规则继续复用项目体系；
 - 排行榜自身可以拥有独立色彩、渐变、光效、阴影、Avatar Ring、金银铜名次层级与自身高亮；
 - 这些局部视觉值不要求晋升为全局 token；
+- 视觉物料统一使用 WebP，避免原始 PNG 直接进入页面；
 - 其它页面不自动继承本页视觉语言；
 - 自动化通过只证明功能和结构未回归，最终视觉 PASS 仍由人工 Review 决定。
 
@@ -133,9 +78,10 @@ Deploy Mobile run `33581820083`：
 
 人工 Review 重点看：
 
-1. Banner 是否已经有足够的品牌感，而不是普通渐变卡；
-2. Top 1 是否真正成为视觉中心，Top 2 / Top 3 是否有明确但不过度的银 / 铜层级；
-3. 4–10 表格与 Top 3 是否属于同一个视觉世界；
-4. 当前用户高亮是否明显但不破坏榜单阅读；
-5. T057 Badge 与 T058 点赞在更强视觉下是否仍然清晰；
-6. 若仍存在视觉差距，应继续按 UI 稿调整，不以 token 一致性或自动化通过作为视觉 PASS 依据。
+1. 周榜 Banner 是否在手机宽度下仍有足够呼吸感，文案不与奖杯物料冲突；
+2. Top 1 奖牌应成为视觉中心，但不能遮挡头像 / 姓名；
+3. Top 2 / 3 奖牌与第一名之间应有层级而非同等重量；
+4. 校园大使 / 推荐官长条徽章在 Top 3 与 4–10 紧凑榜单中的缩放是否清晰且不过载；
+5. 4–10 表格与 Top 3 是否仍属于同一个视觉世界；
+6. 当前用户高亮、点赞反馈与 WebP 物料是否互不抢焦点；
+7. 若仍存在视觉差距，应继续按实际截图调整，不以自动化通过作为视觉 PASS 依据。
