@@ -1,7 +1,7 @@
 # T059｜「我的」页面 Dashboard 化重构
 
 **类型：原型设计 / 施工卡**  
-**状态：REVIEW**  
+**状态：PASS**  
 **优先级：P1**  
 **范围：Mobile `/me` 视觉与信息架构重构**  
 **前置：T014、T055–T058 已有学习排行榜能力**
@@ -157,9 +157,9 @@
 - [x] 退出登录能力保留且降级处理。
 - [x] 页面主题颜色、圆角、文字、边框、触摸尺寸来自项目 token。
 - [x] 未新增伪造业务状态、假角色或无意义 route。
-- [x] 已新增 375px / 390px / 430px 横向溢出专项回归。
-- [x] mobile type-check / build 已在 Quality Gate 中通过。
-- [ ] T059 专项 browser 回归随最新 `dev` Quality Gate 完成。
+- [x] 375px / 390px / 430px 横向溢出专项回归已覆盖并通过。
+- [x] mobile type-check / build 通过。
+- [x] T059 专项 browser 回归随 mobile browser regression suite 通过。
 
 ## 施工提交
 
@@ -170,9 +170,27 @@
 - `0749dfcf0db81032d30c3e6dfe0d6793590fee60` — 阅读卡 token / 文案收口
 - `f7a38cb7301119da0dc03f9cb1373dae0f91e3ae` — 退出确认回归断言修正
 
-## 当前待收口
+## 验收证据
 
-最新代码已完成，待最新 `dev` Quality Gate 执行 T059 browser regression 后把本卡由 `REVIEW` 更新为 `PASS`。
+Quality Gate run `33618152527`：
+
+- `Verify mobile routes, types and build` = **success**
+- `Run learning leaderboard regressions (soft gate)` = **success**
+- `Run mobile browser regressions (soft gate)` = **success**，其中已包含 `tests/t059-my-page-dashboard.spec.ts`
+
+T059 专项回归覆盖：
+
+- 个人资料、扫一扫、设置入口；
+- 阅读中心无正式 route 时 disabled；
+- 4 个学习入口；
+- 排行榜入口；
+- 12 个常驻“更多服务”入口；
+- 动态校园推广团队入口；
+- 退出登录二次确认；
+- 375 / 390 / 430 三档宽度无横向滚动；
+- 扫码模拟器仍可到达。
+
+**结论：T059 PASS。**
 
 ## 不在本卡范围
 
