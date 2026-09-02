@@ -8,7 +8,6 @@ const learningLinks = [
 ] as const;
 
 const serviceLinks = [
-  ["长期资产", "/assets"],
   ["我的卡券", "/benefits/wallet"],
   ["消息通知", "/me/notifications"],
   ["比赛团队", "/me/teams"],
@@ -16,26 +15,34 @@ const serviceLinks = [
   ["账号绑定", "/me/accounts"],
   ["帮助客服", "/support"],
   ["设置中心", "/me/settings"],
-  ["授权管理", "/me/authorization"],
-  ["用户协议", "/legal/user-agreement"],
-  ["隐私政策", "/legal/privacy"],
   ["关于我们", "/about"],
 ] as const;
 
+const secondaryLinks = [
+  ["用户协议", "/legal/user-agreement"],
+  ["隐私政策", "/legal/privacy"],
+  ["授权管理", "/me/authorization"],
+] as const;
+
 test.describe("T059 my page dashboard", () => {
-  test("keeps every existing entrance while reorganizing the page as a dashboard", async ({ page }) => {
+  test("uses only real product capabilities and keeps every entrance reachable", async ({ page }) => {
     await page.goto("/me");
 
     await expect(page.getByTestId("t059-my-dashboard")).toBeVisible();
     await expect(page.getByRole("heading", { name: "我的", exact: true })).toHaveCount(0);
+    await expect(page.getByText("阅读中心", { exact: true })).toHaveCount(0);
+    await expect(page.getByText(/阅读功能|进入阅读/)).toHaveCount(0);
 
-    await expect(page.locator('section[aria-label="个人资料"] a[href="/me/profile"]')).toBeVisible();
+    await expect(page.getByTestId("profile-entry")).toHaveAttribute("href", "/me/profile");
     await expect(page.getByRole("button", { name: "扫一扫" })).toBeVisible();
     await expect(page.getByRole("link", { name: "设置", exact: true })).toHaveAttribute("href", "/me/settings");
 
-    const reading = page.getByTestId("reading-center-entry");
-    await expect(reading.getByText("阅读中心")).toBeVisible();
-    await expect(reading.getByRole("button", { name: /进入阅读/ })).toBeDisabled();
+    const assets = page.getByTestId("long-term-assets-entry");
+    await expect(assets).toHaveAttribute("href", "/assets");
+    await expect(assets.getByText("长期资产", { exact: true })).toBeVisible();
+    await expect(assets.getByText("课程记录", { exact: true })).toBeVisible();
+    await expect(assets.getByText("证书", { exact: true })).toBeVisible();
+    await expect(assets.getByText("赛事成绩", { exact: true })).toBeVisible();
 
     const learningGrid = page.getByTestId("my-learning-grid");
     for (const [label, href] of learningLinks) {
@@ -47,6 +54,11 @@ test.describe("T059 my page dashboard", () => {
     const serviceGrid = page.getByTestId("more-services-grid");
     for (const [label, href] of serviceLinks) {
       await expect(serviceGrid.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
+    }
+
+    const secondary = page.getByTestId("my-page-secondary-links");
+    for (const [label, href] of secondaryLinks) {
+      await expect(secondary.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
     }
 
     const ambassadorTeam = page.getByTestId("ambassador-team-entry");
