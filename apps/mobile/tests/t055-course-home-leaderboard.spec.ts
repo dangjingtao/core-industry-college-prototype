@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("T055 course home learning leaderboard", () => {
-  test("shows the high-fidelity weekly ranking card and opens the full leaderboard", async ({ page }) => {
+  test("shows the compact weekly ranking summary and opens the full leaderboard", async ({ page }) => {
     await page.goto("/courses");
 
     const preview = page.locator('section[aria-labelledby="learning-leaderboard-title"]');
@@ -10,13 +10,12 @@ test.describe("T055 course home learning leaderboard", () => {
     await expect(preview.getByText("本周学习时长")).toBeVisible();
     await expect(preview.getByText(/每周一更新/)).toBeVisible();
     await expect(preview.getByRole("heading", { name: "本校 Top 3" })).toBeVisible();
-    await expect(preview.getByText("本周榜单")).toBeVisible();
-
-    await expect(preview.getByTestId("home-rank-material-1")).toBeVisible();
-    await expect(preview.getByTestId("home-rank-material-2")).toBeVisible();
-    await expect(preview.getByTestId("home-rank-material-3")).toBeVisible();
-    await expect(preview.getByAltText("校园大使")).toBeVisible();
-    await expect(preview.getByAltText("推荐官")).toBeVisible();
+    await expect(preview.getByText("周榜")).toBeVisible();
+    await expect(preview.getByText("NO.1")).toBeVisible();
+    await expect(preview.getByText("NO.2")).toBeVisible();
+    await expect(preview.getByText("NO.3")).toBeVisible();
+    await expect(preview.getByLabel("校园大使")).toBeVisible();
+    await expect(preview.getByLabel("推荐官")).toBeVisible();
     await expect(preview.getByText("林知夏")).toBeVisible();
     await expect(preview.getByText("周可昕")).toBeVisible();
     await expect(preview.getByText("陈一舟")).toBeVisible();

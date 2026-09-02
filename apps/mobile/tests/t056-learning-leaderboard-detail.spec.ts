@@ -13,8 +13,8 @@ test.describe("T056 learning leaderboard detail", () => {
     await expect(page.getByTestId("rank-material-1")).toBeVisible();
     await expect(page.getByTestId("rank-material-2")).toBeVisible();
     await expect(page.getByTestId("rank-material-3")).toBeVisible();
-    await expect(page.getByTestId("role-material-校园大使").first()).toHaveAttribute("src", /campus-ambassador\.webp$/);
-    await expect(page.getByTestId("role-material-推荐官").first()).toHaveAttribute("src", /recommender\.webp$/);
+    await expect(page.locator('[data-leaderboard-role="校园大使"]').first()).toBeVisible();
+    await expect(page.locator('[data-leaderboard-role="推荐官"]').first()).toBeVisible();
 
     const list = page.getByTestId("leaderboard-list");
     await expect(list.getByTestId("leaderboard-row")).toHaveCount(10);
@@ -29,6 +29,7 @@ test.describe("T056 learning leaderboard detail", () => {
     await expect(list.getByTestId("leaderboard-row")).toHaveCount(10);
     await expect(page.getByText("华南理工大学")).toBeVisible();
     await expect(page.getByText("深圳大学")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "本周课程学习时长排名" })).toBeVisible();
 
     const selfRow = list.locator('[data-self="true"]');
     await expect(selfRow).toHaveCount(1);
