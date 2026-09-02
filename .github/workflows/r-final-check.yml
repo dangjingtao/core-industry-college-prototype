@@ -41,8 +41,18 @@ jobs:
           npm run e2e --workspace @core/mobile --
           tests/t055-course-home-leaderboard.spec.ts
           tests/t056-learning-leaderboard-detail.spec.ts
+          tests/t056-leaderboard-visual-review.spec.ts
           tests/t057-leaderboard-identity-states.spec.ts
           tests/t058-leaderboard-like-interaction.spec.ts
+
+      - name: Upload leaderboard visual review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leaderboard-visual-review
+          path: apps/mobile/visual-artifacts/*.png
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Run mobile browser regressions (soft gate)
         id: mobile-regressions
