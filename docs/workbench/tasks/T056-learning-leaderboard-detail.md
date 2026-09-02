@@ -12,7 +12,7 @@
 
 ## 目标
 
-完成排行榜核心详情页，完整表达榜单切换、Top 10、我的排名、学校维度、周榜周期以及托管账户参与规则。
+完成排行榜核心详情页，完整表达榜单切换、Top 10、我的排名、学校维度、周榜周期以及托管账户参与规则，并达到可直接用于视觉评审的高保真完成度。
 
 ## 原型实现点
 
@@ -22,7 +22,7 @@
 - 提供「本校榜 / 全国榜」双 Tab，并有明确选中态。
 - 两个榜单均展示 Top 10。
 - 榜单统一按「本周课程学习时长」由高到低表达排名关系。
-- 页面明确表达当前周榜周期 / 本周时间范围。
+- 页面明确表达当前周榜周期与「每周一 00:00 更新」。
 
 ### 本校榜条目
 
@@ -36,7 +36,7 @@
 
 ### 排名状态
 
-- Top 1–3 有清晰但克制的头部排名视觉层级。
+- Top 1–3 使用明确的领奖台式头部视觉，其中 Top 1 应有更强的冠军识别度。
 - 用户本人进入 Top 10 时，需要有明确本人态。
 - 用户本人未进入 Top 10 时，仍需在榜单下方或固定区域展示「我的排名」。
 - 「我的排名」至少展示：排名、头像、公开昵称、学校（全国榜）、本周课程学习时长和点赞状态。
@@ -60,9 +60,14 @@
 
 ## UI 完成度要求
 
-- 全部复用项目现有 design token 与组件语言。
-- 列表密度、Top 3 层级、我的排名区域需达到正式高保真原型完成度。
-- 参考《学习排行榜_V1.0_UI参考.png》的信息架构与构图，不要求照抄其颜色或细节。
+2026-09-02 人工 Review 后，排行榜详情页不再受“所有视觉值必须严格映射现有 design token”的硬限制。
+
+- 基础排版、可访问性、页面壳层、交互语义继续与项目保持一致；
+- 排行榜详情允许使用**页面专属颜色、渐变、光晕、阴影、金 / 银 / 铜名次视觉、领奖台边框、Avatar Ring、自身排名高亮**等视觉值；
+- 不要求上述专属视觉全部回写为全局 token，也不要求其它页面跟随采用；
+- 目标优先级是：**信息层级清晰 → 视觉完成度达到正式 UI → 功能状态完整 → 再考虑 token 复用**；
+- 参考已确认的学习排行榜 UI 构图：品牌 Banner → Top 3 领奖台 → 4–10 榜单卡 → 我的排名 → 页尾反馈；
+- 不再以“功能齐全的普通业务列表”作为视觉验收通过标准。
 
 ## 验收
 
@@ -71,10 +76,11 @@
 - [x] 全国榜明确展示学校维度。
 - [x] 未进入 Top 10 的用户仍可看到「我的排名」。
 - [x] 用户本人进入 Top 10 时有本人态。
-- [x] Top 1–3 与普通榜单行层级清楚但不过度装饰。
+- [x] Top 1–3 使用完整领奖台视觉，Top 1 有冠军层级。
 - [x] 榜单仅以本周课程学习时长表达排名依据。
 - [x] 托管账户动态上榜规则在示例数据与原型说明中被完整体现。
 - [x] 不展示真实姓名。
+- [x] 详情页已允许并实际使用排行榜专属视觉值，不受全局 token 完整覆盖约束。
 
 ## 实施证据
 
@@ -82,7 +88,9 @@
 - 实现：`apps/mobile/src/features/learning-leaderboard/T056LeaderboardPage.tsx`
 - 路由兼容出口：`apps/mobile/src/features/learning-leaderboard/T043CourseHomePage.tsx`
 - 专项回归：`apps/mobile/tests/t056-learning-leaderboard-detail.spec.ts`
-- Quality Gate run `33577071577`：`Verify mobile routes, types and build` = **success**；`Run learning leaderboard regressions` = **success**。
+- 最新视觉重构提交：`e571e0c` — `feat: rebuild leaderboard with freer premium visual system`
+- Prototype Quality Gate run `33581820080`：`Verify mobile routes, types and build` = **success**；`Run learning leaderboard regressions` = **success**，覆盖 T055–T058。
+- Deploy Mobile run `33581820083`：mobile preview build、F00 browser regression 与 Cloudflare dev deployment 均 **success**。
 - 本校榜默认场景：当前用户第 12 名，Top 10 下方显示独立「我的排名」。
 - 全国榜场景：当前用户第 8 名，直接在 Top 10 中显示本人态与学校信息。
 
@@ -90,9 +98,10 @@
 
 - 日榜、月榜、历史榜、好友榜；
 - 学习时长奖励；
-- Badge 组件细节由 T057 承接；
-- 点赞状态与交互由 T058 承接。
+- 生产级排行榜后端；
+- 把本页专属视觉扩展为全局 design token；
+- 修改其它页面的视觉体系。
 
 ## 状态说明
 
-本卡已完成施工并具备自动化验证证据，按项目规则进入 **REVIEW**；未获得人工验收前不自行标记 PASS。
+本卡已完成最新一轮视觉重构并具备自动化验证证据，按项目规则保持 **REVIEW**；最终视觉 PASS 仍由人工验收决定。
